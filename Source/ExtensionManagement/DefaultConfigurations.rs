@@ -46,8 +46,11 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 /// - `visited_keys` guards against circular references.
 pub fn process_configuration_properties(
 	merged_defaults:&mut Map<String, Value>,
+
 	current_path:&str,
+
 	properties:&Map<String, Value>,
+
 	visited_keys:&mut Vec<String>,
 ) -> Result<(), CommonError> {
 	for (key, value) in properties {

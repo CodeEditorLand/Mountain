@@ -107,14 +107,19 @@ fn Path_ContainsSegment(Path:&str, Needle:&str) -> bool {
 		// least one path-separator immediately before it (or at
 		// the start of the path).
 		let Bytes = Path.as_bytes();
+
 		let NeedleBytes = Needle.as_bytes();
 
 		let mut Start = 0;
+
 		while let Some(Hit) = Path[Start..].find(Needle) {
 			let Index = Start + Hit;
+
 			let PreviousIsSep = Index == 0 || matches!(Bytes[Index - 1], b'/' | b'\\');
+
 			let NextIsSepOrEnd = match Bytes.get(Index + NeedleBytes.len()) {
 				None => true,
+
 				Some(b) => matches!(*b, b'/' | b'\\'),
 			};
 
@@ -133,6 +138,7 @@ fn Path_ContainsSegment(Path:&str, Needle:&str) -> bool {
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[test]
@@ -165,6 +171,7 @@ mod tests {
 		// The Git extension needs index / HEAD events; the ignore
 		// list must not swallow those.
 		assert!(!ShouldIgnore("/repo/.git/index"));
+
 		assert!(!ShouldIgnore("/repo/.git/HEAD"));
 	}
 

@@ -110,8 +110,11 @@ pub async fn ModelOpen(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) ->
 	// updates. The notification is cheap (~gRPC framing + 1 JSON field); if
 	// Cocoon isn't connected yet the `SendNotification` error is swallowed.
 	let NotifyUri = Uri.clone();
+
 	let NotifyLang = LanguageId.clone();
+
 	let NotifyVer = Version;
+
 	tokio::spawn(async move {
 		let _ = crate::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),

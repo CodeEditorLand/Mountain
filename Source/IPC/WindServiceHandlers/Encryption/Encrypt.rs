@@ -24,7 +24,7 @@ pub async fn Encrypt(Arguments:Vec<Value>) -> Result<Value, String> {
 		return Ok(json!(""));
 	}
 
-	let KeyBytes = DeriveKey();
+	let KeyBytes = DeriveKey().map_err(|E| format!("encryption:encrypt unavailable - {E}"))?;
 
 	let UnboundK = UnboundKey::new(&AES_256_GCM, &KeyBytes).map_err(|E| format!("encrypt key: {E:?}"))?;
 

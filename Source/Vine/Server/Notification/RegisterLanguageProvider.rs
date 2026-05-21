@@ -35,11 +35,13 @@ pub async fn RegisterLanguageProvider(Service:&MountainVinegRPCService, MethodNa
 		.or_else(|| Parameter.get("language_selector"))
 		.and_then(|s| s.as_str())
 		.unwrap_or("*");
+
 	let ExtId = Parameter
 		.get("extensionId")
 		.or_else(|| Parameter.get("extension_id"))
 		.and_then(|e| e.as_str())
 		.unwrap_or("");
+
 	let Scheme = Parameter.get("scheme").and_then(|s| s.as_str()).unwrap_or("");
 
 	let ProviderTypeName = MethodName
@@ -54,6 +56,7 @@ pub async fn RegisterLanguageProvider(Service:&MountainVinegRPCService, MethodNa
 		Handle,
 		Selector
 	);
+
 	dev_log!(
 		"provider-register",
 		"[ProviderRegister] accepted method={} type={} handle={} lang={} scheme={} ext={}",
@@ -67,56 +70,107 @@ pub async fn RegisterLanguageProvider(Service:&MountainVinegRPCService, MethodNa
 
 	let ProvType:Option<PT> = match ProviderTypeName {
 		"authentication" => Some(PT::Authentication),
+
 		"call_hierarchy" => Some(PT::CallHierarchy),
+
 		"code_actions" => Some(PT::CodeAction),
+
 		"code_lens" => Some(PT::CodeLens),
+
 		"color" => Some(PT::Color),
+
 		"completion_item" => Some(PT::Completion),
+
 		"debug_adapter" => Some(PT::DebugAdapter),
+
 		"debug_configuration" => Some(PT::DebugConfiguration),
+
 		"declaration" => Some(PT::Declaration),
+
 		"definition" => Some(PT::Definition),
+
 		"document_drop_edit" => Some(PT::DocumentDropEdit),
+
 		"document_formatting" => Some(PT::DocumentFormatting),
+
 		"document_highlight" => Some(PT::DocumentHighlight),
+
 		"document_link" => Some(PT::DocumentLink),
+
 		"document_paste_edit" => Some(PT::DocumentPasteEdit),
+
 		"document_range_formatting" => Some(PT::DocumentRangeFormatting),
+
 		"document_symbol" => Some(PT::DocumentSymbol),
+
 		"evaluatable_expression" => Some(PT::EvaluatableExpression),
+
 		"external_uri_opener" => Some(PT::ExternalUriOpener),
+
 		"file_decoration" => Some(PT::FileDecoration),
+
 		"file_system" => Some(PT::FileSystem),
+
 		"folding_range" => Some(PT::FoldingRange),
+
 		"hover" => Some(PT::Hover),
+
 		"implementation" => Some(PT::Implementation),
+
 		"inlay_hints" => Some(PT::InlayHint),
+
 		"inline_completion_item" => Some(PT::InlineCompletion),
+
 		"inline_edit" => Some(PT::InlineEdit),
+
 		"inline_values" => Some(PT::InlineValues),
+
 		"linked_editing_range" => Some(PT::LinkedEditingRange),
+
 		"mapped_edits" => Some(PT::MappedEdits),
+
 		"multi_document_highlight" => Some(PT::MultiDocumentHighlight),
+
 		"notebook_content" => Some(PT::NotebookContent),
+
 		"notebook_serializer" => Some(PT::NotebookSerializer),
+
 		"on_type_formatting" => Some(PT::OnTypeFormatting),
+
 		"reference" => Some(PT::References),
+
 		"remote_authority_resolver" => Some(PT::RemoteAuthorityResolver),
+
 		"rename" => Some(PT::Rename),
+
 		"resource_label_formatter" => Some(PT::ResourceLabelFormatter),
+
 		"scm" => Some(PT::SourceControl),
+
 		"scm_resource_group" => Some(PT::ScmResourceGroup),
+
 		"selection_range" => Some(PT::SelectionRange),
+
 		"semantic_tokens" => Some(PT::SemanticTokens),
+
 		"signature_help" => Some(PT::SignatureHelp),
+
 		"task" => Some(PT::Task),
+
 		"terminal_link" => Some(PT::TerminalLink),
+
 		"terminal_profile" => Some(PT::TerminalProfile),
+
 		"text_document_content" => Some(PT::TextDocumentContent),
+
 		"type_definition" => Some(PT::TypeDefinition),
+
 		"type_hierarchy" => Some(PT::TypeHierarchy),
+
 		"uri_handler" => Some(PT::UriHandler),
+
 		"workspace_symbol" => Some(PT::WorkspaceSymbol),
+
 		_ => None,
 	};
 
@@ -132,10 +186,15 @@ pub async fn RegisterLanguageProvider(Service:&MountainVinegRPCService, MethodNa
 
 	let Dto = ProviderRegistrationDTO {
 		Handle,
+
 		ProviderType,
+
 		Selector:SelectorValue,
+
 		SideCarIdentifier:"cocoon-main".to_string(),
+
 		ExtensionIdentifier:json!(ExtId),
+
 		Options:Parameter.get("options").cloned(),
 	};
 

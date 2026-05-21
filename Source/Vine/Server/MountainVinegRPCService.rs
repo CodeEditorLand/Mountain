@@ -681,33 +681,50 @@ impl MountainService for MountainVinegRPCService {
 			// delegation so adding a variant stays a one-line change here
 			// plus one new file.
 			"unregister_authentication_provider" => {
+
 				super::Notification::UnregisterAuthenticationProvider::UnregisterAuthenticationProvider(self, &Parameter).await;
 			},
+
 			"unregister_debug_adapter" => {
+
 				super::Notification::UnregisterDebugAdapter::UnregisterDebugAdapter(self, &Parameter).await;
 			},
+
 			"unregister_debug_configuration_provider" => {
+
 				super::Notification::UnregisterDebugConfigurationProvider::UnregisterDebugConfigurationProvider(
 					self,
+
 					&Parameter,
 				)
 				.await;
 			},
+
 			"unregister_file_system_provider" => {
+
 				super::Notification::UnregisterFileSystemProvider::UnregisterFileSystemProvider(self, &Parameter).await;
 			},
+
 			"unregister_scm_provider" => {
+
 				super::Notification::UnregisterScmProvider::UnregisterScmProvider(self, &Parameter).await;
 			},
+
 			"unregister_task_provider" => {
+
 				super::Notification::UnregisterTaskProvider::UnregisterTaskProvider(self, &Parameter).await;
 			},
+
 			"unregister_uri_handler" => {
+
 				super::Notification::UnregisterUriHandler::UnregisterUriHandler(self, &Parameter).await;
 			},
+
 			"update_scm_group" => {
+
 				super::Notification::UpdateScmGroup::UpdateScmGroup(self, &Parameter).await;
 			},
+
 			// SCM register pair: explicit arms BEFORE the language-providers
 			// OR-block below. Without these, both `register_scm_provider` and
 			// `register_scm_resource_group` fell into the catch-all language-
@@ -719,25 +736,34 @@ impl MountainService for MountainVinegRPCService {
 			// atoms write the markers + emit the `sky://scm/*` events the
 			// renderer subscribes to.
 			"register_scm_provider" => {
+
 				super::Notification::RegisterScmProvider::RegisterScmProvider(self, &Parameter).await;
 			},
+
 			"register_scm_resource_group" => {
+
 				super::Notification::RegisterScmResourceGroup::RegisterScmResourceGroup(self, &Parameter).await;
 			},
 
 			// Batch 11: progress lifecycle name alignment.
 			"progress.update" => {
+
 				super::Notification::ProgressUpdate::ProgressUpdate(self, &Parameter).await;
 			},
+
 			"progress.complete" => {
+
 				super::Notification::ProgressComplete::ProgressComplete(self, &Parameter).await;
 			},
 
 			// Batch 10: status-bar text-only fast path + item disposal.
 			"setStatusBarText" => {
+
 				super::Notification::SetStatusBarText::SetStatusBarText(self, &Parameter).await;
 			},
+
 			"disposeStatusBarItem" => {
+
 				super::Notification::DisposeStatusBarItem::DisposeStatusBarItem(self, &Parameter).await;
 			},
 
@@ -746,61 +772,94 @@ impl MountainService for MountainVinegRPCService {
 			// `outputChannel.*` via `SendToMountain`) both forward to the
 			// same `sky://output/*` channels until Cocoon consolidates.
 			"output.create" => {
+
 				super::Notification::OutputCreate::OutputCreate(self, &Parameter).await;
 			},
+
 			"output.append" => {
+
 				super::Notification::OutputAppend::OutputAppend(self, &Parameter).await;
 			},
+
 			"output.appendLine" => {
+
 				super::Notification::OutputAppendLine::OutputAppendLine(self, &Parameter).await;
 			},
+
 			"output.clear" => {
+
 				super::Notification::OutputClear::OutputClear(self, &Parameter).await;
 			},
+
 			"output.show" => {
+
 				super::Notification::OutputShow::OutputShow(self, &Parameter).await;
 			},
+
 			"output.dispose" => {
+
 				super::Notification::OutputDispose::OutputDispose(self, &Parameter).await;
 			},
+
 			"output.replace" => {
+
 				super::Notification::OutputReplace::OutputReplace(self, &Parameter).await;
 			},
+
 			"outputChannel.create" => {
+
 				super::Notification::OutputChannelCreate::OutputChannelCreate(self, &Parameter).await;
 			},
+
 			"outputChannel.append" => {
+
 				super::Notification::OutputChannelAppend::OutputChannelAppend(self, &Parameter).await;
 			},
+
 			"outputChannel.clear" => {
+
 				super::Notification::OutputChannelClear::OutputChannelClear(self, &Parameter).await;
 			},
+
 			"outputChannel.show" => {
+
 				super::Notification::OutputChannelShow::OutputChannelShow(self, &Parameter).await;
 			},
+
 			"outputChannel.hide" => {
+
 				super::Notification::OutputChannelHide::OutputChannelHide(self, &Parameter).await;
 			},
+
 			"outputChannel.dispose" => {
+
 				super::Notification::OutputChannelDispose::OutputChannelDispose(self, &Parameter).await;
 			},
 
 			// Batch 13: webview reverse-channel (Mountain → renderer).
 			"webview.postMessage" => {
+
 				super::Notification::WebviewPostMessage::WebviewPostMessage(self, &Parameter).await;
 			},
+
 			"webview.dispose" => {
+
 				super::Notification::WebviewDispose::WebviewDispose(self, &Parameter).await;
 			},
 
 			// Batch 14: grammar config, external-URI open, security alert.
 			"set_language_configuration" => {
+
 				super::Notification::SetLanguageConfiguration::SetLanguageConfiguration(self, &Parameter).await;
 			},
+
 			"openExternal" => {
+
 				super::Notification::OpenExternal::OpenExternal(self, &Parameter).await;
 			},
+
 			"security.incident" => {
+
 				super::Notification::SecurityIncident::SecurityIncident(self, &Parameter).await;
 			},
 
@@ -880,7 +939,9 @@ impl MountainService for MountainVinegRPCService {
 			| "register_type_hierarchy_provider"
 			| "register_uri_handler"
 			| "register_workspace_symbol_provider" => {
+
 				let Handle = Parameter.get("handle").and_then(|h| h.as_u64()).unwrap_or(0) as u32;
+
 				// Wire-shape contract: producer (Cocoon's `*Namespace.ts`)
 				// emits camelCase keys (`languageSelector`, `extensionId`)
 				// to align with VS Code's API surface. We probe camelCase
@@ -892,18 +953,22 @@ impl MountainService for MountainVinegRPCService {
 					.or_else(|| Parameter.get("language_selector"))
 					.and_then(|s| s.as_str())
 					.unwrap_or("*");
+
 				let ExtId = Parameter
 					.get("extensionId")
 					.or_else(|| Parameter.get("extension_id"))
 					.and_then(|e| e.as_str())
 					.unwrap_or("");
+
 				// Extension-scoped scheme (for FileSystemProvider, TextDocumentContentProvider,
 				// UriHandler). Present only for schema-bound variants; `""` for others.
 				let Scheme = Parameter.get("scheme").and_then(|s| s.as_str()).unwrap_or("");
+
 				let ProviderTypeName = MethodName
 					.strip_prefix("register_")
 					.map(|Stripped| Stripped.strip_suffix("_provider").unwrap_or(Stripped))
 					.unwrap_or("");
+
 				// The second `provider-register` dev_log below carries the
 				// superset of fields (MethodName, scheme, extension id)
 				// that make the line useful. The `grpc`-tagged copy here
@@ -912,94 +977,173 @@ impl MountainService for MountainVinegRPCService {
 				// one line per provider registration.
 				dev_log!(
 					"grpc-verbose",
+
 					"[MountainVinegRPCService] Cocoon registered {} provider: handle={}, lang={}",
+
 					ProviderTypeName,
+
 					Handle,
+
 					Selector
 				);
+
 				dev_log!(
 					"provider-register",
+
 					"[ProviderRegister] accepted method={} type={} handle={} lang={} scheme={} ext={}",
+
 					MethodName,
+
 					ProviderTypeName,
+
 					Handle,
+
 					Selector,
+
 					Scheme,
+
 					ExtId
 				);
+
 				use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType as PT;
+
 				let ProvType = match ProviderTypeName {
+
 					"authentication" => Some(PT::Authentication),
+
 					"call_hierarchy" => Some(PT::CallHierarchy),
+
 					"code_actions" => Some(PT::CodeAction),
+
 					"code_lens" => Some(PT::CodeLens),
+
 					"color" => Some(PT::Color),
+
 					"completion_item" => Some(PT::Completion),
+
 					"debug_adapter" => Some(PT::DebugAdapter),
+
 					"debug_configuration" => Some(PT::DebugConfiguration),
+
 					"declaration" => Some(PT::Declaration),
+
 					"definition" => Some(PT::Definition),
+
 					"document_drop_edit" => Some(PT::DocumentDropEdit),
+
 					"document_formatting" => Some(PT::DocumentFormatting),
+
 					"document_highlight" => Some(PT::DocumentHighlight),
+
 					"document_link" => Some(PT::DocumentLink),
+
 					"document_paste_edit" => Some(PT::DocumentPasteEdit),
+
 					"document_range_formatting" => Some(PT::DocumentRangeFormatting),
+
 					"document_symbol" => Some(PT::DocumentSymbol),
+
 					"evaluatable_expression" => Some(PT::EvaluatableExpression),
+
 					"external_uri_opener" => Some(PT::ExternalUriOpener),
+
 					"file_decoration" => Some(PT::FileDecoration),
+
 					"file_system" => Some(PT::FileSystem),
+
 					"folding_range" => Some(PT::FoldingRange),
+
 					"hover" => Some(PT::Hover),
+
 					"implementation" => Some(PT::Implementation),
+
 					"inlay_hints" => Some(PT::InlayHint),
+
 					"inline_completion_item" => Some(PT::InlineCompletion),
+
 					"inline_edit" => Some(PT::InlineEdit),
+
 					"inline_values" => Some(PT::InlineValues),
+
 					"linked_editing_range" => Some(PT::LinkedEditingRange),
+
 					"mapped_edits" => Some(PT::MappedEdits),
+
 					"multi_document_highlight" => Some(PT::MultiDocumentHighlight),
+
 					"notebook_content" => Some(PT::NotebookContent),
+
 					"notebook_serializer" => Some(PT::NotebookSerializer),
+
 					"on_type_formatting" => Some(PT::OnTypeFormatting),
+
 					"reference" => Some(PT::References),
+
 					"remote_authority_resolver" => Some(PT::RemoteAuthorityResolver),
+
 					"rename" => Some(PT::Rename),
+
 					"resource_label_formatter" => Some(PT::ResourceLabelFormatter),
+
 					"scm" => Some(PT::SourceControl),
+
 					"scm_resource_group" => Some(PT::ScmResourceGroup),
+
 					"selection_range" => Some(PT::SelectionRange),
+
 					"semantic_tokens" => Some(PT::SemanticTokens),
+
 					"signature_help" => Some(PT::SignatureHelp),
+
 					"task" => Some(PT::Task),
+
 					"terminal_link" => Some(PT::TerminalLink),
+
 					"terminal_profile" => Some(PT::TerminalProfile),
+
 					"text_document_content" => Some(PT::TextDocumentContent),
+
 					"type_definition" => Some(PT::TypeDefinition),
+
 					"type_hierarchy" => Some(PT::TypeHierarchy),
+
 					"uri_handler" => Some(PT::UriHandler),
+
 					"workspace_symbol" => Some(PT::WorkspaceSymbol),
+
 					_ => None,
 				};
+
 				if let Some(ProviderType) = ProvType {
+
 					use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
+
 					// Scheme-bound providers carry their scheme in the selector payload so
 					// the Mountain-side resolver (FileSystem router, URI handler dispatch,
 					// TextDocumentContent view, …) can match on it.
 					let SelectorValue = if !Scheme.is_empty() {
+
 						json!([{ "scheme": Scheme, "language": Selector }])
 					} else {
+
 						json!([{ "language": Selector }])
 					};
+
 					let Dto = ProviderRegistrationDTO {
+
 						Handle,
+
 						ProviderType,
+
 						Selector:SelectorValue,
+
 						SideCarIdentifier:"cocoon-main".to_string(),
+
 						ExtensionIdentifier:json!(ExtId),
+
 						Options:Parameter.get("options").cloned(),
 					};
+
 					self.RunTime
 						.Environment
 						.ApplicationState
@@ -1008,8 +1152,11 @@ impl MountainService for MountainVinegRPCService {
 						.RegisterProvider(Handle, Dto);
 				}
 			},
+
 			_ => {
+
 				dev_log!("grpc", "[MountainVinegRPCService] Cocoon notification: {}", MethodName);
+
 				// No typed match arm exists for this notification - it hits
 				// the default path and becomes a `cocoon:<method>` Tauri
 				// event that Wind may or may not listen for. The
@@ -1023,27 +1170,42 @@ impl MountainService for MountainVinegRPCService {
 				// handler. Payload preview included so diagnosis doesn't need
 				// a second run.
 				let PayloadPreview = if NotificationData.parameter.len() <= 160 {
+
 					String::from_utf8_lossy(&NotificationData.parameter).into_owned()
 				} else {
+
 					let Slice = &NotificationData.parameter[..160];
+
 					format!("{}…", String::from_utf8_lossy(Slice))
 				};
+
 				dev_log!(
 					"notif-drop",
+
 					"[NotifDrop] method={} payload_bytes={} preview={:?} (falls through to cocoon:{} event)",
+
 					MethodName,
+
 					NotificationData.parameter.len(),
+
 					PayloadPreview,
+
 					MethodName
 				);
+
 				// Forward all unknown notifications as Tauri events so Wind
 				// can subscribe to any Cocoon-originated event.
 				let EventName = format!("cocoon:{}", MethodName);
+
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
+
 					dev_log!(
 						"grpc",
+
 						"warn: [MountainVinegRPCService] Failed to emit {}: {}",
+
 						EventName,
+
 						Error
 					);
 				}
@@ -1078,6 +1240,7 @@ impl MountainService for MountainVinegRPCService {
 		// Look up the operation in the active operations registry
 		let cancel_token = {
 			let operations = self.ActiveOperations.read().await;
+
 			operations.get(&RequestIdentifierToCancel).cloned()
 		};
 
@@ -1098,6 +1261,7 @@ impl MountainService for MountainVinegRPCService {
 
 				Ok(Response::new(Empty {}))
 			},
+
 			None => {
 				// Operation not found - it may have already completed
 				dev_log!(

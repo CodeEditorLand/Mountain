@@ -111,14 +111,17 @@ impl SecretProvider for MountainEnvironment {
 
 		let Entry = match Entry::new(&ServiceName, &Key) {
 			Ok(e) => e,
+
 			Err(KeyringError::NoStorageAccess(_)) | Err(KeyringError::PlatformFailure(_)) => {
 				dev_log!(
 					"storage",
 					"warn: [SecretProvider] Keyring unavailable for key '{}', returning None",
 					Key
 				);
+
 				return Ok(None);
 			},
+
 			Err(Error) => return Err(CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() }),
 		};
 
@@ -175,14 +178,17 @@ impl SecretProvider for MountainEnvironment {
 
 		let Entry = match Entry::new(&ServiceName, &Key) {
 			Ok(e) => e,
+
 			Err(KeyringError::NoStorageAccess(_)) | Err(KeyringError::PlatformFailure(_)) => {
 				dev_log!(
 					"storage",
 					"warn: [SecretProvider] Keyring unavailable for key '{}', cannot store",
 					Key
 				);
+
 				return Ok(());
 			},
+
 			Err(Error) => return Err(CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() }),
 		};
 
@@ -236,14 +242,17 @@ impl SecretProvider for MountainEnvironment {
 
 		let Entry = match Entry::new(&ServiceName, &Key) {
 			Ok(e) => e,
+
 			Err(KeyringError::NoStorageAccess(_)) | Err(KeyringError::PlatformFailure(_)) => {
 				dev_log!(
 					"storage",
 					"warn: [SecretProvider] Keyring unavailable for key '{}', cannot delete",
 					Key
 				);
+
 				return Ok(());
 			},
+
 			Err(Error) => return Err(CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() }),
 		};
 

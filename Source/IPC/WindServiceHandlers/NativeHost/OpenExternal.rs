@@ -14,7 +14,9 @@ pub async fn OpenExternal(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>)
 	// `{ uri: "..." }` that some VS Code callers emit.
 	let url_str = match Arguments.first() {
 		Some(Value::String(S)) => S.as_str(),
+
 		Some(Value::Object(Obj)) => Obj.get("uri").or_else(|| Obj.get("url")).and_then(|V| V.as_str()).unwrap_or(""),
+
 		_ => return Ok(Value::Bool(false)),
 	};
 
@@ -28,6 +30,7 @@ pub async fn OpenExternal(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>)
 	// access) and bare shell commands. Everything else that parses as a
 	// valid URI scheme is forwarded to the OS default handler.
 	let Scheme = url_str.splitn(2, ':').next().unwrap_or("").to_lowercase();
+
 	let AllowedSchemes = [
 		"http",
 		"https",
@@ -45,6 +48,7 @@ pub async fn OpenExternal(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>)
 		"tel",
 		"callto",
 	];
+
 	if Scheme == "file" || Scheme.is_empty() || !url_str.contains(':') {
 		dev_log!(
 			"lifecycle",
@@ -52,9 +56,12 @@ pub async fn OpenExternal(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>)
 			Scheme,
 			url_str
 		);
+
 		return Ok(Value::Bool(false));
 	}
+
 	let IsKnownScheme = AllowedSchemes.contains(&Scheme.as_str());
+
 	if !IsKnownScheme {
 		dev_log!(
 			"lifecycle",

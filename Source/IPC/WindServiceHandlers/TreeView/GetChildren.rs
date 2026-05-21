@@ -20,7 +20,9 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn TreeGetChildren(
 	ApplicationHandle:AppHandle,
+
 	RunTime:Arc<ApplicationRunTime>,
+
 	Arguments:Vec<Value>,
 ) -> Result<Value, String> {
 	let ViewId = Arguments
@@ -29,31 +31,37 @@ pub async fn TreeGetChildren(
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
+
 	let ItemHandle = Arguments
 		.first()
 		.and_then(|V| V.get("treeItemHandle").or_else(|| V.get(1)))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
+
 	crate::dev_log!(
 		"tree-view",
 		"[TreeView] invoke:getChildren view={} parent={}",
 		ViewId,
 		ItemHandle
 	);
+
 	if ViewId.is_empty() {
 		return Err("tree:getChildren requires viewId".to_string());
 	}
+
 	let Parameters = json!({
 		"viewId": ViewId,
 		"treeItemHandle": ItemHandle,
 	});
+
 	// Boot-race: the workbench's Explorer view fires `tree:getChildren` ~700
 	// log lines before Cocoon's gRPC client finishes handshaking. Without
 	// this wait the first call returns `ClientNotConnected`, the workbench
 	// caches an empty list, and the Explorer never recovers without a manual
 	// refresh. 5000 ms chosen from boot-trace observation.
 	let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 5000).await;
+
 	match crate::Vine::Client::SendRequest::Fn(
 		"cocoon-main",
 		"$provideTreeChildren".to_string(),
@@ -67,11 +75,13 @@ pub async fn TreeGetChildren(
 		Ok(Value_) => {
 			match &Value_ {
 				Value::Object(_) | Value::Array(_) => Ok(Value_),
+
 				// Non-conforming shape: force to {items:[]} so the renderer
 				// always has iterable data and avoids TypeError crashes.
 				_ => Ok(json!({ "items": [] })),
 			}
 		},
+
 		Err(Error) => {
 			// Log first failure per view; silence repeats so the dev log
 			// doesn't fill with identical lines while the user browses
@@ -84,6 +94,7 @@ pub async fn TreeGetChildren(
 					ViewId, Error
 				),
 			);
+
 			Ok(json!({ "items": [] }))
 		},
 	}

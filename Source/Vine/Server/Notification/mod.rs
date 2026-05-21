@@ -168,6 +168,7 @@ pub mod WindowShowMessage;
 // reads. These atoms route through `SourceControlManagementProvider`
 // + emit the `sky://scm/*` events the renderer actually subscribes to.
 pub mod RegisterScmProvider;
+
 pub mod RegisterScmResourceGroup;
 
 // --- Batch 18: language-provider OR-block extracted from the inline match

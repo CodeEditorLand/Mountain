@@ -11,6 +11,7 @@ pub async fn NativeIsRunningUnderARM64Translation() -> Result<Value, String> {
 	{
 		// sysctl.proc_translated is stable for the process lifetime.
 		static ROSETTA:std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+
 		let IsTranslated = *ROSETTA.get_or_init(|| {
 			std::process::Command::new("sysctl")
 				.args(["-n", "sysctl.proc_translated"])
@@ -19,8 +20,10 @@ pub async fn NativeIsRunningUnderARM64Translation() -> Result<Value, String> {
 				.map(|O| String::from_utf8_lossy(&O.stdout).trim() == "1")
 				.unwrap_or(false)
 		});
+
 		Ok(json!(IsTranslated))
 	}
+
 	#[cfg(not(target_os = "macos"))]
 	{
 		Ok(json!(false))

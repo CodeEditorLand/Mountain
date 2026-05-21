@@ -24,10 +24,12 @@ fn StripFileUriScheme(Input:&str) -> &str {
 		if Rest.starts_with('/') {
 			return Rest;
 		}
+
 		if let Some(Idx) = Rest.find('/') {
 			return &Rest[Idx..];
 		}
 	}
+
 	Input
 }
 

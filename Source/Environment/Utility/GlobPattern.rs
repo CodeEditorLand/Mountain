@@ -21,17 +21,21 @@ pub fn ExtractGlobPattern(Pattern:&Value) -> Option<String> {
 	if let Some(S) = Pattern.as_str() {
 		return Some(S.to_string());
 	}
+
 	if let Some(Obj) = Pattern.as_object() {
 		if let Some(P) = Obj.get("pattern").and_then(Value::as_str) {
 			return Some(P.to_string());
 		}
+
 		if let Some(P) = Obj.get("value").and_then(Value::as_str) {
 			return Some(P.to_string());
 		}
+
 		if let Some(P) = Obj.get("Pattern").and_then(Value::as_str) {
 			return Some(P.to_string());
 		}
 	}
+
 	None
 }
 
@@ -51,11 +55,14 @@ pub fn ExtractRelativeBase(Pattern:&Value) -> Option<String> {
 			if let Some(Stripped) = S.strip_prefix("file://") {
 				return Some(Stripped.to_string());
 			}
+
 			return Some(S.to_string());
 		}
+
 		if let Some(P) = B.as_object().and_then(|O| O.get("path")).and_then(Value::as_str) {
 			return Some(P.to_string());
 		}
+
 		if let Some(P) = B.as_object().and_then(|O| O.get("fsPath")).and_then(Value::as_str) {
 			return Some(P.to_string());
 		}

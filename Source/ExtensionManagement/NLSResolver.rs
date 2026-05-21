@@ -23,8 +23,11 @@ pub fn ManifestContainsNLSPlaceholders(Value:&Value) -> bool {
 		serde_json::Value::String(Text) => {
 			Text.len() >= 2 && Text.starts_with('%') && Text.ends_with('%') && !Text[1..Text.len() - 1].contains('%')
 		},
+
 		serde_json::Value::Array(Items) => Items.iter().any(ManifestContainsNLSPlaceholders),
+
 		serde_json::Value::Object(Object) => Object.values().any(ManifestContainsNLSPlaceholders),
+
 		_ => false,
 	}
 }
@@ -36,12 +39,16 @@ pub fn ManifestContainsNLSPlaceholders(Value:&Value) -> bool {
 /// when the manifest has no `%placeholder%` entries (absence is benign).
 pub async fn LoadNLSBundle(
 	RunTime:&Arc<ApplicationRunTime>,
+
 	ExtensionPath:&PathBuf,
+
 	PlaceholdersNeeded:bool,
 ) -> Option<Map<String, Value>> {
 	let NLSPath = ExtensionPath.join("package.nls.json");
+
 	let Content = match RunTime.Run(ReadFile(NLSPath.clone())).await {
 		Ok(Bytes) => Bytes,
+
 		Err(Error) => {
 			if PlaceholdersNeeded {
 				dev_log!("nls", "[LandFix:NLS] no bundle for {} ({})", ExtensionPath.display(), Error);
@@ -52,18 +59,25 @@ pub async fn LoadNLSBundle(
 					ExtensionPath.display()
 				);
 			}
+
 			return None;
 		},
 	};
+
 	let Parsed:Value = match serde_json::from_slice(&Content) {
 		Ok(V) => V,
+
 		Err(Error) => {
 			dev_log!("nls", "warn: [LandFix:NLS] failed to parse {}: {}", NLSPath.display(), Error);
+
 			return None;
 		},
 	};
+
 	let Object = Parsed.as_object()?;
+
 	let mut Resolved = Map::with_capacity(Object.len());
+
 	for (Key, RawValue) in Object {
 		let Text = if let Some(s) = RawValue.as_str() {
 			Some(s.to_string())
@@ -72,16 +86,19 @@ pub async fn LoadNLSBundle(
 		} else {
 			None
 		};
+
 		if let Some(t) = Text {
 			Resolved.insert(Key.clone(), Value::String(t));
 		}
 	}
+
 	dev_log!(
 		"nls",
 		"[LandFix:NLS] loaded {} keys for {}",
 		Resolved.len(),
 		ExtensionPath.display()
 	);
+
 	Some(Resolved)
 }
 
@@ -93,6 +110,7 @@ pub fn ResolveNLSPlaceholdersInner(Value:&mut Value, NLS:&Map<String, Value>, Re
 		serde_json::Value::String(Text) => {
 			if Text.len() >= 2 && Text.starts_with('%') && Text.ends_with('%') {
 				let Key = &Text[1..Text.len() - 1];
+
 				if !Key.is_empty() && !Key.contains('%') {
 					if let Some(Replacement) = NLS.get(Key).and_then(|v| v.as_str()) {
 						*Text = Replacement.to_string();
@@ -103,16 +121,19 @@ pub fn ResolveNLSPlaceholdersInner(Value:&mut Value, NLS:&Map<String, Value>, Re
 				}
 			}
 		},
+
 		serde_json::Value::Array(Items) => {
 			for Item in Items {
 				ResolveNLSPlaceholdersInner(Item, NLS, Replaced, Unresolved);
 			}
 		},
+
 		serde_json::Value::Object(Map) => {
 			for (_, FieldValue) in Map {
 				ResolveNLSPlaceholdersInner(FieldValue, NLS, Replaced, Unresolved);
 			}
 		},
+
 		_ => {},
 	}
 }

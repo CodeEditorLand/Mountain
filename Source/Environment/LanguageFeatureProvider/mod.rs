@@ -231,7 +231,9 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 	async fn PrepareCallHierarchy(
 		&self,
+
 		DocumentURI:Url,
+
 		PositionDTO:PositionDTO,
 	) -> Result<Option<Value>, CommonError> {
 		FeatureMethods::prepare_call_hierarchy(self, DocumentURI, PositionDTO).await
@@ -239,7 +241,9 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 	async fn PrepareTypeHierarchy(
 		&self,
+
 		DocumentURI:Url,
+
 		PositionDTO:PositionDTO,
 	) -> Result<Option<Value>, CommonError> {
 		FeatureMethods::prepare_type_hierarchy(self, DocumentURI, PositionDTO).await

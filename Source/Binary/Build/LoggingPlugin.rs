@@ -60,6 +60,7 @@ fn CompressTarget(Target:&str) -> &str { Target.rsplit("::").next().unwrap_or(Ta
 /// - want: Connection readiness logs
 pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 	tauri_plugin_log::Builder::new()
+
 		// Configure output targets
 		.targets([
 			Target::new(TargetKind::Stdout),
@@ -70,16 +71,20 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 
 			Target::new(TargetKind::Webview),
 		])
+
 		// Configure file rotation and timezone
 		.timezone_strategy(TimezoneStrategy::UseLocal)
 		.rotation_strategy(RotationStrategy::KeepAll)
+
 		// Set base log level
 		.level(LogLevel)
+
 		// Cap very noisy dependencies at Info level
 		.level_for("hyper", LevelFilter::Info)
 		.level_for("mio", LevelFilter::Info)
 		.level_for("tao", LevelFilter::Info)
 		.level_for("tracing", LevelFilter::Info)
+
 		// `ignore` and `globset` (used by Mountain's extension scanner +
 		// `WorkspaceProvider::FindFiles` walk) emit a DEBUG line per
 		// `.gitignore` opened, per glob compiled, and per file
@@ -92,6 +97,7 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 		.level_for("ignore::walk", LevelFilter::Warn)
 		.level_for("ignore::gitignore", LevelFilter::Warn)
 		.level_for("globset", LevelFilter::Warn)
+
 		// `keyring` (used by Mountain's secret-storage path on the
 		// `dev1phpTools.license.data` lookup chain) emits a 3-line
 		// DEBUG block per `get_password` call - "creating entry",
@@ -99,12 +105,14 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 		// tick. After the workbench paints these fire indefinitely.
 		// Cap to Warn alongside the other dependency mutes.
 		.level_for("keyring", LevelFilter::Warn)
+
 		// Filter out extremely noisy targets
 		.filter(|Metadata| {
 			!Metadata.target().starts_with("polling")
 				&& !Metadata.target().starts_with("tokio_reactor")
 				&& !Metadata.target().starts_with("want")
 		})
+
 		// Format logs with category-like structure: [LEVEL] [TARGET] message
 		.format(|out, message, record| {
 			if DevLog::IsShort::Fn() {

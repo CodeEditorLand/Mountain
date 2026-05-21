@@ -64,7 +64,9 @@ pub fn LogResolvedTiers() {
 		env!("TierModuleCache"),
 		env!("TierTelemetry"),
 	);
+
 	// Runtime-only tiers use std::env::var - readable without a rebuild.
 	let IPC = std::env::var("TierIPC").unwrap_or_else(|_| "Mountain".into());
+
 	dev_log!("lifecycle", "[LandFix:Tier] Runtime: IPC={}", IPC);
 }

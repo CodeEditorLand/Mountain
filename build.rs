@@ -62,9 +62,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		// the previous tier was exported but .env.Land was since updated).
 		// This matches the logic in PropagateTierGating which also walks up
 		// from CARGO_MANIFEST_DIR to find the env file.
-		let TierSchemeAssets = std::env::var("TierSchemeAssets").unwrap_or_else(|_| {
-			ReadTierValueFromEnvFile("TierSchemeAssets").unwrap_or_else(|| "Embedded".into())
-		});
+		let TierSchemeAssets = std::env::var("TierSchemeAssets")
+			.unwrap_or_else(|_| ReadTierValueFromEnvFile("TierSchemeAssets").unwrap_or_else(|| "Embedded".into()));
 
 		// Patch build.frontendDist
 		if let Some(Build) = Tauri.get_mut("build") {

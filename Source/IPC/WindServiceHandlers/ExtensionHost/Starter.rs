@@ -9,6 +9,7 @@ use serde_json::{Value, json};
 
 pub async fn ExtensionHostStarterCreate(_Arguments:Vec<Value>) -> Result<Value, String> {
 	crate::dev_log!("exthost", "extensionHostStarter:createExtensionHost");
+
 	Ok(json!({ "id": "1" }))
 }
 
@@ -19,16 +20,20 @@ pub async fn ExtensionHostStarterStart(_Arguments:Vec<Value>) -> Result<Value, S
 	// Mountain's Rust binary. Fall back to Mountain's PID only if Cocoon
 	// hasn't spawned yet (should not happen for a real extension-host start).
 	let Pid = crate::ProcessManagement::CocoonManagement::GetCocoonPid().unwrap_or_else(std::process::id);
+
 	crate::dev_log!("exthost", "extensionHostStarter:start pid={}", Pid);
+
 	Ok(json!({ "pid": Pid }))
 }
 
 pub async fn ExtensionHostStarterKill(_Arguments:Vec<Value>) -> Result<Value, String> {
 	crate::dev_log!("exthost", "extensionHostStarter:kill");
+
 	Ok(Value::Null)
 }
 
 pub async fn ExtensionHostStarterGetExitInfo(_Arguments:Vec<Value>) -> Result<Value, String> {
 	crate::dev_log!("exthost", "extensionHostStarter:getExitInfo");
+
 	Ok(json!({ "code": null, "signal": null }))
 }

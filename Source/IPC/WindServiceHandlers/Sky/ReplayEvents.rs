@@ -20,9 +20,13 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn SkyReplayEvents(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let mut TreeViewCount:usize = 0;
+
 	let mut ScmCount:usize = 0;
+
 	let mut CommandCount:usize = 0;
+
 	let mut TerminalCount:usize = 0;
+
 	let mut TerminalDataBytes:usize = 0;
 
 	// ── Tree views ────────────────────────────────────────────────────────
@@ -36,6 +40,7 @@ pub async fn SkyReplayEvents(ApplicationHandle:AppHandle, RunTime:Arc<Applicatio
 					"title": Dto.Title.clone().unwrap_or_default(),
 				},
 			});
+
 			if ApplicationHandle.emit("sky://tree-view/create", Payload).is_ok() {
 				TreeViewCount += 1;
 			}
@@ -63,11 +68,13 @@ pub async fn SkyReplayEvents(ApplicationHandle:AppHandle, RunTime:Arc<Applicatio
 				.and_then(serde_json::Value::as_str)
 				.unwrap_or("")
 				.to_string();
+
 			let ScmId = if Dto.Identifier.is_empty() {
 				"git".to_string()
 			} else {
 				Dto.Identifier.clone()
 			};
+
 			let Payload = serde_json::json!({
 				"scmId": ScmId,
 				"label": Dto.Label,
@@ -75,6 +82,7 @@ pub async fn SkyReplayEvents(ApplicationHandle:AppHandle, RunTime:Arc<Applicatio
 				"extensionId": "",
 				"handle": *Handle,
 			});
+
 			if ApplicationHandle.emit("sky://scm/register", Payload).is_ok() {
 				ScmCount += 1;
 			}
@@ -88,20 +96,26 @@ pub async fn SkyReplayEvents(ApplicationHandle:AppHandle, RunTime:Arc<Applicatio
 	// SkyBridge accepts `{ commands: [...] }` or `{ id, commandId, kind }`.
 	if let Ok(Commands) = RunTime.Environment.ApplicationState.Extension.Registry.CommandRegistry.lock() {
 		let mut Batch:Vec<serde_json::Value> = Vec::new();
+
 		for (CommandId, Handler) in Commands.iter() {
 			use crate::Environment::CommandProvider::CommandHandler;
+
 			let Kind = match Handler {
 				CommandHandler::Native(_) => continue,
+
 				CommandHandler::Proxied { .. } => "extension",
 			};
+
 			Batch.push(serde_json::json!({
 				"id": CommandId,
 				"commandId": CommandId,
 				"kind": Kind,
 			}));
 		}
+
 		if !Batch.is_empty() {
 			let Count = Batch.len();
+
 			if ApplicationHandle
 				.emit("sky://command/register", serde_json::json!({ "commands": Batch }))
 				.is_ok()
@@ -123,19 +137,24 @@ pub async fn SkyReplayEvents(ApplicationHandle:AppHandle, RunTime:Arc<Applicatio
 			} else {
 				(String::new(), 0)
 			};
+
 			let CreatePayload = serde_json::json!({
 				"id": *TerminalId,
 				"name": Name,
 				"pid": Pid,
 			});
+
 			if ApplicationHandle.emit("sky://terminal/create", CreatePayload).is_ok() {
 				TerminalCount += 1;
 			}
 		}
 	}
+
 	for (TerminalId, Bytes) in crate::Environment::TerminalProvider::DrainTerminalOutputBuffer() {
 		let DataString = String::from_utf8_lossy(&Bytes).to_string();
+
 		TerminalDataBytes += Bytes.len();
+
 		let _ = ApplicationHandle.emit(
 			"sky://terminal/data",
 			serde_json::json!({ "id": TerminalId, "data": DataString }),
@@ -151,6 +170,7 @@ pub async fn SkyReplayEvents(ApplicationHandle:AppHandle, RunTime:Arc<Applicatio
 		TerminalCount,
 		TerminalDataBytes
 	);
+
 	Ok(serde_json::json!({
 		"treeViews": TreeViewCount,
 		"scmProviders": ScmCount,

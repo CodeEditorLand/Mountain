@@ -221,6 +221,7 @@ impl CommandExecutor for MountainEnvironment {
 							CommandIdentifier
 						),
 					);
+
 					return Ok(Value::Null);
 				}
 
@@ -254,6 +255,7 @@ impl CommandExecutor for MountainEnvironment {
 						 (extension will retry post-activation).",
 						CommandIdentifier
 					);
+
 					return Ok(Value::Null);
 				}
 
@@ -273,7 +275,9 @@ impl CommandExecutor for MountainEnvironment {
 						"[CommandProvider] Lazy activation for command '{}' - firing onCommand:{0}",
 						CommandIdentifier
 					);
+
 					let Event = format!("onCommand:{}", CommandIdentifier);
+
 					let ActivationResult = Client::SendRequest::Fn(
 						&"cocoon-main".to_string(),
 						"$activateByEvent".to_string(),
@@ -281,6 +285,7 @@ impl CommandExecutor for MountainEnvironment {
 						30_000,
 					)
 					.await;
+
 					if let Err(Error) = ActivationResult {
 						dev_log!(
 							"commands",
@@ -289,10 +294,12 @@ impl CommandExecutor for MountainEnvironment {
 							Error
 						);
 					}
+
 					// The registerCommand channel-drain delivers within ~16 ms.
 					// Yield for one frame so the batch flush lands before
 					// the registry re-read below.
 					tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+
 					let PostActivationHandler = self
 						.ApplicationState
 						.Extension
@@ -302,6 +309,7 @@ impl CommandExecutor for MountainEnvironment {
 						.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 						.get(&CommandIdentifier)
 						.cloned();
+
 					if let Some(Handler) = PostActivationHandler {
 						match Handler {
 							CommandHandler::Native(Function) => {
@@ -312,6 +320,7 @@ impl CommandExecutor for MountainEnvironment {
 												.to_string(),
 										}
 									})?;
+
 								let RunTime =
 									self.ApplicationHandle.try_state::<Arc<ApplicationRunTime>>().ok_or_else(|| {
 										CommonError::IPCError {
@@ -320,6 +329,7 @@ impl CommandExecutor for MountainEnvironment {
 												.to_string(),
 										}
 									})?;
+
 								return Function(
 									self.ApplicationHandle.clone(),
 									MainWindow,
@@ -329,12 +339,15 @@ impl CommandExecutor for MountainEnvironment {
 								.await
 								.map_err(|Error| CommonError::CommandExecution { CommandIdentifier, Reason:Error });
 							},
+
 							CommandHandler::Proxied { SideCarIdentifier, CommandIdentifier: ProxiedId } => {
 								let RPCParameters = json!([ProxiedId, Argument]);
+
 								let RPCMethod = format!(
 									"{}$ExecuteContributedCommand",
 									ProxyTarget::ExtHostCommands.GetTargetPrefix()
 								);
+
 								return Client::SendRequest::Fn(&SideCarIdentifier, RPCMethod, RPCParameters, 30_000)
 									.await
 									.map_err(|Error| CommonError::IPCError { Description:Error.to_string() });
@@ -418,6 +431,7 @@ impl CommandExecutor for MountainEnvironment {
 /// matching event" for every typo. Scans the cached registry; no IPC.
 fn LookupCommandContributingExtension(Environment:&MountainEnvironment, CommandIdentifier:&str) -> bool {
 	let Event = format!("onCommand:{}", CommandIdentifier);
+
 	let Guard = match Environment
 		.ApplicationState
 		.Extension
@@ -426,8 +440,10 @@ fn LookupCommandContributingExtension(Environment:&MountainEnvironment, CommandI
 		.lock()
 	{
 		Ok(G) => G,
+
 		Err(_) => return false,
 	};
+
 	for Description in Guard.values() {
 		if let Some(Events) = &Description.ActivationEvents {
 			if Events.iter().any(|E| E == &Event) {
@@ -435,5 +451,6 @@ fn LookupCommandContributingExtension(Environment:&MountainEnvironment, CommandI
 			}
 		}
 	}
+
 	false
 }

@@ -40,6 +40,7 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 pub async fn ReviveTerminalProcesses(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let States:Vec<Value> = match Arguments.first() {
 		Some(Value::Array(Array)) => Array.clone(),
+
 		Some(Other) => {
 			dev_log!(
 				"terminal",
@@ -49,6 +50,7 @@ pub async fn ReviveTerminalProcesses(RunTime:Arc<ApplicationRunTime>, Arguments:
 
 			return Ok(Value::Null);
 		},
+
 		None => return Ok(Value::Null),
 	};
 
@@ -101,6 +103,7 @@ pub async fn ReviveTerminalProcesses(RunTime:Arc<ApplicationRunTime>, Arguments:
 
 				dev_log!("terminal", "[ReviveTerminalProcesses] revived terminal new_id={}", NewId);
 			},
+
 			Err(Error) => {
 				dev_log!(
 					"terminal",

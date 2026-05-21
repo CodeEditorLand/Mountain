@@ -162,6 +162,7 @@ impl Sink for PerFileSink {
 
 	fn matched(&mut self, _Searcher:&Searcher, Mat:&SinkMatch<'_>) -> Result<bool, Self::Error> {
 		let RawLine = Mat.bytes();
+
 		// Trim trailing newline so the preview text the renderer shows
 		// doesn't carry a stray empty line break.
 		let TrimmedLen = if RawLine.ends_with(b"\r\n") {
@@ -171,18 +172,23 @@ impl Sink for PerFileSink {
 		} else {
 			RawLine.len()
 		};
+
 		let LineBytes = &RawLine[..TrimmedLen];
+
 		// Cap preview length at 512 chars - super-long minified lines
 		// would otherwise force the renderer to layout massive rows
 		// AND make the byte→char map below grow proportionally.
 		const PREVIEW_BYTE_CAP:usize = 512;
+
 		let CapBytes = LineBytes.len().min(PREVIEW_BYTE_CAP);
+
 		// Round down to the nearest UTF-8 boundary so `from_utf8_lossy`
 		// doesn't replace half a multibyte char with U+FFFD.
 		let SafeCap = (0..=CapBytes)
 			.rev()
 			.find(|&I| I == 0 || I == LineBytes.len() || (LineBytes[I] & 0xC0) != 0x80)
 			.unwrap_or(0);
+
 		let Preview = String::from_utf8_lossy(&LineBytes[..SafeCap]).to_string();
 
 		// `line_number(true)` was set on the SearcherBuilder so this
@@ -199,13 +205,17 @@ impl Sink for PerFileSink {
 		// minutes-long hang on workspaces that contain match-dense
 		// minified bundles.
 		let mut CharBoundaries:Vec<usize> = Vec::with_capacity(Preview.len() / 2 + 1);
+
 		for (B, _) in Preview.char_indices() {
 			CharBoundaries.push(B);
 		}
+
 		CharBoundaries.push(Preview.len()); // Sentinel for end-of-string.
+
 		let ByteToChar = |Byte:usize| -> u64 {
 			match CharBoundaries.binary_search(&Byte) {
 				Ok(Index) => Index as u64,
+
 				Err(Index) => Index as u64,
 			}
 		};
@@ -218,23 +228,30 @@ impl Sink for PerFileSink {
 		// where a regex matches every character (e.g. `.` or `\w`
 		// against a long minified line).
 		const MAX_COLUMNS_PER_LINE:usize = 100;
+
 		let mut Columns:Vec<ColumnRange> = Vec::new();
+
 		let mut StartByte = 0usize;
+
 		// Search within the truncated preview so columns line up with
 		// the preview text the renderer will display.
 		let SearchBytes = &LineBytes[..SafeCap];
+
 		while StartByte <= SearchBytes.len() && Columns.len() < MAX_COLUMNS_PER_LINE {
 			match self.matcher.find_at(SearchBytes, StartByte) {
 				Ok(Some(M)) => {
 					if M.start() >= SearchBytes.len() {
 						break;
 					}
+
 					Columns.push(ColumnRange { start:ByteToChar(M.start()), end:ByteToChar(M.end()) });
+
 					// `M.end() == M.start()` happens for zero-width
 					// matches (e.g. `\b`); advance by one byte to
 					// avoid an infinite loop.
 					StartByte = if M.end() == M.start() { M.end() + 1 } else { M.end() };
 				},
+
 				_ => break,
 			}
 		}
@@ -365,6 +382,7 @@ impl SearchProvider for MountainEnvironment {
 			.clone();
 
 		let TotalLineMatches:usize = FinalMatches.iter().map(|F| F.matches.len()).sum();
+
 		dev_log!(
 			"search",
 			"[SearchProvider] returned {} files / {} line-matches for pattern={:?}",

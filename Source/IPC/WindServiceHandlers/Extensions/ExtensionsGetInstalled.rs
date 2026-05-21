@@ -76,6 +76,7 @@ pub async fn ExtensionsGetInstalled(RunTime:Arc<ApplicationRunTime>, Arguments:V
 					Extensions.len()
 				);
 			},
+
 			Err(_) => {
 				dev_log!(
 					"extensions",

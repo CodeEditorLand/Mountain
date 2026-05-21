@@ -150,6 +150,7 @@ pub fn Fn() {
 	// it and always routes to the native Keychain.
 	match keyring::use_native_store(false) {
 		Ok(()) => dev_log!("lifecycle", "[Boot] [Keyring] Native store initialized for secret management"),
+
 		Err(E) => {
 			dev_log!(
 				"lifecycle",

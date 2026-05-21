@@ -592,6 +592,7 @@ mod tests {
 		stats.available_permits = 50;
 
 		stats.healthy_connections = 30; // 60%
+
 		assert!(stats.is_under_stress());
 	}
 
@@ -612,6 +613,7 @@ mod tests {
 		assert_eq!(stats.utilization(), 0.0);
 
 		assert_eq!(stats.health_percentage(), 100.0); // Empty pool is healthy
+
 		assert!(!stats.is_under_stress());
 	}
 }

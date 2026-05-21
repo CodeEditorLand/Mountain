@@ -296,10 +296,12 @@ impl WorkspaceProvider for MountainEnvironment {
 				"other"
 			}
 		);
+
 		let ExcludePattern = ExcludePatternDTO
 			.as_ref()
 			.and_then(ExtractGlobPattern)
 			.filter(|P| !P.is_empty());
+
 		let Cap = MaxResults.unwrap_or(10_000).max(1);
 
 		let IncludeMatcher = GlobBuilder::new(&IncludePattern)
@@ -309,6 +311,7 @@ impl WorkspaceProvider for MountainEnvironment {
 			.map_err(|Error| {
 				CommonError::InvalidArgument { ArgumentName:"IncludePattern".into(), Reason:Error.to_string() }
 			})?;
+
 		let ExcludeMatcher = match &ExcludePattern {
 			Some(P) => {
 				Some(
@@ -324,6 +327,7 @@ impl WorkspaceProvider for MountainEnvironment {
 						})?,
 				)
 			},
+
 			None => None,
 		};
 
@@ -342,20 +346,24 @@ impl WorkspaceProvider for MountainEnvironment {
 			.iter()
 			.filter_map(|Folder| Folder.URI.to_file_path().ok())
 			.collect();
+
 		if Folders.is_empty() {
 			dev_log!("workspaces", "[FindFilesInWorkspace] no workspace folders → []");
+
 			return Ok(Vec::new());
 		}
 
 		let WalkRoots:Vec<PathBuf> = match &RestrictBase {
 			Some(Base) => {
 				let BasePath = PathBuf::from(Base);
+
 				if Folders.iter().any(|F| BasePath.starts_with(F) || F.starts_with(&BasePath)) {
 					vec![BasePath]
 				} else {
 					Folders.clone()
 				}
 			},
+
 			None => Folders.clone(),
 		};
 
@@ -367,15 +375,23 @@ impl WorkspaceProvider for MountainEnvironment {
 		// HashMap lookup.
 		let CacheKey = FindFilesCacheKey {
 			Folders:WalkRoots.clone(),
+
 			Include:IncludePattern.clone(),
+
 			Exclude:ExcludePattern.clone(),
+
 			Cap,
+
 			UseIgnoreFiles,
+
 			FollowSymlinks,
+
 			RestrictBase:RestrictBase.clone(),
 		};
+
 		if let Some(Cached) = FindFilesCacheGet(&CacheKey) {
 			dev_log!("workspaces", "[FindFilesInWorkspace] cache hit → {} match(es)", Cached.len());
+
 			return Ok(Cached);
 		}
 
@@ -390,21 +406,28 @@ impl WorkspaceProvider for MountainEnvironment {
 		// tokio refuses to spawn it across worker threads.
 		enum SingleFlightRole {
 			Follower(Arc<Notify>),
+
 			Leader(Arc<Notify>),
 		}
+
 		let RoleResolved:SingleFlightRole = {
 			let mut Guard = FindFilesInFlight()
 				.lock()
 				.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+
 			match Guard.get(&CacheKey) {
 				Some(Existing) => SingleFlightRole::Follower(Existing.clone()),
+
 				None => {
 					let LeaderNotify = Arc::new(Notify::new());
+
 					Guard.insert(CacheKey.clone(), LeaderNotify.clone());
+
 					SingleFlightRole::Leader(LeaderNotify)
 				},
 			}
 		};
+
 		let LeaderNotify:Arc<Notify> = match RoleResolved {
 			SingleFlightRole::Follower(WaitNotify) => {
 				dev_log!(
@@ -412,9 +435,12 @@ impl WorkspaceProvider for MountainEnvironment {
 					"[FindFilesInWorkspace] singleflight wait - leader walk in progress for include={}",
 					IncludePattern
 				);
+
 				WaitNotify.notified().await;
+
 				return Ok(FindFilesCacheGet(&CacheKey).unwrap_or_default());
 			},
+
 			SingleFlightRole::Leader(N) => N,
 		};
 
@@ -423,34 +449,45 @@ impl WorkspaceProvider for MountainEnvironment {
 		// drop-time notify-and-remove via a small RAII helper.
 		struct LeaderGuard {
 			Key:FindFilesCacheKey,
+
 			Notify:Arc<Notify>,
+
 			Completed:bool,
 		}
+
 		impl Drop for LeaderGuard {
 			fn drop(&mut self) {
 				if !self.Completed {
 					if let Ok(mut Guard) = FindFilesInFlight().lock() {
 						Guard.remove(&self.Key);
 					}
+
 					self.Notify.notify_waiters();
 				}
 			}
 		}
+
 		let mut Leader = LeaderGuard { Key:CacheKey.clone(), Notify:LeaderNotify, Completed:false };
 
 		let Results:Arc<Mutex<Vec<Url>>> = Arc::new(Mutex::new(Vec::with_capacity(Cap.min(1024))));
+
 		let Cap = Cap;
 
 		for Root in WalkRoots {
 			if Results.lock().map(|G| G.len() >= Cap).unwrap_or(true) {
 				break;
 			}
+
 			let RootForRel = Root.clone();
+
 			let IncludeMatcher = IncludeMatcher.clone();
+
 			let ExcludeMatcher = ExcludeMatcher.clone();
+
 			let ResultsArc = Results.clone();
 
 			let mut Builder = WalkBuilder::new(&Root);
+
 			Builder
 				.standard_filters(UseIgnoreFiles)
 				.git_ignore(UseIgnoreFiles)
@@ -513,6 +550,7 @@ impl WorkspaceProvider for MountainEnvironment {
 			})?
 			.into_inner()
 			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+
 		dev_log!(
 			"workspaces",
 			"[FindFilesInWorkspace] returned {} match(es) include={} exclude={:?} roots={}",
@@ -521,6 +559,7 @@ impl WorkspaceProvider for MountainEnvironment {
 			ExcludePattern,
 			CacheKey.Folders.len()
 		);
+
 		FindFilesCachePut(CacheKey.clone(), Final.clone());
 
 		// Successful walk + cache put: clear the in-flight entry and
@@ -531,7 +570,9 @@ impl WorkspaceProvider for MountainEnvironment {
 			if let Ok(mut Guard) = FindFilesInFlight().lock() {
 				Guard.remove(&CacheKey);
 			}
+
 			Leader.Notify.notify_waiters();
+
 			Leader.Completed = true;
 		}
 
@@ -553,10 +594,12 @@ impl WorkspaceProvider for MountainEnvironment {
 	/// callers always pass absolute paths via the trait).
 	async fn OpenFile(&self, path:PathBuf) -> Result<(), CommonError> {
 		use tauri::Emitter;
+
 		dev_log!("workspaces", "[WorkspaceProvider] OpenFile called for: {:?}", path);
 
 		let UriString = match Url::from_file_path(&path) {
 			Ok(U) => U.to_string(),
+
 			Err(_) => format!("file://{}", path.to_string_lossy()),
 		};
 
@@ -593,10 +636,13 @@ impl WorkspaceEditApplier for MountainEnvironment {
 	/// zero-based.
 	async fn ApplyWorkspaceEdit(&self, Edit:WorkspaceEditDTO) -> Result<bool, CommonError> {
 		use tauri::Emitter;
+
 		dev_log!("workspaces", "[WorkspaceEditApplier] Applying workspace edit");
 
 		let WorkspaceEditDTO { Edits } = Edit;
+
 		let DocumentMirror = &self.ApplicationState.Feature.Documents;
+
 		let mut AnyFailure = false;
 
 		for (DocumentURIValue, TextEdits) in Edits {
@@ -605,8 +651,10 @@ impl WorkspaceEditApplier for MountainEnvironment {
 				.map(String::from)
 				.or_else(|| DocumentURIValue.get("value").and_then(Value::as_str).map(String::from))
 				.unwrap_or_default();
+
 			if UriString.is_empty() {
 				dev_log!("workspaces", "warn: [WorkspaceEditApplier] empty URI in edit; skipping");
+
 				continue;
 			}
 
@@ -627,9 +675,11 @@ impl WorkspaceEditApplier for MountainEnvironment {
 			// same-document case; on-disk writes happen for closed
 			// files only).
 			let IsOpen = DocumentMirror.Get(&UriString).is_some();
+
 			if !IsOpen {
 				if let Err(Error) = ApplyEditsToDisk(&UriString, &TextEdits).await {
 					AnyFailure = true;
+
 					dev_log!(
 						"workspaces",
 						"warn: [WorkspaceEditApplier] on-disk apply failed for {}: {}",
@@ -651,6 +701,7 @@ impl WorkspaceEditApplier for MountainEnvironment {
 /// `CommonError::InvalidArgument` for malformed edits.
 async fn ApplyEditsToDisk(UriString:&str, TextEdits:&[Value]) -> Result<(), CommonError> {
 	use std::path::Path;
+
 	let RawPath = if let Some(Stripped) = UriString.strip_prefix("file://") {
 		percent_decode(Stripped)
 	} else if UriString.starts_with('/') {
@@ -661,6 +712,7 @@ async fn ApplyEditsToDisk(UriString:&str, TextEdits:&[Value]) -> Result<(), Comm
 			Reason:format!("ApplyWorkspaceEdit: unsupported scheme in {}", UriString),
 		});
 	};
+
 	let Path = Path::new(&RawPath);
 
 	let Original = tokio::fs::read_to_string(Path)
@@ -672,30 +724,42 @@ async fn ApplyEditsToDisk(UriString:&str, TextEdits:&[Value]) -> Result<(), Comm
 	// are clamped to EOF (matches VS Code's bulk-edit forgiving
 	// semantics on truncated files).
 	let LineOffsets = ComputeLineOffsets(&Original);
+
 	let mut WithOffsets:Vec<(usize, usize, String)> = Vec::with_capacity(TextEdits.len());
+
 	for Edit in TextEdits {
 		let StartLine = Edit.pointer("/range/start/line").and_then(Value::as_u64).unwrap_or(0) as usize;
+
 		let StartChar = Edit.pointer("/range/start/character").and_then(Value::as_u64).unwrap_or(0) as usize;
+
 		let EndLine = Edit
 			.pointer("/range/end/line")
 			.and_then(Value::as_u64)
 			.unwrap_or(StartLine as u64) as usize;
+
 		let EndChar = Edit
 			.pointer("/range/end/character")
 			.and_then(Value::as_u64)
 			.unwrap_or(StartChar as u64) as usize;
+
 		let NewText = Edit.get("newText").and_then(Value::as_str).unwrap_or("").to_string();
+
 		let StartOffset = LinePosToOffset(&LineOffsets, &Original, StartLine, StartChar);
+
 		let EndOffset = LinePosToOffset(&LineOffsets, &Original, EndLine, EndChar);
+
 		WithOffsets.push((StartOffset, EndOffset, NewText));
 	}
 
 	WithOffsets.sort_by(|A, B| B.0.cmp(&A.0));
 
 	let mut Mutated = Original;
+
 	for (Start, End, NewText) in WithOffsets {
 		let SafeStart = Start.min(Mutated.len());
+
 		let SafeEnd = End.max(SafeStart).min(Mutated.len());
+
 		Mutated.replace_range(SafeStart..SafeEnd, &NewText);
 	}
 
@@ -706,24 +770,30 @@ async fn ApplyEditsToDisk(UriString:&str, TextEdits:&[Value]) -> Result<(), Comm
 		Path.extension().and_then(|E| E.to_str()).unwrap_or("tmp"),
 		std::process::id()
 	));
+
 	tokio::fs::write(&TempPath, Mutated.as_bytes())
 		.await
 		.map_err(|Error| CommonError::FromStandardIOError(Error, TempPath.clone(), "ApplyWorkspaceEdit.Write"))?;
+
 	tokio::fs::rename(&TempPath, Path)
 		.await
 		.map_err(|Error| CommonError::FromStandardIOError(Error, Path.to_path_buf(), "ApplyWorkspaceEdit.Rename"))?;
+
 	Ok(())
 }
 
 /// Pre-compute the byte offset of the start of every line.
 fn ComputeLineOffsets(Source:&str) -> Vec<usize> {
 	let mut Offsets = Vec::with_capacity(Source.len() / 40 + 1);
+
 	Offsets.push(0);
+
 	for (Index, Byte) in Source.bytes().enumerate() {
 		if Byte == b'\n' {
 			Offsets.push(Index + 1);
 		}
 	}
+
 	Offsets
 }
 
@@ -735,20 +805,27 @@ fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Character:usiz
 	if Line >= LineOffsets.len() {
 		return Source.len();
 	}
+
 	let LineStart = LineOffsets[Line];
+
 	let LineEnd = if Line + 1 < LineOffsets.len() {
 		LineOffsets[Line + 1].saturating_sub(1)
 	} else {
 		Source.len()
 	};
+
 	let LineText = &Source[LineStart..LineEnd.min(Source.len())];
+
 	let mut Utf16Count:usize = 0;
+
 	for (ByteOffset, Char) in LineText.char_indices() {
 		if Utf16Count >= Character {
 			return LineStart + ByteOffset;
 		}
+
 		Utf16Count += Char.len_utf16();
 	}
+
 	LineStart + LineText.len()
 }
 
@@ -757,34 +834,48 @@ fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Character:usiz
 /// version avoids an extra crate import.
 fn percent_decode(Input:&str) -> String {
 	let mut Out = String::with_capacity(Input.len());
+
 	let mut Bytes = Input.as_bytes().iter().peekable();
+
 	while let Some(&Byte) = Bytes.next() {
 		if Byte == b'%' {
 			let H = Bytes.next().copied();
+
 			let L = Bytes.next().copied();
+
 			if let (Some(H), Some(L)) = (H, L) {
 				if let (Some(Hi), Some(Lo)) = (HexDigit(H), HexDigit(L)) {
 					Out.push((Hi * 16 + Lo) as char);
+
 					continue;
 				}
+
 				Out.push('%');
+
 				Out.push(H as char);
+
 				Out.push(L as char);
+
 				continue;
 			}
+
 			Out.push('%');
 		} else {
 			Out.push(Byte as char);
 		}
 	}
+
 	Out
 }
 
 fn HexDigit(Byte:u8) -> Option<u8> {
 	match Byte {
 		b'0'..=b'9' => Some(Byte - b'0'),
+
 		b'a'..=b'f' => Some(Byte - b'a' + 10),
+
 		b'A'..=b'F' => Some(Byte - b'A' + 10),
+
 		_ => None,
 	}
 }
@@ -798,17 +889,21 @@ fn ExtractGlobPattern(Pattern:&Value) -> Option<String> {
 	if let Some(S) = Pattern.as_str() {
 		return Some(S.to_string());
 	}
+
 	if let Some(Obj) = Pattern.as_object() {
 		if let Some(P) = Obj.get("pattern").and_then(Value::as_str) {
 			return Some(P.to_string());
 		}
+
 		if let Some(P) = Obj.get("value").and_then(Value::as_str) {
 			return Some(P.to_string());
 		}
+
 		if let Some(P) = Obj.get("Pattern").and_then(Value::as_str) {
 			return Some(P.to_string());
 		}
 	}
+
 	None
 }
 
@@ -818,22 +913,28 @@ fn ExtractGlobPattern(Pattern:&Value) -> Option<String> {
 /// to `base`. Returns `None` for plain glob strings.
 fn ExtractRelativeBase(Pattern:&Value) -> Option<String> {
 	let Obj = Pattern.as_object()?;
+
 	if let Some(B) = Obj.get("base").and_then(Value::as_str) {
 		return Some(B.to_string());
 	}
+
 	if let Some(B) = Obj.get("baseUri") {
 		if let Some(S) = B.as_str() {
 			if let Some(Stripped) = S.strip_prefix("file://") {
 				return Some(Stripped.to_string());
 			}
+
 			return Some(S.to_string());
 		}
+
 		if let Some(P) = B.as_object().and_then(|O| O.get("path")).and_then(Value::as_str) {
 			return Some(P.to_string());
 		}
+
 		if let Some(P) = B.as_object().and_then(|O| O.get("fsPath")).and_then(Value::as_str) {
 			return Some(P.to_string());
 		}
 	}
+
 	None
 }

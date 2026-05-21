@@ -29,6 +29,7 @@ impl Default for LifecyclePhaseState {
 
 		Self {
 			CurrentPhase:Arc::new(StandardMutex::new(1)),
+
 			PhaseNotify:Arc::new(Notify::new()),
 		}
 	}

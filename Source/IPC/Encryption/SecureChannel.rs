@@ -86,6 +86,7 @@ impl EncryptedMessage {
 	pub fn is_valid(&self) -> bool {
 		self.nonce.len() == 12 // AES-256-GCM requires 12-byte nonce
 			&& !self.ciphertext.is_empty()
+
 			&& !self.hmac_tag.is_empty()
 	}
 }
@@ -476,6 +477,7 @@ mod tests {
 		assert_eq!(channel.nonce_length(), 12);
 
 		assert_eq!(channel.auth_tag_length(), 16); // AES-256-GCM
+
 		assert_eq!(channel.hmac_tag_length(), 32); // HMAC-SHA256
 	}
 

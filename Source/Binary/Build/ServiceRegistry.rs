@@ -551,6 +551,7 @@ mod tests {
 		let service = registry.lookup("secure.service.land").unwrap();
 
 		assert_eq!(service.tls_port, None); // Explicitly None
+
 		assert_eq!(service.get_port(), 9080); // But get_port() returns default
 	}
 }

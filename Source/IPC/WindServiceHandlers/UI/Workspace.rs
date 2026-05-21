@@ -18,6 +18,7 @@ use crate::{
 
 pub async fn WorkspacesGetFolders(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Workspace = &RunTime.Environment.ApplicationState.Workspace;
+
 	let Folders = Workspace.GetWorkspaceFolders();
 
 	let FolderList:Vec<Value> = Folders
@@ -47,11 +48,16 @@ pub async fn WorkspacesAddFolder(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<
 	let Name = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Workspace = &RunTime.Environment.ApplicationState.Workspace;
+
 	let mut Folders = Workspace.GetWorkspaceFolders();
+
 	let Index = Folders.len();
+
 	let URI = Url::parse(&UriStr).map_err(|E| format!("workspaces:addFolder invalid URI: {}", E))?;
+
 	if let Ok(Folder) = WorkspaceFolderStateDTO::New(URI, Name, Index) {
 		Folders.push(Folder);
+
 		UpdateWorkspaceFoldersAndNotify(Workspace, Folders);
 	}
 
@@ -66,11 +72,15 @@ pub async fn WorkspacesRemoveFolder(RunTime:Arc<ApplicationRunTime>, Arguments:V
 		.to_string();
 
 	let Workspace = &RunTime.Environment.ApplicationState.Workspace;
+
 	let mut Folders = Workspace.GetWorkspaceFolders();
+
 	Folders.retain(|F| F.URI.to_string() != UriStr);
+
 	for (I, F) in Folders.iter_mut().enumerate() {
 		F.Index = I;
 	}
+
 	UpdateWorkspaceFoldersAndNotify(Workspace, Folders);
 
 	Ok(Value::Null)

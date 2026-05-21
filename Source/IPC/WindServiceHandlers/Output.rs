@@ -16,7 +16,11 @@
 //! - `OutputShow::OutputShow`
 
 pub mod OutputAppend;
+
 pub mod OutputAppendLine;
+
 pub mod OutputClear;
+
 pub mod OutputCreate;
+
 pub mod OutputShow;

@@ -73,7 +73,7 @@
 		<key>TierRemoteProcedureCall</key>
 		<string>gRPC</string>
 		<key>TierSchemeAssets</key>
-		<string>Embedded</string>
+		<string>FileSystem</string>
 		<key>TierTelemetry</key>
 		<string>Synchronous</string>
 		<key>Trace</key>

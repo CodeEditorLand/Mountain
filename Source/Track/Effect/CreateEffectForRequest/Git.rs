@@ -81,6 +81,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						let StartAt = std::time::Instant::now();
 						let OutputResult = tokio::time::timeout(
 							Duration::from_secs(30),
+
 							tokio::process::Command::new("git")
 								.args(&Args)
 								.current_dir(&Cwd)
@@ -90,7 +91,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						.map_err(|_| {
 							format!(
 								"$gitExec timed out after 30s: args={:?} cwd={}",
+
 								Args,
+
 								Cwd.display()
 							)
 						})?

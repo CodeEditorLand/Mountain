@@ -18,23 +18,33 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::Mapp
 
 async fn UpdateConfigurationValueAndNotify(
 	run_time:Arc<ApplicationRunTime>,
+
 	key:String,
+
 	value:Value,
+
 	target:ConfigurationTarget,
+
 	log_prefix:&str,
 ) -> Result<Value, String> {
 	use tauri::Emitter;
+
 	let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
+
 	let KeyForEvents = key.clone();
+
 	let result = provider
 		.UpdateConfigurationValue(key, value, target, Default::default(), None)
 		.await;
+
 	if result.is_ok() {
 		let Payload = json!({
 			"keys": [KeyForEvents.clone()],
 			"affected": [KeyForEvents.clone()],
 		});
+
 		let AppHandle = run_time.Environment.ApplicationHandle.clone();
+
 		if let Err(Error) = AppHandle.emit("sky://configuration/changed", Payload.clone()) {
 			dev_log!(
 				"config",
@@ -43,7 +53,9 @@ async fn UpdateConfigurationValueAndNotify(
 				Error
 			);
 		}
+
 		let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
+
 		if let Err(Error) = IPCProvider
 			.SendNotificationToSideCar("cocoon-main".to_string(), "configuration.change".to_string(), Payload)
 			.await
@@ -56,6 +68,7 @@ async fn UpdateConfigurationValueAndNotify(
 			);
 		}
 	}
+
 	result.map(|_| json!(null)).map_err(|e| e.to_string())
 }
 

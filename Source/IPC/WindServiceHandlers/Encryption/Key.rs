@@ -5,22 +5,29 @@
 //! The key is derived once per process from the host's hardware UUID using
 //! SHA-256: `key = SHA-256("Land-Encryption-v1" ++ machine_id)`.
 //!
-//! Rationale: using the machine ID means ciphertext produced by
-//! `encryption:encrypt` survives process restarts (same key each time) but
-//! cannot be decrypted on a different machine, matching VS Code's
-//! `dpapi`/`safeStorage` semantics. No HSM or external key storage required.
+//! If the machine ID cannot be obtained on this system, `DeriveKey` returns
+//! `Err` so callers can surface a meaningful error rather than silently
+//! falling back to a constant key that is identical on every affected machine.
 
 use std::sync::OnceLock;
 
 use ring::digest::{SHA256, digest};
 
-static DERIVED_KEY:[OnceLock<[u8; 32]>; 1] = [OnceLock::new()];
+static DERIVED_KEY:OnceLock<Option<[u8; 32]>> = OnceLock::new();
 
 /// Returns the process-wide 256-bit encryption key.
-pub fn DeriveKey() -> [u8; 32] { *DERIVED_KEY[0].get_or_init(ComputeKey) }
+///
+/// Returns `Err` when no machine-bound seed is available on this system so
+/// that callers can propagate the failure instead of encrypting with a
+/// predictable constant.
+pub fn DeriveKey() -> Result<[u8; 32], String> {
+	DERIVED_KEY
+		.get_or_init(ComputeKey)
+		.ok_or_else(|| "encryption unavailable: machine ID lookup failed".to_string())
+}
 
-fn ComputeKey() -> [u8; 32] {
-	let MachineId = ReadMachineId();
+fn ComputeKey() -> Option<[u8; 32]> {
+	let MachineId = ReadMachineId()?;
 
 	let Input = format!("Land-Encryption-v1{}", MachineId);
 
@@ -30,10 +37,10 @@ fn ComputeKey() -> [u8; 32] {
 
 	Key.copy_from_slice(Hash.as_ref());
 
-	Key
+	Some(Key)
 }
 
-fn ReadMachineId() -> String {
+fn ReadMachineId() -> Option<String> {
 	#[cfg(target_os = "macos")]
 	{
 		if let Ok(Out) = std::process::Command::new("ioreg")
@@ -41,12 +48,14 @@ fn ReadMachineId() -> String {
 			.output()
 		{
 			let S = String::from_utf8_lossy(&Out.stdout);
+
 			for Line in S.lines() {
 				if Line.contains("IOPlatformUUID") {
 					if let Some(Start) = Line.rfind('"') {
 						let Rest = &Line[..Start];
+
 						if let Some(End) = Rest.rfind('"') {
-							return Rest[End + 1..].to_string();
+							return Some(Rest[End + 1..].to_string());
 						}
 					}
 				}
@@ -58,14 +67,17 @@ fn ReadMachineId() -> String {
 	{
 		if let Ok(Id) = std::fs::read_to_string("/etc/machine-id") {
 			let Trimmed = Id.trim().to_string();
+
 			if !Trimmed.is_empty() {
-				return Trimmed;
+				return Some(Trimmed);
 			}
 		}
+
 		if let Ok(Id) = std::fs::read_to_string("/var/lib/dbus/machine-id") {
 			let Trimmed = Id.trim().to_string();
+
 			if !Trimmed.is_empty() {
-				return Trimmed;
+				return Some(Trimmed);
 			}
 		}
 	}
@@ -73,22 +85,20 @@ fn ReadMachineId() -> String {
 	#[cfg(target_os = "windows")]
 	{
 		use std::process::Command;
+
 		if let Ok(Out) = Command::new("reg")
 			.args(["query", "HKLM\\SOFTWARE\\Microsoft\\Cryptography", "/v", "MachineGuid"])
 			.output()
 		{
 			let S = String::from_utf8_lossy(&Out.stdout);
+
 			if let Some(Line) = S.lines().find(|L| L.contains("MachineGuid")) {
 				if let Some(Id) = Line.split_whitespace().last() {
-					return Id.to_string();
+					return Some(Id.to_string());
 				}
 			}
 		}
 	}
 
-	// Fallback: use the executable path hash so at least different installs
-	// produce different keys.
-	std::env::current_exe()
-		.map(|P| format!("{:?}", P))
-		.unwrap_or_else(|_| "fallback-land-key-seed".to_string())
+	None
 }

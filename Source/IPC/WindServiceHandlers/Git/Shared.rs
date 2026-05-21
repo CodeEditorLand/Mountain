@@ -23,6 +23,7 @@ use crate::dev_log;
 
 pub fn RunningProcesses() -> &'static Mutex<HashMap<String, u32>> {
 	static SLOT:OnceLock<Mutex<HashMap<String, u32>>> = OnceLock::new();
+
 	SLOT.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
@@ -30,6 +31,7 @@ pub fn RegisterPid(OperationId:&str, Pid:u32) {
 	if OperationId.is_empty() {
 		return;
 	}
+
 	if let Ok(mut Map) = RunningProcesses().lock() {
 		Map.insert(OperationId.to_string(), Pid);
 	}
@@ -39,6 +41,7 @@ pub fn ClearPid(OperationId:&str) {
 	if OperationId.is_empty() {
 		return;
 	}
+
 	if let Ok(mut Map) = RunningProcesses().lock() {
 		Map.remove(OperationId);
 	}
@@ -48,6 +51,7 @@ pub fn TakePid(OperationId:&str) -> Option<u32> {
 	if OperationId.is_empty() {
 		return None;
 	}
+
 	RunningProcesses().lock().ok().and_then(|mut M| M.remove(OperationId))
 }
 
@@ -73,6 +77,7 @@ pub async fn RunGit(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Resul
 		.unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
 
 	let mut Spawn = Command::new("git");
+
 	Spawn.args(Args).current_dir(&WorkingDir).kill_on_drop(true);
 
 	let Child = Spawn.spawn().map_err(|Error| {
@@ -98,7 +103,9 @@ pub async fn RunGit(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Resul
 	ClearPid(OperationId);
 
 	let ExitCode = Output.status.code().unwrap_or(-1);
+
 	let Stdout = String::from_utf8_lossy(&Output.stdout).into_owned();
+
 	let Stderr = String::from_utf8_lossy(&Output.stderr).into_owned();
 
 	dev_log!(

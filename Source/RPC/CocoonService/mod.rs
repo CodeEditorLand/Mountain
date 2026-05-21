@@ -441,6 +441,7 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<GenericResponse>, Status> {
 		return GenericRequest::Dispatcher::Fn(self, request).await;
 	}
+
 	/// Send Mountain notifications to Cocoon (generic fire-and-forget).
 	/// Implementation in `GenericNotification::Dispatcher`.
 	async fn send_mountain_notification(
@@ -450,6 +451,7 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		return GenericNotification::Dispatcher::Fn(self, request).await;
 	}
+
 	async fn cancel_operation(&self, request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
 		Initialization::CancelOperation::Fn(self, request.into_inner()).await
 	}

@@ -177,6 +177,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 	if let Ok(Override) = std::env::var("Lodge") {
 		if !Override.is_empty() {
 			let OverridePath = PathBuf::from(&Override);
+
 			if Candidate.starts_with(&OverridePath) || PathToCheck.starts_with(&OverridePath) {
 				return true;
 			}
@@ -187,6 +188,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 		// Primary user-scope root post-rename. Resolved through the
 		// `FiddeeRoot` atom so any future rename touches a single file.
 		let FiddeeRoot = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot();
+
 		if Candidate.starts_with(&FiddeeRoot) || PathToCheck.starts_with(&FiddeeRoot) {
 			return true;
 		}
@@ -196,6 +198,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 		// so existing data remains visible until the user reinstalls or
 		// migrates to `~/.fiddee`.
 		let LandRoot = PathBuf::from(&Home).join(".land");
+
 		if Candidate.starts_with(&LandRoot) || PathToCheck.starts_with(&LandRoot) {
 			return true;
 		}
@@ -203,6 +206,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 		// macOS / Linux Application-Support trees that host Land's per-profile
 		// state. `land.editor.*` prefix matches every build profile variant.
 		let MacAppSupport = PathBuf::from(&Home).join("Library/Application Support");
+
 		if (Candidate.starts_with(&MacAppSupport) || PathToCheck.starts_with(&MacAppSupport))
 			&& ContainsLandEditorSegment(PathToCheck)
 		{
@@ -212,6 +216,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 		let XdgConfig = std::env::var("XDG_CONFIG_HOME")
 			.map(PathBuf::from)
 			.unwrap_or_else(|_| PathBuf::from(&Home).join(".config"));
+
 		if (Candidate.starts_with(&XdgConfig) || PathToCheck.starts_with(&XdgConfig))
 			&& ContainsLandEditorSegment(PathToCheck)
 		{
@@ -221,6 +226,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 		let XdgData = std::env::var("XDG_DATA_HOME")
 			.map(PathBuf::from)
 			.unwrap_or_else(|_| PathBuf::from(&Home).join(".local/share"));
+
 		if (Candidate.starts_with(&XdgData) || PathToCheck.starts_with(&XdgData))
 			&& ContainsLandEditorSegment(PathToCheck)
 		{
@@ -239,8 +245,10 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 				// debug profile - match the canonical `Sky/Target/Static/Application/extensions`
 				// segment regardless of how many `..` hops the scan path used.
 			];
+
 			for Root in BundleRoots {
 				let Normalised = crate::Cache::PathCanon::Canonicalize::Fn(&Root).unwrap_or(Root.clone());
+
 				if Candidate.starts_with(&Normalised) || PathToCheck.starts_with(&Root) {
 					return true;
 				}
@@ -278,6 +286,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 
 	if let Ok(TempDir) = std::env::var("TMPDIR") {
 		let TempPath = PathBuf::from(&TempDir);
+
 		if !TempPath.as_os_str().is_empty() && (Candidate.starts_with(&TempPath) || PathToCheck.starts_with(&TempPath))
 		{
 			return true;
@@ -296,6 +305,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 	// not the extension's own `fs.writeFileSync`.
 	for Root in ["/tmp", "/private/tmp", "/var/tmp"] {
 		let RootPath = PathBuf::from(Root);
+
 		if Candidate.starts_with(&RootPath) || PathToCheck.starts_with(&RootPath) {
 			return true;
 		}
@@ -310,6 +320,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 	if let Ok(Home) = std::env::var("HOME") {
 		for Suffix in [".gitkraken", ".gk", ".copilot", ".config/git"] {
 			let ToolRoot = PathBuf::from(&Home).join(Suffix);
+
 			if Candidate.starts_with(&ToolRoot) || PathToCheck.starts_with(&ToolRoot) {
 				return true;
 			}
@@ -340,6 +351,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 		"/proc/self/cgroup",
 	] {
 		let SysPath = PathBuf::from(SystemFile);
+
 		if Candidate == SysPath || PathToCheck == SysPath {
 			return true;
 		}
@@ -367,9 +379,11 @@ fn ContainsLandEditorSegment(path:&Path) -> bool {
 /// roots regardless of which relative-path prefix the scanner used.
 fn ContainsPathSegments(path:&Path, segments:&[&str]) -> bool {
 	let Names:Vec<&str> = path.components().filter_map(|C| C.as_os_str().to_str()).collect();
+
 	if segments.is_empty() || Names.len() < segments.len() {
 		return false;
 	}
+
 	Names
 		.windows(segments.len())
 		.any(|Window| Window.iter().zip(segments.iter()).all(|(A, B)| A == B))

@@ -10,7 +10,9 @@ use crate::{Environment::MountainEnvironment::MountainEnvironment, dev_log};
 
 pub async fn HandleRegisterCommand(Params:Value, Env:&MountainEnvironment) {
 	let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 	let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 	if let Err(Error) = Env.RegisterCommand(ExtensionId, CommandId.clone()).await {
 		dev_log!(
 			"cocoon",
@@ -23,6 +25,8 @@ pub async fn HandleRegisterCommand(Params:Value, Env:&MountainEnvironment) {
 
 pub async fn HandleUnregisterCommand(Params:Value, Env:&MountainEnvironment) {
 	let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 	let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 	let _ = Env.UnregisterCommand(ExtensionId, CommandId).await;
 }

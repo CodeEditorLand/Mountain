@@ -20,8 +20,10 @@ pub async fn LocalPTYCreateProcess(RunTime:Arc<ApplicationRunTime>, Arguments:Ve
 	match TerminalCreate(RunTime, Arguments).await {
 		Ok(Response) => {
 			let TerminalIdOption = Response.get("id").and_then(serde_json::Value::as_u64);
+
 			match TerminalIdOption {
 				Some(TerminalId) if TerminalId > 0 => Ok(serde_json::json!(TerminalId)),
+
 				Some(_) | None => {
 					// Defensive: if `CreateTerminal` returned without a usable id
 					// (shape drift or `GetNextTerminalIdentifier` regression),
@@ -32,6 +34,7 @@ pub async fn LocalPTYCreateProcess(RunTime:Arc<ApplicationRunTime>, Arguments:Ve
 						"error: [localPty:createProcess] CreateTerminal returned no usable id; response={:?}",
 						Response
 					);
+
 					Err(format!(
 						"localPty:createProcess: CreateTerminal returned no terminal id (response={})",
 						Response
@@ -39,6 +42,7 @@ pub async fn LocalPTYCreateProcess(RunTime:Arc<ApplicationRunTime>, Arguments:Ve
 				},
 			}
 		},
+
 		Err(Error) => Err(Error),
 	}
 }

@@ -9,26 +9,29 @@ use serde_json::{Value, json};
 
 pub async fn NativeMoveItemToTrash(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Path = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 	if Path.is_empty() {
 		return Ok(json!(false));
 	}
+
 	crate::dev_log!("nativehost", "nativeHost:moveItemToTrash path={}", Path);
+
 	let Moved = {
 		#[cfg(target_os = "macos")]
 		{
+			// Pass path via env var so it is never interpolated into AppleScript source.
 			tokio::process::Command::new("osascript")
+				.env("MOVE_TARGET", &Path)
 				.args([
 					"-e",
-					&format!(
-						"tell application \"Finder\" to delete POSIX file \"{}\"",
-						Path.replace('"', "\\\"")
-					),
+					"tell application \"Finder\" to delete POSIX file (system attribute \"MOVE_TARGET\")",
 				])
 				.status()
 				.await
 				.map(|S| S.success())
 				.unwrap_or(false)
 		}
+
 		#[cfg(target_os = "linux")]
 		{
 			let Gio = tokio::process::Command::new("gio")
@@ -37,6 +40,7 @@ pub async fn NativeMoveItemToTrash(Arguments:Vec<Value>) -> Result<Value, String
 				.await
 				.map(|S| S.success())
 				.unwrap_or(false);
+
 			if Gio {
 				true
 			} else {
@@ -48,23 +52,28 @@ pub async fn NativeMoveItemToTrash(Arguments:Vec<Value>) -> Result<Value, String
 					.unwrap_or(false)
 			}
 		}
+
 		#[cfg(target_os = "windows")]
 		{
-			let Script = format!(
-				"(new-object -comobject Shell.Application).NameSpace(0xA).MoveHere('{}')",
-				Path.replace('\'', "''")
-			);
+			// Pass path via env var so it is never interpolated into PowerShell source.
 			tokio::process::Command::new("powershell.exe")
-				.args(["-NoProfile", "-Command", &Script])
+				.env("MOVE_TARGET", &Path)
+				.args([
+					"-NoProfile",
+					"-Command",
+					"(new-object -comobject Shell.Application).NameSpace(0xA).MoveHere($env:MOVE_TARGET)",
+				])
 				.status()
 				.await
 				.map(|S| S.success())
 				.unwrap_or(false)
 		}
+
 		#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
 		{
 			false
 		}
 	};
+
 	Ok(json!(Moved))
 }

@@ -19,7 +19,9 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 pub async fn DetachFromProcess(_RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let TerminalId = match Arguments.first() {
 		Some(Value::Number(N)) => N.as_u64().unwrap_or(0),
+
 		Some(Value::Object(Obj)) => Obj.get("id").and_then(Value::as_u64).unwrap_or(0),
+
 		_ => 0,
 	};
 

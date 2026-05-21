@@ -39,7 +39,6 @@ const CLEANUP_INTERVAL_SECONDS:u64 = 300;
 /// Connection handle representing an active connection
 #[derive(Debug, Clone)]
 pub struct ConnectionHandle {
-
 	/// Unique connection identifier
 	pub ConnectionId:String,
 
@@ -62,7 +61,6 @@ pub struct ConnectionHandle {
 /// Health status of a connection
 #[derive(Debug, Clone, PartialEq)]
 pub enum ConnectionHealth {
-
 	Healthy,
 
 	Degraded,
@@ -73,7 +71,6 @@ pub enum ConnectionHealth {
 /// Statistics about the connection pool
 #[derive(Debug, Clone)]
 pub struct PoolStatistics {
-
 	pub total_connections:usize,
 
 	pub active_connections:usize,
@@ -89,7 +86,6 @@ pub struct PoolStatistics {
 
 /// Connection pool for managing reusable connections
 pub struct ConnectionPool {
-
 	/// Maximum number of connections allowed
 	pub MaxConnection:usize,
 
@@ -110,7 +106,6 @@ pub struct ConnectionPool {
 }
 
 impl ConnectionPool {
-
 	/// Create a new connection pool
 	///
 	/// ## Parameters
@@ -120,9 +115,7 @@ impl ConnectionPool {
 	/// ## Returns
 	/// New ConnectionPool instance
 	pub fn New(MaxConnection:usize, ConnectionTimeout:Duration) -> Self {
-
 		Self {
-
 			MaxConnection:MaxConnection.min(MAX_CONNECTIONS),
 
 			ConnectionTimeout,
@@ -145,12 +138,10 @@ impl ConnectionPool {
 	/// ## Returns
 	/// ConnectionHandle or error if timeout or pool exhausted
 	pub async fn GetConnection(&self, Channel:&str) -> Result<ConnectionHandle, String> {
-
 		// Check timeout first
 		let AcquireResult = timeout(self.ConnectionTimeout, self.AcquireConnectionFromPool(Channel)).await;
 
 		match AcquireResult {
-
 			Ok(Result) => Result,
 
 			Err(_) => Err(format!("Connection acquisition timed out after {:?}", self.ConnectionTimeout)),
@@ -165,34 +156,28 @@ impl ConnectionPool {
 	/// ## Returns
 	/// ConnectionHandle or error if pool exhausted
 	async fn AcquireConnectionFromPool(&self, Channel:&str) -> Result<ConnectionHandle, String> {
-
 		// Check capacity limit first
 		let ActiveCount = {
-
 			let ActiveConnection = self.ActiveConnection.read().await;
 
 			ActiveConnection.len()
 		};
 
 		let IdleCount = {
-
 			let IdleConnection = self.IdleConnection.read().await;
 
 			IdleConnection.len()
 		};
 
 		if ActiveCount + IdleCount >= self.MaxConnection {
-
 			return Err(format!(
 				"Connection pool exhausted: Active: {}, Idle: {}, Max: {}",
-
 				ActiveCount, IdleCount, self.MaxConnection
 			));
 		}
 
 		// Try to reuse idle connection
 		{
-
 			let mut IdleConnection = self.IdleConnection.write().await;
 
 			if let Some((Key, mut Handle)) = IdleConnection
@@ -200,7 +185,6 @@ impl ConnectionPool {
 				.find(|(_, h)| h.Channel == Channel && h.Health == ConnectionHealth::Healthy)
 				.map(|(k, v)| (k.clone(), v.clone()))
 			{
-
 				IdleConnection.remove(&Key);
 
 				Handle.ReuseCount += 1;
@@ -208,14 +192,12 @@ impl ConnectionPool {
 				Handle.LastActivity = Instant::now();
 
 				{
-
 					let mut ActiveConnection = self.ActiveConnection.write().await;
 
 					ActiveConnection.insert(Handle.ConnectionId.clone(), Handle.clone());
 				}
 
 				{
-
 					let mut TotalAcquired = self.TotalAcquired.write().await;
 
 					*TotalAcquired += 1;
@@ -231,7 +213,6 @@ impl ConnectionPool {
 		let Now = Instant::now();
 
 		let NewHandle = ConnectionHandle {
-
 			ConnectionId:ConnectionId.clone(),
 
 			Channel:Channel.to_string(),
@@ -246,14 +227,12 @@ impl ConnectionPool {
 		};
 
 		{
-
 			let mut ActiveConnection = self.ActiveConnection.write().await;
 
 			ActiveConnection.insert(ConnectionId, NewHandle.clone());
 		}
 
 		{
-
 			let mut TotalAcquired = self.TotalAcquired.write().await;
 
 			*TotalAcquired += 1;
@@ -267,12 +246,10 @@ impl ConnectionPool {
 	/// ## Parameters
 	/// - `Handle`: The connection handle to release
 	pub async fn ReleaseConnection(&self, Handle:ConnectionHandle) {
-
 		// Remove from active connection
 		let ConnectionId = Handle.ConnectionId.clone();
 
 		{
-
 			let mut ActiveConnection = self.ActiveConnection.write().await;
 
 			ActiveConnection.remove(&ConnectionId);
@@ -280,14 +257,12 @@ impl ConnectionPool {
 
 		// Return to idle if healthy
 		if Handle.Health == ConnectionHealth::Healthy {
-
 			let mut IdleConnection = self.IdleConnection.write().await;
 
 			IdleConnection.insert(ConnectionId, Handle);
 		}
 
 		{
-
 			let mut TotalReleased = self.TotalReleased.write().await;
 
 			*TotalReleased += 1;
@@ -299,7 +274,6 @@ impl ConnectionPool {
 	/// ## Returns
 	/// PoolStatistics with current pool metrics
 	pub async fn GetStats(&self) -> PoolStatistics {
-
 		let ActiveConnection = self.ActiveConnection.read().await;
 
 		let IdleConnection = self.IdleConnection.read().await;
@@ -320,15 +294,12 @@ impl ConnectionPool {
 			.sum();
 
 		let AverageReuseCount = if ActiveCount + IdleCount > 0 {
-
 			TotalReuseCount as f64 / (ActiveCount + IdleCount) as f64
 		} else {
-
 			0.0
 		};
 
 		PoolStatistics {
-
 			total_connections:ActiveCount + IdleCount,
 
 			active_connections:ActiveCount,
@@ -348,13 +319,11 @@ impl ConnectionPool {
 	/// ## Returns
 	/// Number of connections cleaned up
 	pub async fn CleanUpStaleConnections(&self) -> usize {
-
 		let Now = Instant::now();
 
 		let TimeoutDuration = Duration::from_secs(CLEANUP_INTERVAL_SECONDS);
 
 		let Cleaned = {
-
 			let mut IdleConnection = self.IdleConnection.write().await;
 
 			let InitialCount = IdleConnection.len();
@@ -378,7 +347,6 @@ impl ConnectionPool {
 	/// ## Returns
 	/// Unique connection ID
 	fn GenerateConnectionId(Channel:&str) -> String {
-
 		use std::time::{SystemTime, UNIX_EPOCH};
 
 		let Timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_micros();
@@ -394,7 +362,6 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_connection_pool_new() {
-
 		let Pool = ConnectionPool::New(10, Duration::from_secs(5));
 
 		assert_eq!(Pool.MaxConnection, 10);
@@ -407,7 +374,6 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_connection_pool_max_connections_limit() {
-
 		let Pool = ConnectionPool::New(1000, Duration::from_secs(5));
 
 		assert_eq!(Pool.MaxConnection, MAX_CONNECTIONS);
@@ -415,7 +381,6 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_get_connection() {
-
 		let Pool = ConnectionPool::New(10, Duration::from_secs(5));
 
 		let Handle = Pool.GetConnection("test-channel").await.unwrap();
@@ -435,7 +400,6 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_release_and_reuse_connection() {
-
 		let Pool = ConnectionPool::New(10, Duration::from_secs(5));
 
 		let Handle1 = Pool.GetConnection("test-channel").await.unwrap();
@@ -453,7 +417,6 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_pool_exhaustion() {
-
 		let Pool = ConnectionPool::New(2, Duration::from_secs(5));
 
 		let _Handle1 = Pool.GetConnection("test-channel-1").await.unwrap();
@@ -467,7 +430,6 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_cleanup_stale_connections() {
-
 		let Pool = ConnectionPool::New(10, Duration::from_secs(5));
 
 		let Handle = Pool.GetConnection("test-channel").await.unwrap();
@@ -476,11 +438,9 @@ mod tests {
 
 		// Simulate stale connection by modifying last activity
 		{
-
 			let mut IdleConnection = Pool.IdleConnection.write().await;
 
 			if let Some(Connection) = IdleConnection.values_mut().next() {
-
 				Connection.LastActivity = Instant::now() - Duration::from_secs(600);
 			}
 		}
@@ -492,7 +452,6 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_get_statistics() {
-
 		let Pool = ConnectionPool::New(10, Duration::from_secs(5));
 
 		let _Handle1 = Pool.GetConnection("test-channel-1").await.unwrap();

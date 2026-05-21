@@ -721,7 +721,9 @@ pub(super) async fn prepare_call_hierarchy(
 	match provider {
 		Some(registration) => {
 			let uri_json = json!({ "external": document_uri.to_string(), "$mid": 1 });
+
 			let pos_json = json!({ "Line": position_dto.LineNumber, "Character": position_dto.Column });
+
 			let response = invoke_provider_method(
 				environment,
 				&registration,
@@ -751,7 +753,9 @@ pub(super) async fn prepare_type_hierarchy(
 	match provider {
 		Some(registration) => {
 			let uri_json = json!({ "external": document_uri.to_string(), "$mid": 1 });
+
 			let pos_json = json!({ "Line": position_dto.LineNumber, "Character": position_dto.Column });
+
 			let response = invoke_provider_method(
 				environment,
 				&registration,

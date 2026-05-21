@@ -31,6 +31,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 struct DecoSetItem {
 	Handle:AppHandle,
+
 	Payload:Value,
 }
 
@@ -79,6 +80,7 @@ fn GetOrInitChannel(Handle:&AppHandle) -> &'static DecoSetChannel {
 
 pub async fn SetTextEditorDecorations(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Ch = GetOrInitChannel(Service.ApplicationHandle());
+
 	let _ = Ch
 		.Sender
 		.send(DecoSetItem { Handle:Service.ApplicationHandle().clone(), Payload:Parameter.clone() });

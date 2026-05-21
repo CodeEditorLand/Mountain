@@ -24,6 +24,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	request:Request<GenericNotificationMsg>,
 ) -> Result<Response<Empty>, Status> {
 	let notification = request.into_inner();

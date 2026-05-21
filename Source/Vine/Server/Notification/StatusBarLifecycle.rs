@@ -16,6 +16,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn StatusBarLifecycle(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
 	let EventName = format!("sky://statusbar/{}", &MethodName["statusBar.".len()..]);
+
 	if let Err(Error) = Service.ApplicationHandle().emit(&EventName, Parameter) {
 		dev_log!("grpc", "warn: [MountainVinegRPCService] {} emit failed: {}", EventName, Error);
 	}

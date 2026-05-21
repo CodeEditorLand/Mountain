@@ -488,12 +488,17 @@ impl AirServiceProvider {
 	/// ```
 	pub async fn index_files(
 		&self,
+
 		path:String,
+
 		patterns:Vec<String>,
+
 		exclude_patterns:Vec<String>,
+
 		max_depth:u32,
 	) -> Result<IndexInfo::Struct, CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!(
 			"grpc",
 			"[AirServiceProvider] index_files (request_id: {}, path: {})",
@@ -536,11 +541,15 @@ impl AirServiceProvider {
 	/// ```
 	pub async fn search_files(
 		&self,
+
 		query:String,
+
 		path:String,
+
 		max_results:u32,
 	) -> Result<Vec<FileResult::Struct>, CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!(
 			"grpc",
 			"[AirServiceProvider] search_files (request_id: {}, query: {})",
@@ -561,6 +570,7 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Request error
 	pub async fn get_file_info(&self, path:String) -> Result<ExtendedFileInfo::Struct, CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!(
 			"grpc",
 			"[AirServiceProvider] get_file_info (request_id: {}, path: {})",
@@ -582,6 +592,7 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Request error
 	pub async fn get_status(&self) -> Result<AirStatus::Struct, CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!("grpc", "[AirServiceProvider] get_status (request_id: {})", request_id);
 
 		self.client.get_status(request_id).await
@@ -609,6 +620,7 @@ impl AirServiceProvider {
 	/// ```
 	pub async fn health_check(&self) -> Result<bool, CommonError> {
 		dev_log!("grpc", "[AirServiceProvider] health_check");
+
 		self.client.health_check().await
 	}
 
@@ -623,6 +635,7 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Request error
 	pub async fn get_metrics(&self, metric_type:Option<String>) -> Result<AirMetrics::Struct, CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!("grpc", "[AirServiceProvider] get_metrics (request_id: {})", request_id);
 
 		self.client.get_metrics(request_id, metric_type).await
@@ -639,6 +652,7 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Request error
 	pub async fn get_resource_usage(&self) -> Result<ResourceUsage::Struct, CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!("grpc", "[AirServiceProvider] get_resource_usage (request_id: {})", request_id);
 
 		self.client.get_resource_usage(request_id).await
@@ -656,11 +670,15 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Set error
 	pub async fn set_resource_limits(
 		&self,
+
 		memory_limit_mb:u32,
+
 		cpu_limit_percent:u32,
+
 		disk_limit_mb:u32,
 	) -> Result<(), CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!("grpc", "[AirServiceProvider] set_resource_limits (request_id: {})", request_id);
 
 		self.client
@@ -699,6 +717,7 @@ impl AirServiceProvider {
 	/// ```
 	pub async fn get_configuration(&self, section:String) -> Result<HashMap<String, String>, CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!(
 			"grpc",
 			"[AirServiceProvider] get_configuration (request_id: {}, section: {})",
@@ -720,10 +739,13 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Update error
 	pub async fn update_configuration(
 		&self,
+
 		section:String,
+
 		updates:HashMap<String, String>,
 	) -> Result<(), CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!(
 			"grpc",
 			"[AirServiceProvider] update_configuration (request_id: {}, section: {})",
@@ -745,11 +767,13 @@ impl AirServiceProvider {
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[test]
 	fn test_generate_request_id() {
 		let id1 = generate_request_id();
+
 		let id2 = generate_request_id();
 
 		// IDs should be unique
@@ -757,10 +781,12 @@ mod tests {
 
 		// IDs should be valid UUIDs (simple format = 32 chars)
 		assert_eq!(id1.len(), 32);
+
 		assert_eq!(id2.len(), 32);
 
 		// IDs should be hex characters
 		assert!(id1.chars().all(|c| c.is_ascii_hexdigit()));
+
 		assert!(id2.chars().all(|c| c.is_ascii_hexdigit()));
 	}
 

@@ -9,6 +9,8 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn UnregisterFileSystemProvider(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Scheme = Parameter.get("scheme").and_then(Value::as_str).unwrap_or("");
+
 	dev_log!("provider-register", "[ProviderUnregister] file_system scheme={}", Scheme);
+
 	UnregisterByHandle(Service, Parameter, "file_system");
 }

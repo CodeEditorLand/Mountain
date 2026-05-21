@@ -9,6 +9,8 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn UnregisterUriHandler(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Scheme = Parameter.get("scheme").and_then(Value::as_str).unwrap_or("");
+
 	dev_log!("provider-register", "[ProviderUnregister] uri_handler scheme={}", Scheme);
+
 	UnregisterByHandle(Service, Parameter, "uri_handler");
 }

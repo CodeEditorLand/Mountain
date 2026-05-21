@@ -34,6 +34,7 @@ pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Va
 				Text.to_string(),
 			)
 		},
+
 		None => false,
 	};
 

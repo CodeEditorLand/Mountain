@@ -250,6 +250,7 @@ pub async fn ConstructSandboxConfiguration(
 	// Missing it leaves logsPath=undefined → URI.file(undefined).fsPath=undefined
 	// → path.join(undefined,"…") → "The path argument must be of type string".
 	let LogsPath = AppDataDir.join("logs").join(crate::IPC::DevLog::SessionTimestamp::Fn());
+
 	let _ = std::fs::create_dir_all(&LogsPath);
 
 	let Platform = match env::consts::OS {
@@ -439,8 +440,11 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 		// Extract logging scalars before FoldersWire is moved - avoids clone.
 		let FolderCount = FoldersWire.len();
+
 		let FolderSample = FoldersWire.first().map(|F| F.to_string()).unwrap_or_else(|| "<none>".into());
+
 		let IsEmpty = Guard.is_empty();
+
 		drop(Guard); // guard released; no await points follow inside this block
 
 		dev_log!(

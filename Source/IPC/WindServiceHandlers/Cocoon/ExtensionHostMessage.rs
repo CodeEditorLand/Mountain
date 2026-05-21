@@ -13,9 +13,11 @@ pub async fn CocoonExtensionHostMessage(_ApplicationHandle:AppHandle, Arguments:
 		.first()
 		.map(|P| P.get("data").and_then(|D| D.as_array()).map(|A| A.len()).unwrap_or(0))
 		.unwrap_or(0);
+
 	crate::dev_log!("exthost", "cocoon:extensionHostMessage bytes={}", ByteCount);
 
 	let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+
 	tokio::spawn(async move {
 		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),
@@ -27,5 +29,6 @@ pub async fn CocoonExtensionHostMessage(_ApplicationHandle:AppHandle, Arguments:
 			crate::dev_log!("exthost", "cocoon:extensionHostMessage forward failed: {}", Error);
 		}
 	});
+
 	Ok(Value::Null)
 }

@@ -243,6 +243,7 @@ pub fn AppLifecycleSetup(
 	#[cfg(debug_assertions)]
 	{
 		let enable_debug_server = std::env::var("DebugServer").map(|v| v != "0" && !v.is_empty()).unwrap_or(false);
+
 		if enable_debug_server {
 			// DebugServer values: mountain | cocoon | both | 1 (= mountain, legacy).
 			// Mountain port: DebugServerPort or DebugServerPortMountain (default 9933).
@@ -257,6 +258,7 @@ pub fn AppLifecycleSetup(
 					.unwrap_or_else(|_| "9933".into()),
 				std::env::var("DebugServerPortCocoon").unwrap_or_else(|_| "9934".into())
 			);
+
 			WebkitServer::install(&MainWindow);
 		}
 	}

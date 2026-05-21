@@ -66,6 +66,7 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 	// snapshot - without depending on the rest of the bundle loading.
 	let TauriDiagnosticScript = r#"(function() {
 		if (window.__MOUNTAIN_TAURI_DIAG) { return; }
+
 		const Stamp = (Reason) => ({
 			at: Date.now(),
 			reason: Reason,
@@ -78,11 +79,15 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 			origin: window.location.origin,
 			url: window.location.href,
 		});
+
 		window.__MOUNTAIN_TAURI_DIAG = { initial: Stamp('initialization_script') };
+
 		try {
+
 			window.addEventListener('DOMContentLoaded', () => {
 				window.__MOUNTAIN_TAURI_DIAG.dom_content_loaded = Stamp('DOMContentLoaded');
 			});
+
 			window.addEventListener('load', () => {
 				window.__MOUNTAIN_TAURI_DIAG.load = Stamp('load');
 			});
@@ -94,6 +99,7 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 		.initialization_script(TauriDiagnosticScript)
 		.zoom_hotkeys_enabled(true)
 		.browser_extensions_enabled(false)
+
 		// macOS first-responder: by default WKWebView swallows the
 		// first click on an unfocused window as a "make me key"
 		// no-op and the click never reaches the inner content. With
@@ -142,6 +148,7 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 	#[cfg(debug_assertions)]
 	{
 		let enable_debugtools = std::env::var("Inspect").map(|v| v != "0" && !v.is_empty()).unwrap_or(false);
+
 		if enable_debugtools {
 			WindowBuilder = WindowBuilder.devtools(true);
 		}
@@ -150,6 +157,7 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 	#[cfg(debug_assertions)]
 	{
 		let enable_debug_server = std::env::var("DebugServer").map(|v| v != "0" && !v.is_empty()).unwrap_or(false);
+
 		if enable_debug_server {
 			WindowBuilder = WindowBuilder.on_page_load(|window, _payload| {
 				let _ = window.eval(

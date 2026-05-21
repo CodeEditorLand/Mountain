@@ -4,6 +4,7 @@
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Enum {
+
 	/// Use Air if available, otherwise fall through to Tauri.
 	#[default]
 	AutoDetect,

@@ -23,8 +23,10 @@ pub async fn Decrypt(Arguments:Vec<Value>) -> Result<Value, String> {
 
 	let Blob = match B64.decode(&Ciphertext) {
 		Ok(B) => B,
+
 		Err(_) => {
 			dev_log!("encryption", "warn: encryption:decrypt invalid base64 - returning empty");
+
 			return Ok(json!(""));
 		},
 	};
@@ -32,13 +34,15 @@ pub async fn Decrypt(Arguments:Vec<Value>) -> Result<Value, String> {
 	// Minimum: 12 (nonce) + 16 (GCM tag) = 28 bytes
 	if Blob.len() < 28 {
 		dev_log!("encryption", "warn: encryption:decrypt blob too short ({} bytes)", Blob.len());
+
 		return Ok(json!(""));
 	}
 
-	let KeyBytes = DeriveKey();
+	let KeyBytes = DeriveKey().map_err(|E| format!("encryption:decrypt unavailable - {E}"))?;
 
 	let UnboundK = match UnboundKey::new(&AES_256_GCM, &KeyBytes) {
 		Ok(K) => K,
+
 		Err(_) => return Ok(json!("")),
 	};
 
@@ -53,14 +57,18 @@ pub async fn Decrypt(Arguments:Vec<Value>) -> Result<Value, String> {
 	match Key.open_in_place(NonceVal, Aad::empty(), &mut Data) {
 		Ok(Plaintext) => {
 			let S = String::from_utf8_lossy(Plaintext).into_owned();
+
 			dev_log!("encryption", "encryption:decrypt ok ({} bytes)", S.len());
+
 			Ok(json!(S))
 		},
+
 		Err(_) => {
 			dev_log!(
 				"encryption",
 				"warn: encryption:decrypt open_in_place failed (wrong key or corrupt)"
 			);
+
 			Ok(json!(""))
 		},
 	}

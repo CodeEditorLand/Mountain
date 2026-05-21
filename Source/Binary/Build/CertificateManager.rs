@@ -330,6 +330,7 @@ impl CertificateManager {
 		let now = chrono::Utc::now();
 
 		let current_year = 2024; // Use fixed year for now
+
 		let current_month = 1;
 
 		let current_day = 1;

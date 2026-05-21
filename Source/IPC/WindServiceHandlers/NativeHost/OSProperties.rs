@@ -15,8 +15,11 @@ pub async fn NativeOSProperties() -> Result<Value, String> {
 	if let Some(Cached) = OS_PROPERTIES_CACHE.get() {
 		return Ok(Cached.clone());
 	}
+
 	let Result = compute_os_properties();
+
 	let _ = OS_PROPERTIES_CACHE.set(Result.clone());
+
 	Ok(Result)
 }
 

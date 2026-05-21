@@ -37,14 +37,16 @@ pub async fn InstallShellCommand(_Arguments:Vec<Value>) -> Result<Value, String>
 			// Retry with osascript-elevated write on macOS.
 			#[cfg(target_os = "macos")]
 			{
-				let Script = format!(
-					"do shell script \"ln -sf '{}' '{}'\" with administrator privileges",
-					ExePath.display(),
-					Target.display()
-				);
-
+				// Pass paths via env vars; use AppleScript's `quoted form of` for
+				// safe shell quoting - no interpolation into script source.
 				let Status = tokio::process::Command::new("osascript")
-					.args(["-e", &Script])
+					.env("SH_SRC", ExePath.as_os_str())
+					.env("SH_DST", Target.as_os_str())
+					.args([
+						"-e",
+						"do shell script (\"ln -sf \" & quoted form of (system attribute \"SH_SRC\") & \" \" & quoted \
+						 form of (system attribute \"SH_DST\")) with administrator privileges",
+					])
 					.status()
 					.await
 					.map_err(|E| format!("installShellCommand: osascript failed: {E}"))?;

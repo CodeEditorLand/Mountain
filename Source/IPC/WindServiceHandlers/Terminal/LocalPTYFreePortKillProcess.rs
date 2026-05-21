@@ -9,6 +9,7 @@ use serde_json::{Value, json};
 
 pub async fn LocalPTYFreePortKillProcess(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Port = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0) as u16;
+
 	if Port > 0 {
 		#[cfg(unix)]
 		{
@@ -16,8 +17,10 @@ pub async fn LocalPTYFreePortKillProcess(Arguments:Vec<Value>) -> Result<Value, 
 				.args(["-t", "-i", &format!(":{}", Port)])
 				.output()
 				.await;
+
 			if let Ok(O) = Out {
 				let Pids = String::from_utf8_lossy(&O.stdout);
+
 				for Pid in Pids.split_whitespace() {
 					if let Ok(P) = Pid.parse::<u32>() {
 						let _ = tokio::process::Command::new("kill").args(["-9", &P.to_string()]).status().await;
@@ -26,5 +29,6 @@ pub async fn LocalPTYFreePortKillProcess(Arguments:Vec<Value>) -> Result<Value, 
 			}
 		}
 	}
+
 	Ok(Value::Null)
 }

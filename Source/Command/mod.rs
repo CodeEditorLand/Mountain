@@ -7,6 +7,7 @@
 pub mod Bootstrap;
 
 pub mod Hover; // Atomic structure (new)
+
 pub mod Keybinding;
 
 pub mod LanguageFeature;

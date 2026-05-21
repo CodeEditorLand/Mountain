@@ -376,28 +376,39 @@ pub async fn mountain_ipc_invoke(
 	// file watch, storage events, command registration).
 	if IsHighFrequencyCommand {
 		match command.as_str() {
+
 			// Logger: forward error/warn/critical to dev_log; drop the rest.
 			// `logger:log` (info/debug/trace) fires thousands of times per boot
 			// from VS Code console.* calls - we gate those to `vscode-log`
 			// which is opt-in. Errors and warnings are always surfaced.
 			"logger:error" | "logger:critical" => {
+
 				let Msg = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or(
 					Arguments.first().and_then(|V| V.as_str()).unwrap_or(""),
 				);
+
 				if !Msg.is_empty() {
+
 					dev_log!("vscode-log", "[ERROR] {}", Msg);
 				}
+
 				return Ok(Value::Null);
 			},
+
 			"logger:warn" => {
+
 				let Msg = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or(
 					Arguments.first().and_then(|V| V.as_str()).unwrap_or(""),
 				);
+
 				if !Msg.is_empty() {
+
 					dev_log!("vscode-log", "[WARN] {}", Msg);
 				}
+
 				return Ok(Value::Null);
 			},
+
 			"logger:log" | "logger:info" | "logger:debug" | "logger:trace"
 			| "logger:flush" | "logger:setLevel" | "logger:getLevel"
 			| "logger:createLogger" | "logger:registerLogger"
@@ -421,11 +432,14 @@ pub async fn mountain_ipc_invoke(
 			// Workspace event stubs: change delivery via Tauri events
 			| "workspaces:onDidChangeWorkspaceFolders"
 			| "workspaces:onDidChangeWorkspaceName" => {
+
 				return Ok(Value::Null);
 			},
+
 			// Menubar: acknowledged with atomic counter in the Echo path,
 			// but fast-path here to save scheduler overhead per call.
 			"menubar:updateMenubar" => {
+
 				use std::sync::atomic::{AtomicU64, Ordering as AO};
 
 				static MENUBAR_CALLS_FAST:AtomicU64 = AtomicU64::new(0);
@@ -433,11 +447,13 @@ pub async fn mountain_ipc_invoke(
 				let N = MENUBAR_CALLS_FAST.fetch_add(1, AO::Relaxed) + 1;
 
 				if N == 1 || N % 100 == 0 {
+
 					dev_log!("menubar", "menubar:updateMenubar (fast-path call #{})", N);
 				}
 
 				return Ok(Value::Null);
 			},
+
 			_ => {}, // fall through to Echo dispatch for real work
 		}
 	}
@@ -2531,11 +2547,13 @@ pub async fn mountain_ipc_invoke(
 
 	let Result = match ResultReceiver.await {
 		Ok(Dispatched) => Dispatched,
+
 		Err(_) => {
 			dev_log!(
 				"ipc",
 				"error: [WindServiceHandlers] IPC task cancelled before producing a result"
 			);
+
 			Err("IPC task cancelled before result was produced".to_string())
 		},
 	};
@@ -2545,18 +2563,22 @@ pub async fn mountain_ipc_invoke(
 	// per session (logger, file I/O, storage polling).
 	if !IsHighFrequencyCommand {
 		let IsErr = Result.is_err();
+
 		let SpanName = if IsErr {
 			format!("land:mountain:ipc:{}:error", command)
 		} else {
 			format!("land:mountain:ipc:{}", command)
 		};
+
 		crate::otel_span!(&SpanName, OTLPStart, &[("ipc.command", command.as_str())]);
 
 		// Emit `land:mountain:handler:complete` to PostHog for every dispatched IPC.
 		// Pairs with `land:cocoon:handler:complete` to populate the Feature
 		// Parity dashboard's Node-vs-Rust handler-latency comparison.
 		let HandlerElapsedNanos = crate::IPC::DevLog::NowNano::Fn().saturating_sub(OTLPStart);
+
 		let HandlerDurationMs = HandlerElapsedNanos / 1_000_000;
+
 		crate::Binary::Build::PostHogPlugin::CaptureHandler::Fn(&command, HandlerDurationMs, !IsErr);
 	}
 
@@ -2570,6 +2592,7 @@ pub async fn mountain_ipc_invoke(
 	// is individually accounted for.
 	if !IsHighFrequencyCommand {
 		let ElapsedNanos = crate::IPC::DevLog::NowNano::Fn().saturating_sub(OTLPStart);
+
 		dev_log!("ipc", "done: {} ok={} t_ns={}", command, !Result.is_err(), ElapsedNanos);
 	}
 

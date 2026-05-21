@@ -22,12 +22,15 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 pub async fn AttachToProcess(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let TerminalId = match Arguments.first() {
 		Some(Value::Number(N)) => N.as_u64().unwrap_or(0),
+
 		Some(Value::Object(Obj)) => Obj.get("id").and_then(Value::as_u64).unwrap_or(0),
+
 		_ => 0,
 	};
 
 	if TerminalId == 0 {
 		dev_log!("terminal", "warn: [AttachToProcess] called with id=0, ignoring");
+
 		return Ok(Value::Null);
 	}
 
@@ -38,18 +41,23 @@ pub async fn AttachToProcess(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Valu
 	match Provider.GetTerminalProcessId(TerminalId).await {
 		Ok(Some(Pid)) => {
 			dev_log!("terminal", "[AttachToProcess] attached id={} pid={}", TerminalId, Pid);
+
 			Ok(json!({ "id": TerminalId, "pid": Pid }))
 		},
+
 		Ok(None) => {
 			dev_log!(
 				"terminal",
 				"warn: [AttachToProcess] id={} not found in active terminals",
 				TerminalId
 			);
+
 			Ok(Value::Null)
 		},
+
 		Err(Error) => {
 			dev_log!("terminal", "warn: [AttachToProcess] id={} error: {}", TerminalId, Error);
+
 			Ok(Value::Null)
 		},
 	}

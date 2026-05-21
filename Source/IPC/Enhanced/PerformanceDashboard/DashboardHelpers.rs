@@ -28,11 +28,17 @@ pub fn generate_alert_id() -> String { uuid::Uuid::new_v4().to_string() }
 pub fn metric_type_name(metric_type:&MetricType) -> &'static str {
 	match metric_type {
 		MetricType::MessageProcessingTime => "Message Processing Time",
+
 		MetricType::ConnectionLatency => "Connection Latency",
+
 		MetricType::MemoryUsage => "Memory Usage",
+
 		MetricType::CpuUsage => "CPU Usage",
+
 		MetricType::NetworkThroughput => "Network Throughput",
+
 		MetricType::ErrorRate => "Error Rate",
+
 		MetricType::QueueSize => "Queue Size",
 	}
 }

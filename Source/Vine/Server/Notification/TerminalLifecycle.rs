@@ -21,6 +21,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn TerminalLifecycle(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
 	let EventName = format!("sky://terminal/{}", &MethodName["terminal.".len()..]);
+
 	if let Err(Error) = Service.ApplicationHandle().emit(&EventName, Parameter) {
 		dev_log!("grpc", "warn: [MountainVinegRPCService] {} emit failed: {}", EventName, Error);
 	}
@@ -31,22 +32,29 @@ pub async fn TerminalLifecycle(Service:&MountainVinegRPCService, MethodName:&str
 		.get("handle")
 		.and_then(|H| H.as_str())
 		.and_then(|S| S.trim_start_matches("terminal:").parse::<u64>().ok());
+
 	if let Some(TerminalId) = HandleNumeric {
 		let Provider:Arc<dyn TerminalProvider> = Service.RunTime().Environment.Require();
+
 		match MethodName {
 			"terminal.sendText" => {
 				let Text = Parameter.get("text").and_then(|T| T.as_str()).unwrap_or("").to_string();
+
 				let ProviderForTask = Provider.clone();
+
 				tokio::spawn(async move {
 					let _ = ProviderForTask.SendTextToTerminal(TerminalId, Text).await;
 				});
 			},
+
 			"terminal.dispose" => {
 				let ProviderForTask = Provider.clone();
+
 				tokio::spawn(async move {
 					let _ = ProviderForTask.DisposeTerminal(TerminalId).await;
 				});
 			},
+
 			_ => {},
 		}
 	}

@@ -30,10 +30,15 @@ pub async fn UninstallShellCommand(_Arguments:Vec<Value>) -> Result<Value, Strin
 		Err(E) if E.kind() == std::io::ErrorKind::PermissionDenied => {
 			#[cfg(target_os = "macos")]
 			{
-				let Script = format!("do shell script \"rm -f '{}'\" with administrator privileges", Target.display());
-
+				// Pass path via env var; use AppleScript's `quoted form of` for
+				// safe shell quoting - no interpolation into script source.
 				let Status = tokio::process::Command::new("osascript")
-					.args(["-e", &Script])
+					.env("SH_TARGET", Target.as_os_str())
+					.args([
+						"-e",
+						"do shell script (\"rm -f \" & quoted form of (system attribute \"SH_TARGET\")) with \
+						 administrator privileges",
+					])
 					.status()
 					.await
 					.map_err(|E| format!("uninstallShellCommand: osascript failed: {E}"))?;

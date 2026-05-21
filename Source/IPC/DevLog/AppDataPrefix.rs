@@ -16,6 +16,7 @@ use std::sync::{Mutex, OnceLock};
 //   subsequent writes can retry after Tauri has created the directory,
 //   rather than caching None forever and routing all logs to /tmp.
 static RESOLVED:OnceLock<String> = OnceLock::new();
+
 static RETRY:Mutex<bool> = Mutex::new(true);
 
 pub fn Fn() -> Option<&'static str> {
@@ -35,6 +36,7 @@ pub fn Fn() -> Option<&'static str> {
 	if let Some(Prefix) = DetectAppDataPrefix() {
 		// RESOLVED may already be set by a concurrent caller - that's fine.
 		let _ = RESOLVED.set(Prefix);
+
 		*Guard = false;
 		return RESOLVED.get().map(String::as_str);
 	}
