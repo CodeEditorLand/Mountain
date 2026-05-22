@@ -326,27 +326,48 @@ async fn LaunchAndManageCocoonSideCar(
 	// die silently on the first `import()` and we'll sit through 20+
 	// seconds of `attempt N/M` retries with no diagnostic.
 	//
-	// bootstrap-fork.js is in `Mountain/scripts/cocoon/`. The Cocoon
-	// bundle is at `Cocoon/Target/Bootstrap/Implementation/Cocoon/Main.js`
-	// relative to the repo root. Compose the probe path by walking up
-	// from the bootstrap script to the `Element/` root, then descending.
-	if let Some(BootstrapDirectory) = ScriptPath.parent() {
-		let ProbePath = BootstrapDirectory.join("../..").join(COCOON_BUNDLE_PROBE);
+	// Two layouts:
+	//
+	// 1. Bundle (.app): tauri.conf.json maps
+	//    `Element/Cocoon/Target/Bootstrap/Implementation/Cocoon` →
+	//    `Contents/Resources/Cocoon/Target/Bootstrap/Implementation/Cocoon`. The
+	//    Tauri resource resolver finds it directly.
+	//
+	// 2. Repo (dev binary): bootstrap is at
+	//    `Element/Mountain/scripts/cocoon/bootstrap-fork.js`, so walking `../../..`
+	//    from the bootstrap dir reaches `Element/` and `COCOON_BUNDLE_PROBE`
+	//    (`../Cocoon/Target/...`) descends into `Element/Cocoon/Target/...`.
+	let BundleProbe = path_resolver
+		.resolve("Cocoon/Target/Bootstrap/Implementation/Cocoon/Main.js", BaseDirectory::Resource)
+		.ok()
+		.filter(|P| P.exists());
 
-		if !ProbePath.exists() {
-			return Err(CommonError::IPCError {
-				Description:format!(
-					"Cocoon bundle is missing at {}. Run `pnpm run prepublishOnly --filter=@codeeditorland/cocoon` \
-					 (or the full `./Maintain/Debug/Build.sh --profile debug-electron`) before launching - node will \
-					 fail to import without it and Mountain will fall into degraded mode with zero extensions \
-					 available. Root cause is typically an esbuild failure in an upstream Cocoon source file or a \
-					 stale `rm -rf Element/Cocoon/Target` without a rebuild.",
-					ProbePath.display()
-				),
-			});
+	if BundleProbe.is_none() {
+		if let Some(BootstrapDirectory) = ScriptPath.parent() {
+			let RepoProbePath = BootstrapDirectory.join("../..").join(COCOON_BUNDLE_PROBE);
+
+			if !RepoProbePath.exists() {
+				return Err(CommonError::IPCError {
+					Description:format!(
+						"Cocoon bundle is missing at {}. Run `pnpm run prepublishOnly \
+						 --filter=@codeeditorland/cocoon` (or the full `./Maintain/Debug/Build.sh --profile \
+						 debug-electron`) before launching - node will fail to import without it and Mountain will \
+						 fall into degraded mode with zero extensions available. Root cause is typically an esbuild \
+						 failure in an upstream Cocoon source file or a stale `rm -rf Element/Cocoon/Target` without \
+						 a rebuild.",
+						RepoProbePath.display()
+					),
+				});
+			}
+
+			dev_log!(
+				"cocoon",
+				"[CocoonManagement] pre-flight OK: bundle at {} (repo)",
+				RepoProbePath.display()
+			);
 		}
-
-		dev_log!("cocoon", "[CocoonManagement] pre-flight OK: bundle at {}", ProbePath.display());
+	} else {
+		dev_log!("cocoon", "[CocoonManagement] pre-flight OK: bundle in bundle resources");
 	}
 
 	// Atom I6: zombie-Cocoon sweep. If a prior Mountain exited without

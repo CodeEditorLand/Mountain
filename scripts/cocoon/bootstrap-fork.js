@@ -241,14 +241,16 @@ PostHogCapture("cocoon:session:start", {
 // Load Cocoon entry point
 // ============================================================================
 
+// Two-level = bundle (Contents/Resources/scripts/cocoon/ → Contents/Resources/Cocoon/).
+// Three-level = repo  (Element/Mountain/scripts/cocoon/ → Element/Cocoon/).
+const CocoonBase = (Rel) => [
+	new URL(`../../${Rel}`, import.meta.url),
+	new URL(`../../../${Rel}`, import.meta.url),
+];
+
 const CocoonEntryPaths = [
-	new URL(
-		"../../../Cocoon/Target/Bootstrap/Implementation/Cocoon/Main.js",
-
-		import.meta.url,
-	),
-
-	new URL("../../../Cocoon/Target/ESBuild/Cocoon/Main.js", import.meta.url),
+	...CocoonBase("Cocoon/Target/Bootstrap/Implementation/Cocoon/Main.js"),
+	...CocoonBase("Cocoon/Target/ESBuild/Cocoon/Main.js"),
 ];
 
 let Loaded = false;

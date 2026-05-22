@@ -82,12 +82,19 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	if !SkipBuiltins {
 		if let Ok(ExecutableDirectory) = std::env::current_exe() {
 			if let Some(Parent) = ExecutableDirectory.parent() {
+				// Resolve a raw path (which may contain `..`) to its canonical
+				// form when it exists, falling back to the raw path otherwise.
+				// Keeps log output clean (`Contents/Resources/...` not
+				// `Contents/MacOS/../Resources/...`).
+				let Canonicalize = |P:std::path::PathBuf| -> std::path::PathBuf { P.canonicalize().unwrap_or(P) };
+
 				// New canonical path: ../Resources/Static/Application/extensions.
 				// Extensions land here when tauri.conf.json bundle.resources maps
 				// them to "Static/Application/extensions" (single source layout).
 				let StaticAppExtPath = Parent.join("../Resources/Static/Application/extensions");
 
 				if StaticAppExtPath.exists() {
+					let StaticAppExtPath = Canonicalize(StaticAppExtPath);
 					dev_log!(
 						"extensions",
 						"[Extensions] [ScanPaths] + {} (Static/Application canonical)",
@@ -99,14 +106,14 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 
 				// Legacy flat path: ../Resources/extensions (kept for backward
 				// compat while the tauri.conf.json resources remap takes effect).
-				let ResourcesPath = Parent.join("../Resources/extensions");
+				let ResourcesPath = Canonicalize(Parent.join("../Resources/extensions"));
 
 				dev_log!("extensions", "[Extensions] [ScanPaths] + {}", ResourcesPath.display());
 
 				ScanPathsGuard.push(ResourcesPath);
 
 				// VS Code-style bundle layout: `.app/Contents/Resources/app/extensions`.
-				let ResourcesAppPath = Parent.join("../Resources/app/extensions");
+				let ResourcesAppPath = Canonicalize(Parent.join("../Resources/app/extensions"));
 
 				dev_log!("extensions", "[Extensions] [ScanPaths] + {}", ResourcesAppPath.display());
 
@@ -133,6 +140,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 				let SkyTargetPath = Parent.join("../../../Sky/Target/Static/Application/extensions");
 
 				if SkyTargetPath.exists() {
+					let SkyTargetPath = Canonicalize(SkyTargetPath);
 					dev_log!(
 						"extensions",
 						"[Extensions] [ScanPaths] + {} (Sky Target, repo-layout)",

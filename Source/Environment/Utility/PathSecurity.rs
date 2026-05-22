@@ -149,9 +149,10 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 /// - `$HOME/.land/**` - legacy alias kept for forward-compat reads of
 ///   pre-rename install trees so existing user data stays reachable until the
 ///   next install migrates it.
-/// - The Mountain executable's own `extensions/`, `../Resources/extensions/`
-///   and `../Resources/app/extensions/` neighbours - built-in extension roots
-///   that ship inside the `.app` bundle.
+/// - The Mountain executable's own `extensions/`, `../Resources/extensions/`,
+///   `../Resources/app/extensions/`, and
+///   `../Resources/Static/Application/extensions/` neighbours - built-in
+///   extension roots that ship inside the `.app` bundle.
 /// - `$APPDATA`-equivalents: Tauri's resolved app-data / app-config / app-local
 ///   directories (via `$XDG_DATA_HOME`, `$XDG_CONFIG_HOME` if set; on macOS the
 ///   `Library/Application Support/land.editor.*` tree).
@@ -240,10 +241,11 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 				ExeParent.join("extensions"),
 				ExeParent.join("../Resources/extensions"),
 				ExeParent.join("../Resources/app/extensions"),
-				// Sky's Static/Application/extensions root is reached via
-				// `../../../Sky/Target/Static/Application/extensions` in the
-				// debug profile - match the canonical `Sky/Target/Static/Application/extensions`
-				// segment regardless of how many `..` hops the scan path used.
+				// Canonical bundle layout: tauri.conf.json maps Sky's
+				// Static/Application/extensions into Contents/Resources/Static/
+				// Application/extensions. This is the path ScanPathConfigure
+				// adds first and it must bypass the workspace-folder gate.
+				ExeParent.join("../Resources/Static/Application/extensions"),
 			];
 
 			for Root in BundleRoots {

@@ -30,7 +30,16 @@ pub fn Fn<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> Option<ResolvedNode::St
 		return Some(ResolvedNode::Struct { Path:SiblingNode, Source:NodeSource::Enum::Shipped });
 	}
 
-	let _ = PathBuf::new();
+	// Tauri externalBin sidecar layout: the binary is placed directly next to
+	// the main executable as `node` (not in a `Node/bin/` subdirectory).
+	// Matches `externalBin: ["Binary/node"]` in tauri.conf.json.
+	let SidecarName = if cfg!(target_os = "windows") { "node.exe" } else { "node" };
+
+	let SidecarNode = ExecutableDirectory.join(SidecarName);
+
+	if SidecarNode.exists() {
+		return Some(ResolvedNode::Struct { Path:SidecarNode, Source:NodeSource::Enum::Shipped });
+	}
 
 	None
 }

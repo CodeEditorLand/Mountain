@@ -55,30 +55,49 @@ struct CacheBlob {
 	extensions:Vec<CachedEntry>,
 }
 
-/// Maximum cache age before we consider it stale and fall back to a live scan.
+/// Maximum cache age for dev/repo runs (binary sits next to the cache file).
 const MAX_CACHE_AGE:Duration = Duration::from_secs(600); // 10 minutes
 
 /// Try to load extension descriptors from the pre-baked manifest cache.
+///
+/// Probes two locations in order:
+///   1. `BinaryDir/extensions.manifest.json` - dev binary next to repo cache
+///   2. `BinaryDir/../Resources/extensions.manifest.json` - .app bundle path
+///      (tauri.conf.json copies Sky/Target/extensions.manifest.json there)
+///
+/// Bundled caches skip the stale check: they were written at build time and
+/// are always consistent with the extensions packed into the same .app.
 ///
 /// Returns `Ok(Some(map))` on a cache hit, `Ok(None)` when the cache is
 /// missing/stale/incompatible, and `Err(_)` only on unexpected I/O errors.
 pub async fn TryLoadFromCache(
 	BinaryDir:&PathBuf,
 ) -> Result<Option<HashMap<String, ExtensionDescriptionStateDTO>>, CommonError> {
-	let CachePath = BinaryDir.join("extensions.manifest.json");
+	// Probe 1: alongside the binary (dev / repo run).
+	let DevCachePath = BinaryDir.join("extensions.manifest.json");
+	// Probe 2: inside .app bundle at Contents/Resources/ (bundle run).
+	let BundleCachePath = BinaryDir.join("../Resources/extensions.manifest.json");
 
-	// --- Existence + freshness check ---
-	let Metadata = match tokio::fs::metadata(&CachePath).await {
-		Ok(M) => M,
-		Err(_) => {
-			dev_log!("extensions", "[ExtensionCache] Cache not found at {}", CachePath.display());
-			return Ok(None);
-		},
+	// Pick the first probe that exists, noting whether it is the bundled copy.
+	let (CachePath, IsBundled) = if tokio::fs::metadata(&DevCachePath).await.is_ok() {
+		(DevCachePath, false)
+	} else if tokio::fs::metadata(&BundleCachePath).await.is_ok() {
+		(BundleCachePath, true)
+	} else {
+		dev_log!("extensions", "[ExtensionCache] Cache not found at {}", DevCachePath.display());
+		return Ok(None);
 	};
 
-	let Age = Metadata.modified().ok().and_then(|T| T.elapsed().ok()).unwrap_or(Duration::MAX);
-
-	if Age > MAX_CACHE_AGE {
+	// --- Freshness check (skipped for bundled caches - built with the app) ---
+	let Age = if IsBundled {
+		Duration::ZERO
+	} else {
+		let Metadata = tokio::fs::metadata(&CachePath)
+			.await
+			.map_err(|_| CommonError::Unknown { Description:"cache stat failed".into() })?;
+		Metadata.modified().ok().and_then(|T| T.elapsed().ok()).unwrap_or(Duration::MAX)
+	};
+	if !IsBundled && Age > MAX_CACHE_AGE {
 		dev_log!(
 			"extensions",
 			"[ExtensionCache] Cache is stale ({:.0}s > {:.0}s), falling back to live scan",
@@ -129,43 +148,20 @@ pub async fn TryLoadFromCache(
 		let Manifest = &Entry.manifest;
 		let Path = &Entry.path;
 
-		let Name = Manifest.get("name").and_then(Value::as_str).unwrap_or("").to_string();
-		let Version = Manifest.get("version").and_then(Value::as_str).unwrap_or("0.0.0").to_string();
+		// Helpers scoped to each manifest to eliminate repeated extraction chains.
+		let str = |k:&str| Manifest.get(k).and_then(Value::as_str).map(str::to_string);
+		let str_or = |k:&str, d:&str| Manifest.get(k).and_then(Value::as_str).unwrap_or(d).to_string();
+		let arr =
+			|k:&str| -> Option<Vec<String>> { Manifest.get(k).and_then(|V| serde_json::from_value(V.clone()).ok()) };
+
+		let ExtId = Entry.id.clone();
 		let Publisher = Manifest
 			.get("publisher")
 			.and_then(Value::as_str)
-			.unwrap_or(Entry.id.split('.').next().unwrap_or("unknown"))
+			.unwrap_or_else(|| Entry.id.split('.').next().unwrap_or("unknown"))
 			.to_string();
 
-		// Build ExtensionLocation as a plain file:// URI string.
-		// Normalize.rs handles `Value::String` via `FromUrl::Fn` which parses
-		// it into the `{scheme, authority, path, ...}` UriComponents shape.
-		// Using `{"value": url}` (the Identifier wrapper shape) would NOT match
-		// the `scheme` key check and would fall through to `/extensions/unknown`.
-		let LocationUri = format!("file://{}", Path);
-
-		// Activation events
-		let ActivationEvents:Option<Vec<String>> = Manifest
-			.get("activationEvents")
-			.and_then(|V| serde_json::from_value(V.clone()).ok());
-
-		// Contributes
-		let Contributes = Manifest.get("contributes").cloned();
-
-		// Categories
-		let Categories:Option<Vec<String>> =
-			Manifest.get("categories").and_then(|V| serde_json::from_value(V.clone()).ok());
-
-		let Main = Manifest.get("main").and_then(Value::as_str).map(str::to_string);
-		let Browser = Manifest.get("browser").and_then(Value::as_str).map(str::to_string);
-		let ModuleType = Manifest.get("type").and_then(Value::as_str).map(str::to_string);
-
-		let DisplayName = Manifest.get("displayName").and_then(Value::as_str).map(str::to_string);
-
-		let ExtId = Entry.id.clone();
-
-		// Determine if this is a built-in extension (lives under the
-		// binary's sibling `extensions/` directory).
+		// Built-in when the parent directory is named "extensions".
 		let IsBuiltin = PathBuf::from(Path)
 			.parent()
 			.and_then(|P| P.file_name())
@@ -173,48 +169,36 @@ pub async fn TryLoadFromCache(
 			.map(|N| N == "extensions")
 			.unwrap_or(false);
 
-		let Description = Manifest.get("description").and_then(Value::as_str).map(str::to_string);
-		let Keywords:Option<Vec<String>> =
-			Manifest.get("keywords").and_then(|V| serde_json::from_value(V.clone()).ok());
-		let Icon = Manifest.get("icon").and_then(Value::as_str).map(str::to_string);
-		let AiKey = Manifest.get("aiKey").and_then(Value::as_str).map(str::to_string);
-		let ExtensionKind = Manifest.get("extensionKind").cloned();
-		let Capabilities = Manifest.get("capabilities").cloned();
-		let ExtensionDependencies:Option<Vec<String>> = Manifest
-			.get("extensionDependencies")
-			.and_then(|V| serde_json::from_value(V.clone()).ok());
-		let ExtensionPack:Option<Vec<String>> = Manifest
-			.get("extensionPack")
-			.and_then(|V| serde_json::from_value(V.clone()).ok());
-
 		let Dto = ExtensionDescriptionStateDTO {
 			Identifier:serde_json::json!({ "value": ExtId }),
-			Name,
-			Version,
+			Name:str_or("name", ""),
+			Version:str_or("version", "0.0.0"),
 			Publisher,
 			Engines:Manifest.get("engines").cloned().unwrap_or(serde_json::json!({})),
-			Main,
-			Browser,
-			ModuleType,
+			Main:str("main"),
+			Browser:str("browser"),
+			ModuleType:str("type"),
 			IsBuiltin,
 			IsUnderDevelopment:false,
-			ExtensionLocation:Value::String(LocationUri),
-			ActivationEvents,
-			Contributes,
-			Categories,
-			DisplayName,
-			Description,
-			Keywords,
+			// file:// URI string - Normalize.rs parses it via FromUrl::Fn into
+			// the {scheme, authority, path, …} UriComponents shape.
+			ExtensionLocation:Value::String(format!("file://{}", Path)),
+			ActivationEvents:arr("activationEvents"),
+			Contributes:Manifest.get("contributes").cloned(),
+			Categories:arr("categories"),
+			DisplayName:str("displayName"),
+			Description:str("description"),
+			Keywords:arr("keywords"),
 			Repository:Manifest.get("repository").cloned(),
 			Bugs:Manifest.get("bugs").cloned(),
-			Homepage:Manifest.get("homepage").and_then(Value::as_str).map(str::to_string),
-			License:Manifest.get("license").and_then(Value::as_str).map(str::to_string),
-			Icon,
-			AiKey,
-			ExtensionKind,
-			Capabilities,
-			ExtensionDependencies,
-			ExtensionPack,
+			Homepage:str("homepage"),
+			License:str("license"),
+			Icon:str("icon"),
+			AiKey:str("aiKey"),
+			ExtensionKind:Manifest.get("extensionKind").cloned(),
+			Capabilities:Manifest.get("capabilities").cloned(),
+			ExtensionDependencies:arr("extensionDependencies"),
+			ExtensionPack:arr("extensionPack"),
 		};
 
 		Map.insert(ExtId, Dto);
@@ -222,10 +206,15 @@ pub async fn TryLoadFromCache(
 
 	dev_log!(
 		"extensions",
-		"[ExtensionCache] Loaded {} extensions from cache ({} bytes, {:.0}s old)",
+		"[ExtensionCache] Loaded {} extensions from {} cache ({} bytes{})",
 		Map.len(),
+		if IsBundled { "bundled" } else { "dev" },
 		Bytes.len(),
-		Age.as_secs_f32()
+		if IsBundled {
+			String::new()
+		} else {
+			format!(", {:.0}s old", Age.as_secs_f32())
+		}
 	);
 
 	Ok(Some(Map))
