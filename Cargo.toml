@@ -160,6 +160,9 @@ TierFindFilesLayer4 = []
 TierGlobNative = []
 # Tier:FileWatcher:Layer4 🟣 Experimental - notify-rs FS events (dep is already on the crate)
 TierFileWatcherLayer4 = []
+# Tier:SchemeAssets:FileSystem - assets served from disk via static_root fallback
+# (frontendDist: null). Enabled by TierSchemeAssets=FileSystem in .env.Land.
+TierSchemeAssetsFileSystem = []
 # Tier:SchemeAssets:Hybrid 🟣 Experimental
 TierSchemeAssetsHybrid = []
 # Tier:Configuration:Eager 🟣 Experimental
