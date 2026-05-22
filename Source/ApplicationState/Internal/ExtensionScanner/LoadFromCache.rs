@@ -137,7 +137,11 @@ pub async fn TryLoadFromCache(
 			.unwrap_or(Entry.id.split('.').next().unwrap_or("unknown"))
 			.to_string();
 
-		// Build ExtensionLocation as a file:// URI.
+		// Build ExtensionLocation as a plain file:// URI string.
+		// Normalize.rs handles `Value::String` via `FromUrl::Fn` which parses
+		// it into the `{scheme, authority, path, ...}` UriComponents shape.
+		// Using `{"value": url}` (the Identifier wrapper shape) would NOT match
+		// the `scheme` key check and would fall through to `/extensions/unknown`.
 		let LocationUri = format!("file://{}", Path);
 
 		// Activation events
@@ -194,7 +198,7 @@ pub async fn TryLoadFromCache(
 			ModuleType,
 			IsBuiltin,
 			IsUnderDevelopment:false,
-			ExtensionLocation:serde_json::json!({ "value": LocationUri }),
+			ExtensionLocation:Value::String(LocationUri),
 			ActivationEvents,
 			Contributes,
 			Categories,

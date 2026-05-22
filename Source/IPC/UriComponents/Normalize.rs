@@ -15,6 +15,16 @@ pub fn Fn(Raw:Option<&Value>) -> Value {
 
 		Some(Value::String(Url)) => FromUrl::Fn(Url),
 
+		// {"value": "url_string"} - legacy cache loader format where the URI
+		// was mistakenly wrapped in the Identifier shape. Unwrap and parse as URL.
+		Some(Value::Object(Map)) if Map.contains_key("value") => {
+			if let Some(Value::String(Url)) = Map.get("value") {
+				FromUrl::Fn(Url)
+			} else {
+				FromFilePath::Fn("/extensions/unknown")
+			}
+		},
+
 		_ => FromFilePath::Fn("/extensions/unknown"),
 	}
 }
