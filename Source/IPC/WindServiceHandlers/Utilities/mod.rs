@@ -13,6 +13,8 @@ pub mod ApplicationRoot;
 
 pub mod ChannelPriority;
 
+pub mod LocalhostUrl;
+
 pub mod FiddeeRoot;
 
 pub mod JsonValueHelpers;

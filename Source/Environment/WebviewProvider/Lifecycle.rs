@@ -85,13 +85,26 @@ pub(super) async fn create_webview_panel_impl(
 		webview_guard.insert(handle.clone(), state);
 	}
 
-	// Create a new Tauri window for this webview with security settings
+	// Create a new Tauri window for this webview with security settings.
+	// Use the localhost plugin URL (http://localhost:PORT/Mountain/WebviewHost.html)
+	// so the webview's scripts are served by the same localhost plugin as the
+	// main window. WebviewUrl::App("WebviewHost.html") routes through
+	// tauri::manager which has no assets when frontendDist is null.
 	let title_clone = title.clone();
+
+	let WebviewHostUrl = crate::IPC::WindServiceHandlers::Utilities::LocalhostUrl::get_localhost_url()
+		.map(|Base| format!("{}/Mountain/WebviewHost", Base))
+		.unwrap_or_else(|| "http://localhost:15536/Mountain/WebviewHost".to_string());
+
+	let WebviewUrlParsed = WebviewHostUrl
+		.parse::<url::Url>()
+		.map(tauri::WebviewUrl::External)
+		.unwrap_or_else(|_| tauri::WebviewUrl::App("WebviewHost.html".into()));
 
 	let _webview_window = WebviewWindowBuilder::new(
 		&env.ApplicationHandle,
 		&handle,
-		tauri::WebviewUrl::App("WebviewHost.html".into()),
+		WebviewUrlParsed,
 	)
 	.title(title)
 	.initialization_script(&format!(

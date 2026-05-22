@@ -386,116 +386,12 @@ async fn LaunchAndManageCocoonSideCar(
 	// Overridable via `Pick=/absolute/path/to/node`.
 	let ResolvedNodeBinary = NodeResolver::ResolveNodeBinary::Fn(&ApplicationHandle);
 
-	// Build Node.js command with comprehensive environment configuration
 	let mut NodeCommand = Command::new(&ResolvedNodeBinary.Path);
-
-	let mut EnvironmentVariables = HashMap::new();
-
-	// VS Code protocol environment variables for extension host compatibility
-	EnvironmentVariables.insert("VSCODE_PIPE_LOGGING".to_string(), "true".to_string());
-
-	EnvironmentVariables.insert("VSCODE_VERBOSE_LOGGING".to_string(), "true".to_string());
-
-	EnvironmentVariables.insert("VSCODE_PARENT_PID".to_string(), std::process::id().to_string());
-
-	// gRPC port configuration for Vine communication
-	EnvironmentVariables.insert("MOUNTAIN_GRPC_PORT".to_string(), MOUNTAIN_GRPC_PORT.to_string());
-
-	EnvironmentVariables.insert("COCOON_GRPC_PORT".to_string(), COCOON_GRPC_PORT.to_string());
-
-	// Preserve PATH so `node` resolves. env_clear() was stripping it.
-	if let Ok(Path) = std::env::var("PATH") {
-		EnvironmentVariables.insert("PATH".to_string(), Path);
-	}
-
-	if let Ok(Home) = std::env::var("HOME") {
-		EnvironmentVariables.insert("HOME".to_string(), Home);
-	}
-
-	// Atom I5: forward every Product*, Tier*, Network* env var from
-	// .env.Land into the Cocoon subprocess. Cocoon's InitData.ts +
-	// ExtensionHostHandler.ts read these at startup for version,
-	// identity, and port configuration. Without this forwarding, the
-	// whitelist above drops them and Cocoon falls back to defaults,
-	// defeating the single-source-of-truth design.
-	//
-	// PascalCase single-word vars: covers `.env.Land.PostHog` (Authorize,
-	// Beam, Report, Brand, Replay, Ask, Throttle, Buffer, Batch, Cap,
-	// Capture, OTLPEndpoint, OTLPEnabled), `.env.Land.Node` (Pick,
-	// Require), `.env.Land.Extensions` (Lodge, Extend, Probe, Ship, Wire,
-	// Install, Mute, Skip), and the kernel / Cocoon-spawn / preload
-	// gating flags (Spawn, Render). Each name is a single PascalCase
-	// action verb - no LAND_ prefix. Previously only Product/Tier/Network
-	// were forwarded and the PostHog bridge fell back to the empty-string
-	// default; the AllowList below now enumerates every Land-introduced
-	// env var by name so Cocoon sees the same values Mountain reads.
-	const LandEnvAllowList:&[&str] = &[
-		"Authorize",
-		"Beam",
-		"Report",
-		"Brand",
-		"Replay",
-		"Ask",
-		"Throttle",
-		"Buffer",
-		"Batch",
-		"Cap",
-		"Capture",
-		"OTLPEndpoint",
-		"OTLPEnabled",
-		"Pick",
-		"Require",
-		"Lodge",
-		"Extend",
-		"Probe",
-		"Ship",
-		"Wire",
-		"Install",
-		"Mute",
-		"Skip",
-		"Spawn",
-		"Render",
-		"Walk",
-		"Trace",
-		"Record",
-		"Profile",
-		"Diagnose",
-		"Resolve",
-		"Open",
-		"Warn",
-		"Catch",
-		"Source",
-		"Track",
-		"Defer",
-		"Boot",
-		"Pack",
-	];
-
-	for (Key, Value) in std::env::vars() {
-		if Key.starts_with("Product")
-			|| Key.starts_with("Tier")
-			|| Key.starts_with("Network")
-			|| LandEnvAllowList.contains(&Key.as_str())
-		{
-			EnvironmentVariables.insert(Key, Value);
-		}
-	}
-
-	// Atom I11: forward NODE_ENV / TAURI_ENV_DEBUG (Trace is
-	// already covered by the `LAND_` prefix sweep above). Without this,
-	// env_clear() leaves Cocoon seeing NodeEnv="production" /
-	// TauriDebug=false even on the debug-electron profile - silently
-	// disabling dev-only logging and debug-only diagnostics in Cocoon.
-	for Key in ["NODE_ENV", "TAURI_ENV_DEBUG"] {
-		if let Ok(Value) = std::env::var(Key) {
-			EnvironmentVariables.insert(Key.to_string(), Value);
-		}
-	}
 
 	NodeCommand
 		.arg(&ScriptPath)
 		.env_clear()
-		.envs(EnvironmentVariables)
+		.envs(BuildCocoonEnvironment())
 		.stdin(Stdio::piped())
 		.stdout(Stdio::piped())
 		.stderr(Stdio::piped());
@@ -521,105 +417,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 	crate::dev_log!("cocoon", "spawned PID={}", ProcessId);
 
-	// Capture stdout for trace logging. Two disposition classes:
-	//
-	// 1. Tagged lines produced by `Cocoon/Source/Services/DevLog.ts::
-	//    CocoonDevLog(Tag, Message)` arrive prefixed with `[DEV:<UPPER_TAG>]
-	//    <body>`. Re-emit under the matching Mountain tag (lowercased) so
-	//    `Trace=bootstrap-stage` on Mountain's side surfaces Cocoon's
-	//    `bootstrap-stage` lines without forcing the user to also enable the broad
-	//    `cocoon` tag.
-	//
-	// 2. Plain stdout (console.log, uncaught trace, etc.) stays under the `cocoon`
-	//    tag so it's silent unless explicitly requested.
-	if let Some(stdout) = ChildProcess.stdout.take() {
-		tokio::spawn(async move {
-			let Reader = BufReader::new(stdout);
-			let mut Lines = Reader.lines();
-
-			while let Ok(Some(Line)) = Lines.next_line().await {
-				if let Some(ForwardedTag) = ExtractDevTag(&Line) {
-					// dev_log! macro requires a static string, so match on
-					// the known tag set and fall through to raw 'cocoon'
-					// for anything else. Keep the arms in sync with
-					// `CocoonDevLog` call sites.
-					match ForwardedTag.as_str() {
-						"bootstrap-stage" => dev_log!("bootstrap-stage", "[Cocoon stdout] {}", Line),
-						"ext-activate" => dev_log!("ext-activate", "[Cocoon stdout] {}", Line),
-						"config-prime" => dev_log!("config-prime", "[Cocoon stdout] {}", Line),
-						"breaker" => dev_log!("breaker", "[Cocoon stdout] {}", Line),
-						_ => dev_log!("cocoon", "[Cocoon stdout] {}", Line),
-					}
-				} else {
-					dev_log!("cocoon", "[Cocoon stdout] {}", Line);
-				}
-			}
-		});
-	}
-
-	// Capture stderr for warn-level logging.
-	//
-	// Node and macOS tooling write a stream of informational-only noise
-	// to stderr that is indistinguishable from fatal errors at the line
-	// level. Downgrade these to the verbose `cocoon-stderr-verbose` tag
-	// (silent under `Trace=short`) so the main cocoon channel only
-	// carries actionable Node errors:
-	//
-	// - `: is already signed` / `: replacing existing signature` - macOS codesign
-	//   informational output when Cocoon re-signs a just-rebuilt extension binary.
-	//   Not an error.
-	// - `DeprecationWarning:` / `(node:...) [DEP0...]` - Node deprecation warnings
-	//   from VS Code's upstream dependencies (punycode, url.parse, Buffer()).
-	//   Fixable only in upstream, not in Land.
-	// - `Use \`node --trace-deprecation\` to show where the warning was created` -
-	//   follow-up to the DEP line above.
-	// - `EntryNotFound (FileSystemError):` + follow-up stack frames - extensions
-	//   (svelte, copilot, etc.) probe paths that may not exist and let the
-	//   rejection bubble up. Node's unhandled rejection printer splits the stack
-	//   across stderr lines. The classifier enters a stateful "suppress follow-up
-	//   stack frames" mode after the first EntryNotFound line and exits on a
-	//   non-frame line.
-	if let Some(stderr) = ChildProcess.stderr.take() {
-		tokio::spawn(async move {
-			let Reader = BufReader::new(stderr);
-			let mut Lines = Reader.lines();
-			let mut SuppressStackFrames = false;
-
-			while let Ok(Some(Line)) = Lines.next_line().await {
-				let Trimmed = Line.trim_start();
-				let IsStackFrame = Trimmed.starts_with("at ")
-					|| Trimmed.starts_with("code: '")
-					|| Trimmed == "}"
-					|| Trimmed.is_empty();
-				if SuppressStackFrames && IsStackFrame {
-					dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
-					continue;
-				}
-				// Exited the suppression window. Reset and classify
-				// this line normally.
-				SuppressStackFrames = false;
-
-				let IsBenignSingleLine = Line.contains(": is already signed")
-					|| Line.contains(": replacing existing signature")
-					|| Line.contains("DeprecationWarning:")
-					|| Line.contains("--trace-deprecation")
-					|| Line.contains("--trace-warnings");
-				let IsBenignStackHead = Line.contains("EntryNotFound (FileSystemError):")
-					|| Line.contains("FileNotFound (FileSystemError):")
-					|| Line.contains("[LandFix:UnhandledRejection]")
-					|| Line.starts_with("[Patcher] unhandledRejection:")
-					|| Line.starts_with("[Patcher] uncaughtException:");
-				if IsBenignStackHead {
-					SuppressStackFrames = true;
-				}
-				if IsBenignSingleLine || IsBenignStackHead {
-					dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
-				} else {
-					dev_log!("cocoon", "warn: [Cocoon stderr] {}", Line);
-				}
-			}
-		});
-	}
+	SpawnCocoonIoForwarders(&mut ChildProcess);
 
 	// Establish Vine connection to Cocoon with exponential-backoff
 	// retry + child-exit detection.
@@ -1118,6 +916,106 @@ pub async fn HardKillCocoon() {
 	}
 
 	State.IsRunning = false;
+}
+
+/// Build the complete environment variable map for the Cocoon subprocess.
+///
+/// Includes: VS Code pipe-logging vars, gRPC ports, PATH/HOME passthrough,
+/// every `Product*`/`Tier*`/`Network*` var, the PascalCase Land allow-list
+/// (PostHog, Extensions, kernel flags), and NODE_ENV / TAURI_ENV_DEBUG.
+fn BuildCocoonEnvironment() -> HashMap<String, String> {
+	const LAND_ENV_ALLOW_LIST:&[&str] = &[
+		"Authorize", "Beam", "Report", "Brand", "Replay", "Ask", "Throttle", "Buffer", "Batch", "Cap", "Capture",
+		"OTLPEndpoint", "OTLPEnabled", "Pick", "Require", "Lodge", "Extend", "Probe", "Ship", "Wire", "Install",
+		"Mute", "Skip", "Spawn", "Render", "Walk", "Trace", "Record", "Profile", "Diagnose", "Resolve", "Open",
+		"Warn", "Catch", "Source", "Track", "Defer", "Boot", "Pack",
+	];
+
+	let mut Env = HashMap::new();
+
+	Env.insert("VSCODE_PIPE_LOGGING".into(), "true".into());
+	Env.insert("VSCODE_VERBOSE_LOGGING".into(), "true".into());
+	Env.insert("VSCODE_PARENT_PID".into(), std::process::id().to_string());
+	Env.insert("MOUNTAIN_GRPC_PORT".into(), MOUNTAIN_GRPC_PORT.to_string());
+	Env.insert("COCOON_GRPC_PORT".into(), COCOON_GRPC_PORT.to_string());
+
+	for Key in ["PATH", "HOME"] {
+		if let Ok(V) = std::env::var(Key) {
+			Env.insert(Key.into(), V);
+		}
+	}
+
+	for (Key, Value) in std::env::vars() {
+		if Key.starts_with("Product") || Key.starts_with("Tier") || Key.starts_with("Network")
+			|| LAND_ENV_ALLOW_LIST.contains(&Key.as_str())
+		{
+			Env.insert(Key, Value);
+		}
+	}
+
+	for Key in ["NODE_ENV", "TAURI_ENV_DEBUG"] {
+		if let Ok(V) = std::env::var(Key) {
+			Env.insert(Key.into(), V);
+		}
+	}
+
+	Env
+}
+
+/// Spawn background tasks that forward Cocoon's stdout and stderr into
+/// Mountain's dev-log. Tagged lines (`[DEV:<TAG>] …`) are re-emitted under
+/// the matching tag; plain lines stay under `cocoon`.
+fn SpawnCocoonIoForwarders(Process:&mut tokio::process::Child) {
+	if let Some(Stdout) = Process.stdout.take() {
+		tokio::spawn(async move {
+			let mut Lines = BufReader::new(Stdout).lines();
+			while let Ok(Some(Line)) = Lines.next_line().await {
+				if let Some(Tag) = ExtractDevTag(&Line) {
+					match Tag.as_str() {
+						"bootstrap-stage" => dev_log!("bootstrap-stage", "[Cocoon stdout] {}", Line),
+						"ext-activate"    => dev_log!("ext-activate",    "[Cocoon stdout] {}", Line),
+						"config-prime"    => dev_log!("config-prime",    "[Cocoon stdout] {}", Line),
+						"breaker"         => dev_log!("breaker",         "[Cocoon stdout] {}", Line),
+						_                 => dev_log!("cocoon",          "[Cocoon stdout] {}", Line),
+					}
+				} else {
+					dev_log!("cocoon", "[Cocoon stdout] {}", Line);
+				}
+			}
+		});
+	}
+
+	if let Some(Stderr) = Process.stderr.take() {
+		tokio::spawn(async move {
+			let mut Lines = BufReader::new(Stderr).lines();
+			let mut SuppressStack = false;
+			while let Ok(Some(Line)) = Lines.next_line().await {
+				let T = Line.trim_start();
+				let IsFrame = T.starts_with("at ") || T.starts_with("code: '") || T == "}" || T.is_empty();
+				if SuppressStack && IsFrame {
+					dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
+					continue;
+				}
+				SuppressStack = false;
+				let Benign = Line.contains(": is already signed")
+					|| Line.contains(": replacing existing signature")
+					|| Line.contains("DeprecationWarning:")
+					|| Line.contains("--trace-deprecation")
+					|| Line.contains("--trace-warnings");
+				let BenignHead = Line.contains("EntryNotFound (FileSystemError):")
+					|| Line.contains("FileNotFound (FileSystemError):")
+					|| Line.contains("[LandFix:UnhandledRejection]")
+					|| Line.starts_with("[Patcher] unhandledRejection:")
+					|| Line.starts_with("[Patcher] uncaughtException:");
+				if BenignHead { SuppressStack = true; }
+				if Benign || BenignHead {
+					dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
+				} else {
+					dev_log!("cocoon", "warn: [Cocoon stderr] {}", Line);
+				}
+			}
+		});
+	}
 }
 
 /// Atom I6: pre-boot sweep. TCP-probe the Cocoon gRPC port and kill any

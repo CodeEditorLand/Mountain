@@ -162,6 +162,8 @@ pub fn AppLifecycleSetup(
 
 	dev_log!("lifecycle", "[Lifecycle] [Setup] LocalhostUrl={}", localhost_url);
 
+	crate::IPC::WindServiceHandlers::Utilities::LocalhostUrl::set_localhost_url(localhost_url.clone());
+
 	let app_handle_for_setup = app_handle.clone();
 
 	TraceStep!("[Lifecycle] [Setup] AppHandle acquired.");
