@@ -7,7 +7,7 @@
 
 use serde_json::Value;
 
-pub async fn CocoonRequest(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	crate::dev_log!("ipc", "cocoon:request method={:?}", Arguments.first());
 
 	let MethodOpt = Arguments.first().and_then(|V| V.as_str()).map(|S| S.to_string());

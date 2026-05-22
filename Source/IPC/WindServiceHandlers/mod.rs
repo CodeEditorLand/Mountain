@@ -54,7 +54,11 @@ pub mod Utilities;
 // (`WindServiceHandlers::Utilities::foo`).
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
-use Cocoon::{ExtensionHostMessage::CocoonExtensionHostMessage, Notify::CocoonNotify, Request::CocoonRequest};
+use Cocoon::{
+	ExtensionHostMessage::Fn as CocoonExtensionHostMessage,
+	Notify::Fn as CocoonNotify,
+	Request::Fn as CocoonRequest,
+};
 use ExtensionHost::{
 	DebugService::{ExtensionHostDebugClose, ExtensionHostDebugReload},
 	Starter::{
