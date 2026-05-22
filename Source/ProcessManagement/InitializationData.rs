@@ -294,7 +294,7 @@ pub async fn ConstructSandboxConfiguration(
 	let UserProfile = AppDataDir.join("User");
 
 	// Helper closure: build a `UriComponents` JSON object for a filesystem path.
-	let FileUri = |P: std::path::PathBuf| -> serde_json::Value {
+	let FileUri = |P:std::path::PathBuf| -> serde_json::Value {
 		json!({
 			"scheme": "file",
 			"authority": "",
@@ -326,6 +326,30 @@ pub async fn ConstructSandboxConfiguration(
 		"home": FileUri(UserProfile.join("profiles")),
 		"all": [DefaultProfile.clone()],
 		"profile": DefaultProfile
+	});
+
+	// Pre-build other nested sections that contribute heavily to the token
+	// count of the outer json! call and could push it past the limit.
+	let NlsSection = json!({
+		"messages": {},
+		"language": "en",
+		"availableLanguages": { "en": "English" }
+	});
+
+	let ProductConfig = json!({
+		"nameShort": std::env::var("ProductNameShort").unwrap_or_else(|_| "FIDDEE".into()),
+		"nameLong": std::env::var("ProductNameLong").unwrap_or_else(|_| "FIDDEE".into()),
+		"applicationName": std::env::var("ProductApplicationName").unwrap_or_else(|_| "fiddee".into()),
+		"embedderIdentifier": std::env::var("ProductEmbedderIdentifier").unwrap_or_else(|_| "fiddee-desktop".into()),
+		"dataFolderName": std::env::var("ProductDataFolderName").unwrap_or_else(|_| ".fiddee".into()),
+		"sharedDataFolderName": std::env::var("ProductDataFolderName").unwrap_or_else(|_| ".fiddee".into()),
+		"version": std::env::var("ProductVersion").unwrap_or_else(|_| "1.0.0".into()),
+	});
+
+	let OsSection = json!({
+		"release": "22.0.0",
+		"hostname": "land",
+		"arch": env::consts::ARCH,
 	});
 
 	Ok(json!({
@@ -391,248 +415,20 @@ pub async fn ConstructSandboxConfiguration(
 
 		"mainPid": std::process::id(),
 
-		"os": {
-			"release": "22.0.0",
-			"hostname": "land",
-			"arch": env::consts::ARCH,
-		},
+		"os": OsSection,
 
-		"nls": { "messages": {}, "language": "en", "availableLanguages": { "en": "English" } },
+		"nls": NlsSection,
 
-		"productConfiguration": {
-
-		// Atom I5: read from process env (populated from .env.Land at
-		// Mountain startup). Fallback strings keep a sensible identity
-		// if the env file is absent at a release-profile launch.
-		"nameShort": std::env::var("ProductNameShort").unwrap_or_else(|_| "FIDDEE".into()),
-		"nameLong": std::env::var("ProductNameLong").unwrap_or_else(|_| "FIDDEE".into()),
-		"applicationName": std::env::var("ProductApplicationName").unwrap_or_else(|_| "fiddee".into()),
-		"embedderIdentifier": std::env::var("ProductEmbedderIdentifier").unwrap_or_else(|_| "fiddee-desktop".into()),
-
-		// `dataFolderName` is used by VS Code's `AbstractNativeEnvironmentService
-		// .extensionsPath` via `URI.joinPath(userHome, dataFolderName, "extensions")`.
-		// Without it, `path.posix.join("...", undefined, "extensions")` throws
-		// "The path argument must be of type string. Received type undefined".
-		"dataFolderName": std::env::var("ProductDataFolderName").unwrap_or_else(|_| ".fiddee".into()),
-
-		// `sharedDataFolderName` is used by `appSharedDataHome` in the same way.
-		// Provide the same value to avoid a second undefined-path crash if accessed.
-		"sharedDataFolderName": std::env::var("ProductDataFolderName").unwrap_or_else(|_| ".fiddee".into()),
-
-		// `version` is used in extension compatibility checks and telemetry.
-		"version": std::env::var("ProductVersion").unwrap_or_else(|_| "1.0.0".into()),
-		},
+		// Atom I5: read from process env. Pre-built above to reduce the
+		// token count inside this json! call.
+		"productConfiguration": ProductConfig,
 
 		"resourcesPath": PathResolver.resource_dir().unwrap_or_default().to_string_lossy(),
 
 		"VSCODE_CWD": env::current_dir().unwrap_or_default().to_string_lossy(),
 
-		// `INativeWindowConfiguration.profiles` - required by the desktop
-		// workbench. Missing this field causes a crash during workbench
-		// initialization:
-		//   TypeError: undefined is not an object
-		//     (evaluating 'M.revive(o.languageModelsResource).with')
-		// because VS Code calls `reviveProfile()` on each profile in
-		// `profiles.all` and blindly calls `.with()` on every URI field -
-		// including `languageModelsResource` - without null-guarding.
-		// We send the default profile only. All paths sit under the
-		// user data directory (AppDataDir / "User").
-		"profiles": {
-			// Profiles home - the directory that stores non-default profiles.
-			"home": {
-				"scheme": "file",
-				"authority": "",
-				"path": AppDataDir.join("User/profiles").to_string_lossy(),
-				"query": "",
-				"fragment": ""
-			},
-			// Default profile - the only profile Land uses.
-			"all": [
-				{
-					"id": "__default__profile__",
-					"name": "Default",
-					"location": {
-						"scheme": "file",
-						"authority": "",
-						"path": AppDataDir.join("User").to_string_lossy(),
-						"query": "",
-						"fragment": ""
-					},
-					"isDefault": true,
-					"globalStorageHome": {
-						"scheme": "file",
-						"authority": "",
-						"path": AppDataDir.join("User/globalStorage").to_string_lossy(),
-						"query": "",
-						"fragment": ""
-					},
-					"settingsResource": {
-						"scheme": "file",
-						"authority": "",
-						"path": AppDataDir.join("User/settings.json").to_string_lossy(),
-						"query": "",
-						"fragment": ""
-					},
-					"keybindingsResource": {
-						"scheme": "file",
-						"authority": "",
-						"path": AppDataDir.join("User/keybindings.json").to_string_lossy(),
-						"query": "",
-						"fragment": ""
-					},
-					"tasksResource": {
-						"scheme": "file",
-						"authority": "",
-						"path": AppDataDir.join("User/tasks.json").to_string_lossy(),
-						"query": "",
-						"fragment": ""
-					},
-					"snippetsHome": {
-						"scheme": "file",
-						"authority": "",
-						"path": AppDataDir.join("User/snippets").to_string_lossy(),
-						"query": "",
-						"fragment": ""
-					},
-					"promptsHome": {
-						"scheme": "file",
-						"authority": "",
-						"path": AppDataDir.join("User/prompts").to_string_lossy(),
-						"query": "",
-						"fragment": ""
-					},
-					"extensionsResource": {
-						"scheme": "file",
-						"authority": "",
-						"path": AppDataDir.join("User/extensions.json").to_string_lossy(),
-						"query": "",
-						"fragment": ""
-					},
-					"mcpResource": {
-						"scheme": "file",
-						"authority": "",
-						"path": AppDataDir.join("User/mcp.json").to_string_lossy(),
-						"query": "",
-						"fragment": ""
-					},
-					// The field that caused the crash:
-					// `reviveProfile()` calls `.with()` on this URI without
-					// guarding against undefined. Must be present even if
-					// Land does not use LM configuration files.
-					"languageModelsResource": {
-						"scheme": "file",
-						"authority": "",
-						"path": AppDataDir.join("User/chatLanguageModels.json").to_string_lossy(),
-						"query": "",
-						"fragment": ""
-					},
-					"agentPluginsHome": {
-						"scheme": "file",
-						"authority": "",
-						"path": AppDataDir.join("User/agent-plugins").to_string_lossy(),
-						"query": "",
-						"fragment": ""
-					},
-					"cacheHome": {
-						"scheme": "file",
-						"authority": "",
-						"path": AppDataDir.join("User/profiles/.cache/__default__profile__").to_string_lossy(),
-						"query": "",
-						"fragment": ""
-					}
-				}
-			],
-			// The currently active profile (same as the default profile above).
-			"profile": {
-				"id": "__default__profile__",
-				"name": "Default",
-				"location": {
-					"scheme": "file",
-					"authority": "",
-					"path": AppDataDir.join("User").to_string_lossy(),
-					"query": "",
-					"fragment": ""
-				},
-				"isDefault": true,
-				"globalStorageHome": {
-					"scheme": "file",
-					"authority": "",
-					"path": AppDataDir.join("User/globalStorage").to_string_lossy(),
-					"query": "",
-					"fragment": ""
-				},
-				"settingsResource": {
-					"scheme": "file",
-					"authority": "",
-					"path": AppDataDir.join("User/settings.json").to_string_lossy(),
-					"query": "",
-					"fragment": ""
-				},
-				"keybindingsResource": {
-					"scheme": "file",
-					"authority": "",
-					"path": AppDataDir.join("User/keybindings.json").to_string_lossy(),
-					"query": "",
-					"fragment": ""
-				},
-				"tasksResource": {
-					"scheme": "file",
-					"authority": "",
-					"path": AppDataDir.join("User/tasks.json").to_string_lossy(),
-					"query": "",
-					"fragment": ""
-				},
-				"snippetsHome": {
-					"scheme": "file",
-					"authority": "",
-					"path": AppDataDir.join("User/snippets").to_string_lossy(),
-					"query": "",
-					"fragment": ""
-				},
-				"promptsHome": {
-					"scheme": "file",
-					"authority": "",
-					"path": AppDataDir.join("User/prompts").to_string_lossy(),
-					"query": "",
-					"fragment": ""
-				},
-				"extensionsResource": {
-					"scheme": "file",
-					"authority": "",
-					"path": AppDataDir.join("User/extensions.json").to_string_lossy(),
-					"query": "",
-					"fragment": ""
-				},
-				"mcpResource": {
-					"scheme": "file",
-					"authority": "",
-					"path": AppDataDir.join("User/mcp.json").to_string_lossy(),
-					"query": "",
-					"fragment": ""
-				},
-				"languageModelsResource": {
-					"scheme": "file",
-					"authority": "",
-					"path": AppDataDir.join("User/chatLanguageModels.json").to_string_lossy(),
-					"query": "",
-					"fragment": ""
-				},
-				"agentPluginsHome": {
-					"scheme": "file",
-					"authority": "",
-					"path": AppDataDir.join("User/agent-plugins").to_string_lossy(),
-					"query": "",
-					"fragment": ""
-				},
-				"cacheHome": {
-					"scheme": "file",
-					"authority": "",
-					"path": AppDataDir.join("User/profiles/.cache/__default__profile__").to_string_lossy(),
-					"query": "",
-					"fragment": ""
-				}
-			}
-		},
+		// Pre-built outside json! to avoid macro recursion limit (see above).
+		"profiles": ProfilesSection,
 
 		// Required non-optional fields added defensively to avoid future
 		// workbench crashes on properties accessed without null-checks.
