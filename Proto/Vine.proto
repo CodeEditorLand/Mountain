@@ -202,6 +202,12 @@ service CocoonService {
   // Provide Linked Editing Ranges
   rpc ProvideLinkedEditingRanges(ProvideLinkedEditingRangesRequest) returns (ProvideLinkedEditingRangesResponse);
 
+  // Register Inline Completion Item Provider (GitHub Copilot, Roo Code, etc.)
+  rpc RegisterInlineCompletionItemProvider(RegisterProviderRequest) returns (Empty);
+
+  // Provide Inline Completion Items - called by Monaco when the cursor pauses
+  rpc ProvideInlineCompletionItems(ProvideInlineCompletionRequest) returns (ProvideInlineCompletionResponse);
+
   // ==================== Window Operations (Extended) ====================
 
   // Show Quick Pick
@@ -1676,4 +1682,39 @@ message GetConfigurationRequest {
 // Response with configuration value.
 message GetConfigurationResponse {
   bytes Value = 1;
+}
+
+// ==================== Inline Completion Messages ====================
+
+// Context passed when requesting inline completions.
+message InlineCompletionContext {
+  // 0 = Invoke (user explicitly triggered), 1 = Automatic (cursor pause)
+  int32 TriggerKind = 1;
+  // JSON-serialised SelectedCompletionInfo if a completion is already showing.
+  string SelectedCompletionInfo = 2;
+}
+
+// Request for inline completion items (e.g. GitHub Copilot ghost text).
+message ProvideInlineCompletionRequest {
+  Uri Uri = 1;
+  Position Position = 2;
+  uint32 ProviderHandle = 3;
+  InlineCompletionContext Context = 4;
+}
+
+// A single inline completion suggestion.
+message InlineCompletionItem {
+  // The text to insert. May be a plain string or a SnippetString.
+  string InsertText = 1;
+  // The range to replace (optional; defaults to cursor position if empty).
+  Range Range = 2;
+  // Command to execute after accepting the completion (e.g. trigger suggest).
+  string Command = 3;
+  // Whether InsertText is a snippet string.
+  bool IsSnippet = 4;
+}
+
+// Response carrying inline completion items.
+message ProvideInlineCompletionResponse {
+  repeated InlineCompletionItem Items = 1;
 }

@@ -11,14 +11,43 @@ use serde_json::{Value, json};
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn DecorationsGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
+
 	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("decorations:get requires uri".to_string())?;
 
-	let Decoration = RunTime.Environment.ApplicationState.Feature.Decorations.GetDecoration(Uri);
+	// 1. Check the static in-memory store (populated by decorations:set or prior
+	//    provider calls).
+	if let Some(Cached) = RunTime.Environment.ApplicationState.Feature.Decorations.GetDecoration(Uri) {
+		return Ok(Cached);
+	}
 
-	Ok(Decoration.unwrap_or(Value::Null))
+	// 2. Ask registered FileDecoration providers via Cocoon gRPC so
+	//    extension-contributed decorations (e.g. git status badges from vscode.git,
+	//    error badges from eslint) populate on demand.
+	if let Ok(ParsedUri) = url::Url::parse(Uri) {
+		match RunTime.Environment.ProvideFileDecoration(ParsedUri).await {
+			Ok(Some(Result)) => {
+				// Cache for subsequent requests so the next `decorations:get`
+				// for the same URI doesn't round-trip again.
+				RunTime
+					.Environment
+					.ApplicationState
+					.Feature
+					.Decorations
+					.SetDecoration(Uri, Result.clone());
+				return Ok(Result);
+			},
+			Ok(None) => {},
+			Err(E) => {
+				crate::dev_log!("decorations", "warn: [DecorationsGet] provider error for {}: {}", Uri, E);
+			},
+		}
+	}
+
+	Ok(Value::Null)
 }
 
 pub async fn DecorationsGetMany(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {

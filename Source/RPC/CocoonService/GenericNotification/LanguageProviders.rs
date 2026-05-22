@@ -79,6 +79,9 @@ pub fn DispatchRegisterProvider(Method:&str, Params:Value, Service:&CocoonServic
 
 		"register_inline_values_provider" => ProviderType::InlineValues,
 
+		// Inline completion: GitHub Copilot, Roo Code, Continue, etc.
+		"register_inline_completion_item_provider" => ProviderType::InlineCompletion,
+
 		_ => return false,
 	};
 

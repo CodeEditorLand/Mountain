@@ -288,6 +288,46 @@ pub async fn ConstructSandboxConfiguration(
 	// Load or generate persistent machine ID
 	let machine_id = get_or_generate_machine_id(&AppDataDir).await;
 
+	// Build the `profiles` section outside the main `json!` call to avoid
+	// exceeding the macro's recursion limit (default 64). Each nested json!
+	// call here is shallow enough to compile without issue.
+	let UserProfile = AppDataDir.join("User");
+
+	// Helper closure: build a `UriComponents` JSON object for a filesystem path.
+	let FileUri = |P: std::path::PathBuf| -> serde_json::Value {
+		json!({
+			"scheme": "file",
+			"authority": "",
+			"path": P.to_string_lossy(),
+			"query": "",
+			"fragment": ""
+		})
+	};
+
+	let DefaultProfile = json!({
+		"id": "__default__profile__",
+		"name": "Default",
+		"location": FileUri(UserProfile.clone()),
+		"isDefault": true,
+		"globalStorageHome": FileUri(UserProfile.join("globalStorage")),
+		"settingsResource": FileUri(UserProfile.join("settings.json")),
+		"keybindingsResource": FileUri(UserProfile.join("keybindings.json")),
+		"tasksResource": FileUri(UserProfile.join("tasks.json")),
+		"snippetsHome": FileUri(UserProfile.join("snippets")),
+		"promptsHome": FileUri(UserProfile.join("prompts")),
+		"extensionsResource": FileUri(UserProfile.join("extensions.json")),
+		"mcpResource": FileUri(UserProfile.join("mcp.json")),
+		"languageModelsResource": FileUri(UserProfile.join("chatLanguageModels.json")),
+		"agentPluginsHome": FileUri(UserProfile.join("agent-plugins")),
+		"cacheHome": FileUri(UserProfile.join("profiles/.cache/__default__profile__"))
+	});
+
+	let ProfilesSection = json!({
+		"home": FileUri(UserProfile.join("profiles")),
+		"all": [DefaultProfile.clone()],
+		"profile": DefaultProfile
+	});
+
 	Ok(json!({
 		"windowId": ApplicationHandle.get_webview_window("main").unwrap().label(),
 
@@ -386,6 +426,219 @@ pub async fn ConstructSandboxConfiguration(
 		"resourcesPath": PathResolver.resource_dir().unwrap_or_default().to_string_lossy(),
 
 		"VSCODE_CWD": env::current_dir().unwrap_or_default().to_string_lossy(),
+
+		// `INativeWindowConfiguration.profiles` - required by the desktop
+		// workbench. Missing this field causes a crash during workbench
+		// initialization:
+		//   TypeError: undefined is not an object
+		//     (evaluating 'M.revive(o.languageModelsResource).with')
+		// because VS Code calls `reviveProfile()` on each profile in
+		// `profiles.all` and blindly calls `.with()` on every URI field -
+		// including `languageModelsResource` - without null-guarding.
+		// We send the default profile only. All paths sit under the
+		// user data directory (AppDataDir / "User").
+		"profiles": {
+			// Profiles home - the directory that stores non-default profiles.
+			"home": {
+				"scheme": "file",
+				"authority": "",
+				"path": AppDataDir.join("User/profiles").to_string_lossy(),
+				"query": "",
+				"fragment": ""
+			},
+			// Default profile - the only profile Land uses.
+			"all": [
+				{
+					"id": "__default__profile__",
+					"name": "Default",
+					"location": {
+						"scheme": "file",
+						"authority": "",
+						"path": AppDataDir.join("User").to_string_lossy(),
+						"query": "",
+						"fragment": ""
+					},
+					"isDefault": true,
+					"globalStorageHome": {
+						"scheme": "file",
+						"authority": "",
+						"path": AppDataDir.join("User/globalStorage").to_string_lossy(),
+						"query": "",
+						"fragment": ""
+					},
+					"settingsResource": {
+						"scheme": "file",
+						"authority": "",
+						"path": AppDataDir.join("User/settings.json").to_string_lossy(),
+						"query": "",
+						"fragment": ""
+					},
+					"keybindingsResource": {
+						"scheme": "file",
+						"authority": "",
+						"path": AppDataDir.join("User/keybindings.json").to_string_lossy(),
+						"query": "",
+						"fragment": ""
+					},
+					"tasksResource": {
+						"scheme": "file",
+						"authority": "",
+						"path": AppDataDir.join("User/tasks.json").to_string_lossy(),
+						"query": "",
+						"fragment": ""
+					},
+					"snippetsHome": {
+						"scheme": "file",
+						"authority": "",
+						"path": AppDataDir.join("User/snippets").to_string_lossy(),
+						"query": "",
+						"fragment": ""
+					},
+					"promptsHome": {
+						"scheme": "file",
+						"authority": "",
+						"path": AppDataDir.join("User/prompts").to_string_lossy(),
+						"query": "",
+						"fragment": ""
+					},
+					"extensionsResource": {
+						"scheme": "file",
+						"authority": "",
+						"path": AppDataDir.join("User/extensions.json").to_string_lossy(),
+						"query": "",
+						"fragment": ""
+					},
+					"mcpResource": {
+						"scheme": "file",
+						"authority": "",
+						"path": AppDataDir.join("User/mcp.json").to_string_lossy(),
+						"query": "",
+						"fragment": ""
+					},
+					// The field that caused the crash:
+					// `reviveProfile()` calls `.with()` on this URI without
+					// guarding against undefined. Must be present even if
+					// Land does not use LM configuration files.
+					"languageModelsResource": {
+						"scheme": "file",
+						"authority": "",
+						"path": AppDataDir.join("User/chatLanguageModels.json").to_string_lossy(),
+						"query": "",
+						"fragment": ""
+					},
+					"agentPluginsHome": {
+						"scheme": "file",
+						"authority": "",
+						"path": AppDataDir.join("User/agent-plugins").to_string_lossy(),
+						"query": "",
+						"fragment": ""
+					},
+					"cacheHome": {
+						"scheme": "file",
+						"authority": "",
+						"path": AppDataDir.join("User/profiles/.cache/__default__profile__").to_string_lossy(),
+						"query": "",
+						"fragment": ""
+					}
+				}
+			],
+			// The currently active profile (same as the default profile above).
+			"profile": {
+				"id": "__default__profile__",
+				"name": "Default",
+				"location": {
+					"scheme": "file",
+					"authority": "",
+					"path": AppDataDir.join("User").to_string_lossy(),
+					"query": "",
+					"fragment": ""
+				},
+				"isDefault": true,
+				"globalStorageHome": {
+					"scheme": "file",
+					"authority": "",
+					"path": AppDataDir.join("User/globalStorage").to_string_lossy(),
+					"query": "",
+					"fragment": ""
+				},
+				"settingsResource": {
+					"scheme": "file",
+					"authority": "",
+					"path": AppDataDir.join("User/settings.json").to_string_lossy(),
+					"query": "",
+					"fragment": ""
+				},
+				"keybindingsResource": {
+					"scheme": "file",
+					"authority": "",
+					"path": AppDataDir.join("User/keybindings.json").to_string_lossy(),
+					"query": "",
+					"fragment": ""
+				},
+				"tasksResource": {
+					"scheme": "file",
+					"authority": "",
+					"path": AppDataDir.join("User/tasks.json").to_string_lossy(),
+					"query": "",
+					"fragment": ""
+				},
+				"snippetsHome": {
+					"scheme": "file",
+					"authority": "",
+					"path": AppDataDir.join("User/snippets").to_string_lossy(),
+					"query": "",
+					"fragment": ""
+				},
+				"promptsHome": {
+					"scheme": "file",
+					"authority": "",
+					"path": AppDataDir.join("User/prompts").to_string_lossy(),
+					"query": "",
+					"fragment": ""
+				},
+				"extensionsResource": {
+					"scheme": "file",
+					"authority": "",
+					"path": AppDataDir.join("User/extensions.json").to_string_lossy(),
+					"query": "",
+					"fragment": ""
+				},
+				"mcpResource": {
+					"scheme": "file",
+					"authority": "",
+					"path": AppDataDir.join("User/mcp.json").to_string_lossy(),
+					"query": "",
+					"fragment": ""
+				},
+				"languageModelsResource": {
+					"scheme": "file",
+					"authority": "",
+					"path": AppDataDir.join("User/chatLanguageModels.json").to_string_lossy(),
+					"query": "",
+					"fragment": ""
+				},
+				"agentPluginsHome": {
+					"scheme": "file",
+					"authority": "",
+					"path": AppDataDir.join("User/agent-plugins").to_string_lossy(),
+					"query": "",
+					"fragment": ""
+				},
+				"cacheHome": {
+					"scheme": "file",
+					"authority": "",
+					"path": AppDataDir.join("User/profiles/.cache/__default__profile__").to_string_lossy(),
+					"query": "",
+					"fragment": ""
+				}
+			}
+		},
+
+		// Required non-optional fields added defensively to avoid future
+		// workbench crashes on properties accessed without null-checks.
+		"sqmId": "",
+		"devDeviceId": "",
+		"isPortable": false,
 	}))
 }
 

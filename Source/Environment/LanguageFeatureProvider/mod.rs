@@ -275,6 +275,22 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 		FeatureMethods::provide_linked_editing_ranges(self, DocumentURI, PositionDTO).await
 	}
 
+	async fn ProvideFileDecoration(&self, ResourceURI:Url) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_file_decoration(self, ResourceURI).await
+	}
+
+	async fn ProvideInlineCompletionItems(
+		&self,
+
+		DocumentURI:Url,
+
+		PositionDTO_:PositionDTO,
+
+		ContextDTO:Value,
+	) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_inline_completion_items(self, DocumentURI, PositionDTO_, ContextDTO).await
+	}
+
 	async fn ProvideOnTypeFormattingEdits(
 		&self,
 

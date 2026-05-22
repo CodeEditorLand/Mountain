@@ -895,6 +895,79 @@ pub(super) async fn provide_on_type_formatting_edits(
 	}
 }
 
+/// Provide a file decoration (badge, tooltip, colour) for the given URI.
+/// Called by Mountain's `FileDecorationProvider` when the file explorer
+/// or source-control tree requests decoration state for a resource URI.
+/// Cocoon's `$provideFileDecoration` handler (added in session Trench) asks
+/// the registered extension provider and returns the result.
+pub(super) async fn provide_file_decoration(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
+	resource_uri:Url,
+) -> Result<Option<Value>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &resource_uri, ProviderType::FileDecoration).await?;
+
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider_method(
+				environment,
+				&registration,
+				"$provideFileDecoration",
+				vec![
+					json!(registration.Handle),
+					json!({ "external": resource_uri.to_string(), "$mid": 1 }),
+				],
+			)
+			.await?;
+
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+
+		None => Ok(None),
+	}
+}
+
+/// Provide inline completion items for the given document position.
+/// Called from `ProvideInlineCompletionItems.rs` when Monaco requests
+/// ghost-text completions (GitHub Copilot, Roo Code, Continue, etc.).
+pub(super) async fn provide_inline_completion_items(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
+	document_uri:Url,
+
+	position_dto:CommonLibrary::LanguageFeature::DTO::PositionDTO::PositionDTO,
+
+	context_dto:Value,
+) -> Result<Option<Value>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::InlineCompletion)
+			.await?;
+
+	match provider {
+		Some(registration) => {
+			// `$provideInlineCompletionItems` method name follows the
+			// extHostTypes pattern used by Copilot / Roo Code.
+			let response = invoke_provider_method(
+				environment,
+				&registration,
+				"$provideInlineCompletionItems",
+				vec![
+					json!(registration.Handle),
+					json!({ "external": document_uri.to_string(), "$mid": 1 }),
+					json!({ "line": position_dto.LineNumber, "character": position_dto.Column }),
+					context_dto,
+				],
+			)
+			.await?;
+
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+
+		None => Ok(None),
+	}
+}
+
 async fn invoke_provider(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 

@@ -39,6 +39,8 @@ pub mod ProvideHover;
 
 pub mod ProvideInlayHints;
 
+pub mod ProvideInlineCompletionItems;
+
 pub mod ProvideLinkedEditingRanges;
 
 pub mod ProvideOnTypeFormatting;

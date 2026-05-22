@@ -17,6 +17,57 @@ pub async fn ScanAndPopulateExtensions(
 ) -> Result<(), CommonError> {
 	dev_log!("extensions", "[ExtensionScanner] Starting extension scan...");
 
+	// --- Fast path: pre-baked manifest cache (B7.P08) ---
+	// `Maintain/Build/Manifest/PreBake.ts` writes a single JSON blob to
+	// `Target/debug/extensions.manifest.json` as part of the debug build.
+	// Loading it avoids the N×disk-read scan and cuts ~1200 ms from boot.
+	if let Ok(ExecutablePath) = std::env::current_exe() {
+		if let Some(BinaryDir) = ExecutablePath.parent() {
+			match super::LoadFromCache::TryLoadFromCache(&BinaryDir.to_path_buf()).await {
+				Ok(Some(CachedMap)) => {
+					let CachedLen = CachedMap.len();
+
+					let PostWriteCount = {
+						let mut Guard = _State
+							.ScannedExtensions
+							.ScannedExtensions
+							.lock()
+							.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+
+						*Guard = CachedMap;
+
+						Guard.len()
+					};
+
+					dev_log!(
+						"extensions",
+						"[ExtensionScanner] Cache hit: {} extensions loaded in <50ms (live scan skipped). State has \
+						 {} entries.",
+						CachedLen,
+						PostWriteCount
+					);
+
+					// Unblock any callers waiting for the first scan result.
+					_State.ScanReady.notify_waiters();
+
+					return Ok(());
+				},
+
+				Ok(None) => {
+					dev_log!("extensions", "[ExtensionScanner] Cache miss - falling back to live disk scan");
+				},
+
+				Err(E) => {
+					dev_log!(
+						"extensions",
+						"warn: [ExtensionScanner] Cache load error: {}; continuing with live scan",
+						E
+					);
+				},
+			}
+		}
+	}
+
 	let ScanPaths:Vec<PathBuf> = _State.Registry.GetExtensionScanPaths();
 
 	dev_log!(

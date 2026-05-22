@@ -94,9 +94,27 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 		} catch {}
 	})();"#;
 
+	// Capture-phase keydown listener that fires BEFORE WKWebView dispatches
+	// undo:/redo: via doCommandBySelector:. Even without a native menu entry
+	// WKWebView binds Cmd+Z to NSUndoManager through its internal responder
+	// chain. preventDefault() at the capture phase stops that dispatch so
+	// Monaco's own keydown handler handles the undo stack exclusively.
+	// Cmd+Y (redo) is included for completeness. Monaco's handlers still fire
+	// and process the keystroke normally - only the native NSUndoManager path
+	// is blocked.
+	let WkUndoSuppressScript = r#"(function() {
+		document.addEventListener('keydown', function(e) {
+			if (e.metaKey && !e.ctrlKey && !e.altKey) {
+				if (e.key === 'z' || e.key === 'Z') { e.preventDefault(); }
+				if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); }
+			}
+		}, true);
+	})();"#;
+
 	let mut WindowBuilder = WebviewWindowBuilder::new(Application, "main", WindowUrl)
 		.use_https_scheme(false)
 		.initialization_script(TauriDiagnosticScript)
+		.initialization_script(WkUndoSuppressScript)
 		.zoom_hotkeys_enabled(true)
 		.browser_extensions_enabled(false)
 

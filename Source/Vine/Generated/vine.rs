@@ -1617,6 +1617,50 @@ pub struct GetConfigurationResponse {
     #[prost(bytes = "vec", tag = "1")]
     pub value: ::prost::alloc::vec::Vec<u8>,
 }
+/// Context passed when requesting inline completions.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct InlineCompletionContext {
+    /// 0 = Invoke (user explicitly triggered), 1 = Automatic (cursor pause)
+    #[prost(int32, tag = "1")]
+    pub trigger_kind: i32,
+    /// JSON-serialised SelectedCompletionInfo if a completion is already showing.
+    #[prost(string, tag = "2")]
+    pub selected_completion_info: ::prost::alloc::string::String,
+}
+/// Request for inline completion items (e.g. GitHub Copilot ghost text).
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideInlineCompletionRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "2")]
+    pub position: ::core::option::Option<Position>,
+    #[prost(uint32, tag = "3")]
+    pub provider_handle: u32,
+    #[prost(message, optional, tag = "4")]
+    pub context: ::core::option::Option<InlineCompletionContext>,
+}
+/// A single inline completion suggestion.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct InlineCompletionItem {
+    /// The text to insert. May be a plain string or a SnippetString.
+    #[prost(string, tag = "1")]
+    pub insert_text: ::prost::alloc::string::String,
+    /// The range to replace (optional; defaults to cursor position if empty).
+    #[prost(message, optional, tag = "2")]
+    pub range: ::core::option::Option<Range>,
+    /// Command to execute after accepting the completion (e.g. trigger suggest).
+    #[prost(string, tag = "3")]
+    pub command: ::prost::alloc::string::String,
+    /// Whether InsertText is a snippet string.
+    #[prost(bool, tag = "4")]
+    pub is_snippet: bool,
+}
+/// Response carrying inline completion items.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideInlineCompletionResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub items: ::prost::alloc::vec::Vec<InlineCompletionItem>,
+}
 /// A view column (editor location).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
@@ -3761,6 +3805,60 @@ pub mod cocoon_service_client {
                 );
             self.inner.unary(req, path, codec).await
         }
+        /// Register Inline Completion Item Provider (GitHub Copilot, Roo Code, etc.)
+        pub async fn register_inline_completion_item_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/RegisterInlineCompletionItemProvider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "RegisterInlineCompletionItemProvider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Inline Completion Items - called by Monaco when the cursor pauses
+        pub async fn provide_inline_completion_items(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideInlineCompletionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideInlineCompletionResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/ProvideInlineCompletionItems",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.CocoonService", "ProvideInlineCompletionItems"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
         /// Show Quick Pick
         pub async fn show_quick_pick(
             &mut self,
@@ -5648,6 +5746,19 @@ pub mod cocoon_service_server {
             request: tonic::Request<super::ProvideLinkedEditingRangesRequest>,
         ) -> std::result::Result<
             tonic::Response<super::ProvideLinkedEditingRangesResponse>,
+            tonic::Status,
+        >;
+        /// Register Inline Completion Item Provider (GitHub Copilot, Roo Code, etc.)
+        async fn register_inline_completion_item_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Inline Completion Items - called by Monaco when the cursor pauses
+        async fn provide_inline_completion_items(
+            &self,
+            request: tonic::Request<super::ProvideInlineCompletionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideInlineCompletionResponse>,
             tonic::Status,
         >;
         /// Show Quick Pick
@@ -8728,6 +8839,108 @@ pub mod cocoon_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = ProvideLinkedEditingRangesSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/RegisterInlineCompletionItemProvider" => {
+                    #[allow(non_camel_case_types)]
+                    struct RegisterInlineCompletionItemProviderSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for RegisterInlineCompletionItemProviderSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_inline_completion_item_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = RegisterInlineCompletionItemProviderSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/ProvideInlineCompletionItems" => {
+                    #[allow(non_camel_case_types)]
+                    struct ProvideInlineCompletionItemsSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideInlineCompletionRequest>
+                    for ProvideInlineCompletionItemsSvc<T> {
+                        type Response = super::ProvideInlineCompletionResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::ProvideInlineCompletionRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_inline_completion_items(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = ProvideInlineCompletionItemsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

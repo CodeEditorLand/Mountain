@@ -366,6 +366,16 @@ impl TerminalProvider for MountainEnvironment {
 					Error
 				);
 			}
+
+			// B6: Notify Cocoon so vscode.window.terminals removes the entry.
+			// Cocoon's NotificationHandler maps `$acceptTerminalClosed` →
+			// filters `__terminals` by id.
+			let _ = crate::Vine::Client::SendNotification::Fn(
+				"cocoon-main".to_string(),
+				"$acceptTerminalClosed".to_string(),
+				serde_json::json!({ "id": TermIDForExit }),
+			)
+			.await;
 		});
 
 		self.ApplicationState
@@ -419,7 +429,7 @@ impl TerminalProvider for MountainEnvironment {
 			tokio::time::sleep(std::time::Duration::from_millis(20)).await;
 			let CreatePayload = json!({
 				"id": CreateTermId,
-				"name": CreateName,
+				"name": CreateName.clone(),
 				"pid": CreatePid,
 			});
 			// `LogSkyEmit` makes the deferred emit visible under
@@ -427,12 +437,31 @@ impl TerminalProvider for MountainEnvironment {
 			// the deferral landed (and how many `localPty:input` calls
 			// arrived afterwards). The bare `.emit()` we replaced was
 			// invisible to the histogram.
-			if let Err(Error) = LogSkyEmit(&CreateAppHandle, SkyEvent::TerminalCreate.AsStr(), CreatePayload) {
+			if let Err(Error) = LogSkyEmit(&CreateAppHandle, SkyEvent::TerminalCreate.AsStr(), CreatePayload.clone()) {
 				dev_log!(
 					"terminal",
 					"warn: [TerminalProvider] sky://terminal/create emit failed for ID {}: {}",
 					CreateTermId,
 					Error
+				);
+			}
+
+			// B6: Also notify Cocoon so vscode.window.terminals stays current
+			// when terminals are created from the UI rather than via the
+			// extension API (createTerminal()). Cocoon's NotificationHandler
+			// maps `$acceptTerminalOpened` → pushes a stub to `__terminals`.
+			if let Err(E) = crate::Vine::Client::SendNotification::Fn(
+				"cocoon-main".to_string(),
+				"$acceptTerminalOpened".to_string(),
+				serde_json::json!({ "id": CreateTermId, "name": CreateName, "pid": CreatePid }),
+			)
+			.await
+			{
+				dev_log!(
+					"terminal",
+					"warn: [TerminalProvider] $acceptTerminalOpened notify failed ID={}: {}",
+					CreateTermId,
+					E
 				);
 			}
 		});

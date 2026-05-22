@@ -181,6 +181,8 @@ use crate::Vine::Generated::{
 	ProvideHoverResponse,
 	ProvideInlayHintsRequest,
 	ProvideInlayHintsResponse,
+	ProvideInlineCompletionRequest,
+	ProvideInlineCompletionResponse,
 	ProvideLinkedEditingRangesRequest,
 	ProvideLinkedEditingRangesResponse,
 	ProvideOnTypeFormattingRequest,
@@ -1110,6 +1112,32 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideLinkedEditingRangesRequest>,
 	) -> Result<Response<ProvideLinkedEditingRangesResponse>, Status> {
 		Provider::ProvideLinkedEditingRanges::Fn(self, request.into_inner()).await
+	}
+
+	async fn register_inline_completion_item_provider(
+		&self,
+
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		// Registration: store handle + selector in the LanguageFeatureProviderRegistry.
+		// The generic NotificationDispatcher already handles
+		// `register_inline_completion_item_provider` coming via
+		// SendCocoonNotification; this typed path is the proto-generated entry point.
+		// NOTE: prost generates snake_case fields from the proto definition.
+		let Inner = request.into_inner();
+		let Handle = Inner.handle;
+		let Selector = Inner.language_selector.clone();
+		let ExtId = Inner.extension_id.clone();
+		self.RegisterProvider(Handle, ProviderType::InlineCompletion, &Selector, &ExtId);
+		Ok(Response::new(Empty {}))
+	}
+
+	async fn provide_inline_completion_items(
+		&self,
+
+		request:Request<ProvideInlineCompletionRequest>,
+	) -> Result<Response<ProvideInlineCompletionResponse>, Status> {
+		Provider::ProvideInlineCompletionItems::Fn(self, request.into_inner()).await
 	}
 
 	async fn show_quick_pick(
