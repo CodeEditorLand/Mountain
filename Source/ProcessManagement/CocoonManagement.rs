@@ -90,21 +90,20 @@ const MOUNTAIN_GRPC_PORT:u16 = 50051;
 const BOOTSTRAP_SCRIPT_PATH:&str = "scripts/cocoon/bootstrap-fork.js";
 
 /// Exponential-backoff retry parameters for the Mountain → Cocoon gRPC
-/// handshake. Replaces the previous "20 × 1000 ms fixed poll" which
-/// under-probed the common race (Cocoon's stage2 binds the port at
-/// ~200 ms so attempts 1-2 fail and we sat idle through 18 more whole-
-/// second sleeps) and over-waited the real failure (when Cocoon is
-/// genuinely dead, we wasted 20 s before reporting).
+/// handshake. After the Bootstrap.ts stage-reorder fix, Cocoon's RPCServer
+/// (port 50052) starts as Stage 3 (before MountainConnection), so the port
+/// is available within 2-5 seconds of spawn. Budget raised to 30 s as a
+/// defensive buffer for slow hardware or contended startup.
 ///
 /// Policy: start at 50 ms, double each attempt up to a 2 s ceiling,
-/// with a hard 20 s total-budget. Under healthy spawn timing (Cocoon
-/// up at 150-600 ms) this converges on attempts 3-5 in <~400 ms total;
+/// with a hard 30 s total-budget. Under healthy spawn timing (Cocoon
+/// binds 50052 within 2-3s) this converges on attempts 5-8 in <~3s total;
 /// under a genuinely dead Cocoon the loop abandons at the budget.
 const GRPC_CONNECT_INITIAL_MS:u64 = 50;
 
 const GRPC_CONNECT_MAX_DELAY_MS:u64 = 2_000;
 
-const GRPC_CONNECT_BUDGET_MS:u64 = 20_000;
+const GRPC_CONNECT_BUDGET_MS:u64 = 30_000;
 
 /// Relative path from the resolved Cocoon package root to the bundled
 /// entry module. Used by the pre-flight guard below to fail fast with
@@ -1002,58 +1001,97 @@ fn BuildCocoonEnvironment() -> HashMap<String, String> {
 /// Spawn background tasks that forward Cocoon's stdout and stderr into
 /// Mountain's dev-log. Tagged lines (`[DEV:<TAG>] …`) are re-emitted under
 /// the matching tag; plain lines stay under `cocoon`.
+///
+/// Uses `tauri::async_runtime::spawn` (not bare `tokio::spawn`) so the tasks
+/// live on the same runtime handle that Tauri owns, ensuring they are polled
+/// even while the calling async task is awaiting elsewhere.
 fn SpawnCocoonIoForwarders(Process:&mut tokio::process::Child) {
+	dev_log!(
+		"cocoon",
+		"[CocoonIO] Spawning IO forwarder tasks (stdout={}, stderr={})",
+		Process.stdout.is_some(),
+		Process.stderr.is_some()
+	);
+
 	if let Some(Stdout) = Process.stdout.take() {
-		tokio::spawn(async move {
+		tauri::async_runtime::spawn(async move {
 			let mut Lines = BufReader::new(Stdout).lines();
-			while let Ok(Some(Line)) = Lines.next_line().await {
-				if let Some(Tag) = ExtractDevTag(&Line) {
-					match Tag.as_str() {
-						"bootstrap-stage" => dev_log!("bootstrap-stage", "[Cocoon stdout] {}", Line),
-						"ext-activate" => dev_log!("ext-activate", "[Cocoon stdout] {}", Line),
-						"config-prime" => dev_log!("config-prime", "[Cocoon stdout] {}", Line),
-						"breaker" => dev_log!("breaker", "[Cocoon stdout] {}", Line),
-						_ => dev_log!("cocoon", "[Cocoon stdout] {}", Line),
-					}
-				} else {
-					dev_log!("cocoon", "[Cocoon stdout] {}", Line);
+			loop {
+				match Lines.next_line().await {
+					Ok(Some(Line)) => {
+						if let Some(Tag) = ExtractDevTag(&Line) {
+							match Tag.as_str() {
+								"bootstrap-stage" => dev_log!("bootstrap-stage", "[Cocoon stdout] {}", Line),
+								"ext-activate" => dev_log!("ext-activate", "[Cocoon stdout] {}", Line),
+								"config-prime" => dev_log!("config-prime", "[Cocoon stdout] {}", Line),
+								"breaker" => dev_log!("breaker", "[Cocoon stdout] {}", Line),
+								_ => dev_log!("cocoon", "[Cocoon stdout] {}", Line),
+							}
+						} else {
+							dev_log!("cocoon", "[Cocoon stdout] {}", Line);
+						}
+					},
+					Ok(None) => {
+						dev_log!("cocoon", "[CocoonIO] stdout pipe closed (EOF)");
+						break;
+					},
+					Err(Error) => {
+						dev_log!("cocoon", "warn: [CocoonIO] stdout read error: {}", Error);
+						break;
+					},
 				}
 			}
 		});
+	} else {
+		dev_log!("cocoon", "warn: [CocoonIO] stdout pipe not available (Stdio::piped() not set?)");
 	}
 
 	if let Some(Stderr) = Process.stderr.take() {
-		tokio::spawn(async move {
+		tauri::async_runtime::spawn(async move {
 			let mut Lines = BufReader::new(Stderr).lines();
 			let mut SuppressStack = false;
-			while let Ok(Some(Line)) = Lines.next_line().await {
-				let T = Line.trim_start();
-				let IsFrame = T.starts_with("at ") || T.starts_with("code: '") || T == "}" || T.is_empty();
-				if SuppressStack && IsFrame {
-					dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
-					continue;
-				}
-				SuppressStack = false;
-				let Benign = Line.contains(": is already signed")
-					|| Line.contains(": replacing existing signature")
-					|| Line.contains("DeprecationWarning:")
-					|| Line.contains("--trace-deprecation")
-					|| Line.contains("--trace-warnings");
-				let BenignHead = Line.contains("EntryNotFound (FileSystemError):")
-					|| Line.contains("FileNotFound (FileSystemError):")
-					|| Line.contains("[LandFix:UnhandledRejection]")
-					|| Line.starts_with("[Patcher] unhandledRejection:")
-					|| Line.starts_with("[Patcher] uncaughtException:");
-				if BenignHead {
-					SuppressStack = true;
-				}
-				if Benign || BenignHead {
-					dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
-				} else {
-					dev_log!("cocoon", "warn: [Cocoon stderr] {}", Line);
+			loop {
+				match Lines.next_line().await {
+					Ok(Some(Line)) => {
+						let T = Line.trim_start();
+						let IsFrame = T.starts_with("at ") || T.starts_with("code: '") || T == "}" || T.is_empty();
+						if SuppressStack && IsFrame {
+							dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
+							continue;
+						}
+						SuppressStack = false;
+						let Benign = Line.contains(": is already signed")
+							|| Line.contains(": replacing existing signature")
+							|| Line.contains("DeprecationWarning:")
+							|| Line.contains("--trace-deprecation")
+							|| Line.contains("--trace-warnings");
+						let BenignHead = Line.contains("EntryNotFound (FileSystemError):")
+							|| Line.contains("FileNotFound (FileSystemError):")
+							|| Line.contains("[LandFix:UnhandledRejection]")
+							|| Line.starts_with("[Patcher] unhandledRejection:")
+							|| Line.starts_with("[Patcher] uncaughtException:");
+						if BenignHead {
+							SuppressStack = true;
+						}
+						if Benign || BenignHead {
+							dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
+						} else {
+							dev_log!("cocoon", "warn: [Cocoon stderr] {}", Line);
+						}
+					},
+					Ok(None) => {
+						dev_log!("cocoon", "[CocoonIO] stderr pipe closed (EOF)");
+						break;
+					},
+					Err(Error) => {
+						dev_log!("cocoon", "warn: [CocoonIO] stderr read error: {}", Error);
+						break;
+					},
 				}
 			}
 		});
+	} else {
+		dev_log!("cocoon", "warn: [CocoonIO] stderr pipe not available");
 	}
 }
 

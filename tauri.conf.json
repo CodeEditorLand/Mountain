@@ -145,6 +145,7 @@
 			"scripts/cocoon/bootstrap-fork.js": "scripts/cocoon/bootstrap-fork.js",
 			"../Sky/Target/extensions.manifest.json": "extensions.manifest.json",
 			"../Cocoon/Target/Bootstrap/Implementation/Cocoon": "Cocoon/Target/Bootstrap/Implementation/Cocoon",
+			"Proto/Vine.proto": "Mountain/Proto/Vine.proto",
 			"../Sky/Target/Electron": "Electron",
 			"../Sky/Target/Browser": "Browser",
 			"../Sky/Target/Bundled": "Bundled",
