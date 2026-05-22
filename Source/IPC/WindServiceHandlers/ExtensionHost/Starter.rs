@@ -37,3 +37,11 @@ pub async fn ExtensionHostStarterGetExitInfo(_Arguments:Vec<Value>) -> Result<Va
 
 	Ok(json!({ "code": null, "signal": null }))
 }
+
+pub async fn ExtensionHostStarterWaitForExit(_Arguments:Vec<Value>) -> Result<Value, String> {
+	// Resolves when the extension host exits. Cocoon runs indefinitely while
+	// Mountain is alive; return a stub exit-info shape so callers don't hang.
+	crate::dev_log!("exthost", "extensionHostStarter:waitForExit");
+
+	Ok(json!({ "code": null, "signal": null }))
+}

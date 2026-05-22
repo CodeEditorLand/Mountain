@@ -62,6 +62,7 @@ use ExtensionHost::{
 		ExtensionHostStarterGetExitInfo,
 		ExtensionHostStarterKill,
 		ExtensionHostStarterStart,
+		ExtensionHostStarterWaitForExit,
 	},
 };
 use Sky::ReplayEvents::SkyReplayEvents;
@@ -1742,6 +1743,17 @@ pub async fn mountain_ipc_invoke(
 				"nativeHost:stopPowerSaveBlocker" => Ok(json!(false)),
 				"nativeHost:isPowerSaveBlockerStarted" => Ok(json!(false)),
 
+				// Electron BrowserView management - not applicable under Tauri.
+				// updateKeybindings/updateTheme/updateConfiguration are UI-state
+				// notifications the renderer sends to BrowserView overlays. getBrowserViews
+				// returns the list of active views. All are no-ops here.
+				"browserView:updateKeybindings"
+				| "browserView:updateTheme"
+				| "browserView:updateConfiguration"
+				| "browserView:openDevTools"
+				| "browserView:closeDevTools" => Ok(Value::Null),
+				"browserView:getBrowserViews" => Ok(serde_json::json!([])),
+
 				// macOS specific
 				"nativeHost:newWindowTab" => Ok(Value::Null),
 				"nativeHost:showPreviousWindowTab" => Ok(Value::Null),
@@ -2075,6 +2087,10 @@ pub async fn mountain_ipc_invoke(
 				"extensionHostStarter:getExitInfo" => {
 					dev_log!("exthost", "extensionHostStarter:getExitInfo");
 					ExtensionHostStarterGetExitInfo(Arguments).await
+				},
+				"extensionHostStarter:waitForExit" => {
+					dev_log!("exthost", "extensionHostStarter:waitForExit");
+					ExtensionHostStarterWaitForExit(Arguments).await
 				},
 
 				// =====================================================================

@@ -925,10 +925,45 @@ pub async fn HardKillCocoon() {
 /// (PostHog, Extensions, kernel flags), and NODE_ENV / TAURI_ENV_DEBUG.
 fn BuildCocoonEnvironment() -> HashMap<String, String> {
 	const LAND_ENV_ALLOW_LIST:&[&str] = &[
-		"Authorize", "Beam", "Report", "Brand", "Replay", "Ask", "Throttle", "Buffer", "Batch", "Cap", "Capture",
-		"OTLPEndpoint", "OTLPEnabled", "Pick", "Require", "Lodge", "Extend", "Probe", "Ship", "Wire", "Install",
-		"Mute", "Skip", "Spawn", "Render", "Walk", "Trace", "Record", "Profile", "Diagnose", "Resolve", "Open",
-		"Warn", "Catch", "Source", "Track", "Defer", "Boot", "Pack",
+		"Authorize",
+		"Beam",
+		"Report",
+		"Brand",
+		"Replay",
+		"Ask",
+		"Throttle",
+		"Buffer",
+		"Batch",
+		"Cap",
+		"Capture",
+		"OTLPEndpoint",
+		"OTLPEnabled",
+		"Pick",
+		"Require",
+		"Lodge",
+		"Extend",
+		"Probe",
+		"Ship",
+		"Wire",
+		"Install",
+		"Mute",
+		"Skip",
+		"Spawn",
+		"Render",
+		"Walk",
+		"Trace",
+		"Record",
+		"Profile",
+		"Diagnose",
+		"Resolve",
+		"Open",
+		"Warn",
+		"Catch",
+		"Source",
+		"Track",
+		"Defer",
+		"Boot",
+		"Pack",
 	];
 
 	let mut Env = HashMap::new();
@@ -946,7 +981,9 @@ fn BuildCocoonEnvironment() -> HashMap<String, String> {
 	}
 
 	for (Key, Value) in std::env::vars() {
-		if Key.starts_with("Product") || Key.starts_with("Tier") || Key.starts_with("Network")
+		if Key.starts_with("Product")
+			|| Key.starts_with("Tier")
+			|| Key.starts_with("Network")
 			|| LAND_ENV_ALLOW_LIST.contains(&Key.as_str())
 		{
 			Env.insert(Key, Value);
@@ -973,10 +1010,10 @@ fn SpawnCocoonIoForwarders(Process:&mut tokio::process::Child) {
 				if let Some(Tag) = ExtractDevTag(&Line) {
 					match Tag.as_str() {
 						"bootstrap-stage" => dev_log!("bootstrap-stage", "[Cocoon stdout] {}", Line),
-						"ext-activate"    => dev_log!("ext-activate",    "[Cocoon stdout] {}", Line),
-						"config-prime"    => dev_log!("config-prime",    "[Cocoon stdout] {}", Line),
-						"breaker"         => dev_log!("breaker",         "[Cocoon stdout] {}", Line),
-						_                 => dev_log!("cocoon",          "[Cocoon stdout] {}", Line),
+						"ext-activate" => dev_log!("ext-activate", "[Cocoon stdout] {}", Line),
+						"config-prime" => dev_log!("config-prime", "[Cocoon stdout] {}", Line),
+						"breaker" => dev_log!("breaker", "[Cocoon stdout] {}", Line),
+						_ => dev_log!("cocoon", "[Cocoon stdout] {}", Line),
 					}
 				} else {
 					dev_log!("cocoon", "[Cocoon stdout] {}", Line);
@@ -1007,7 +1044,9 @@ fn SpawnCocoonIoForwarders(Process:&mut tokio::process::Child) {
 					|| Line.contains("[LandFix:UnhandledRejection]")
 					|| Line.starts_with("[Patcher] unhandledRejection:")
 					|| Line.starts_with("[Patcher] uncaughtException:");
-				if BenignHead { SuppressStack = true; }
+				if BenignHead {
+					SuppressStack = true;
+				}
 				if Benign || BenignHead {
 					dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
 				} else {

@@ -5,8 +5,6 @@
 //! same layout next to the executable so the dev build dogfoods the same
 //! resolution path.
 
-use std::path::PathBuf;
-
 use tauri::{AppHandle, Manager, Runtime, path::BaseDirectory};
 
 use crate::ProcessManagement::NodeResolver::{NodeSource, ResolvedNode};

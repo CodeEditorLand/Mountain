@@ -101,29 +101,25 @@ pub(super) async fn create_webview_panel_impl(
 		.map(tauri::WebviewUrl::External)
 		.unwrap_or_else(|_| tauri::WebviewUrl::App("WebviewHost.html".into()));
 
-	let _webview_window = WebviewWindowBuilder::new(
-		&env.ApplicationHandle,
-		&handle,
-		WebviewUrlParsed,
-	)
-	.title(title)
-	.initialization_script(&format!(
-		"window.__WEBVIEW_INITIAL_STATE__ = {};",
-		json!({
-			"Handle": handle,
-			"ViewType": view_type,
-			"Title": title_clone
-		})
-	))
-	.build()
-	.map_err(|error| {
-		dev_log!(
-			"extensions",
-			"error: [WebviewProvider] Failed to create Webview window: {}",
-			error
-		);
-		CommonError::UserInterfaceInteraction { Reason:error.to_string() }
-	})?;
+	let _webview_window = WebviewWindowBuilder::new(&env.ApplicationHandle, &handle, WebviewUrlParsed)
+		.title(title)
+		.initialization_script(&format!(
+			"window.__WEBVIEW_INITIAL_STATE__ = {};",
+			json!({
+				"Handle": handle,
+				"ViewType": view_type,
+				"Title": title_clone
+			})
+		))
+		.build()
+		.map_err(|error| {
+			dev_log!(
+				"extensions",
+				"error: [WebviewProvider] Failed to create Webview window: {}",
+				error
+			);
+			CommonError::UserInterfaceInteraction { Reason:error.to_string() }
+		})?;
 
 	// Setup message listener for this Webview
 	crate::Environment::WebviewProvider::Messaging::setup_webview_message_listener_impl(env, handle.clone()).await?;

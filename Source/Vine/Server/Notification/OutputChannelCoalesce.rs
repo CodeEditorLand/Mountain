@@ -84,8 +84,6 @@ fn GetOrInitChannel() -> &'static CoalesceChannel {
 			// per process) so we stash it alongside.
 			let Buffers:StandardMutex<HashMap<String, String>> = StandardMutex::new(HashMap::new());
 
-			let mut HandleSlot:Option<AppHandle> = None;
-
 			loop {
 				let Received = Rx.recv().await;
 
@@ -93,8 +91,6 @@ fn GetOrInitChannel() -> &'static CoalesceChannel {
 					None => break,
 					Some(Pair) => Pair,
 				};
-
-				HandleSlot = Some(Handle.clone());
 
 				// Append to per-channel buffer.
 				{
@@ -149,7 +145,7 @@ fn GetOrInitChannel() -> &'static CoalesceChannel {
 				}
 
 				// Flush every non-empty channel.
-				let HandleForFlush = HandleSlot.clone().unwrap_or_else(|| Handle.clone());
+				let HandleForFlush = Handle.clone();
 
 				let Snapshots = {
 					match Buffers.lock() {
