@@ -715,6 +715,16 @@ impl MountainService for MountainVinegRPCService {
 				super::Notification::UnregisterTaskProvider::UnregisterTaskProvider(self, &Parameter).await;
 			},
 
+			"unregister_external_uri_opener" => {
+
+				super::Notification::UnregisterExternalUriOpener::UnregisterExternalUriOpener(self, &Parameter).await;
+			},
+
+			"unregister_remote_authority_resolver" => {
+
+				super::Notification::UnregisterRemoteAuthorityResolver::UnregisterRemoteAuthorityResolver(self, &Parameter).await;
+			},
+
 			"unregister_uri_handler" => {
 
 				super::Notification::UnregisterUriHandler::UnregisterUriHandler(self, &Parameter).await;

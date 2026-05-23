@@ -55,6 +55,10 @@ pub mod UnregisterScmProvider;
 
 pub mod UnregisterTaskProvider;
 
+pub mod UnregisterExternalUriOpener;
+
+pub mod UnregisterRemoteAuthorityResolver;
+
 pub mod UnregisterUriHandler;
 
 pub mod UpdateScmGroup;
