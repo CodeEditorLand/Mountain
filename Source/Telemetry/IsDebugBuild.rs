@@ -1,4 +1,3 @@
-
 //! `true` when compiled without `--release`.
 
 #[inline]

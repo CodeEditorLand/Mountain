@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Utilities for Wind handlers - one `pub fn Fn` per atomic file.
 //! Shared-state modules (ApplicationRoot, LocalhostUrl, UserdataDir,

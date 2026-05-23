@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 
 //! Shared state and utilities for `Git/*` atomic handlers.
 

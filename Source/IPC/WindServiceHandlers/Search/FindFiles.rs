@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `search:findFiles` / `search:fileSearch`.
 //! Delegates to `WorkspaceProvider::FindFilesInWorkspace`.

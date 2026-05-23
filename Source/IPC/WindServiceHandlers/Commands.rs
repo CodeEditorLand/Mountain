@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Command registry handlers - execute and list all registered commands.
 

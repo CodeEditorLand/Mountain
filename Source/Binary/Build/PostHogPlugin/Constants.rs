@@ -39,5 +39,4 @@ pub const TELEMETRY_CAPTURE:&str = env!("Capture");
 /// Reserved for the eventual `tracing-subscriber` EnvFilter; currently
 /// duplicated with `IPC::DevLog::IsEnabled` which reads `Trace` at
 /// runtime via `std::env::var`.
-#[allow(dead_code)]
 pub const TRACE_FILTER:&str = env!("Trace");

@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 
 //! Create a named output channel. Returns the channel name as
 //! its handle. The Sky/frontend listens for `sky://output/create`

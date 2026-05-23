@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 //! Dynamic keybinding handlers. Extensions' `package.json > contributes.
 //! keybindings` is a declarative registry; this surface is for the
 //! imperative `keybindings:add/remove/lookup/getAll` IPC path Wind uses

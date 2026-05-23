@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method `file:move` / `file:rename`.
 
@@ -17,8 +16,11 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 
 	// Notify Cocoon so `onDidRenameFiles` fires for extensions (GitLens, etc.)
 	let OldUri = format!("file://{}", Source);
+
 	let NewUri = format!("file://{}", Target);
+
 	dev_log!("vfs", "file:rename ok {} -> {}", Source, Target);
+
 	tokio::spawn(async move {
 		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),

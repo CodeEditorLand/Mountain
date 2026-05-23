@@ -1,4 +1,3 @@
-
 //! Compile-time gate - `true` under the `RuntimeFeatureFlags` feature.
 
 #[inline]

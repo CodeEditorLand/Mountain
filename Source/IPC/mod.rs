@@ -2,7 +2,6 @@
 //! communication between the Tauri frontend and the Rust backend through
 //! Tauri commands, WebSocket, and custom message formats.
 
-#![allow(unused_imports, unused_variables)]
 
 // --- Main Sub-modules ---
 

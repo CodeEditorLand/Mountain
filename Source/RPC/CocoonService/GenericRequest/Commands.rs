@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Generic-request command handlers for `process_mountain_request`.
 //! Handles `commands.execute`, `executeCommand`, and `unregisterCommand`

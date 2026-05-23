@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `UserInterface.ShowSaveDialog`.
 //! Returns bare path string or null so Wind's `typeof Result === "string"`

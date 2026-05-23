@@ -1,4 +1,3 @@
-#![allow(unused_imports)]
 
 //! # StateBuild - Advanced Application State Initialization
 //!

@@ -1,4 +1,3 @@
-
 //! Process-wide singleton storing every runtime gate enabled by Cargo
 //! features at boot. The set is populated lazily on first read and is
 //! cheap to consult thereafter (`HashSet::contains`).

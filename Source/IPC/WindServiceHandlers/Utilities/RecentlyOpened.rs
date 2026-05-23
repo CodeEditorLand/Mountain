@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Recently-opened workspaces/files persistence.
 //! File lives at `~/.fiddee/workspaces/RecentlyOpened.json` (resolved

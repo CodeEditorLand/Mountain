@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `extensionHostStarter:waitForExit`.
 //! Resolves when the extension host exits. Returns stub exit-info so callers

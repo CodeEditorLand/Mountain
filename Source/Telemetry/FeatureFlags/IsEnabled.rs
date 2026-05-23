@@ -1,4 +1,3 @@
-
 //! Convenience accessor for the global feature-flag registry.
 
 use crate::Telemetry::FeatureFlags::GlobalRegistry;

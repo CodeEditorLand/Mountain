@@ -37,7 +37,6 @@ use std::{
 	sync::{Arc, RwLock},
 };
 
-#[allow(unused_imports)]
 use http::{Request as HttpRequest, Response as HttpResponse, header};
 use tokio::{
 	io::{AsyncReadExt, AsyncWriteExt},

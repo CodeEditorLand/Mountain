@@ -1,4 +1,3 @@
-
 //! # OpenTelemetry Distributed Tracing
 //!
 //! Wraps RPC calls and command executions in `tracing` spans plus

@@ -1,4 +1,3 @@
-#![allow(unused_imports)]
 
 //! # RuntimeBuild - Echo scheduler bring-up
 //!

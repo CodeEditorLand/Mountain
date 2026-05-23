@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `extensionHostStarter:createExtensionHost`.
 //! Allocates a stub extension-host ID for VS Code's starter protocol.

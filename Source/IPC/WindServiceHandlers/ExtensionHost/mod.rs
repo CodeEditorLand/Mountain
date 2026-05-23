@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! ExtensionHost atoms - VS Code extension-host lifecycle handlers.
 //!

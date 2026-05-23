@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Managed FS atoms - route via Application RunTime's
 //! `FileSystemReader`/`FileSystemWriter` trait objects.

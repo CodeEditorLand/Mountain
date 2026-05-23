@@ -57,7 +57,6 @@ use crate::{
 };
 
 /// Configuration for MountainService
-#[allow(dead_code)]
 mod ServiceConfig {
 
 	/// Maximum number of concurrent operations

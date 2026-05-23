@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Sky bridge atoms - Mountain→Sky event replay handlers.
 //!

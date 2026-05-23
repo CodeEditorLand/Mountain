@@ -50,5 +50,4 @@ impl Struct {
 
 // Allow `EchoPriority` import below to satisfy clippy unused warning when
 // the inner Scheduler import is feature-gated in future revisions.
-#[allow(dead_code)]
 fn _Priority(P:EchoPriority) -> EchoPriority { P }

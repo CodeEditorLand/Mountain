@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Configuration, environment, and workbench-configuration handlers.
 

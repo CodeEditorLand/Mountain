@@ -1,4 +1,3 @@
-
 //! Add a gate to the runtime set after boot.
 //!
 //! ## No-op shim

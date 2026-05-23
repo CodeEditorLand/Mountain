@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `nativeHost:findFreePort`.
 //! Scans 100 ports starting from `Arguments[0]` (default 9000) and returns the

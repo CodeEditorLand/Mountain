@@ -89,7 +89,6 @@ impl MountainEnvironment {
 	///
 	/// This is the standard constructor used when the `AirIntegration`
 	/// feature is either disabled or the Air service is not yet available.
-	#[allow(unused_mut)]
 	pub fn Create(ApplicationHandle:AppHandle<Wry>, ApplicationState:Arc<ApplicationState>) -> Self {
 		dev_log!("lifecycle", "[MountainEnvironment] New instance created.");
 

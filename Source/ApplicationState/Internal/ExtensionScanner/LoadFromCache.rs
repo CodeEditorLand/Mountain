@@ -42,7 +42,9 @@ use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescri
 #[derive(Debug, Deserialize)]
 struct CachedEntry {
 	id:String,
+
 	path:String,
+
 	manifest:Value,
 }
 
@@ -50,8 +52,9 @@ struct CachedEntry {
 #[derive(Debug, Deserialize)]
 struct CacheBlob {
 	version:u32,
-	#[allow(dead_code)]
+
 	count:u32,
+
 	extensions:Vec<CachedEntry>,
 }
 
@@ -73,6 +76,7 @@ const MAX_CACHE_AGE:Duration = Duration::from_secs(600); // 10 minutes
 pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDescriptionStateDTO>>, CommonError> {
 	// Probe 1: alongside the binary (dev / repo run).
 	let DevCachePath = BinaryDir.join("extensions.manifest.json");
+
 	// Probe 2: inside .app bundle at Contents/Resources/ (bundle run).
 	let BundleCachePath = BinaryDir.join("../Resources/extensions.manifest.json");
 
@@ -83,6 +87,7 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 		(BundleCachePath, true)
 	} else {
 		dev_log!("extensions", "[ExtensionCache] Cache not found at {}", DevCachePath.display());
+
 		return Ok(None);
 	};
 
@@ -93,8 +98,10 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 		let Metadata = tokio::fs::metadata(&CachePath)
 			.await
 			.map_err(|_| CommonError::Unknown { Description:"cache stat failed".into() })?;
+
 		Metadata.modified().ok().and_then(|T| T.elapsed().ok()).unwrap_or(Duration::MAX)
 	};
+
 	if !IsBundled && Age > MAX_CACHE_AGE {
 		dev_log!(
 			"extensions",
@@ -102,30 +109,35 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 			Age.as_secs_f32(),
 			MAX_CACHE_AGE.as_secs_f32()
 		);
+
 		return Ok(None);
 	}
 
 	// --- Read + parse ---
 	let Bytes = match tokio::fs::read(&CachePath).await {
 		Ok(B) => B,
+
 		Err(E) => {
 			dev_log!(
 				"extensions",
 				"warn: [ExtensionCache] Read failed: {}; falling back to live scan",
 				E
 			);
+
 			return Ok(None);
 		},
 	};
 
 	let Blob:CacheBlob = match serde_json::from_slice(&Bytes) {
 		Ok(B) => B,
+
 		Err(E) => {
 			dev_log!(
 				"extensions",
 				"warn: [ExtensionCache] Parse error: {}; falling back to live scan",
 				E
 			);
+
 			return Ok(None);
 		},
 	};
@@ -136,6 +148,7 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 			"[ExtensionCache] Unsupported cache version {}; falling back to live scan",
 			Blob.version
 		);
+
 		return Ok(None);
 	}
 
@@ -144,15 +157,19 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 
 	for Entry in Blob.extensions {
 		let Manifest = &Entry.manifest;
+
 		let Path = &Entry.path;
 
 		// Helpers scoped to each manifest to eliminate repeated extraction chains.
 		let str = |k:&str| Manifest.get(k).and_then(Value::as_str).map(str::to_string);
+
 		let str_or = |k:&str, d:&str| Manifest.get(k).and_then(Value::as_str).unwrap_or(d).to_string();
+
 		let arr =
 			|k:&str| -> Option<Vec<String>> { Manifest.get(k).and_then(|V| serde_json::from_value(V.clone()).ok()) };
 
 		let ExtId = Entry.id.clone();
+
 		let Publisher = Manifest
 			.get("publisher")
 			.and_then(Value::as_str)
@@ -169,33 +186,59 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 
 		let Dto = ExtensionDescriptionStateDTO {
 			Identifier:serde_json::json!({ "value": ExtId }),
+
 			Name:str_or("name", ""),
+
 			Version:str_or("version", "0.0.0"),
+
 			Publisher,
+
 			Engines:Manifest.get("engines").cloned().unwrap_or(serde_json::json!({})),
+
 			Main:str("main"),
+
 			Browser:str("browser"),
+
 			ModuleType:str("type"),
+
 			IsBuiltin,
+
 			IsUnderDevelopment:false,
+
 			// file:// URI string - Normalize.rs parses it via FromUrl::Fn into
 			// the {scheme, authority, path, …} UriComponents shape.
 			ExtensionLocation:Value::String(format!("file://{}", Path)),
+
 			ActivationEvents:arr("activationEvents"),
+
 			Contributes:Manifest.get("contributes").cloned(),
+
 			Categories:arr("categories"),
+
 			DisplayName:str("displayName"),
+
 			Description:str("description"),
+
 			Keywords:arr("keywords"),
+
 			Repository:Manifest.get("repository").cloned(),
+
 			Bugs:Manifest.get("bugs").cloned(),
+
 			Homepage:str("homepage"),
+
 			License:str("license"),
+
 			Icon:str("icon"),
+
 			AiKey:str("aiKey"),
+
 			ExtensionKind:Manifest.get("extensionKind").cloned(),
+
 			Capabilities:Manifest.get("capabilities").cloned(),
+
 			ExtensionDependencies:arr("extensionDependencies"),
+
 			ExtensionPack:arr("extensionPack"),
 		};
 

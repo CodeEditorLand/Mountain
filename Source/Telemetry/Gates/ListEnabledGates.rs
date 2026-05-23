@@ -1,4 +1,3 @@
-
 //! Owned `Vec<String>` snapshot of every enabled runtime gate. Useful
 //! for diagnostic dumps where the borrow returned by `GetRuntimeGates`
 //! would outlive the consumer.

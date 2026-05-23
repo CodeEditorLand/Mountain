@@ -112,6 +112,7 @@ pub async fn Fn(
 
 		Err(Error) => {
 			dev_log!("provider", "warn: [ProvideInlineCompletionItems] provider error: {}", Error);
+
 			Ok(Response::new(ProvideInlineCompletionResponse::default()))
 		},
 	}

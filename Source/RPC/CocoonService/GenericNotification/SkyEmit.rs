@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Notification handlers that forward events to Sky via `app.emit()`.
 //! Covers: webview messages, status bar, output channels, progress,

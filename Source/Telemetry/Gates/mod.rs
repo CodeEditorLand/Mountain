@@ -1,4 +1,3 @@
-
 //! # Telemetry Gates
 //!
 //! Compile-time and runtime feature gates that decide which telemetry

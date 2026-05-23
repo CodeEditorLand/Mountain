@@ -1,4 +1,3 @@
-
 //! Delegate the update check to the Air gRPC service. Centralised update
 //! management across the Land ecosystem; download path still TODO.
 

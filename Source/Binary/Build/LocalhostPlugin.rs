@@ -19,7 +19,6 @@ use tauri::plugin::TauriPlugin;
 /// `tauri-plugin-localhost`. After resetting the vendored copy to upstream
 /// (`Dependency/Tauri/Dependency/PluginsWorkspace/plugins/localhost`),
 /// those methods are gone;
-#[allow(dead_code)]
 const OTLP_HOST:&str = "127.0.0.1:4318";
 
 /// Resolve the correct `Content-Type` for a request URL by its file extension.
@@ -80,7 +79,6 @@ fn MimeFromUrl(Url:&str) -> Option<&'static str> {
 /// Returns true if the collector accepted (2xx), false otherwise.
 ///
 /// See `OTLP_HOST` for why this is currently unused.
-#[allow(dead_code)]
 fn ProxyToOTLP(Body:&[u8]) -> bool {
 	let Ok(mut Stream) = TcpStream::connect_timeout(&OTLP_HOST.parse().unwrap(), Duration::from_millis(500)) else {
 		return false;

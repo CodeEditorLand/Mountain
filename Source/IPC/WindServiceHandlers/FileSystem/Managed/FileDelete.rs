@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Legacy wire method `file:delete`. Non-recursive, non-trash.
 

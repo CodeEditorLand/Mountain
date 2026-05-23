@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 //! Progress indicator handlers (`progress:begin/report/end`). Distinct
 //! from the notification-scoped progress surface in
 //! `UI::Notification` - these drive window-level / status-bar progress

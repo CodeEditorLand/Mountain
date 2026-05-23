@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method `file:mkdir`. `create_dir_all` is recursive; matches the
 //! Electron default VS Code expects.
@@ -17,6 +16,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	dev_log!("vfs", "file:mkdir ok path={}", Path);
 
 	let FileUri = format!("file://{}", Path);
+
 	tokio::spawn(async move {
 		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),

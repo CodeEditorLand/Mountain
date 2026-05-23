@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! `/Static/Application/` → Sky Target real path.
 //! State held here; `Get` and `Set` expose atomic accessors.

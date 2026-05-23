@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wind Service Handlers - dispatcher and sub-module aggregator.
 //! Domain files handle the individual handler implementations.
@@ -2457,6 +2456,7 @@ pub async fn mountain_ipc_invoke(
 						// Notify Cocoon so onDidChangeTextDocument fires in extensions.
 						let Payload2 = json!([
 							{ "external": Uri.clone(), "$mid": 1 },
+
 							{ "content": Content, "versionId": Version, "isDirty": true, "changes": [] }
 						]);
 						tokio::spawn(async move {

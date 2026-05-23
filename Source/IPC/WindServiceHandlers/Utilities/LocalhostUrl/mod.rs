@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! The localhost plugin base URL (`http://localhost:<port>`).
 //! State held here; `Get` and `Set` expose atomic accessors.

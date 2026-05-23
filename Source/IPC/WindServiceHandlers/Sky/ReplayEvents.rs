@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `sky:replay-events`.
 //! Called by SkyBridge after every `sky://*` Tauri listener is installed.

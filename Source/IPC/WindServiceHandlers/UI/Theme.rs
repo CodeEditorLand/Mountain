@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 //! Theme IPC handlers. `themes:getActive` / `themes:list` / `themes:set`
 //! drive the workbench's colour-theme picker and the RunTime theme swap.
 //!

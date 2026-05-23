@@ -1,4 +1,3 @@
-
 //! Application updater. Two paths: Tauri's bundled updater (always available)
 //! and Air-delegated updates (feature-gated). `CheckForUpdatesWithAir::Fn`
 //! routes by `UpdateMode::Enum`.

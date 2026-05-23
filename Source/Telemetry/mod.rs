@@ -1,4 +1,3 @@
-
 //! Telemetry & observability surface. Currently a feature-gated stub stack:
 //! tracing/metrics live behind `--features Telemetry`; the build flags
 //! (`IsEnabled`, `IsDebugBuild`, `IsDevelopmentBuild`) are always available

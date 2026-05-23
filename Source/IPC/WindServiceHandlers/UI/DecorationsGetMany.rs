@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 
 //! Wire method: `decorations:getMany`.
 //! Bulk-reads decorations for an array of URIs from the in-memory cache.

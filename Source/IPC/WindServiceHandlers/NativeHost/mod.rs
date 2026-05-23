@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! NativeHost atoms - native OS-layer handlers.
 //!

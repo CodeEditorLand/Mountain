@@ -1,4 +1,3 @@
-#![allow(unused_imports)]
 
 //! # DispatchFrontendCommand (Track)
 //!

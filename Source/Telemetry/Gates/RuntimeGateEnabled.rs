@@ -1,4 +1,3 @@
-
 //! Predicate over the boot-time gate set.
 
 use crate::Telemetry::Gates::GetRuntimeGates;

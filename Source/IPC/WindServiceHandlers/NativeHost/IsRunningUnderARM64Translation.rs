@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `nativeHost:isRunningUnderARM64Translation`.
 //! On macOS checks `sysctl.proc_translated` (Rosetta 2). Cached via

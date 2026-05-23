@@ -1,4 +1,3 @@
-
 //! Tagged value carried by `Metric::Struct`. Counter/Gauge/Histogram cover
 //! the OTEL primitive shapes; Boolean/Text are escape hatches for
 //! Mountain-internal observations that don't fit the numeric model.

@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method `file:delete`. Honours `{ recursive }` option for
 //! directories; `useTrash` is accepted but not yet implemented (future
@@ -33,7 +32,9 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 
 	// Notify Cocoon so `onDidDeleteFiles` fires for extensions (GitLens, etc.)
 	let FileUri = format!("file://{}", Path);
+
 	dev_log!("vfs", "file:delete ok path={}", Path);
+
 	tokio::spawn(async move {
 		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),

@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `nativeHost:getOSStatistics`.
 //! Returns Electron-shaped `{ totalmem, freemem, loadavg }` snapshot.

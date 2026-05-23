@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 
 //! Shared helpers for the `Git/*` atomic handlers. Holds:
 //!
@@ -17,38 +16,48 @@ use std::{
 };
 
 use serde_json::Value;
+
 use tokio::process::Command;
 
 use crate::dev_log;
 
 pub fn RunningProcesses() -> &'static Mutex<HashMap<String, u32>> {
+
 	static SLOT:OnceLock<Mutex<HashMap<String, u32>>> = OnceLock::new();
 
 	SLOT.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 pub fn RegisterPid(OperationId:&str, Pid:u32) {
+
 	if OperationId.is_empty() {
+
 		return;
 	}
 
 	if let Ok(mut Map) = RunningProcesses().lock() {
+
 		Map.insert(OperationId.to_string(), Pid);
 	}
 }
 
 pub fn ClearPid(OperationId:&str) {
+
 	if OperationId.is_empty() {
+
 		return;
 	}
 
 	if let Ok(mut Map) = RunningProcesses().lock() {
+
 		Map.remove(OperationId);
 	}
 }
 
 pub fn TakePid(OperationId:&str) -> Option<u32> {
+
 	if OperationId.is_empty() {
+
 		return None;
 	}
 
@@ -56,19 +65,27 @@ pub fn TakePid(OperationId:&str) -> Option<u32> {
 }
 
 pub fn ResolveCwd(Raw:&str) -> PathBuf {
+
 	if Raw.is_empty() {
+
 		std::env::current_dir().unwrap_or_default()
 	} else {
+
 		PathBuf::from(Raw)
 	}
 }
 
 pub async fn RunGit(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Result<(i32, String, String), String> {
+
 	dev_log!(
 		"git",
+
 		"[Git] exec-begin op={} cwd={} Arguments=[{}]",
+
 		OperationId,
+
 		Cwd.unwrap_or("<inherit>"),
+
 		Args.join(" ")
 	);
 
@@ -83,15 +100,20 @@ pub async fn RunGit(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Resul
 	let Child = Spawn.spawn().map_err(|Error| {
 		dev_log!(
 			"git",
+
 			"[Git] exec-spawn-fail op={} Arguments=[{}] error={}",
+
 			OperationId,
+
 			Args.join(" "),
+
 			Error
 		);
 		format!("git spawn failed: {}", Error)
 	})?;
 
 	if let Some(Pid) = Child.id() {
+
 		RegisterPid(OperationId, Pid);
 	}
 
@@ -110,11 +132,17 @@ pub async fn RunGit(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Resul
 
 	dev_log!(
 		"git",
+
 		"[Git] exec-done op={} Arguments=[{}] exit={} stdout={}B stderr={}B",
+
 		OperationId,
+
 		Args.join(" "),
+
 		ExitCode,
+
 		Stdout.len(),
+
 		Stderr.len()
 	);
 
@@ -122,6 +150,7 @@ pub async fn RunGit(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Resul
 }
 
 pub fn AsStringArray(Value:&Value) -> Vec<String> {
+
 	Value
 		.as_array()
 		.map(|Arr| Arr.iter().filter_map(|V| V.as_str().map(str::to_string)).collect())

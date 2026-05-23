@@ -1,4 +1,3 @@
-
 //! Convenience: record a counter against the global registry without
 //! labels.
 

@@ -37,7 +37,6 @@ pub const MAX_MESSAGE_SIZE_BYTES:usize = 4 * 1024 * 1024;
 pub const HEALTH_CHECK_INTERVAL_MS:u64 = 30000;
 
 /// Connection timeout (currently unused - kept for the streaming variant).
-#[allow(dead_code)]
 pub const CONNECTION_TIMEOUT_MS:u64 = 10000;
 
 /// Notification broadcast capacity (drop-oldest when full). 4096 covers

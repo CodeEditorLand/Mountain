@@ -1,4 +1,3 @@
-
 //! Module-private singleton holding the process-wide
 //! `FeatureFlagRegistry::Struct`. Convenience free functions in sibling
 //! files (`IsEnabled`, `Enable`, `Disable`, `GetAllFlags`) read through

@@ -117,14 +117,11 @@ const HANDSHAKE_TIMEOUT_MS:u64 = 60000;
 
 const HEALTH_CHECK_INTERVAL_SECONDS:u64 = 5;
 
-#[allow(dead_code)]
 const MAX_RESTART_ATTEMPTS:u32 = 3;
 
-#[allow(dead_code)]
 const RESTART_WINDOW_SECONDS:u64 = 300;
 
 /// Global state for tracking Cocoon process lifecycle
-#[allow(dead_code)]
 struct CocoonProcessState {
 	ChildProcess:Option<Child>,
 
@@ -968,9 +965,13 @@ fn BuildCocoonEnvironment() -> HashMap<String, String> {
 	let mut Env = HashMap::new();
 
 	Env.insert("VSCODE_PIPE_LOGGING".into(), "true".into());
+
 	Env.insert("VSCODE_VERBOSE_LOGGING".into(), "true".into());
+
 	Env.insert("VSCODE_PARENT_PID".into(), std::process::id().to_string());
+
 	Env.insert("MOUNTAIN_GRPC_PORT".into(), MOUNTAIN_GRPC_PORT.to_string());
+
 	Env.insert("COCOON_GRPC_PORT".into(), COCOON_GRPC_PORT.to_string());
 
 	for Key in ["PATH", "HOME"] {

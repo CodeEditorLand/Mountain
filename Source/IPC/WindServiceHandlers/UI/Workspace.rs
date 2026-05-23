@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 //! Workspace folder handlers: get / add / remove / get-name. Thin
 //! wrappers over `ApplicationState::Workspace` that re-broadcast via
 //! `UpdateWorkspaceFoldersAndNotify` so Wind + Sky pick up the new
@@ -17,6 +16,7 @@ use crate::{
 };
 
 pub async fn WorkspacesGetFolders(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+
 	let Workspace = &RunTime.Environment.ApplicationState.Workspace;
 
 	let Folders = Workspace.GetWorkspaceFolders();
@@ -37,6 +37,7 @@ pub async fn WorkspacesGetFolders(RunTime:Arc<ApplicationRunTime>) -> Result<Val
 }
 
 pub async fn WorkspacesAddFolder(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	use url::Url;
 
 	let UriStr = Arguments
@@ -56,6 +57,7 @@ pub async fn WorkspacesAddFolder(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<
 	let URI = Url::parse(&UriStr).map_err(|E| format!("workspaces:addFolder invalid URI: {}", E))?;
 
 	if let Ok(Folder) = WorkspaceFolderStateDTO::New(URI, Name, Index) {
+
 		Folders.push(Folder);
 
 		UpdateWorkspaceFoldersAndNotify(Workspace, Folders);
@@ -65,6 +67,7 @@ pub async fn WorkspacesAddFolder(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<
 }
 
 pub async fn WorkspacesRemoveFolder(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let UriStr = Arguments
 		.first()
 		.and_then(|V| V.as_str())
@@ -78,6 +81,7 @@ pub async fn WorkspacesRemoveFolder(RunTime:Arc<ApplicationRunTime>, Arguments:V
 	Folders.retain(|F| F.URI.to_string() != UriStr);
 
 	for (I, F) in Folders.iter_mut().enumerate() {
+
 		F.Index = I;
 	}
 
@@ -87,6 +91,7 @@ pub async fn WorkspacesRemoveFolder(RunTime:Arc<ApplicationRunTime>, Arguments:V
 }
 
 pub async fn WorkspacesGetName(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+
 	let Name = RunTime
 		.Environment
 		.ApplicationState

@@ -90,15 +90,19 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 					if P.exists() {
 						return P.canonicalize().unwrap_or(P);
 					}
+
 					let mut Out:Vec<std::path::Component> = Vec::new();
+
 					for C in P.components() {
 						match C {
 							std::path::Component::ParentDir => {
 								Out.pop();
 							},
+
 							_ => Out.push(C),
 						}
 					}
+
 					Out.iter().collect()
 				};
 
@@ -109,6 +113,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 
 				if StaticAppExtPath.exists() {
 					let StaticAppExtPath = Normalize(StaticAppExtPath);
+
 					dev_log!(
 						"extensions",
 						"[Extensions] [ScanPaths] + {} (Static/Application canonical)",
@@ -155,6 +160,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 
 				if SkyTargetPath.exists() {
 					let SkyTargetPath = Normalize(SkyTargetPath);
+
 					dev_log!(
 						"extensions",
 						"[Extensions] [ScanPaths] + {} (Sky Target, repo-layout)",

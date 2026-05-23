@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire methods: `extensionhostdebugservice:*`.
 //! Bridges VS Code's `IExtensionHostDebugService` channel. `reload` triggers

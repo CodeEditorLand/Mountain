@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 //! Working-copy (dirty-state) handlers. Tracks whether an open URI has
 //! unsaved changes; Sky queries this to paint the tab's dot-indicator,
 //! gate exit dialogs, and drive "Save All" affordances.

@@ -1255,7 +1255,6 @@ impl std::fmt::Debug for AirClient {
 // ============================================================================
 
 /// Helper trait for converting types to tonic::Request
-#[allow(dead_code)]
 trait IntoRequestExt {
 	fn into_request(self) -> tonic::Request<Self>
 	where

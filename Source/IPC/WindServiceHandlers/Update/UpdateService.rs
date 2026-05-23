@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire methods: `update:*`.
 //! Land has no update server yet; all methods are acknowledged no-ops that

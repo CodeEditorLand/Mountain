@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 
 //! Lifecycle handlers: phase get / wait / shutdown.
 //!

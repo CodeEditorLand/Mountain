@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Generic-request file-system handlers.
 //! `OkResponse`/`ErrResponse` are shared helpers available to sibling modules.

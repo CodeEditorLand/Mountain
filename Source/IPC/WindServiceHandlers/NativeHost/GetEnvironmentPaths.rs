@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `nativeHost:getEnvironmentPaths`.
 //! Returns paths used by VS Code's `ResolveConfiguration` to locate user-data,

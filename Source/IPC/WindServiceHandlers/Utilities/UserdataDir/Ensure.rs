@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! First-access scaffolding: creates userdata directories and default files.
 //! Idempotent - the atomic flag skips the walk after the first pass.

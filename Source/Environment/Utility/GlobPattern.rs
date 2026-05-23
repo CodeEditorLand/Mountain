@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Glob pattern extraction helpers for `WorkspaceProvider::FindFiles` calls.
 //!

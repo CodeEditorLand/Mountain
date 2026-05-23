@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `cocoon:extensionHostMessage`.
 //! Relays binary extension-host protocol messages from Wind/Sky to Cocoon via

@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `extensionHostStarter:kill`.
 //! Acknowledged no-op - Cocoon lifecycle is managed by Mountain directly.

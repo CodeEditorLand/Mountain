@@ -1,4 +1,3 @@
-
 //! Verify every gate listed in `RequiredGates` is enabled. Returns a
 //! diagnostic string naming the missing gates so callers can surface
 //! them in error UI.

@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `nativeHost:moveItemToTrash`.
 //! Routes deletions to the OS trash bin so they are recoverable.

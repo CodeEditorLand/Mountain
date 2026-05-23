@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! FileSystem atoms - two tiers:
 //! - `Managed`: legacy handlers that route through

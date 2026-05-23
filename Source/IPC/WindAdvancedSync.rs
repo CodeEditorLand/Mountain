@@ -1077,7 +1077,6 @@ impl WindAdvancedSync {
 	pub async fn get_current_ui_state(&self) -> UIStateSynchronization { self.get_ui_state().await }
 
 	/// Clone sync for async tasks
-	#[allow(dead_code)]
 	fn clone_sync(&self) -> WindAdvancedSync {
 		WindAdvancedSync {
 			runtime:self.runtime.clone(),

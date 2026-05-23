@@ -3,7 +3,6 @@
 use std::path::PathBuf;
 
 pub struct Struct {
-	#[allow(dead_code)]
 	workspace_root:Option<PathBuf>,
 }
 

@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Converts VS Code `Uri`-shaped arguments to platform-native paths.
 //! Co-locates percent-decoding, userdata remapping, and `/Static/Application`

@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Dispatcher for the generic `send_mountain_notification` gRPC endpoint.
 //!

@@ -1,4 +1,3 @@
-
 //! # Performance and Operational Metrics
 //!
 //! Bounded ring buffer of recent metric observations. Every emit goes

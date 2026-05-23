@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `nativeHost:readClipboardFindText`.
 //! macOS has a separate find pasteboard; reuse the general clipboard for

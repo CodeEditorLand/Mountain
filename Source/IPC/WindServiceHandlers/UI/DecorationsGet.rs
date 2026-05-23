@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 
 //! Wire method: `decorations:get`.
 //! Reads a URI decoration from cache, then falls back to a registered
@@ -30,9 +29,12 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 					.Feature
 					.Decorations
 					.SetDecoration(Uri, Result.clone());
+
 				return Ok(Result);
 			},
+
 			Ok(None) => {},
+
 			Err(E) => {
 				crate::dev_log!("decorations", "warn: [DecorationsGet] provider error for {}: {}", Uri, E);
 			},

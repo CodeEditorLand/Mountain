@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 // # CocoonServiceImpl - thin-wrapper dispatcher
 //
@@ -44,7 +43,6 @@ pub mod Window;
 
 pub mod Workspace;
 
-#[allow(unused_imports)]
 use std::{
 	collections::HashMap,
 	sync::Arc,
@@ -1125,10 +1123,15 @@ impl CocoonService for CocoonServiceImpl {
 		// SendCocoonNotification; this typed path is the proto-generated entry point.
 		// NOTE: prost generates snake_case fields from the proto definition.
 		let Inner = request.into_inner();
+
 		let Handle = Inner.handle;
+
 		let Selector = Inner.language_selector.clone();
+
 		let ExtId = Inner.extension_id.clone();
+
 		self.RegisterProvider(Handle, ProviderType::InlineCompletion, &Selector, &ExtId);
+
 		Ok(Response::new(Empty {}))
 	}
 

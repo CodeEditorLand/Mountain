@@ -52,14 +52,18 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 	// Notify Cocoon so `onDidChangeTextDocument` fires with the new content.
 	let UriForCocoon = Uri.clone();
+
 	let ContentForCocoon = NewContent.clone();
+
 	let VersionForCocoon = NewVersion;
+
 	tokio::spawn(async move {
 		let _ = crate::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),
 			"$acceptModelChanged".to_string(),
 			serde_json::json!([
 				{ "external": UriForCocoon, "$mid": 1 },
+
 				{ "content": ContentForCocoon, "versionId": VersionForCocoon, "isDirty": true, "changes": [] }
 			]),
 		)

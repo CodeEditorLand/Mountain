@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `native:showItemInFolder`, `nativeHost:showItemInFolder`.
 //! Reveals a path in the platform file manager (Finder / Explorer / Linux FM).

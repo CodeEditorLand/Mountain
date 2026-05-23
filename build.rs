@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use std::fs::read_to_string;
 
 use serde::{Deserialize, Serialize};
@@ -104,7 +103,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 					"../Sky/Target/_astro": "_astro",
 					"../Sky/Target/index.html": "index.html",
 					"../Sky/Target/product.json": "product.json",
-					"../Sky/Target/robots.txt": "robots.txt"
+					"../Sky/Target/robots.txt": "robots.txt",
+					"../Cocoon/Target/Bootstrap/Implementation/Cocoon": "Cocoon/Target/Bootstrap/Implementation/Cocoon",
+					"../Sky/Target/extensions.manifest.json": "extensions.manifest.json",
+					"Proto/Vine.proto": "Mountain/Proto/Vine.proto",
+					"scripts/cocoon/bootstrap-fork.js": "scripts/cocoon/bootstrap-fork.js"
 				})
 			} else {
 				// Embedded layout - only Cocoon-needed files on disk; all
@@ -119,7 +122,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 					"../Sky/Target/Static/Application/nls.messages.json": "nls.messages.json",
 					"../Sky/Target/Static/Application/nls.metadata.json": "nls.metadata.json",
 					"../Sky/Target/Static/Application/node_modules": "node_modules",
-					"../Sky/Target/product.json": "product.json"
+					"../Sky/Target/product.json": "product.json",
+					"../Cocoon/Target/Bootstrap/Implementation/Cocoon": "Cocoon/Target/Bootstrap/Implementation/Cocoon",
+					"../Sky/Target/extensions.manifest.json": "extensions.manifest.json",
+					"Proto/Vine.proto": "Mountain/Proto/Vine.proto",
+					"scripts/cocoon/bootstrap-fork.js": "scripts/cocoon/bootstrap-fork.js"
 				})
 			};
 			if let Some(B) = Bundle.as_object_mut() {

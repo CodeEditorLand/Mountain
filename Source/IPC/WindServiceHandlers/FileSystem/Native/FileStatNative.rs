@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method `file:stat`. Returns VS Code's `IStat` shape via
 //! `metadata_to_istat`. Uses `symlink_metadata` to avoid following

@@ -1,4 +1,3 @@
-#![allow(unused_imports)]
 
 //! # Entry (Binary/Main)
 //!

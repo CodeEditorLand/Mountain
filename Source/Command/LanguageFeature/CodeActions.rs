@@ -2,7 +2,6 @@
 //!
 //! Provides code actions (quick fixes and refactorings) for a code range
 
-#[allow(unused_imports)]
 use CommonLibrary::{
 	Error::CommonError::CommonError,
 	LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,

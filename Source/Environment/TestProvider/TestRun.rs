@@ -7,7 +7,6 @@ use std::collections::HashMap;
 
 use crate::Environment::TestProvider::{TestResult, TestRunStatus};
 
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Struct {
 	pub RunIdentifier:String,

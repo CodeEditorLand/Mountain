@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method `file:readBinary`. Active in dispatch. Routes through the
 //! RunTime's `FileSystemReader` so VS Code's `VSBuffer.wrap()` receives

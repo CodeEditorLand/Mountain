@@ -77,7 +77,9 @@ pub(super) async fn get_configuration_value(
 	// VS Code uses `[rust]`, `[typescript]`, etc. as top-level keys.
 	let configuration_value = if let Some(ref lang_id) = overrides.OverrideIdentifier {
 		let lang = lang_id.as_str();
+
 		let lang_block_key = format!("[{}]", lang);
+
 		if let Some(lang_block) = configuration_guard.get(&lang_block_key).and_then(|v| v.as_object()) {
 			match section.as_deref() {
 				None => {
@@ -87,26 +89,34 @@ pub(super) async fn get_configuration_value(
 					} else {
 						return Ok(base_value);
 					};
+
 					for (k, v) in lang_block {
 						merged.insert(k.clone(), v.clone());
 					}
+
 					Value::Object(merged)
 				},
+
 				Some(section_path) => {
 					// Check if the language block overrides this specific section key.
 					let top_key = section_path.split('.').next().unwrap_or(section_path);
+
 					if let Some(lang_value) = lang_block.get(top_key) {
 						let remainder:Vec<&str> = section_path.splitn(2, '.').skip(1).collect();
+
 						if remainder.is_empty() {
 							lang_value.clone()
 						} else {
 							let mut cur = lang_value;
+
 							for k in remainder[0].split('.') {
 								match cur.get(k) {
 									Some(v) => cur = v,
+
 									None => return Ok(base_value),
 								}
 							}
+
 							cur.clone()
 						}
 					} else {

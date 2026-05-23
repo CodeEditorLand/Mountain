@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Pure utility functions shared across `Dashboard` methods.
 //!

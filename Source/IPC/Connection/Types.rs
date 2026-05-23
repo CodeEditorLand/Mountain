@@ -238,7 +238,6 @@ impl ConnectionHandle {
 }
 
 /// Helper trait to get duration since UNIX epoch for SystemTime
-#[allow(dead_code)]
 trait SystemTimeExt {
 	/// Get the duration since UNIX epoch in seconds
 	fn duration_since_epoch_secs(&self) -> Result<u64, std::time::SystemTimeError>;

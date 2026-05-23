@@ -70,7 +70,6 @@ mod Messaging;
 
 /// Webview message handler context. Private - only the dispatch
 /// machinery in `Messaging.rs` consumes it.
-#[allow(dead_code)]
 struct WebviewMessageContext {
 	Handle:String,
 

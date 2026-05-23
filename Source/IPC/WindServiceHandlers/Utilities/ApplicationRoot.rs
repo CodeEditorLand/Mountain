@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! `/Static/Application/` → Sky Target real path. The static root is seeded
 //! once by `AppLifecycle::Dirs` with the resolved `Sky/Target` directory

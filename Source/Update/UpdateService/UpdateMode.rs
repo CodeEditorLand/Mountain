@@ -1,4 +1,3 @@
-
 //! Delegation mode controlling which update mechanism to use.
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

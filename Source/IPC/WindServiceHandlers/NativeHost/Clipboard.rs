@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire methods: clipboard operations via `nativeHost:*Clipboard*`.
 //! Backed by `arboard` for cross-platform text clipboard access.

@@ -1,4 +1,3 @@
-
 //! Toggle a feature flag on through the global registry.
 
 use crate::Telemetry::FeatureFlags::{FeatureFlagError, GlobalRegistry};

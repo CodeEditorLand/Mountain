@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `cocoon:request`.
 //! Generic renderer→Cocoon RPC bridge for two-way wire methods that expect

@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Notification handlers: `register_*_provider` language feature registrations.
 //! All follow the same pattern: extract `handle`, `language_selector`,

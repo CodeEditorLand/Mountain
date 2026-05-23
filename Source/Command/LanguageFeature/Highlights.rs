@@ -2,7 +2,6 @@
 //!
 //! Finds symbol occurrences (document highlights) in a document
 
-#[allow(unused_imports)]
 use CommonLibrary::{
 	Error::CommonError::CommonError,
 	LanguageFeature::{

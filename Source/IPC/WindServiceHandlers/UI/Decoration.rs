@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 //! File decoration handlers (URI → badge / tooltip / colour) backing
 //! `vscode.window.registerFileDecorationProvider`. Mountain's
 //! `ApplicationState::Feature::Decorations` owns the map keyed on URI
@@ -11,6 +10,7 @@ use serde_json::{Value, json};
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn DecorationsGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
 
 	let Uri = Arguments
@@ -21,6 +21,7 @@ pub async fn DecorationsGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value
 	// 1. Check the static in-memory store (populated by decorations:set or prior
 	//    provider calls).
 	if let Some(Cached) = RunTime.Environment.ApplicationState.Feature.Decorations.GetDecoration(Uri) {
+
 		return Ok(Cached);
 	}
 
@@ -28,8 +29,11 @@ pub async fn DecorationsGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value
 	//    extension-contributed decorations (e.g. git status badges from vscode.git,
 	//    error badges from eslint) populate on demand.
 	if let Ok(ParsedUri) = url::Url::parse(Uri) {
+
 		match RunTime.Environment.ProvideFileDecoration(ParsedUri).await {
+
 			Ok(Some(Result)) => {
+
 				// Cache for subsequent requests so the next `decorations:get`
 				// for the same URI doesn't round-trip again.
 				RunTime
@@ -38,10 +42,14 @@ pub async fn DecorationsGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value
 					.Feature
 					.Decorations
 					.SetDecoration(Uri, Result.clone());
+
 				return Ok(Result);
 			},
+
 			Ok(None) => {},
+
 			Err(E) => {
+
 				crate::dev_log!("decorations", "warn: [DecorationsGet] provider error for {}: {}", Uri, E);
 			},
 		}
@@ -51,6 +59,7 @@ pub async fn DecorationsGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value
 }
 
 pub async fn DecorationsGetMany(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Uris:Vec<String> = Arguments
 		.first()
 		.and_then(|V| V.as_array())
@@ -60,7 +69,9 @@ pub async fn DecorationsGetMany(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<V
 	let mut Result = serde_json::Map::new();
 
 	for Uri in &Uris {
+
 		if let Some(Decoration) = RunTime.Environment.ApplicationState.Feature.Decorations.GetDecoration(Uri) {
+
 			Result.insert(Uri.clone(), Decoration);
 		}
 	}
@@ -69,6 +80,7 @@ pub async fn DecorationsGetMany(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<V
 }
 
 pub async fn DecorationsSet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
@@ -87,6 +99,7 @@ pub async fn DecorationsSet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value
 }
 
 pub async fn DecorationsClear(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())

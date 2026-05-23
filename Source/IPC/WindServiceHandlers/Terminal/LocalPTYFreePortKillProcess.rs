@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `localPty:freePortKillProcess`.
 //! Kills whatever process is holding a TCP port so a new terminal can bind it.

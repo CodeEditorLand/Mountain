@@ -1,4 +1,3 @@
-
 //! Eager initialiser for the feature-flag system. Currently a no-op log
 //! line; in future phases this will hydrate flags from
 //! `MountainEnvironment` configuration.

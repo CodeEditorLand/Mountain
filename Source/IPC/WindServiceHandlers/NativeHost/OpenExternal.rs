@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `native:openExternal`, `nativeHost:openExternal`.
 //! Opens an http/https URL in the platform default browser.

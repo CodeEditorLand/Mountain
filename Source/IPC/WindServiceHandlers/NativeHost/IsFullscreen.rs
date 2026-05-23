@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `nativeHost:isFullscreen`.
 //! Returns true if the `main` webview window is fullscreen. Missing window

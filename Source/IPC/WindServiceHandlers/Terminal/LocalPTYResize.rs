@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `localPty:resize`.
 //! Forwards a resize event to the PTY master (SIGWINCH) via

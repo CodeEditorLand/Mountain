@@ -1,4 +1,3 @@
-
 //! Scoped timer. Records elapsed time as a histogram against the global
 //! registry on `StopAndRecord`. Labels can be attached fluently.
 

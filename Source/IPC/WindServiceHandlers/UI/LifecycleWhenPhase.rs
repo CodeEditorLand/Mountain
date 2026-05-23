@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 
 //! Wire method: `lifecycle:whenPhase`.
 //! Awaits `LifecyclePhaseState::PhaseNotify` instead of polling.

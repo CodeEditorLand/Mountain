@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `localPty:createProcess`.
 //! VS Code's `IPtyService.createProcess` is typed `Promise<number>`.

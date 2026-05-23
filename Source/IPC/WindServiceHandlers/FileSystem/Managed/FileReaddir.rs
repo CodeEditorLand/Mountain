@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Legacy wire method `file:readdir`. Returns raw entries from the
 //! RunTime's `FileSystemReader`. Not currently wired into dispatch; the

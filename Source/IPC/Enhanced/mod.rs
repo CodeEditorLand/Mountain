@@ -16,7 +16,6 @@ pub mod PerformanceDashboard;
 
 use std::collections::HashMap;
 
-#[allow(unused_imports)]
 use bincode::serde::encode_to_vec;
 
 // Import only the types, not the modules themselves (modules are already in scope via `pub mod`)

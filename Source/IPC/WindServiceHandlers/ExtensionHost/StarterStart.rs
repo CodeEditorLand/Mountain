@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `extensionHostStarter:start`.
 //! Returns Cocoon's real PID so debuggers attach to the correct Node.js

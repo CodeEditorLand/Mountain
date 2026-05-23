@@ -58,8 +58,11 @@ static INSTALLED_CACHE:[OnceLock<Value>; 3] = [OnceLock::new(), OnceLock::new(),
 fn CacheIndex(TypeFilter:Option<u8>) -> usize {
 	match TypeFilter {
 		None => 0,
+
 		Some(EXTENSION_TYPE_SYSTEM) => 1,
+
 		Some(EXTENSION_TYPE_USER) => 2,
+
 		Some(_) => 0,
 	}
 }
@@ -70,14 +73,17 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	// Fast path: return cached response if available (built on first call per
 	// type).
 	let CacheSlot = CacheIndex(TypeFilter);
+
 	if let Some(Cached) = INSTALLED_CACHE[CacheSlot].get() {
 		let Count = Cached.as_array().map(|A| A.len()).unwrap_or(0);
+
 		dev_log!(
 			"extensions",
 			"extensions:getInstalled type={:?} returning {} entries (cache hit)",
 			TypeFilter,
 			Count
 		);
+
 		return Ok(Cached.clone());
 	}
 
@@ -191,10 +197,12 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	);
 
 	let Response = json!(Wrapped);
+
 	// Only cache non-empty responses - an empty response on first call (timeout)
 	// shouldn't poison the cache for subsequent calls that would get real data.
 	if !Wrapped.is_empty() {
 		let _ = INSTALLED_CACHE[CacheSlot].set(Response.clone());
 	}
+
 	Ok(Response)
 }

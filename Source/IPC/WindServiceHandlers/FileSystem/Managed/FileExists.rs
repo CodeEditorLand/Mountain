@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Legacy wire method `file:exists`. Returns bool via `StatFile` probe.
 

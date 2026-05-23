@@ -2,7 +2,6 @@
 //!
 //! This module encapsulates all logic related to the gRPC-based
 
-#![allow(unused_imports, unused_variables)]
 //! Inter-Process Communication (IPC) system, codenamed "Vine".
 //!
 //! ## Architecture Overview

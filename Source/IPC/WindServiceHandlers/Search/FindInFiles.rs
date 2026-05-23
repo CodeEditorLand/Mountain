@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `search:findInFiles` / `search:textSearch`.
 //! Delegates to `SearchProvider::TextSearch`.

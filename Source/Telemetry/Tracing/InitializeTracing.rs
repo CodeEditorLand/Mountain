@@ -1,4 +1,3 @@
-
 //! Bring up the `tracing` global subscriber with an OpenTelemetry-aware
 //! formatter. The level filter respects `RUST_LOG`; otherwise it falls
 //! back to debug in `cfg(debug_assertions)` and info in release.

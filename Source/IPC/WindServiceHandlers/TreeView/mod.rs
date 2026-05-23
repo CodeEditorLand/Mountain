@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! TreeView atoms - renderer-side tree-view RPC handlers.
 //!

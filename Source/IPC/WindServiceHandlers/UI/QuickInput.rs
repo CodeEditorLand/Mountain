@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 //! QuickPick / InputBox dialog handlers. Routes through
 //! `UserInterfaceProvider` so the actual dialog rendering stays
 //! platform-agnostic (Tauri-webview on desktop; extensible to a future

@@ -2,7 +2,6 @@
 // Binary / Tray / EnableTray
 // =============================================================================
 
-#![allow(unused_imports)]
 
 //! # Enable Tray Function
 //!

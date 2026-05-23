@@ -1,4 +1,3 @@
-
 //! Snapshot every flag currently held by the global registry.
 
 use crate::Telemetry::FeatureFlags::{FeatureFlag, GlobalRegistry};

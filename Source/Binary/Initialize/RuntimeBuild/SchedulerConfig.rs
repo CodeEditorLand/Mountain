@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 
 //! Echo scheduler tuning knobs. `Default` adapts to the active build
 //! profile: telemetry on under `Telemetry`, log level scales by

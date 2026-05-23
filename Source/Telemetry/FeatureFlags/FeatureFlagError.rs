@@ -1,4 +1,3 @@
-
 //! Error type returned by `FeatureFlagRegistry` operations.
 
 #[derive(Debug, thiserror::Error)]

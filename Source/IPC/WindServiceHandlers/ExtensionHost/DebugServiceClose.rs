@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `extensionhostdebugservice:close`.
 //! Emits `sky://exthost/debug-close` so the Sky bridge can react.

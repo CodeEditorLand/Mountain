@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Generic-request window/dialog handlers for `process_mountain_request`.
 //! Handles `UserInterface.ShowOpenDialog`, `UserInterface.ShowSaveDialog`,

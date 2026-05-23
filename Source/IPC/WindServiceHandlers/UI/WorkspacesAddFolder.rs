@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 
 //! Wire method: `workspaces:addFolder`.
 

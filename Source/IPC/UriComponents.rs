@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 
 //! # UriComponents - VS Code marshalling helpers
 //!

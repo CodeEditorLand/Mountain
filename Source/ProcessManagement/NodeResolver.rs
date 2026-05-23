@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 
 //! Resolve the Node.js binary used to spawn Cocoon.
 //!

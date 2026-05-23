@@ -3,7 +3,6 @@
 use std::collections::HashMap;
 
 pub struct Struct {
-	#[allow(dead_code)]
 	commands:HashMap<String, String>,
 }
 

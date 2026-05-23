@@ -1,4 +1,3 @@
-
 //! Bounded ring buffer of recent metric observations. Oldest entries are
 //! evicted FIFO once `MaxEntries` is reached. The registry is `Sync`
 //! through a `parking_lot::RwLock` so emit/read can race safely.

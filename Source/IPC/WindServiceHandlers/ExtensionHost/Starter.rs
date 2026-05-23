@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire methods: `extensionHostStarter:*`.
 //! Bridges VS Code's `IExtensionHostStarter` channel to Mountain/Cocoon.

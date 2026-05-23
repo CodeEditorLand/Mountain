@@ -1,4 +1,3 @@
-
 //! Wrap an async gRPC call in an `INFO`-level span and emit start/finish
 //! `dev_log` lines with elapsed time. Pass-through when `Telemetry` is
 //! off.

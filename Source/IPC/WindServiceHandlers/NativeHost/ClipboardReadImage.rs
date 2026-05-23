@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `nativeHost:readImage`.
 //! Binary image clipboard not yet implemented - returns empty array.

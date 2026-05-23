@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method `file:readdir`. Returns `[[name, fileType]]` matching
 //! VS Code's `ReadDirResult` (`FileType`: File=1, Directory=2,

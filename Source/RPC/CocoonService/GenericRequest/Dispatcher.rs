@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Dispatcher for the generic `process_mountain_request` gRPC endpoint.
 //!

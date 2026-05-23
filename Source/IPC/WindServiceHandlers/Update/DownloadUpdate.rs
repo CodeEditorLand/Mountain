@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `update:downloadUpdate`.
 //! No-op - Land has no update server.

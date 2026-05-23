@@ -1,5 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-#![allow(non_snake_case, non_camel_case_types, non_upper_case_globals)]
+#![allow(non_snake_case, non_camel_case_types, non_upper_case_globals, dead_code, unused_imports, unused_variables, unused_assignments)]
 
 //! # Mountain: Native Backend for Code Editor Land
 //!

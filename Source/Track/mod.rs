@@ -1,7 +1,6 @@
 //! Central request dispatcher that routes commands from the Sky frontend and
 //! Cocoon sidecar into strongly-typed ActionEffects executed by the runtime.
 
-#![allow(unused_imports, unused_variables)]
 
 // --- Sub-modules ---
 

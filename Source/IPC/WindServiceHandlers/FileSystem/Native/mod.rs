@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Native FS atoms - URI-aware, direct `tokio::fs`. Wind/Sky's `file:*`
 //! channels route here.

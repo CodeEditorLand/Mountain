@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method `file:copy` / `file:cloneFile`. `tokio::fs::copy`
 //! preserves content but not xattrs/acls; callers that need metadata
@@ -29,7 +28,9 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 
 	// Notify Cocoon so `onDidCreateFiles` fires for the newly copied file.
 	let NewUri = format!("file://{}", Target);
+
 	dev_log!("vfs", "file:clone ok {} -> {}", Source, Target);
+
 	tokio::spawn(async move {
 		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),

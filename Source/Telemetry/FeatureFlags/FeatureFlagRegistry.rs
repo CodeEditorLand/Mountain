@@ -11,15 +11,19 @@ use crate::Telemetry::FeatureFlags::{FeatureFlag, FeatureFlagError, FlagCategory
 
 #[derive(Debug)]
 pub struct Struct {
+
 	Flags:Arc<RwLock<HashMap<String, FeatureFlag::Struct>>>,
 }
 
 impl Struct {
+
 	pub fn new() -> Self {
+
 		let mut Flags = HashMap::new();
 
 		Flags.insert(
 			"ipc-compression".to_string(),
+
 			FeatureFlag::Struct {
 				Name:"ipc-compression".to_string(),
 				Enabled:true,
@@ -31,6 +35,7 @@ impl Struct {
 
 		Flags.insert(
 			"experimental-webgl".to_string(),
+
 			FeatureFlag::Struct {
 				Name:"experimental-webgl".to_string(),
 				Enabled:false,
@@ -42,6 +47,7 @@ impl Struct {
 
 		Flags.insert(
 			"extension-hot-reload".to_string(),
+
 			FeatureFlag::Struct {
 				Name:"extension-hot-reload".to_string(),
 				Enabled:false,
@@ -53,6 +59,7 @@ impl Struct {
 
 		Flags.insert(
 			"debug-diagnostics".to_string(),
+
 			FeatureFlag::Struct {
 				Name:"debug-diagnostics".to_string(),
 				Enabled:false,
@@ -66,33 +73,40 @@ impl Struct {
 	}
 
 	pub fn IsEnabled(&self, FlagName:&str) -> bool {
+
 		self.Flags.read().get(FlagName).map(|F| F.Enabled).unwrap_or(false)
 	}
 
 	pub fn Enable(&self, FlagName:&str, Reason:&str) -> Result<(), FeatureFlagError::Enum> {
+
 		let mut Flags = self.Flags.write();
 
 		if let Some(Flag) = Flags.get_mut(FlagName) {
+
 			Flag.Enabled = true;
 
 			Flag.Reason = Reason.to_string();
 
 			Ok(())
 		} else {
+
 			Err(FeatureFlagError::Enum::NotFound(FlagName.to_string()))
 		}
 	}
 
 	pub fn Disable(&self, FlagName:&str, Reason:&str) -> Result<(), FeatureFlagError::Enum> {
+
 		let mut Flags = self.Flags.write();
 
 		if let Some(Flag) = Flags.get_mut(FlagName) {
+
 			Flag.Enabled = false;
 
 			Flag.Reason = Reason.to_string();
 
 			Ok(())
 		} else {
+
 			Err(FeatureFlagError::Enum::NotFound(FlagName.to_string()))
 		}
 	}
@@ -102,6 +116,7 @@ impl Struct {
 	pub fn GetAllFlags(&self) -> Vec<FeatureFlag::Struct> { self.Flags.read().values().cloned().collect() }
 
 	pub fn GetFlagsByCategory(&self, Category:FlagCategory::Enum) -> Vec<FeatureFlag::Struct> {
+
 		self.Flags.read().values().filter(|F| F.Category == Category).cloned().collect()
 	}
 }

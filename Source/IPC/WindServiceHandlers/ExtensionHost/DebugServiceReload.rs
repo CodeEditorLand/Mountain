@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `extensionhostdebugservice:reload`.
 //! Emits `sky://exthost/debug-reload` so Wind can tear down caches before

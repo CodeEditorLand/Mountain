@@ -1,4 +1,3 @@
-
 //! Health probe for the Air daemon. `true` when the gRPC `health_check`
 //! responds and reports `healthy`.
 

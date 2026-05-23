@@ -1,4 +1,3 @@
-
 //! A single observation: name, value, capture timestamp, and free-form
 //! string labels (dimensions). Stored verbatim by
 //! `MetricsRegistry::Struct`.

@@ -2,7 +2,6 @@
 //! Commands are grouped by domain and delegate to providers through the effect
 //! system.
 
-#![allow(unused_imports, unused_variables)]
 
 pub mod Bootstrap;
 

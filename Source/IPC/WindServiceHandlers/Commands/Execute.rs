@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `commands:execute`.
 //! Dispatches to Mountain's CommandExecutor and emits

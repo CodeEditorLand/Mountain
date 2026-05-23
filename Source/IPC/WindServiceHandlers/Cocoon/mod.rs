@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Cocoon bridge atoms - renderer→Cocoon gRPC forwarding.
 //!

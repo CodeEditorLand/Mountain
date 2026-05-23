@@ -1,4 +1,3 @@
-#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `nativeHost:getColorScheme`.
 //! Returns `{ dark, highContrast }`. Dark-mode probe covers macOS

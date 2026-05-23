@@ -1,4 +1,3 @@
-
 //! Convenience: record a gauge against the global registry without labels.
 
 use std::collections::HashMap;

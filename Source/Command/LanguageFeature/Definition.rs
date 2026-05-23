@@ -2,7 +2,6 @@
 //!
 //! Provides go-to-definition functionality
 
-#[allow(unused_imports)]
 use CommonLibrary::{
 	Error::CommonError::CommonError,
 	LanguageFeature::{

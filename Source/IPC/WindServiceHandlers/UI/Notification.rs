@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 //! Notification toast handlers. Both the plain-message and the
 //! progress-bar variants go through here; each emits on an
 //! `SkyEvent::Notification*` channel so Sky's toast stack renders
@@ -9,10 +8,13 @@
 //! path for extensions lives in `Vine::Server::Notification::*`.
 
 use serde_json::{Value, json};
+
 use tauri::AppHandle;
+
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 fn NewId(Prefix:&str) -> String {
+
 	use std::sync::atomic::{AtomicU64, Ordering};
 
 	static SEQ:AtomicU64 = AtomicU64::new(1);
@@ -21,6 +23,7 @@ fn NewId(Prefix:&str) -> String {
 }
 
 pub async fn NotificationShow(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	use tauri::Emitter;
 
 	let Message = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -33,6 +36,7 @@ pub async fn NotificationShow(ApplicationHandle:AppHandle, Arguments:Vec<Value>)
 
 	let _ = ApplicationHandle.emit(
 		SkyEvent::NotificationShow.AsStr(),
+
 		json!({
 			"id": Id,
 			"message": Message,
@@ -45,6 +49,7 @@ pub async fn NotificationShow(ApplicationHandle:AppHandle, Arguments:Vec<Value>)
 }
 
 pub async fn NotificationShowProgress(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	use tauri::Emitter;
 
 	let Title = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -55,6 +60,7 @@ pub async fn NotificationShowProgress(ApplicationHandle:AppHandle, Arguments:Vec
 
 	let _ = ApplicationHandle.emit(
 		SkyEvent::NotificationProgressBegin.AsStr(),
+
 		json!({
 			"id": Id,
 			"title": Title,
@@ -66,6 +72,7 @@ pub async fn NotificationShowProgress(ApplicationHandle:AppHandle, Arguments:Vec
 }
 
 pub async fn NotificationUpdateProgress(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	use tauri::Emitter;
 
 	let Id = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -76,6 +83,7 @@ pub async fn NotificationUpdateProgress(ApplicationHandle:AppHandle, Arguments:V
 
 	let _ = ApplicationHandle.emit(
 		SkyEvent::NotificationProgressUpdate.AsStr(),
+
 		json!({
 			"id": Id,
 			"increment": Increment,
@@ -87,6 +95,7 @@ pub async fn NotificationUpdateProgress(ApplicationHandle:AppHandle, Arguments:V
 }
 
 pub async fn NotificationEndProgress(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	use tauri::Emitter;
 
 	let Id = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
