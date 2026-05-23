@@ -29,7 +29,7 @@ use crate::{
 /// # Errors
 ///
 /// Returns an error if Cocoon initialization fails.
-pub async fn CocoonStart(
+pub async fn Fn(
 	ApplicationHandle:&tauri::AppHandle,
 
 	Environment:&std::sync::Arc<MountainEnvironment>,

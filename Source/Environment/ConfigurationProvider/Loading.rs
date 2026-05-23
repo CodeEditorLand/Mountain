@@ -63,7 +63,7 @@ fn SettingsFileCache() -> &'static Mutex<HashMap<PathBuf, CachedSettingsValue>> 
 /// Drop every cached settings.json parse. Caller: any code path
 /// that mutates settings (`UpdateConfigurationValue`,
 /// `initialize_and_merge_configurations`).
-pub fn ClearSettingsFileCache() {
+pub(crate) fn ClearSettingsFileCache() {
 	if let Ok(mut Guard) = SettingsFileCache().lock() {
 		Guard.clear();
 	}
@@ -107,9 +107,7 @@ pub(super) async fn read_and_parse_configuration_file(
 
 /// Logic to load and merge all configuration files into the effective
 /// configuration stored in `ApplicationState`.
-pub async fn initialize_and_merge_configurations(
-	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
-) -> Result<(), CommonError> {
+pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEnvironment) -> Result<(), CommonError> {
 	dev_log!(
 		"config",
 		"[ConfigurationProvider] Re-initializing and merging all configurations..."

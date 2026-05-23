@@ -30,7 +30,7 @@
 /// # Errors
 ///
 /// Returns an error if Vine server initialization fails.
-pub async fn VineStart(
+pub async fn Fn(
 	ApplicationHandle:tauri::AppHandle,
 
 	PrimaryAddress:String,

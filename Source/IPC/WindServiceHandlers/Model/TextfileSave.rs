@@ -10,7 +10,10 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::{
-	IPC::WindServiceHandlers::Utilities::{MetadataEncoding::Fn as metadata_to_istat, PathExtraction::Fn as extract_path_from_arg},
+	IPC::WindServiceHandlers::Utilities::{
+		MetadataEncoding::Fn as metadata_to_istat,
+		PathExtraction::Fn as extract_path_from_arg,
+	},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };

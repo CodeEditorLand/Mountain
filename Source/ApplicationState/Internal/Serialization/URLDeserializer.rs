@@ -42,7 +42,7 @@ use crate::dev_log;
 /// - Deserializes a string value
 /// - Parses the string as a URL
 /// - Returns parse error as custom deserialization error
-pub fn DeserializeURL<'de, D>(DeserializerInstance:D) -> Result<Url, D::Error>
+pub fn Fn<'de, D>(DeserializerInstance:D) -> Result<Url, D::Error>
 where
 	D: Deserializer<'de>, {
 	let string_value = String::deserialize(DeserializerInstance)?;

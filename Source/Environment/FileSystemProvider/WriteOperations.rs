@@ -44,7 +44,7 @@ pub(super) async fn write_file_impl(
 
 	overwrite:bool,
 ) -> Result<(), CommonError> {
-	Utility::PathSecurity::IsPathAllowedForAccess(&env.ApplicationState, path)?;
+	Utility::PathSecurity::Fn(&env.ApplicationState, path)?;
 
 	// Validate that Content is not excessively large to prevent memory issues
 	if content.len() > 1024 * 1024 * 1024 {
@@ -99,7 +99,7 @@ pub(super) async fn create_directory_impl(
 
 	recursive:bool,
 ) -> Result<(), CommonError> {
-	Utility::PathSecurity::IsPathAllowedForAccess(&env.ApplicationState, path)?;
+	Utility::PathSecurity::Fn(&env.ApplicationState, path)?;
 
 	// Validate that parent path doesn't point to a file
 	if let Some(parent_path) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
@@ -136,7 +136,7 @@ pub(super) async fn delete_impl(
 
 	_use_trash:bool,
 ) -> Result<(), CommonError> {
-	Utility::PathSecurity::IsPathAllowedForAccess(&env.ApplicationState, path)?;
+	Utility::PathSecurity::Fn(&env.ApplicationState, path)?;
 
 	// A full implementation would use the `trash` crate if `UseTrash` is true.
 	match fs::metadata(path).await {
@@ -171,9 +171,9 @@ pub(super) async fn rename_impl(
 
 	overwrite:bool,
 ) -> Result<(), CommonError> {
-	Utility::PathSecurity::IsPathAllowedForAccess(&env.ApplicationState, source)?;
+	Utility::PathSecurity::Fn(&env.ApplicationState, source)?;
 
-	Utility::PathSecurity::IsPathAllowedForAccess(&env.ApplicationState, target)?;
+	Utility::PathSecurity::Fn(&env.ApplicationState, target)?;
 
 	if !overwrite && fs::try_exists(target).await.unwrap_or(false) {
 		return Err(CommonError::FileSystemFileExists(target.clone()));
@@ -194,9 +194,9 @@ pub(super) async fn copy_impl(
 
 	overwrite:bool,
 ) -> Result<(), CommonError> {
-	Utility::PathSecurity::IsPathAllowedForAccess(&env.ApplicationState, source)?;
+	Utility::PathSecurity::Fn(&env.ApplicationState, source)?;
 
-	Utility::PathSecurity::IsPathAllowedForAccess(&env.ApplicationState, target)?;
+	Utility::PathSecurity::Fn(&env.ApplicationState, target)?;
 
 	// Validate that source exists
 	if !fs::try_exists(source).await.unwrap_or(false) {

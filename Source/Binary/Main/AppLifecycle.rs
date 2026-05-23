@@ -105,7 +105,7 @@ use crate::{
 	Binary::Register::WindSyncRegister::WindSyncRegister as WindSyncRegisterFn,
 	Binary::Service::AirStart::AirStart as AirStartFn,
 	Binary::Service::CocoonStart::CocoonStart as CocoonStartFn,
-	Binary::Service::ConfigurationInitialize::ConfigurationInitialize as ConfigurationInitializeFn,
+	Binary::Service::ConfigurationInitialize::Fn as ConfigurationInitializeFn,
 	Binary::Service::VineStart::VineStart as VineStartFn,
 	Binary::Tray::EnableTray as EnableTrayFn,
 	Environment::MountainEnvironment::MountainEnvironment,
@@ -315,9 +315,7 @@ pub fn AppLifecycleSetup(
 
 		// Set the canonical userdata base so WindServiceHandlers resolves
 		// /User/... paths to the real Tauri app_data_dir (not hardcoded "FIDDEE").
-		crate::IPC::WindServiceHandlers::Utilities::UserdataDir::Set::Fn(
-			AppDataDir.to_string_lossy().to_string(),
-		);
+		crate::IPC::WindServiceHandlers::Utilities::UserdataDir::Set::Fn(AppDataDir.to_string_lossy().to_string());
 
 		// Set the real filesystem root for /Static/Application/ path mapping.
 		// In dev mode, Tauri serves from ../Sky/Target relative to Mountain.

@@ -21,7 +21,7 @@ use CommonLibrary::Error::CommonError::CommonError;
 /// Diagnostic.Set call from `vscode.languages.createDiagnosticCollection().set`
 /// trips the breaker after 5 publishes and silences every linter / compiler
 /// across all language extensions.
-pub fn GetURLFromURIComponentsDTO(URIDTO:&serde_json::Value) -> Result<Url, CommonError> {
+pub fn Fn(URIDTO:&serde_json::Value) -> Result<Url, CommonError> {
 	// 1. Plain string: parse directly.
 	if let Some(URIString) = URIDTO.as_str() {
 		return Url::parse(URIString).map_err(|Error| {

@@ -80,7 +80,7 @@ fn IgnoreSegments() -> &'static Vec<String> {
 /// `Target/debug/build/.../foo.rcgu.o`, and
 /// `node_modules/.bin/...`. Worst case is on every event so we
 /// keep this allocation-free.
-pub fn ShouldIgnore(Path:&str) -> bool {
+pub fn Fn(Path:&str) -> bool {
 	let Segments = IgnoreSegments();
 
 	if Segments.is_empty() {

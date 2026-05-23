@@ -26,12 +26,8 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 /// # Errors
 ///
 /// Returns an error if extension scanning or population fails.
-pub async fn ExtensionPopulate(
-	ApplicationHandle:tauri::AppHandle,
-
-	AppState:&std::sync::Arc<ApplicationState>,
-) -> Result<(), String> {
-	match crate::ApplicationState::Internal::ExtensionScanner::ScanAndPopulateExtensions::ScanAndPopulateExtensions(
+pub async fn Fn(ApplicationHandle:tauri::AppHandle, AppState:&std::sync::Arc<ApplicationState>) -> Result<(), String> {
+	match crate::ApplicationState::Internal::ExtensionScanner::ScanAndPopulateExtensions::Fn(
 		ApplicationHandle.clone(),
 		&AppState.Extension,
 	)

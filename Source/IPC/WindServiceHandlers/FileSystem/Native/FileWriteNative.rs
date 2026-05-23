@@ -78,11 +78,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	// FileStatWithMetadata cache - prevents a spurious "file changed on disk"
 	// conflict caused by the pre-write etag being stale after the write.
 	match tokio::fs::metadata(&Path).await {
-		Ok(Meta) => {
-			Ok(crate::IPC::WindServiceHandlers::Utilities::MetadataEncoding::Fn(
-				&Meta,
-			))
-		},
+		Ok(Meta) => Ok(crate::IPC::WindServiceHandlers::Utilities::MetadataEncoding::Fn(&Meta)),
 
 		Err(_) => Ok(Value::Null),
 	}

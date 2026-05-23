@@ -1,25 +1,17 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
 //! Generic-request atom modules for `process_mountain_request`.
-//!
-//! Each submodule handles one semantic group of method names from
-//! Cocoon's `MountainGRPCClient.sendRequest(method, params)` rail.
-//! Handler functions take `(RequestId, Params, &Env)` and return a
-//! typed `Response<GenericResponse>` without referencing `CocoonServiceImpl`.
-//!
-//! Groups:
-//! - `Commands`    - `commands.execute`, `executeCommand`, `unregisterCommand`
-//! - `FileSystem`  - `fs.*`, `readFile`, `writeFile`, `stat`, `readdir`, … Also
-//!   exports `OkResponse` / `ErrResponse` helpers used by other groups.
-//! - `Secrets`     - `getSecret`, `storeSecret`, `deleteSecret`
-//! - `WindowDialogs` - dialogs, messages, status bar, webview, workspace ops
 
+#[path = "Commands/mod.rs"]
 pub mod Commands;
 
 pub mod Dispatcher;
 
+#[path = "FileSystem/mod.rs"]
 pub mod FileSystem;
 
+#[path = "Secrets/mod.rs"]
 pub mod Secrets;
 
+#[path = "WindowDialogs/mod.rs"]
 pub mod WindowDialogs;

@@ -86,7 +86,7 @@ fn TerminalOutputBuffer() -> &'static std::sync::Mutex<std::collections::HashMap
 	TERMINAL_OUTPUT_BUFFER.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()))
 }
 
-pub fn AppendTerminalOutput(TerminalId:u64, Bytes:&[u8]) {
+pub(crate) fn AppendTerminalOutput(TerminalId:u64, Bytes:&[u8]) {
 	if let Ok(mut Map) = TerminalOutputBuffer().lock() {
 		let Entry = Map.entry(TerminalId).or_insert_with(Vec::new);
 
@@ -102,7 +102,7 @@ pub fn AppendTerminalOutput(TerminalId:u64, Bytes:&[u8]) {
 	}
 }
 
-pub fn DrainTerminalOutputBuffer() -> Vec<(u64, Vec<u8>)> {
+pub fn Fn() -> Vec<(u64, Vec<u8>)> {
 	if let Ok(Map) = TerminalOutputBuffer().lock() {
 		Map.iter().map(|(K, V)| (*K, V.clone())).collect()
 	} else {
@@ -110,7 +110,7 @@ pub fn DrainTerminalOutputBuffer() -> Vec<(u64, Vec<u8>)> {
 	}
 }
 
-pub fn RemoveTerminalOutputBuffer(TerminalId:u64) {
+pub(crate) fn RemoveTerminalOutputBuffer(TerminalId:u64) {
 	if let Ok(mut Map) = TerminalOutputBuffer().lock() {
 		Map.remove(&TerminalId);
 	}

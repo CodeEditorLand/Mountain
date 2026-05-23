@@ -42,7 +42,7 @@ use crate::dev_log;
 /// # Behavior
 /// - Converts URL to its string representation
 /// - Uses the serializer to create a JSON string value
-pub fn SerializeURL<S>(URLInstance:&Url, SerializerInstance:S) -> Result<S::Ok, S::Error>
+pub fn Fn<S>(URLInstance:&Url, SerializerInstance:S) -> Result<S::Ok, S::Error>
 where
 	S: Serializer, {
 	let url_string = URLInstance.as_str();

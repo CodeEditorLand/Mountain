@@ -70,9 +70,7 @@ const MAX_CACHE_AGE:Duration = Duration::from_secs(600); // 10 minutes
 ///
 /// Returns `Ok(Some(map))` on a cache hit, `Ok(None)` when the cache is
 /// missing/stale/incompatible, and `Err(_)` only on unexpected I/O errors.
-pub async fn TryLoadFromCache(
-	BinaryDir:&PathBuf,
-) -> Result<Option<HashMap<String, ExtensionDescriptionStateDTO>>, CommonError> {
+pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDescriptionStateDTO>>, CommonError> {
 	// Probe 1: alongside the binary (dev / repo run).
 	let DevCachePath = BinaryDir.join("extensions.manifest.json");
 	// Probe 2: inside .app bundle at Contents/Resources/ (bundle run).

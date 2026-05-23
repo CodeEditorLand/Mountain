@@ -3,7 +3,7 @@
 
 use crate::{
 	Environment::{
-		ConfigurationProvider::Loading::initialize_and_merge_configurations,
+		ConfigurationProvider::Loading::Fn as initialize_and_merge_configurations,
 		MountainEnvironment::MountainEnvironment,
 	},
 	dev_log,
@@ -18,7 +18,7 @@ use crate::{
 /// # Returns
 ///
 /// A `Result` indicating success or failure.
-pub async fn ConfigurationInitialize(Environment:&std::sync::Arc<MountainEnvironment>) -> Result<(), String> {
+pub async fn Fn(Environment:&std::sync::Arc<MountainEnvironment>) -> Result<(), String> {
 	match initialize_and_merge_configurations(Environment).await {
 		Ok(()) => {
 			dev_log!(

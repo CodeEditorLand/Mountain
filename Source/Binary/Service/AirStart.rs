@@ -38,7 +38,7 @@ const AIR_GRPC_ADDRESS:&str = "[::1]:50053";
 /// Spawn is gated on:
 ///   - The `AirIntegration` Cargo feature (compile-time).
 ///   - The `Spawn` env var (runtime; mirrors `CocoonStart` semantics).
-pub async fn AirStart(_ApplicationHandle:&AppHandle, _Environment:&Arc<MountainEnvironment>) -> Result<(), String> {
+pub async fn Fn(_ApplicationHandle:&AppHandle, _Environment:&Arc<MountainEnvironment>) -> Result<(), String> {
 	// Atom N1 mirror: respect the `Spawn=false` env that disables
 	// sidecar spawn for tests and the smallest-shippable-surface
 	// Mountain-only profile.

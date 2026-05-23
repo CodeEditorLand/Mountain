@@ -11,7 +11,10 @@ use serde_json::Value;
 use crate::{
 	IPC::{
 		DevLog,
-		WindServiceHandlers::Utilities::{MetadataEncoding::Fn as metadata_to_istat, PathExtraction::Fn as extract_path_from_arg},
+		WindServiceHandlers::Utilities::{
+			MetadataEncoding::Fn as metadata_to_istat,
+			PathExtraction::Fn as extract_path_from_arg,
+		},
 	},
 	dev_log,
 };

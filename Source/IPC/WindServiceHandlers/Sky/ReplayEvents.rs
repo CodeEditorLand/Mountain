@@ -150,7 +150,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 		}
 	}
 
-	for (TerminalId, Bytes) in crate::Environment::TerminalProvider::DrainTerminalOutputBuffer() {
+	for (TerminalId, Bytes) in crate::Environment::TerminalProvider::Fn() {
 		let DataString = String::from_utf8_lossy(&Bytes).to_string();
 
 		TerminalDataBytes += Bytes.len();

@@ -12,10 +12,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	use CommonLibrary::{
 		Configuration::{
 			ConfigurationProvider::ConfigurationProvider,
-			DTO::{
-				ConfigurationOverridesDTO::ConfigurationOverridesDTO,
-				ConfigurationTarget::ConfigurationTarget,
-			},
+			DTO::{ConfigurationOverridesDTO::ConfigurationOverridesDTO, ConfigurationTarget::ConfigurationTarget},
 		},
 		IPC::SkyEvent::SkyEvent,
 	};

@@ -53,7 +53,7 @@ pub(super) async fn open_document(
 
 	content:Option<String>,
 ) -> Result<Url, CommonError> {
-	let uri = Utility::UriParsing::GetURLFromURIComponentsDTO(&uri_components_dto)?;
+	let uri = Utility::UriParsing::Fn(&uri_components_dto)?;
 
 	dev_log!("model", "[DocumentProvider] Opening document: {}", uri);
 

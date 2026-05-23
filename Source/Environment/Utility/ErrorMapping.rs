@@ -11,7 +11,7 @@ use crate::dev_log;
 
 /// Maps a `PoisonError` from a failed `ApplicationState` Mutex lock into a
 /// structured `CommonError::StateLockPoisoned`.
-pub fn MapApplicationStateLockErrorToCommonError<T>(Error:PoisonError<MutexGuard<'_, T>>) -> CommonError {
+pub(crate) fn MapApplicationStateLockErrorToCommonError<T>(Error:PoisonError<MutexGuard<'_, T>>) -> CommonError {
 	let ErrorMessage = format!("[EnvironmentUtility] Failed to lock ApplicationState section: {}", Error);
 
 	dev_log!("vfs", "error: {}", ErrorMessage);
@@ -21,7 +21,7 @@ pub fn MapApplicationStateLockErrorToCommonError<T>(Error:PoisonError<MutexGuard
 
 /// Maps a generic `PoisonError` from a failed Mutex lock into a
 /// structured `CommonError::StateLockPoisoned`.
-pub fn MapLockErrorToCommonError<T>(Error:PoisonError<MutexGuard<'_, T>>) -> CommonError {
+pub(crate) fn MapLockErrorToCommonError<T>(Error:PoisonError<MutexGuard<'_, T>>) -> CommonError {
 	let ErrorMessage = format!("[EnvironmentUtility] Failed to lock Mutex: {}", Error);
 
 	dev_log!("vfs", "error: {}", ErrorMessage);

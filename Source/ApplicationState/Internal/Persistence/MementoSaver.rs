@@ -51,7 +51,7 @@ use crate::dev_log;
 /// - Creates parent directory if it doesn't exist
 /// - Serializes data to JSON
 /// - Writes to file atomically (creates temp file then renames)
-pub async fn SaveMementoToDisk(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> Result<(), CommonError> {
+pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> Result<(), CommonError> {
 	// Ensure parent directory exists
 	if let Some(parent) = StorageFilePath.parent() {
 		if !parent.exists() {

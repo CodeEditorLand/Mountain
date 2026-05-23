@@ -29,7 +29,7 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 /// rejected as "Path is outside of the registered workspace folders", so
 /// user-installed VSIXes never reach the Extensions sidebar even though
 /// they are present on disk.
-pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), CommonError> {
+pub fn Fn(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), CommonError> {
 	// Per-call verification line is one of the highest-volume tags
 	// (~15k hits per long session). The failure path below logs its own
 	// line; the success path is auditable from IPC-side request logs.

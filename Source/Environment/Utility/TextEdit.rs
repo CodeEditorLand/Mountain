@@ -8,7 +8,7 @@
 
 /// Pre-compute the byte offset of the start of every line in `Source`.
 /// The returned vec always has at least one entry (`[0]`).
-pub fn ComputeLineOffsets(Source:&str) -> Vec<usize> {
+pub(crate) fn ComputeLineOffsets(Source:&str) -> Vec<usize> {
 	let mut Offsets = Vec::with_capacity(Source.len() / 40 + 1);
 
 	Offsets.push(0);
@@ -26,7 +26,7 @@ pub fn ComputeLineOffsets(Source:&str) -> Vec<usize> {
 /// `character` is counted in **UTF-16 code units** to match VS Code's
 /// `Range`/`Position` semantics. Falls back to EOF when line/character
 /// exceeds the source length.
-pub fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Character:usize) -> usize {
+pub(crate) fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Character:usize) -> usize {
 	if Line >= LineOffsets.len() {
 		return Source.len();
 	}
@@ -56,7 +56,7 @@ pub fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Character:
 
 /// Minimal percent-decoder for `file://` URI paths. Self-contained to avoid
 /// an extra crate dependency; handles `%XX` sequences only.
-pub fn percent_decode(Input:&str) -> String {
+pub(crate) fn percent_decode(Input:&str) -> String {
 	let mut Out = String::with_capacity(Input.len());
 
 	let mut Bytes = Input.as_bytes().iter().peekable();

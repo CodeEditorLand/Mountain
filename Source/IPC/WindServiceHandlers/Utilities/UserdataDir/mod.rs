@@ -5,8 +5,7 @@
 
 pub(crate) static BASE_DIR:std::sync::OnceLock<String> = std::sync::OnceLock::new();
 
-pub(crate) static INITIALIZED:std::sync::atomic::AtomicBool =
-	std::sync::atomic::AtomicBool::new(false);
+pub(crate) static INITIALIZED:std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 pub mod Ensure;
 

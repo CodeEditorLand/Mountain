@@ -101,7 +101,7 @@ impl DiagnosticManager for MountainEnvironment {
 			// bad entries instead of throwing: skip the offender, log
 			// once, keep going so the rest of the batch reaches the
 			// renderer.
-			let URIKey = match Utility::UriParsing::GetURLFromURIComponentsDTO(&URIComponentsValue) {
+			let URIKey = match Utility::UriParsing::Fn(&URIComponentsValue) {
 				Ok(Url) => Url.to_string(),
 
 				Err(Error) => {
@@ -267,7 +267,7 @@ impl DiagnosticManager for MountainEnvironment {
 		// are not blocked during the (potentially large) serialize step.
 		let FilterURIKey = ResourceURIFilterOption
 			.as_ref()
-			.map(|V| Utility::UriParsing::GetURLFromURIComponentsDTO(V).map(|U| U.to_string()))
+			.map(|V| Utility::UriParsing::Fn(V).map(|U| U.to_string()))
 			.transpose()?;
 
 		let Snapshot:Vec<std::collections::HashMap<String, Vec<MarkerDataDTO>>> = {

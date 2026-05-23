@@ -257,8 +257,16 @@ use Utilities::{
 	JsonValueHelpers::Fn as v_str,
 	MetadataEncoding::Fn as metadata_to_istat,
 	PathExtraction::{Fn as extract_path_from_arg, percent_decode},
-	RecentlyOpened::{Mutate::Fn as MutateRecentlyOpened, Path::Fn as RecentlyOpenedPath, Read::Fn as ReadRecentlyOpened},
-	UserdataDir::{Ensure::Fn as ensure_userdata_dirs, Get::Fn as get_userdata_base_dir, Set::Fn as set_userdata_base_dir},
+	RecentlyOpened::{
+		Mutate::Fn as MutateRecentlyOpened,
+		Path::Fn as RecentlyOpenedPath,
+		Read::Fn as ReadRecentlyOpened,
+	},
+	UserdataDir::{
+		Ensure::Fn as ensure_userdata_dirs,
+		Get::Fn as get_userdata_base_dir,
+		Set::Fn as set_userdata_base_dir,
+	},
 };
 use Echo::Task::Priority::Priority as EchoPriority;
 use serde_json::{Value, json};
@@ -925,16 +933,10 @@ pub async fn mountain_ipc_invoke(
 				// it in ScannedExtensions, and return the ILocalExtension wrapper
 				// so the sidebar refreshes without a window reload.
 				"extensions:install" => {
-					Extension::ExtensionInstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments)
-						.await
+					Extension::ExtensionInstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await
 				},
 				"extensions:uninstall" => {
-					Extension::ExtensionUninstall::Fn(
-						ApplicationHandle.clone(),
-						RunTime.clone(),
-						Arguments,
-					)
-					.await
+					Extension::ExtensionUninstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await
 				},
 
 				// `ExtensionManagementChannelClient.getManifest(vsix: URI)` - reads
@@ -2334,11 +2336,14 @@ pub async fn mountain_ipc_invoke(
 					let Handle = Arguments.get(1).and_then(|V| V.as_str()).map(String::from).unwrap_or_default();
 					let Options = Arguments.get(2).cloned().unwrap_or(Value::Null);
 					dev_log!("ipc", "tree.reveal viewId={} handle={}", ViewId, Handle);
-					let _ = ApplicationHandle.emit("sky://tree-view/reveal", json!({
-						"viewId": ViewId,
-						"handle": Handle,
-						"options": Options,
-					}));
+					let _ = ApplicationHandle.emit(
+						"sky://tree-view/reveal",
+						json!({
+							"viewId": ViewId,
+							"handle": Handle,
+							"options": Options,
+						}),
+					);
 					Ok(Value::Null)
 				},
 
@@ -2444,7 +2449,12 @@ pub async fn mountain_ipc_invoke(
 						Doc.Version = Version;
 						Doc.Lines = Content.lines().map(|L| L.to_owned()).collect();
 						Doc.IsDirty = true;
-						RunTime.Environment.ApplicationState.Feature.Documents.AddOrUpdate(Uri.clone(), Doc);
+						RunTime
+							.Environment
+							.ApplicationState
+							.Feature
+							.Documents
+							.AddOrUpdate(Uri.clone(), Doc);
 					}
 					// Notify Cocoon so onDidChangeTextDocument fires in extensions.
 					let Payload2 = json!([
@@ -2456,7 +2466,8 @@ pub async fn mountain_ipc_invoke(
 							"cocoon-main".to_string(),
 							"$acceptModelChanged".to_string(),
 							Payload2,
-						).await;
+						)
+						.await;
 					});
 					Ok(Value::Null)
 				},
@@ -2498,8 +2509,16 @@ pub async fn mountain_ipc_invoke(
 					if UriStr.is_empty() {
 						Ok(json!({ "items": [] }))
 					} else {
-						let Line = Payload.get("position").and_then(|P| P.get("line")).and_then(Value::as_u64).unwrap_or(0) as i64 + 1;
-						let Character = Payload.get("position").and_then(|P| P.get("character")).and_then(Value::as_u64).unwrap_or(0) as i64 + 1;
+						let Line = Payload
+							.get("position")
+							.and_then(|P| P.get("line"))
+							.and_then(Value::as_u64)
+							.unwrap_or(0) as i64 + 1;
+						let Character = Payload
+							.get("position")
+							.and_then(|P| P.get("character"))
+							.and_then(Value::as_u64)
+							.unwrap_or(0) as i64 + 1;
 						let Context = Payload.get("context").cloned().unwrap_or_else(|| json!({ "triggerKind": 0 }));
 
 						match url::Url::parse(&UriStr) {
@@ -2507,7 +2526,10 @@ pub async fn mountain_ipc_invoke(
 								let Position = PositionDTO { LineNumber:Line, Column:Character };
 								match RunTime.Environment.ProvideInlineCompletionItems(Uri, Position, Context).await {
 									Ok(Some(Result)) => {
-										let Items = Result.get("items").cloned().unwrap_or_else(|| if Result.is_array() { Result } else { json!([]) });
+										let Items = Result
+											.get("items")
+											.cloned()
+											.unwrap_or_else(|| if Result.is_array() { Result } else { json!([]) });
 										Ok(json!({ "items": Items }))
 									},
 									Ok(None) => Ok(json!({ "items": [] })),

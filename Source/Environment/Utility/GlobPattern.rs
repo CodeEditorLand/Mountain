@@ -17,7 +17,7 @@ use serde_json::Value;
 /// - Object with `pattern` field (VS Code `RelativePattern`).
 /// - Object with `value` field (legacy serialised form).
 /// - Object with `Pattern` field (PascalCase variant).
-pub fn ExtractGlobPattern(Pattern:&Value) -> Option<String> {
+pub(crate) fn ExtractGlobPattern(Pattern:&Value) -> Option<String> {
 	if let Some(S) = Pattern.as_str() {
 		return Some(S.to_string());
 	}
@@ -43,7 +43,7 @@ pub fn ExtractGlobPattern(Pattern:&Value) -> Option<String> {
 /// VS Code's `RelativePattern` carries `{ base, pattern }` or
 /// `{ baseUri, pattern }`. When present, the file walk is restricted to
 /// `base`. Returns `None` for plain glob strings.
-pub fn ExtractRelativeBase(Pattern:&Value) -> Option<String> {
+pub(crate) fn ExtractRelativeBase(Pattern:&Value) -> Option<String> {
 	let Obj = Pattern.as_object()?;
 
 	if let Some(B) = Obj.get("base").and_then(Value::as_str) {

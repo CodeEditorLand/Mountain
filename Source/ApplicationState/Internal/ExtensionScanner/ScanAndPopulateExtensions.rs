@@ -10,7 +10,7 @@ use crate::{
 	dev_log,
 };
 
-pub async fn ScanAndPopulateExtensions(
+pub async fn Fn(
 	ApplicationHandle:AppHandle,
 
 	_State:&crate::ApplicationState::State::ExtensionState::State::State,
@@ -23,7 +23,7 @@ pub async fn ScanAndPopulateExtensions(
 	// Loading it avoids the N×disk-read scan and cuts ~1200 ms from boot.
 	if let Ok(ExecutablePath) = std::env::current_exe() {
 		if let Some(BinaryDir) = ExecutablePath.parent() {
-			match super::LoadFromCache::TryLoadFromCache(&BinaryDir.to_path_buf()).await {
+			match super::LoadFromCache::Fn(&BinaryDir.to_path_buf()).await {
 				Ok(Some(CachedMap)) => {
 					let CachedLen = CachedMap.len();
 
@@ -176,14 +176,14 @@ pub async fn ScanAndPopulateExtensions(
 }
 
 /// Robust extension scanning - clears state first, retries once on failure.
-pub async fn ScanExtensionsWithRecovery(
+pub(crate) async fn ScanExtensionsWithRecovery(
 	ApplicationHandle:AppHandle,
 
 	State:&crate::ApplicationState::State::ExtensionState::State::State,
 ) -> Result<(), CommonError> {
 	dev_log!("extensions", "[ExtensionScanner] Starting robust extension scan...");
 
-	match ScanAndPopulateExtensions(ApplicationHandle.clone(), State).await {
+	match Fn(ApplicationHandle.clone(), State).await {
 		Ok(()) => {
 			dev_log!("extensions", "[ExtensionScanner] Robust scan completed successfully");
 
@@ -193,7 +193,7 @@ pub async fn ScanExtensionsWithRecovery(
 		Err(Error) => {
 			dev_log!("extensions", "error: [ExtensionScanner] Scan failed: {}; retrying once", Error);
 
-			ScanAndPopulateExtensions(ApplicationHandle, State).await
+			Fn(ApplicationHandle, State).await
 		},
 	}
 }

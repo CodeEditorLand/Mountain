@@ -25,7 +25,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;
 
-use crate::{ApplicationState::Internal::TextProcessing::AnalyzeTextLinesAndEOL::AnalyzeTextLinesAndEOL, dev_log};
+use crate::{
+	ApplicationState::Internal::TextProcessing::AnalyzeTextLinesAndEOL::Fn as AnalyzeTextLinesAndEOL,
+	dev_log,
+};
 use super::{RPCModelContentChangeDTO::RPCModelContentChangeDTO, RPCRangeDTO::RPCRangeDTO};
 
 /// Maximum line count for a document to prevent memory exhaustion

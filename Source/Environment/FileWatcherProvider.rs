@@ -393,7 +393,7 @@ impl FileWatcherProvider for MountainEnvironment {
 				.filter(|path| {
 					let PathString = path.to_string_lossy();
 
-					if super::FileWatcherIgnore::ShouldIgnore(&PathString) {
+					if super::FileWatcherIgnore::Fn(&PathString) {
 						return false;
 					}
 

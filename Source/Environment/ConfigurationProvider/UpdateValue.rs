@@ -202,7 +202,7 @@ pub(super) async fn update_configuration_value(
 	crate::Environment::ConfigurationProvider::Loading::ClearSettingsFileCache();
 
 	// Re-merge all configurations to update the live state.
-	crate::Environment::ConfigurationProvider::Loading::initialize_and_merge_configurations(environment).await?;
+	crate::Environment::ConfigurationProvider::Loading::Fn(environment).await?;
 
 	// Notify Sky (the VS Code workbench) so its ConfigurationService rebuilds
 	// its cached model. Without this the Settings UI and workspace inspectors
