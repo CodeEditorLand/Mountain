@@ -38,7 +38,10 @@ pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Val
 			Builder = Builder.title(&Title);
 		}
 		if let Some(DetailText) = Detail.as_deref() {
-			Builder = Builder.title(DetailText);
+			// Use .body() not .title() - detail is the message body text.
+			// Calling .title(DetailText) overwrites the dialog title with
+			// the detail string, losing the original title entirely.
+			Builder = Builder.body(DetailText);
 		}
 		Builder.blocking_show()
 	})

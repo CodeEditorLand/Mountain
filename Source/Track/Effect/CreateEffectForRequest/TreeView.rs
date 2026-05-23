@@ -106,6 +106,35 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			Some(Ok(Box::new(effect)))
 		},
 
+		// `treeView.reveal(element, options)` - extension asks Mountain to
+		// scroll the native panel to a specific tree item. Previously only
+		// existed in the Tauri IPC path (mod.rs), so Cocoon's gRPC
+		// sendRequest("tree.reveal", ...) fell through to "Unknown method".
+		"tree.reveal" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let Payload = if Parameters.is_object() {
+							Parameters.clone()
+						} else {
+							json!({
+								"viewId": Parameters.get(0).cloned().unwrap_or(Value::Null),
+								"element": Parameters.get(1).cloned().unwrap_or(Value::Null),
+								"options": Parameters.get(2).cloned().unwrap_or(Value::Null),
+							})
+						};
+						if let Err(Error) =
+							LogSkyEmit(&run_time.Environment.ApplicationHandle, "sky://tree-view/reveal", Payload)
+						{
+							dev_log!("tree-view", "warn: [TreeView] reveal emit failed: {}", Error);
+						}
+						Ok(json!(null))
+					})
+				};
+
+			Some(Ok(Box::new(effect)))
+		},
+
 		_ => None,
 	}
 }

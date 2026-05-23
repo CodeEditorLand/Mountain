@@ -29,7 +29,9 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		Uri.clone()
 	};
 
-	let Content = tokio::fs::read_to_string(&FilePath).await.unwrap_or_default();
+	let Content = tokio::fs::read_to_string(&FilePath)
+		.await
+		.map_err(|Error| format!("model:open read failed for {}: {}", FilePath, Error))?;
 
 	let LanguageId = std::path::Path::new(&FilePath)
 		.extension()

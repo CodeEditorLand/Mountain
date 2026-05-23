@@ -87,6 +87,13 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		return Ok(Cached.clone());
 	}
 
+	// Subscribe to the scan-ready notify BEFORE calling GetExtensions() to
+	// close the TOCTOU window: if the scan completes between GetExtensions()
+	// returning empty and notified() being registered, the signal would be
+	// lost (Notify does not latch) and we'd wait the full 5 s timeout.
+	let ScanReady = RunTime.Environment.ApplicationState.Extension.ScanReady.clone();
+	let NotifyFuture = ScanReady.notified();
+
 	let mut Extensions = RunTime
 		.Environment
 		.GetExtensions()
@@ -94,9 +101,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.map_err(|Error| format!("extensions:getInstalled failed: {}", Error))?;
 
 	if Extensions.is_empty() {
-		let ScanReady = RunTime.Environment.ApplicationState.Extension.ScanReady.clone();
-
-		let Notified = tokio::time::timeout(Duration::from_millis(SCAN_WAIT_CAP_MS), ScanReady.notified()).await;
+		let Notified = tokio::time::timeout(Duration::from_millis(SCAN_WAIT_CAP_MS), NotifyFuture).await;
 
 		Extensions = RunTime
 			.Environment

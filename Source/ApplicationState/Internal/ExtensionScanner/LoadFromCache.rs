@@ -154,6 +154,18 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 		return Ok(None);
 	}
 
+	// An empty extension list means the cache was written as a stub (e.g.
+	// by build.rs before a real BakeExtensionManifest run). Treat it as a
+	// cache miss so the live scan produces the actual extension list.
+	if Blob.extensions.is_empty() {
+		dev_log!(
+			"extensions",
+			"[ExtensionCache] Empty cache (count=0), falling back to live scan"
+		);
+
+		return Ok(None);
+	}
+
 	// --- Hydrate into ExtensionDescriptionStateDTO ---
 	let mut Map:HashMap<String, ExtensionDescriptionStateDTO> = HashMap::with_capacity(Blob.extensions.len());
 

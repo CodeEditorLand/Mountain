@@ -58,7 +58,16 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.map_err(|Error| format!("quickInput:showQuickPick failed: {}", Error))?;
 
 	match Result {
-		Some(Labels) => Ok(Labels.into_iter().next().map(|S| json!(S)).unwrap_or(Value::Null)),
+		// When canPickMany is true, VS Code expects an array; otherwise a
+		// single string. .next() was always returning only the first item
+		// even for multi-select, silently discarding all other selections.
+		Some(Labels) => {
+			if Options.CanPickMany == Some(true) {
+				Ok(json!(Labels))
+			} else {
+				Ok(Labels.into_iter().next().map(|S| json!(S)).unwrap_or(Value::Null))
+			}
+		},
 
 		None => Ok(Value::Null),
 	}

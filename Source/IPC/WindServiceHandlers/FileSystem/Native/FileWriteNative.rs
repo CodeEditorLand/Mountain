@@ -91,6 +91,10 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	match tokio::fs::metadata(&Path).await {
 		Ok(Meta) => Ok(crate::IPC::WindServiceHandlers::Utilities::MetadataEncoding::Fn(&Meta)),
 
-		Err(_) => Ok(Value::Null),
+		// Write succeeded but post-write stat failed (e.g. NFS race, EPERM).
+		// Returning null here causes DiskFileSystemProvider to receive null.mtime
+		// → TypeError → document flips to conflict state even though the write
+		// was fine. Propagate the error so the caller retries the stat instead.
+		Err(E) => Err(format!("file:write post-stat failed for {}: {}", Path, E)),
 	}
 }

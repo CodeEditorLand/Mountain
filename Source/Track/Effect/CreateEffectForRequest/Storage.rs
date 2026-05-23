@@ -43,6 +43,41 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			Some(Ok(Box::new(effect)))
 		},
 
+		// Bulk-read all key/value pairs as `[[key, value]]` tuples.
+		// Cocoon's Memento calls this once at boot to hydrate its cache.
+		// Without this arm the call fell through to "Unknown method" and
+		// every extension's persisted state was lost on each session.
+		"Storage.GetItems" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
+						match provider.GetAllStorage(true).await {
+							Ok(State) => {
+								if let Some(Obj) = State.as_object() {
+									let Tuples:Vec<Value> = Obj
+										.iter()
+										.map(|(K, V)| {
+											let ValStr = match V {
+												Value::String(S) => S.clone(),
+												_ => V.to_string(),
+											};
+											json!([K, ValStr])
+										})
+										.collect();
+									Ok(json!(Tuples))
+								} else {
+									Ok(json!([]))
+								}
+							},
+							Err(_) => Ok(json!([])),
+						}
+					})
+				};
+
+			Some(Ok(Box::new(effect)))
+		},
+
 		_ => None,
 	}
 }

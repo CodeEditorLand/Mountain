@@ -9,9 +9,16 @@ use tauri::{AppHandle, Manager};
 pub async fn Fn(ApplicationHandle:AppHandle) -> Result<Value, String> {
 	let PathResolver = ApplicationHandle.path();
 
-	let AppDataDir = PathResolver.app_data_dir().unwrap_or_default();
+	// Propagate path resolver failures rather than returning empty PathBuf.
+	// An empty AppDataDir produces paths like URI.joinPath("", "extensions")
+	// which crash VS Code's boot - same class as the dataFolderName bug.
+	let AppDataDir = PathResolver
+		.app_data_dir()
+		.map_err(|E| format!("nativeHost:getEnvironmentPaths app_data_dir failed: {}", E))?;
 
-	let HomeDir = PathResolver.home_dir().unwrap_or_default();
+	let HomeDir = PathResolver
+		.home_dir()
+		.map_err(|E| format!("nativeHost:getEnvironmentPaths home_dir failed: {}", E))?;
 
 	let TmpDir = std::env::temp_dir();
 

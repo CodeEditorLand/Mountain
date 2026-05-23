@@ -81,6 +81,31 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			Some(Ok(Box::new(effect)))
 		},
 
+		// `textEditor.show(viewColumn)` / `window.showTextDocument(uri)` -
+		// extension calls to reveal a document in the editor. Routes to Sky's
+		// `sky://window/showTextDocument` handler which opens/focuses the editor.
+		// Without this arm Cocoon's sendRequest("showTextDocument", ...) fell
+		// through to an unhandled-method error, making textEditor.show() a no-op.
+		"showTextDocument" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
+							&run_time.Environment,
+							"sky://window/showTextDocument",
+							Parameters,
+						)
+						.await
+						{
+							Ok(V) => Ok(V),
+							Err(_) => Ok(json!(null)),
+						}
+					})
+				};
+
+			Some(Ok(Box::new(effect)))
+		},
+
 		// `editor.revealRange(range, revealType)` - scroll the Monaco editor to
 		// bring a range into view. Extensions use this for go-to-definition
 		// "reveal cursor", reference highlights, error navigation, etc.

@@ -19,17 +19,20 @@ use crate::{
 pub async fn Fn(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let ResourceArg = Arguments.first().ok_or("textFile:save requires a resource argument")?;
 
-	let Path = extract_path_from_arg(ResourceArg).unwrap_or_default();
+	let Path = extract_path_from_arg(ResourceArg).map_err(|E| format!("textFile:save bad resource: {}", E))?;
 
 	dev_log!("vfs", "textFile:save path={:?}", Path);
 
 	if Path.is_empty() {
-		return Ok(Value::Null);
+		return Err("textFile:save: empty path after extraction".to_string());
 	}
 
 	match tokio::fs::metadata(&Path).await {
 		Ok(Meta) => Ok(metadata_to_istat(&Meta)),
 
-		Err(_) => Ok(Value::Null),
+		// Propagate stat failure - returning Ok(Null) causes TextFileEditorModel
+		// to call .mtime on null → TypeError, flipping the document to conflict
+		// state even though the write succeeded.
+		Err(E) => Err(format!("textFile:save post-stat failed for {}: {}", Path, E)),
 	}
 }
