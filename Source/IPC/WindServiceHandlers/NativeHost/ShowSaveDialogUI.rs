@@ -1,4 +1,3 @@
-
 //! Wire method: `UserInterface.ShowSaveDialog`.
 //! Returns bare path string or null so Wind's `typeof Result === "string"`
 //! guard finds a string value directly.

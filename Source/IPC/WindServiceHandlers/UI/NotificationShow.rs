@@ -1,4 +1,3 @@
-
 //! Wire method: `notification:show`.
 
 use serde_json::{Value, json};

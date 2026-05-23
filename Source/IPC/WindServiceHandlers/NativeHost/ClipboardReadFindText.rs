@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:readClipboardFindText`.
 //! macOS has a separate find pasteboard; reuse the general clipboard for
 //! parity with VS Code on Linux/Windows.

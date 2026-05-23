@@ -1,4 +1,3 @@
-
 //! Generic-notification atom modules for `send_mountain_notification`.
 
 #[path = "Commands/mod.rs"]

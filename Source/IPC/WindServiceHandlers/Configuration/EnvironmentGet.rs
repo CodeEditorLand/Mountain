@@ -1,4 +1,3 @@
-
 //! Wire method: `environment:get`.
 
 use std::sync::Arc;

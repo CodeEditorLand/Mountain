@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:findFreePort`.
 //! Scans 100 ports starting from `Arguments[0]` (default 9000) and returns the
 //! first free one. Returns 0 when nothing is free in-range so callers can

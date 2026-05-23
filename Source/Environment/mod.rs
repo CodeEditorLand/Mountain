@@ -1,4 +1,3 @@
-
 //! # Environment
 //!
 //! Dependency injection container that provides thread-safe access to

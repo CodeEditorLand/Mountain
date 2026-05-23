@@ -1,4 +1,3 @@
-
 //! Wire method `file:move` / `file:rename`.
 
 use serde_json::{Value, json};

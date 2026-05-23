@@ -1,4 +1,3 @@
-
 //! Wire method: `workspaces:getName`.
 
 use std::sync::Arc;

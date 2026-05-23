@@ -1,4 +1,3 @@
-
 //! Wire method `file:realpath`. Emits a VS Code `UriComponents` (`$mid: 1`)
 //! so the renderer reviver promotes it to a real `URI` with `.fsPath` /
 //! `.with`. Plain string would be treated as a relative path.

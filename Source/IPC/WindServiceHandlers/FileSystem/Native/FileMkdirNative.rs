@@ -1,4 +1,3 @@
-
 //! Wire method `file:mkdir`. `create_dir_all` is recursive; matches the
 //! Electron default VS Code expects.
 

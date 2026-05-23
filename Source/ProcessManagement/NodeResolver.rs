@@ -1,4 +1,3 @@
-
 //! Resolve the Node.js binary used to spawn Cocoon.
 //!
 //! Ladder (first hit wins, cached in `OnceLock`):

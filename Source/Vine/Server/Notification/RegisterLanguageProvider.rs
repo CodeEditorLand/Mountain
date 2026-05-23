@@ -1,4 +1,3 @@
-
 //! Handles all `register_*` / `register_*_provider` gRPC notifications from
 //! the Cocoon extension host. Each such notification wires a language-feature
 //! provider into Mountain's `ProviderRegistration` keyed on `Handle`; the

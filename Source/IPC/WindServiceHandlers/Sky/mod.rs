@@ -1,4 +1,3 @@
-
 //! Sky bridge atoms - Mountain→Sky event replay handlers.
 //!
 //! `ReplayEvents` - `sky:replay-events` IPC: re-emits all buffered

@@ -1,4 +1,3 @@
-
 //! Wire method `file:copy` / `file:cloneFile`. `tokio::fs::copy`
 //! preserves content but not xattrs/acls; callers that need metadata
 //! should use an OS-specific clone atom (future work).

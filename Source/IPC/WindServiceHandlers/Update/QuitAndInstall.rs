@@ -1,4 +1,3 @@
-
 //! Wire method: `update:quitAndInstall`.
 //! No-op - Land has no update server.
 

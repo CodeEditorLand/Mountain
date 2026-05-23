@@ -1,4 +1,3 @@
-
 //! Workspace-contains glob matcher for VS Code `workspaceContains:<pattern>`
 //! activation events.
 //!

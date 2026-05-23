@@ -1,4 +1,3 @@
-
 //! # StateBuild - Advanced Application State Initialization
 //!
 //! Builds the application state with dependency injection, telemetry

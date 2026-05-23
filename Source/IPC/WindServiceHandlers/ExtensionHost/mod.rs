@@ -1,4 +1,3 @@
-
 //! ExtensionHost atoms - VS Code extension-host lifecycle handlers.
 //!
 //! Starter: `extensionHostStarter:*` channel (create/start/kill/exit/wait).

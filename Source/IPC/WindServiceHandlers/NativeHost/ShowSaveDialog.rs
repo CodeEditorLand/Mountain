@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:showSaveDialog`.
 //! Returns `{ canceled: bool, filePath?: string }`.
 

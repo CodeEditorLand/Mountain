@@ -1,4 +1,3 @@
-
 // # CocoonServiceImpl - thin-wrapper dispatcher
 //
 // Domain files hold all typed RPC implementations. This module keeps:

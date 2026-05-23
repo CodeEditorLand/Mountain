@@ -1,4 +1,3 @@
-
 //! Search handlers.
 
 pub mod FindFiles;

@@ -1,4 +1,3 @@
-
 //! Wire method: `update:checkForUpdates`.
 //! No-op - Land has no update server.
 

@@ -1,4 +1,3 @@
-
 //! The localhost plugin base URL (`http://localhost:<port>`).
 //! State held here; `Get` and `Set` expose atomic accessors.
 

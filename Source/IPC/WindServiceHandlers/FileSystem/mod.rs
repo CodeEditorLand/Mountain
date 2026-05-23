@@ -1,4 +1,3 @@
-
 //! FileSystem atoms - two tiers:
 //! - `Managed`: legacy handlers that route through
 //!   `FileSystemReader`/`FileSystemWriter` traits on the Application RunTime.

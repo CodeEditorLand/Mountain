@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:pickFolderAndOpen`, `:pickFileAndOpen`,
 //! `:pickFileFolderAndOpen`, `:pickWorkspaceAndOpen`.
 //!

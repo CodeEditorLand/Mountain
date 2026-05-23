@@ -1,4 +1,3 @@
-
 //! Cocoon legacy aliases: `openDocument`, `readFile`, `stat` - short-hand
 //! routes used by Cocoon's Effect-TS Workspace + FileSystem services before
 //! the canonical `FileSystem.*` naming was established. Backed by the same

@@ -1,4 +1,3 @@
-
 //! Wire method: `workspaces:addFolder`.
 
 use std::sync::Arc;

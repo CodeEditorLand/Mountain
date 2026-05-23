@@ -1,4 +1,3 @@
-
 //! Mountain RPC services. The active surface is `CocoonService` - the tonic
 //! server impl that Cocoon dials into. The other modules here
 //! (`EchoAction`, `Commands`, `Workspace`, `Configuration`, plus the

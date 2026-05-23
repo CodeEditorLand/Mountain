@@ -1,4 +1,3 @@
-
 //! Legacy wire method `file:copy`. Non-overwriting.
 
 use std::{path::PathBuf, sync::Arc};

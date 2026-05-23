@@ -1,4 +1,3 @@
-
 //! Maps a wire command string → Echo scheduler lane via the Common
 //! `Channel` registry's `Priority()` accessor. Unknown commands fall
 //! back to `Priority::Normal` so unclassified callers don't starve the

@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:readImage`.
 //! Binary image clipboard not yet implemented - returns empty array.
 

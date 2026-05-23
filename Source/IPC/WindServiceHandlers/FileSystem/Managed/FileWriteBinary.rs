@@ -1,4 +1,3 @@
-
 //! Wire method `file:writeBinary`. Active in dispatch. Mirrors the read
 //! path: RunTime `FileSystemWriter` does the actual byte write with create
 //! + overwrite flags on.

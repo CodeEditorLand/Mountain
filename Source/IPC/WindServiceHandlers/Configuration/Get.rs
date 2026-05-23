@@ -1,4 +1,3 @@
-
 //! Wire method: `configuration:get`.
 
 use std::sync::Arc;

@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:isRunningUnderARM64Translation`.
 //! On macOS checks `sysctl.proc_translated` (Rosetta 2). Cached via
 //! `OnceLock` - translation status is stable for the process lifetime.

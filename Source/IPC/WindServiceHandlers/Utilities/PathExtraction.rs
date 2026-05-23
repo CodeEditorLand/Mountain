@@ -1,4 +1,3 @@
-
 //! Converts VS Code `Uri`-shaped arguments to platform-native paths.
 //! Co-locates percent-decoding, userdata remapping, and `/Static/Application`
 //! rewriting because each is a private helper of `extract_path_from_arg`.

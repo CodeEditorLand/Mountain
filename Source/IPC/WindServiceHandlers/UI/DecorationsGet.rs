@@ -1,4 +1,3 @@
-
 //! Wire method: `decorations:get`.
 //! Reads a URI decoration from cache, then falls back to a registered
 //! FileDecoration provider via Cocoon gRPC.

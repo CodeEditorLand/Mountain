@@ -1,4 +1,3 @@
-
 //! Canonical userdata base directory (Tauri `app_data_dir`) + first-access
 //! scaffolding. State held here; atomics expose Get/Set/Ensure.
 

@@ -2,7 +2,6 @@
 //! Commands are grouped by domain and delegate to providers through the effect
 //! system.
 
-
 pub mod Bootstrap;
 
 pub mod Hover; // Atomic structure (new)

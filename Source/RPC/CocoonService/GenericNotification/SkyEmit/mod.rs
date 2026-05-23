@@ -1,4 +1,3 @@
-
 //! Sky-emit notification handlers.
 
 pub mod DisposeStatusBarItem;

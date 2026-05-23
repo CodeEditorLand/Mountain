@@ -1,4 +1,3 @@
-
 //! Wire method: `extensionhostdebugservice:reload`.
 //! Emits `sky://exthost/debug-reload` so Wind can tear down caches before
 //! a fresh Cocoon spawn.

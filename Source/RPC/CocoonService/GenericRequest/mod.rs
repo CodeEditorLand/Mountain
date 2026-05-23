@@ -1,4 +1,3 @@
-
 //! Generic-request atom modules for `process_mountain_request`.
 
 #[path = "Commands/mod.rs"]

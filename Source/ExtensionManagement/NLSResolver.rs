@@ -1,4 +1,3 @@
-
 //! NLS (National Language Support) placeholder resolution for extension
 //! manifests. VS Code extensions embed `%key%` tokens in their `package.json`
 //! that are resolved at runtime from a `package.nls.json` bundle.

@@ -1,4 +1,3 @@
-
 //! # Languages Effect (CreateEffectForRequest)
 //!
 //! Effect constructor for the `Languages.GetAll` RPC method. Aggregates

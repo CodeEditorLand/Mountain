@@ -1,4 +1,3 @@
-
 //! Pure text-editing utilities shared across workspace and document providers.
 //!
 //! These are side-effect-free helper functions that compute line offsets and

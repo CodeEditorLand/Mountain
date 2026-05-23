@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:moveItemToTrash`.
 //! Routes deletions to the OS trash bin so they are recoverable.
 //! macOS uses Finder via osascript; Linux prefers `gio trash` then `trash`;

@@ -1,4 +1,3 @@
-
 //! Wire method: `lifecycle:requestShutdown`.
 
 use serde_json::Value;

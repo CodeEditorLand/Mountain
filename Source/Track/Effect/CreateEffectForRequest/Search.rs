@@ -1,4 +1,3 @@
-
 //! # Search Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for workspace search RPC methods. Handles file and

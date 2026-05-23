@@ -1,4 +1,3 @@
-
 //! Utilities for Wind handlers - one `pub fn Fn` per atomic file.
 //! Shared-state modules (ApplicationRoot, LocalhostUrl, UserdataDir,
 //! RecentlyOpened) are directory modules; `#[path]` overrides are required

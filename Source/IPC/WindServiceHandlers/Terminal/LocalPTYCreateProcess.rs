@@ -1,4 +1,3 @@
-
 //! Wire method: `localPty:createProcess`.
 //! VS Code's `IPtyService.createProcess` is typed `Promise<number>`.
 //! The workbench does `new LocalPty(id, …)` and keys `_ptys` by that integer;

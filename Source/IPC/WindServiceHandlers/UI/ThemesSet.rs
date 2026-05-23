@@ -1,4 +1,3 @@
-
 //! Wire method: `themes:set`.
 
 use std::sync::Arc;

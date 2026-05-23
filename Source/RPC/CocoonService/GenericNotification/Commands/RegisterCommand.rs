@@ -1,4 +1,3 @@
-
 //! Notification: `registerCommand`.
 
 use serde_json::Value;

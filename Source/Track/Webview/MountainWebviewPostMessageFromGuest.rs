@@ -1,4 +1,3 @@
-
 //! # MountainWebviewPostMessageFromGuest (Track)
 //!
 //! ## RESPONSIBILITIES

@@ -1,4 +1,3 @@
-
 //! Serde-Value helpers shared across Wind handlers. `v_str` extracts a
 //! string from either a raw JSON string or a VS Code `UriComponents`
 //! object (`external` / `path` field). Any new cross-cutting coercer that

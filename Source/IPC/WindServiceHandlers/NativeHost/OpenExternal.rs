@@ -1,4 +1,3 @@
-
 //! Wire method: `native:openExternal`, `nativeHost:openExternal`.
 //! Opens an http/https URL in the platform default browser.
 

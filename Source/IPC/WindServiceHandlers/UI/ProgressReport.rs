@@ -1,4 +1,3 @@
-
 //! Wire method: `progress:report`.
 
 use serde_json::{Value, json};

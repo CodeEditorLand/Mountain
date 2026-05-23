@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:isFullscreen`.
 //! Returns true if the `main` webview window is fullscreen. Missing window
 //! returns false - this is a read-only probe and should not error.

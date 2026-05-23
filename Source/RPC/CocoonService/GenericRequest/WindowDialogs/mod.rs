@@ -1,4 +1,3 @@
-
 //! Generic-request window and dialog handlers.
 
 pub mod ApplyEdit;

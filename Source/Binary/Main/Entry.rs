@@ -1,4 +1,3 @@
-
 //! # Entry (Binary/Main)
 //!
 //! ## RESPONSIBILITIES

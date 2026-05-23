@@ -1,4 +1,3 @@
-
 //! Wire method: `commands:execute`.
 //! Dispatches to Mountain's CommandExecutor and emits
 //! `sky://commands/executed` for `vscode.commands.onDidExecuteCommand`.

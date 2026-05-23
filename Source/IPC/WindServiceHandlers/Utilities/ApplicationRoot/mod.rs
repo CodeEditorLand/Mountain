@@ -1,4 +1,3 @@
-
 //! `/Static/Application/` → Sky Target real path.
 //! State held here; `Get` and `Set` expose atomic accessors.
 

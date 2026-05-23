@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:getEnvironmentPaths`.
 //! Returns paths used by VS Code's `ResolveConfiguration` to locate user-data,
 //! logs, home, and temp directories. The session-timestamped logs subdirectory

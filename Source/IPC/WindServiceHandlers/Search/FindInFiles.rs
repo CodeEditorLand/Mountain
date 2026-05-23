@@ -1,4 +1,3 @@
-
 //! Wire method: `search:findInFiles` / `search:textSearch`.
 //! Delegates to `SearchProvider::TextSearch`.
 

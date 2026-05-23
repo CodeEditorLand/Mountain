@@ -1,4 +1,3 @@
-
 //! Wire method: `workspaces:removeFolder`.
 
 use std::sync::Arc;

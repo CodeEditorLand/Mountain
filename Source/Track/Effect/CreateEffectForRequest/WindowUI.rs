@@ -1,4 +1,3 @@
-
 //! Window-namespace UI commands from Cocoon's window shim.
 //! ShowMessage is fire-and-forget (no selection reply needed).
 //! ShowQuickPick / ShowInputBox / ShowOpenDialog / ShowSaveDialog block on

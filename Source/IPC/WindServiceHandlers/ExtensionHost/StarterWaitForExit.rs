@@ -1,4 +1,3 @@
-
 //! Wire method: `extensionHostStarter:waitForExit`.
 //! Resolves when the extension host exits. Returns stub exit-info so callers
 //! do not hang - Cocoon runs indefinitely while Mountain is alive.

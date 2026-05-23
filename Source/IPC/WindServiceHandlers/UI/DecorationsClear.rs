@@ -1,4 +1,3 @@
-
 //! Wire method: `decorations:clear`.
 
 use std::sync::Arc;

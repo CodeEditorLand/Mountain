@@ -1,4 +1,3 @@
-
 //! # UriComponents - VS Code marshalling helpers
 //!
 //! Centralised builders for VS Code `UriComponents` payloads. The

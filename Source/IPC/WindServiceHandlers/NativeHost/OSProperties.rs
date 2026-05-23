@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:getOSProperties` (cross-platform).
 //! Returns Electron-shaped `{ type, release, arch, platform, cpus }` tuple.
 //! Cached for the process lifetime - OS type, version, arch, and CPU topology

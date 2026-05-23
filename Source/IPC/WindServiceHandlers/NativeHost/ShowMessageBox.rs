@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:showMessageBox`.
 //! Surfaces a blocking modal message dialog via `tauri_plugin_dialog`.
 //! Returns `{ response: 0 }` (OK pressed) or `{ response: 1 }` (dismissed).

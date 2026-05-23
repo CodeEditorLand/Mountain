@@ -1,4 +1,3 @@
-
 //! # Git Effect (CreateEffectForRequest)
 //!
 //! Effect constructor for the `$gitExec` command. Executes `git` as a

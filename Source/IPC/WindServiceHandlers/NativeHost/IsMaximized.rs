@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:isMaximized`.
 //! Returns true if the `main` webview window is maximized. Missing window
 //! returns false (matches VS Code's behaviour on orphaned calls).

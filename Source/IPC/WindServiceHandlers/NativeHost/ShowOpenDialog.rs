@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:showOpenDialog`.
 //!
 //! Delegates to `NativeDialog::ShowOpenDialog::ShowOpenDialog`. This atom

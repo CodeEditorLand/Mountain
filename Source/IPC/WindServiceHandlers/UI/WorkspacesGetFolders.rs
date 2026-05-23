@@ -1,4 +1,3 @@
-
 //! Wire method: `workspaces:getFolders`.
 
 use std::sync::Arc;

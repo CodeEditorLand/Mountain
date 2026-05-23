@@ -1,4 +1,3 @@
-
 //! Dispatch a `register_*_provider` method string to the correct ProviderType.
 //! Returns `true` if recognised.
 

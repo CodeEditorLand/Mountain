@@ -1,4 +1,3 @@
-
 //! Wire method: `workbench:getConfigurationValue`.
 
 use std::sync::Arc;

@@ -1,4 +1,3 @@
-
 //! Legacy wire method `file:readdir`. Returns raw entries from the
 //! RunTime's `FileSystemReader`. Not currently wired into dispatch; the
 //! native variant serves `file:readdir`.

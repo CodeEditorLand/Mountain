@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:getOSStatistics`.
 //! Returns Electron-shaped `{ totalmem, freemem, loadavg }` snapshot.
 //! `loadavg` is the Unix triple; on Windows it's `[0,0,0]` by policy so the

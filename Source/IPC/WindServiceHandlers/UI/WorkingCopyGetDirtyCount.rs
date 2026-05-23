@@ -1,4 +1,3 @@
-
 //! Wire method: `workingCopy:getDirtyCount`.
 
 use std::sync::Arc;

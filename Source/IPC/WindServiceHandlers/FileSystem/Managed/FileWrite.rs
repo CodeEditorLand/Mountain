@@ -1,4 +1,3 @@
-
 //! Legacy wire method `file:write` (UTF-8 content). Routes via RunTime's
 //! `FileSystemWriter` trait. Not currently wired into dispatch.
 

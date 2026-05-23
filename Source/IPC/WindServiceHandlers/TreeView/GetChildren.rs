@@ -1,4 +1,3 @@
-
 //! Wire method: `tree:getChildren`.
 //! Renderer-side tree-view child lookup. Mirrors the Cocoon→Mountain
 //! `GetTreeChildren` gRPC path but is invoked directly by the Wind/Sky

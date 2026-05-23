@@ -1,4 +1,3 @@
-
 //! Wire method: `extensionHostStarter:start`.
 //! Returns Cocoon's real PID so debuggers attach to the correct Node.js
 //! process. Falls back to Mountain's PID only if Cocoon has not spawned yet.

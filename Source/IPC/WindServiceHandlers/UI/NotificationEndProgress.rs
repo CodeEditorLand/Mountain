@@ -1,4 +1,3 @@
-
 //! Wire method: `notification:endProgress`.
 
 use serde_json::{Value, json};

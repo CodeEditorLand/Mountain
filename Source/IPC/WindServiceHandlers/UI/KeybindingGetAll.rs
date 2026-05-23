@@ -1,4 +1,3 @@
-
 //! Wire method: `keybinding:getAll`.
 
 use std::sync::Arc;

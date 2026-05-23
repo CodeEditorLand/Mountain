@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:writeClipboardBuffer`.
 //! Binary clipboard not yet implemented - no-op.
 

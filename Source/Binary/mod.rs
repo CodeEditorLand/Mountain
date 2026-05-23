@@ -1,4 +1,3 @@
-
 //! # Binary
 //!
 //! Main entry point and initialization for the Mountain desktop application.

@@ -2,7 +2,6 @@
 //! communication between the Tauri frontend and the Rust backend through
 //! Tauri commands, WebSocket, and custom message formats.
 
-
 // --- Main Sub-modules ---
 
 /// Common shared types and abstractions for IPC layer.

@@ -1,4 +1,3 @@
-
 //! Wire method: `lifecycle:whenPhase`.
 //! Awaits `LifecyclePhaseState::PhaseNotify` instead of polling.
 //! Each forward phase transition calls `notify_waiters()`, so callers wake

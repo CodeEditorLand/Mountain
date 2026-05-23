@@ -1,4 +1,3 @@
-
 //! # UserInterface Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for user-interface dialog methods. Delegates to the

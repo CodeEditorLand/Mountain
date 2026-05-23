@@ -1,4 +1,3 @@
-
 //! Wire method: `lifecycle:getPhase`.
 
 use std::sync::Arc;

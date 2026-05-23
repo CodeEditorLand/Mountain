@@ -1,4 +1,3 @@
-
 //! Register a language feature provider by handle, selector, extension.
 
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;

@@ -1,4 +1,3 @@
-
 //! Dispatcher for the generic `process_mountain_request` gRPC endpoint.
 //!
 //! Legacy JSON-over-gRPC rail used by Cocoon's

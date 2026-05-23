@@ -1,4 +1,3 @@
-
 //! Legacy wire method `file:mkdir`. Recursive by default
 //! (`Arguments[1]` honoured when supplied as bool).
 

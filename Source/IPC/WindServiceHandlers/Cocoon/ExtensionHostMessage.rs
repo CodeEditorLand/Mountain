@@ -1,4 +1,3 @@
-
 //! Wire method: `cocoon:extensionHostMessage`.
 //! Relays binary extension-host protocol messages from Wind/Sky to Cocoon via
 //! gRPC GenericNotification. Fire-and-forget - the extension host protocol is

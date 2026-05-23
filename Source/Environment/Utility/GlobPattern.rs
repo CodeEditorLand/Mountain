@@ -1,4 +1,3 @@
-
 //! Glob pattern extraction helpers for `WorkspaceProvider::FindFiles` calls.
 //!
 //! VS Code passes glob patterns in several shapes depending on the caller:

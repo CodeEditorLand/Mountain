@@ -1,4 +1,3 @@
-
 //! Wire method `file:exists`. Boolean probe via `tokio::fs::try_exists`.
 
 use serde_json::{Value, json};

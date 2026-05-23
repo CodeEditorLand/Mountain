@@ -1,4 +1,3 @@
-
 //! Wire method `file:write` / `file:writeFile`. Accepts either a plain
 //! string body or a `{ buffer: number[] | base64 }` VSBuffer. Parent
 //! directory is created best-effort. After a successful write, fires

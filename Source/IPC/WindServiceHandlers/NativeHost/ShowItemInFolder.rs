@@ -1,4 +1,3 @@
-
 //! Wire method: `native:showItemInFolder`, `nativeHost:showItemInFolder`.
 //! Reveals a path in the platform file manager (Finder / Explorer / Linux FM).
 

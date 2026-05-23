@@ -1,4 +1,3 @@
-
 //! Wire method: `decorations:set`.
 
 use std::sync::Arc;

@@ -1,4 +1,3 @@
-
 //! # Documents Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for the `Document.*` RPC family. Delegates to the

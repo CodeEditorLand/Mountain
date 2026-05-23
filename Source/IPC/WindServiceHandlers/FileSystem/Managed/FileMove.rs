@@ -1,4 +1,3 @@
-
 //! Legacy wire method `file:move`. Non-overwriting rename.
 
 use std::{path::PathBuf, sync::Arc};

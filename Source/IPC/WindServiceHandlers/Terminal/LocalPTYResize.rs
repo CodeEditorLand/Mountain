@@ -1,4 +1,3 @@
-
 //! Wire method: `localPty:resize`.
 //! Forwards a resize event to the PTY master (SIGWINCH) via
 //! `TerminalProvider::ResizeTerminal`. Accepts either positional

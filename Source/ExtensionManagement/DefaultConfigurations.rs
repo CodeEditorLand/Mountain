@@ -1,4 +1,3 @@
-
 //! Collects default configuration values contributed by all scanned
 //! extensions. Walks each extension's `contributes.configuration.properties`
 //! tree, handles `properties`-nested sub-objects recursively, and merges

@@ -1,4 +1,3 @@
-
 //! Wire method: `configuration:update`.
 
 use std::sync::Arc;

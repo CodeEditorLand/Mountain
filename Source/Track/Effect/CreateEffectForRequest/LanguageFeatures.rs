@@ -1,4 +1,3 @@
-
 //! # LanguageFeatures Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for LSP-like language feature provider registration.

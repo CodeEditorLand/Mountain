@@ -1,4 +1,3 @@
-
 //! Wire method: `quickInput:showInputBox`.
 
 use std::sync::Arc;

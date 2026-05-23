@@ -1,4 +1,3 @@
-
 //! Converts `std::fs::Metadata` to VS Code's `IStat` wire shape. The
 //! `FileType` bits are VS Code's enum (File=1, Directory=2,
 //! SymbolicLink=64); the readdir atoms also emit these values.

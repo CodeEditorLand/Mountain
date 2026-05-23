@@ -1,4 +1,3 @@
-
 //! Command registry handlers.
 
 pub mod Execute;

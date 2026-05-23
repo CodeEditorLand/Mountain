@@ -1,4 +1,3 @@
-
 //! Wire method: `cocoon:request`.
 //! Generic renderer→Cocoon RPC bridge for two-way wire methods that expect
 //! a reply (e.g. `webview.resolveView`). Waits up to 5 s for the gRPC

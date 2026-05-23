@@ -1,4 +1,3 @@
-
 //! # RuntimeBuild - Echo scheduler bring-up
 //!
 //! Constructs the Echo async scheduler with the right worker count and

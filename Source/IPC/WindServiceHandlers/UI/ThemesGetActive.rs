@@ -1,4 +1,3 @@
-
 //! Wire method: `themes:getColorTheme`.
 
 use std::sync::Arc;

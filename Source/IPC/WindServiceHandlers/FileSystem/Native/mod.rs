@@ -1,4 +1,3 @@
-
 //! Native FS atoms - URI-aware, direct `tokio::fs`. Wind/Sky's `file:*`
 //! channels route here.
 

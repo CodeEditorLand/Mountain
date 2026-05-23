@@ -1,4 +1,3 @@
-
 //! Legacy wire method `file:read` (UTF-8 content). Routes via RunTime's
 //! `FileSystemReader` trait. Not currently wired into dispatch (native
 //! variant handles `file:read`); kept for future per-provider routing.

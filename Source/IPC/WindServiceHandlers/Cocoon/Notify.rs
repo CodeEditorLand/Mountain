@@ -1,4 +1,3 @@
-
 //! Wire method: `cocoon:notify`.
 //! Fire-and-forget renderer→Cocoon notification bridge for one-way wire
 //! methods (`webview.message`, `webview.dispose`, `webview.viewState`, etc.)

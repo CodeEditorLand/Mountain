@@ -1,4 +1,3 @@
-
 //! Wire method: `quickInput:showQuickPick`.
 
 use std::sync::Arc;

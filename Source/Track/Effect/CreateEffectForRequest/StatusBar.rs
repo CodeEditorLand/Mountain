@@ -1,4 +1,3 @@
-
 //! # StatusBar Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for status bar RPC methods from the Cocoon extension

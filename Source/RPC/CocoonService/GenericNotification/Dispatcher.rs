@@ -1,4 +1,3 @@
-
 //! Dispatcher for the generic `send_mountain_notification` gRPC endpoint.
 //!
 //! Legacy fire-and-forget rail used by Cocoon's

@@ -1,4 +1,3 @@
-
 //! Legacy wire method `file:exists`. Returns bool via `StatFile` probe.
 
 use std::{path::PathBuf, sync::Arc};

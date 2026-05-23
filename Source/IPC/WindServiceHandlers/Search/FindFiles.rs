@@ -1,4 +1,3 @@
-
 //! Wire method: `search:findFiles` / `search:fileSearch`.
 //! Delegates to `WorkspaceProvider::FindFilesInWorkspace`.
 

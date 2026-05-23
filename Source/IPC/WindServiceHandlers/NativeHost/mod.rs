@@ -1,4 +1,3 @@
-
 //! NativeHost atoms - native OS-layer handlers.
 //!
 //! One `pub async fn Fn` per file. This mod.rs only declares sub-modules.

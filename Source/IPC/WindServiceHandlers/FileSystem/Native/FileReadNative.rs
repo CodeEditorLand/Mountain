@@ -1,4 +1,3 @@
-
 //! Wire method `file:read` / `file:readFile`.
 //!
 //! Returns `{ buffer: number[] }`. VS Code's `DiskFileSystemProviderClient`

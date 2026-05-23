@@ -1,4 +1,3 @@
-
 //! Notification: `unregisterCommand`.
 
 use serde_json::Value;

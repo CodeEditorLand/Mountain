@@ -1,4 +1,3 @@
-
 //! Legacy wire method `file:delete`. Non-recursive, non-trash.
 
 use std::{path::PathBuf, sync::Arc};

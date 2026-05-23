@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:writeClipboardText`.
 
 use serde_json::Value;

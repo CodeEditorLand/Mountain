@@ -1,4 +1,3 @@
-
 //! Effect constructors for tree-view registration and disposal from the
 //! Cocoon extension host. Delegates to `TreeViewProvider` on
 //! `MountainEnvironment` and emits `SkyEvent` notifications to keep the

@@ -2,7 +2,6 @@
 // Binary / Tray / EnableTray
 // =============================================================================
 
-
 //! # Enable Tray Function
 //!
 //! System tray configuration and initialization.

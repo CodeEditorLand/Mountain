@@ -1,4 +1,3 @@
-
 //! Wire method: `extensionhostdebugservice:close`.
 //! Emits `sky://exthost/debug-close` so the Sky bridge can react.
 

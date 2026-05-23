@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:hasClipboard`.
 
 use serde_json::{Value, json};

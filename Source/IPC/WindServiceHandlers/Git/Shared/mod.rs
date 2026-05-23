@@ -1,4 +1,3 @@
-
 //! Shared state and utilities for `Git/*` atomic handlers.
 
 use std::{

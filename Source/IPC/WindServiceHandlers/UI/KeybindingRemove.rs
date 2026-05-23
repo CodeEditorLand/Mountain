@@ -1,4 +1,3 @@
-
 //! Wire method: `keybinding:remove`.
 
 use std::sync::Arc;

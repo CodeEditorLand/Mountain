@@ -1,4 +1,3 @@
-
 //! Wire method `file:readdir`. Returns `[[name, fileType]]` matching
 //! VS Code's `ReadDirResult` (`FileType`: File=1, Directory=2,
 //! SymbolicLink=64 - combined via bitflags upstream, but the readdir

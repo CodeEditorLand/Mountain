@@ -1,4 +1,3 @@
-
 //! Wire method `file:readBinary`. Active in dispatch. Routes through the
 //! RunTime's `FileSystemReader` so VS Code's `VSBuffer.wrap()` receives
 //! bytes that Mountain's provider layer has already normalised.

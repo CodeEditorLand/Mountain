@@ -1,4 +1,3 @@
-
 //! Generic-request secret handlers.
 
 pub mod Delete;

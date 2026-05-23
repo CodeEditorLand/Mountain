@@ -1,4 +1,3 @@
-
 //! Wire method: `sky:replay-events`.
 //! Called by SkyBridge after every `sky://*` Tauri listener is installed.
 //! Mountain → Sky `app.emit()` events are NOT buffered: any emit fired before

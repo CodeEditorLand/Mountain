@@ -1,4 +1,3 @@
-
 //! Wire method `file:stat`. Returns VS Code's `IStat` shape via
 //! `metadata_to_istat`. Uses `symlink_metadata` to avoid following
 //! symlinks (matches Electron behaviour). Noise from benign ENOENTs on

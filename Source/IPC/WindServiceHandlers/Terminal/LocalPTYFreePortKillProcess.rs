@@ -1,4 +1,3 @@
-
 //! Wire method: `localPty:freePortKillProcess`.
 //! Kills whatever process is holding a TCP port so a new terminal can bind it.
 //! On Unix, uses `lsof -t -i :<port>` to list PIDs then `kill -9` each one.

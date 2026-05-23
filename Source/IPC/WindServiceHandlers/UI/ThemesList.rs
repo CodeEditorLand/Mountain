@@ -1,4 +1,3 @@
-
 //! Wire method: `themes:list`.
 
 use std::sync::Arc;

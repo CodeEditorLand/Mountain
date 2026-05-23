@@ -1,4 +1,3 @@
-
 //! Wire method: `update:downloadUpdate`.
 //! No-op - Land has no update server.
 

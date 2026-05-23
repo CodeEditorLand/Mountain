@@ -1,4 +1,3 @@
-
 //! # CreateEffectForRequest (Track)
 //!
 //! Central routing table that maps string-based commands/RPC methods to typed

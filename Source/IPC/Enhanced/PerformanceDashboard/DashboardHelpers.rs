@@ -1,4 +1,3 @@
-
 //! Pure utility functions shared across `Dashboard` methods.
 //!
 //! All functions are deterministic and side-effect-free, making them

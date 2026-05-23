@@ -1,4 +1,3 @@
-
 //! Cocoon bridge atoms - renderer→Cocoon gRPC forwarding.
 //!
 //! `Request`  - two-way RPC (awaits a reply from Cocoon).

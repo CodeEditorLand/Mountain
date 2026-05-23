@@ -1,4 +1,3 @@
-
 //! # Workspace Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for workspace-level RPC methods. Handles:

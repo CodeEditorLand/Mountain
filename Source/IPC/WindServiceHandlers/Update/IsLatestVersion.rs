@@ -1,4 +1,3 @@
-
 //! Wire method: `update:isLatestVersion`.
 //! Always returns `true` - Land has no update server.
 

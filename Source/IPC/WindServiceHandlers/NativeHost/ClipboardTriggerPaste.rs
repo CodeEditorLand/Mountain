@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:triggerPaste`.
 //! Tauri 2.x has no direct paste API - returns false so callers fall
 //! through to the OS native paste shortcut.

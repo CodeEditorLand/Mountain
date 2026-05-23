@@ -1,4 +1,3 @@
-
 //! # DispatchFrontendCommand (Track)
 //!
 //! ## RESPONSIBILITIES

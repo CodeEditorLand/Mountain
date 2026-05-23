@@ -1,4 +1,3 @@
-
 //! Wire method: `extensionHostStarter:getExitInfo`.
 //! Returns stub exit-info shape - Cocoon runs while Mountain is alive.
 

@@ -1,4 +1,3 @@
-
 //! Wire method: `workingCopy:isDirty`.
 
 use std::sync::Arc;

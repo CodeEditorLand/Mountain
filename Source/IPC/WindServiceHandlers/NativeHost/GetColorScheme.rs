@@ -1,4 +1,3 @@
-
 //! Wire method: `nativeHost:getColorScheme`.
 //! Returns `{ dark, highContrast }`. Dark-mode probe covers macOS
 //! `AppleInterfaceStyle`, Windows `AppsUseLightTheme`, and a Linux ladder

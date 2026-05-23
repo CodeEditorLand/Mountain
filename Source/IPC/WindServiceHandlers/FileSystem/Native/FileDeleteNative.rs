@@ -1,4 +1,3 @@
-
 //! Wire method `file:delete`. Honours `{ recursive }` option for
 //! directories; `useTrash` is accepted but not yet implemented (future
 //! atom: trash.rs on macOS/Linux via `trash-rs`, Windows via SHFileOp).

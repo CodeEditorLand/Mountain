@@ -1,4 +1,3 @@
-
 //! Wire method: `commands:getAll`.
 //! Returns all registered command IDs from Mountain's CommandRegistry.
 

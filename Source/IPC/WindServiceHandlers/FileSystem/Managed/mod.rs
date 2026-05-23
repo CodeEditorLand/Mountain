@@ -1,4 +1,3 @@
-
 //! Managed FS atoms - route via Application RunTime's
 //! `FileSystemReader`/`FileSystemWriter` trait objects.
 

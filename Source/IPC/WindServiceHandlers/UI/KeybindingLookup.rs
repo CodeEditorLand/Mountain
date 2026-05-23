@@ -1,4 +1,3 @@
-
 //! Wire method: `keybinding:lookup`.
 
 use std::sync::Arc;

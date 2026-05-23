@@ -1,4 +1,3 @@
-
 //! # Webview Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for webview-related RPC methods from the Cocoon
