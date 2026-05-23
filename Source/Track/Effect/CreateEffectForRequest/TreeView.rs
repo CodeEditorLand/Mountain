@@ -3,7 +3,7 @@
 //! `MountainEnvironment` and emits `SkyEvent` notifications to keep the
 //! Sky workbench's `ITreeView` instances in sync.
 
-use std::{future::Future, pin::Pin, sync::Arc};
+use std::sync::Arc;
 
 use CommonLibrary::{
 	Environment::Requires::Requires,
@@ -16,94 +16,82 @@ use tauri::Runtime;
 use crate::{
 	IPC::SkyEmit::LogSkyEmit,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Track::Effect::MappedEffectType::MappedEffect,
+	Track::Effect::{
+		CreateEffectForRequest::Utilities::Params::{string_at, val_at},
+		MappedEffectType::MappedEffect,
+	},
 	dev_log,
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$tree:register" | "tree.register" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
-						let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
+			crate::effect!(run_time, {
+				let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
 
-						let first = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+				let first = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
 
-						let (ViewId, Options) = if Parameters.get(2).is_some() {
-							let vid = Parameters.get(1).and_then(Value::as_str).unwrap_or(first).to_string();
-							let opts = Parameters.get(2).cloned().unwrap_or_default();
-							(vid, opts)
-						} else {
-							let vid = first.to_string();
-							let opts = Parameters.get(1).cloned().unwrap_or_default();
-							(vid, opts)
-						};
-
-						dev_log!("tree-view", "[TreeView] register view={}", ViewId);
-
-						let Result = provider.RegisterTreeDataProvider(ViewId.clone(), Options.clone()).await;
-
-						dev_log!(
-							"tree-view",
-							"[TreeView] register view={} result={}",
-							ViewId,
-							if Result.is_ok() { "ok" } else { "err" }
-						);
-
-						if Result.is_ok() {
-							if let Err(Error) = LogSkyEmit(
-								&run_time.Environment.ApplicationHandle,
-								SkyEvent::TreeViewCreate.AsStr(),
-								json!({ "viewId": ViewId, "options": Options }),
-							) {
-								dev_log!("tree-view", "warn: [TreeView] emit failed view={}: {}", ViewId, Error);
-							}
-						}
-
-						Result.map(|_| json!(null)).map_err(|E| E.to_string())
-					})
+				let (ViewId, Options) = if Parameters.get(2).is_some() {
+					let vid = Parameters.get(1).and_then(Value::as_str).unwrap_or(first).to_string();
+					let opts = val_at(&Parameters, 2);
+					(vid, opts)
+				} else {
+					let vid = first.to_string();
+					let opts = val_at(&Parameters, 1);
+					(vid, opts)
 				};
 
-			Some(Ok(Box::new(effect)))
+				dev_log!("tree-view", "[TreeView] register view={}", ViewId);
+
+				let Result = provider.RegisterTreeDataProvider(ViewId.clone(), Options.clone()).await;
+
+				dev_log!(
+					"tree-view",
+					"[TreeView] register view={} result={}",
+					ViewId,
+					if Result.is_ok() { "ok" } else { "err" }
+				);
+
+				if Result.is_ok() {
+					if let Err(Error) = LogSkyEmit(
+						&run_time.Environment.ApplicationHandle,
+						SkyEvent::TreeViewCreate.AsStr(),
+						json!({ "viewId": ViewId, "options": Options }),
+					) {
+						dev_log!("tree-view", "warn: [TreeView] emit failed view={}: {}", ViewId, Error);
+					}
+				}
+
+				Result.map(|_| json!(null)).map_err(|E| E.to_string())
+			})
 		},
 
 		"tree.unregister" | "tree.dispose" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
-						let ViewId = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+			crate::effect!(run_time, {
+				let ViewId = string_at(&Parameters, 0);
 
-						if ViewId.is_empty() {
-							return Ok(json!(null));
-						}
+				if ViewId.is_empty() {
+					return Ok(json!(null));
+				}
 
-						dev_log!("tree-view", "[TreeView] unregister view={}", ViewId);
+				dev_log!("tree-view", "[TreeView] unregister view={}", ViewId);
 
-						let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
+				let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
 
-						let Result = provider.UnregisterTreeDataProvider(ViewId.clone()).await;
+				let Result = provider.UnregisterTreeDataProvider(ViewId.clone()).await;
 
-						if Result.is_ok() {
-							if let Err(Error) = LogSkyEmit(
-								&run_time.Environment.ApplicationHandle,
-								SkyEvent::TreeViewDispose.AsStr(),
-								json!({ "viewId": ViewId }),
-							) {
-								dev_log!(
-									"tree-view",
-									"warn: [TreeView] dispose emit failed view={}: {}",
-									ViewId,
-									Error
-								);
-							}
-						}
+				if Result.is_ok() {
+					if let Err(Error) = LogSkyEmit(
+						&run_time.Environment.ApplicationHandle,
+						SkyEvent::TreeViewDispose.AsStr(),
+						json!({ "viewId": ViewId }),
+					) {
+						dev_log!("tree-view", "warn: [TreeView] dispose emit failed view={}: {}", ViewId, Error);
+					}
+				}
 
-						Result.map(|_| json!(null)).map_err(|E| E.to_string())
-					})
-				};
-
-			Some(Ok(Box::new(effect)))
+				Result.map(|_| json!(null)).map_err(|E| E.to_string())
+			})
 		},
 
 		// `treeView.reveal(element, options)` - extension asks Mountain to
@@ -111,28 +99,23 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// existed in the Tauri IPC path (mod.rs), so Cocoon's gRPC
 		// sendRequest("tree.reveal", ...) fell through to "Unknown method".
 		"tree.reveal" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
-						let Payload = if Parameters.is_object() {
-							Parameters.clone()
-						} else {
-							json!({
-								"viewId": Parameters.get(0).cloned().unwrap_or(Value::Null),
-								"element": Parameters.get(1).cloned().unwrap_or(Value::Null),
-								"options": Parameters.get(2).cloned().unwrap_or(Value::Null),
-							})
-						};
-						if let Err(Error) =
-							LogSkyEmit(&run_time.Environment.ApplicationHandle, "sky://tree-view/reveal", Payload)
-						{
-							dev_log!("tree-view", "warn: [TreeView] reveal emit failed: {}", Error);
-						}
-						Ok(json!(null))
+			crate::effect!(run_time, {
+				let Payload = if Parameters.is_object() {
+					Parameters.clone()
+				} else {
+					json!({
+						"viewId": val_at(&Parameters, 0),
+						"element": val_at(&Parameters, 1),
+						"options": val_at(&Parameters, 2),
 					})
 				};
-
-			Some(Ok(Box::new(effect)))
+				if let Err(Error) =
+					LogSkyEmit(&run_time.Environment.ApplicationHandle, "sky://tree-view/reveal", Payload)
+				{
+					dev_log!("tree-view", "warn: [TreeView] reveal emit failed: {}", Error);
+				}
+				Ok(json!(null))
+			})
 		},
 
 		_ => None,

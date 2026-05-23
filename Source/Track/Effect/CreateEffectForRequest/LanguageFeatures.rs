@@ -13,7 +13,7 @@
 //! CallHierarchy, LinkedEditingRange, DocumentLink, Color, Implementation,
 //! TypeDefinition, Declaration, EvaluatableExpression, InlineValues.
 
-use std::{future::Future, pin::Pin, sync::Arc};
+use std::sync::Arc;
 
 use CommonLibrary::{
 	Environment::Requires::Requires,
@@ -25,26 +25,21 @@ use CommonLibrary::{
 use serde_json::{Value, json};
 use tauri::Runtime;
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
+use crate::Track::Effect::MappedEffectType::MappedEffect;
 
 fn CreateProviderEffect(Parameters:Value, ProviderKind:ProviderType) -> Option<Result<MappedEffect, String>> {
-	let effect =
-		move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-			Box::pin(async move {
-				let provider:Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
-				let id = Parameters.get("handle").and_then(Value::as_str).unwrap_or("").to_string();
-				let selector = Parameters.get("language_selector").cloned().unwrap_or_default();
-				let extension_id = Parameters.get("extension_id").cloned().unwrap_or_default();
-				let options = Parameters.get("options").cloned();
-				provider
-					.RegisterProvider(id, ProviderKind, selector, extension_id, options)
-					.await
-					.map(|handle| json!(handle))
-					.map_err(|e| e.to_string())
-			})
-		};
-
-	Some(Ok(Box::new(effect)))
+	crate::effect!(run_time, {
+		let provider:Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
+		let id = Parameters.get("handle").and_then(Value::as_str).unwrap_or("").to_string();
+		let selector = Parameters.get("language_selector").cloned().unwrap_or_default();
+		let extension_id = Parameters.get("extension_id").cloned().unwrap_or_default();
+		let options = Parameters.get("options").cloned();
+		provider
+			.RegisterProvider(id, ProviderKind, selector, extension_id, options)
+			.await
+			.map(|handle| json!(handle))
+			.map_err(|e| e.to_string())
+	})
 }
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {

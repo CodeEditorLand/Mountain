@@ -1,4 +1,4 @@
-use std::{future::Future, pin::Pin, sync::Arc};
+use std::sync::Arc;
 
 use CommonLibrary::{
 	Environment::Requires::Requires,
@@ -7,79 +7,62 @@ use CommonLibrary::{
 use serde_json::{Value, json};
 use tauri::Runtime;
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
+use crate::{
+	Track::Effect::{CreateEffectForRequest::Utilities::Params::val_at, MappedEffectType::MappedEffect},
+	dev_log,
+};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$scm:createSourceControl" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
-						let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-						let resource = Parameters.get(0).cloned().unwrap_or_default();
-						provider
-							.CreateSourceControl(resource)
-							.await
-							.map(|handle| json!(handle))
-							.map_err(|e| e.to_string())
-					})
-				};
-
-			Some(Ok(Box::new(effect)))
+			crate::effect!(run_time, {
+				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+				let resource = val_at(&Parameters, 0);
+				provider
+					.CreateSourceControl(resource)
+					.await
+					.map(|handle| json!(handle))
+					.map_err(|e| e.to_string())
+			})
 		},
 
 		"$scm:updateSourceControl" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
-						let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-						let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
-						let update = Parameters.get(1).cloned().unwrap_or_default();
-						provider
-							.UpdateSourceControl(handle, update)
-							.await
-							.map(|_| json!(null))
-							.map_err(|e| e.to_string())
-					})
-				};
-
-			Some(Ok(Box::new(effect)))
+			crate::effect!(run_time, {
+				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+				let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
+				let update = val_at(&Parameters, 1);
+				provider
+					.UpdateSourceControl(handle, update)
+					.await
+					.map(|_| json!(null))
+					.map_err(|e| e.to_string())
+			})
 		},
 
 		"$scm:updateGroup" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
-						let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-						let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
-						let group_data = Parameters.get(1).cloned().unwrap_or_default();
-						provider
-							.UpdateSourceControlGroup(handle, group_data)
-							.await
-							.map(|_| json!(null))
-							.map_err(|e| e.to_string())
-					})
-				};
-
-			Some(Ok(Box::new(effect)))
+			crate::effect!(run_time, {
+				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+				let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
+				let group_data = val_at(&Parameters, 1);
+				provider
+					.UpdateSourceControlGroup(handle, group_data)
+					.await
+					.map(|_| json!(null))
+					.map_err(|e| e.to_string())
+			})
 		},
 
 		"$scm:registerInputBox" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
-						let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-						let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
-						let options = Parameters.get(1).cloned().unwrap_or_default();
-						provider
-							.RegisterInputBox(handle, options)
-							.await
-							.map(|_| json!(null))
-							.map_err(|e| e.to_string())
-					})
-				};
-
-			Some(Ok(Box::new(effect)))
+			crate::effect!(run_time, {
+				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+				let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
+				let options = val_at(&Parameters, 1);
+				provider
+					.RegisterInputBox(handle, options)
+					.await
+					.map(|_| json!(null))
+					.map_err(|e| e.to_string())
+			})
 		},
 
 		// `vscode.diff` is the canonical command the vscode.git extension
@@ -101,36 +84,31 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// `$scm:openDiff` is an older alias emitted by some extension
 		// versions; we handle it identically.
 		"vscode.diff" | "$scm:openDiff" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
+			crate::effect!(run_time, {
+				dev_log!(
+					"scm",
+					"[SCM] vscode.diff forwarding to sky://editor/diff params={:?}",
+					Parameters
+				);
+
+				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
+					&run_time.Environment,
+					"sky://editor/diff",
+					Parameters,
+				)
+				.await
+				{
+					Ok(Result) => Ok(Result),
+					Err(Error) => {
 						dev_log!(
 							"scm",
-							"[SCM] vscode.diff forwarding to sky://editor/diff params={:?}",
-							Parameters
+							"warn: [SCM] vscode.diff sky://editor/diff did not answer ({:?}); returning null",
+							Error
 						);
-
-						match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
-							&run_time.Environment,
-							"sky://editor/diff",
-							Parameters,
-						)
-						.await
-						{
-							Ok(Result) => Ok(Result),
-							Err(Error) => {
-								dev_log!(
-									"scm",
-									"warn: [SCM] vscode.diff sky://editor/diff did not answer ({:?}); returning null",
-									Error
-								);
-								Ok(json!(null))
-							},
-						}
-					})
-				};
-
-			Some(Ok(Box::new(effect)))
+						Ok(json!(null))
+					},
+				}
+			})
 		},
 
 		_ => None,

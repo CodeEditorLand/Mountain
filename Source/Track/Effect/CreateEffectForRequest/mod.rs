@@ -34,6 +34,8 @@
 //! | Webview           | `$webview:*`, `webview.*`, `$resolveCustomEditor`        |
 //! | Workspace         | `applyEdit`, `showTextDocument`, `$updateWorkspaceFolders` |
 
+pub mod Utilities;
+
 pub mod Authentication;
 
 pub mod Clipboard;

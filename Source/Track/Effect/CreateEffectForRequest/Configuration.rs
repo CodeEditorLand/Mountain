@@ -1,4 +1,4 @@
-use std::{future::Future, pin::Pin, sync::Arc};
+use std::sync::Arc;
 
 use CommonLibrary::{
 	Configuration::{
@@ -12,7 +12,14 @@ use CommonLibrary::{
 use serde_json::{Value, json};
 use tauri::Runtime;
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
+use crate::{
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	Track::Effect::{
+		CreateEffectForRequest::Utilities::Params::{str_obj_or_pos, string_at, u64_at, val_at},
+		MappedEffectType::MappedEffect,
+	},
+	dev_log,
+};
 
 async fn UpdateConfigurationValueAndNotify(
 	run_time:Arc<ApplicationRunTime>,
@@ -73,87 +80,63 @@ async fn UpdateConfigurationValueAndNotify(
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"config.get" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
-						let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
-						let Key = if let Some(Object) = Parameters.as_object() {
-							Object.get("key").and_then(Value::as_str).unwrap_or("").to_string()
-						} else {
-							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string()
-						};
-						let result = provider.InspectConfigurationValue(Key, Default::default()).await;
-						result
-							.map(|Inspection| serde_json::to_value(Inspection).unwrap_or(Value::Null))
-							.map_err(|e| e.to_string())
-					})
-				};
-
-			Some(Ok(Box::new(effect)))
+			crate::effect!(run_time, {
+				let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
+				let Key = str_obj_or_pos(&Parameters, "key", 0).to_string();
+				let result = provider.InspectConfigurationValue(Key, Default::default()).await;
+				result
+					.map(|Inspection| serde_json::to_value(Inspection).unwrap_or(Value::Null))
+					.map_err(|e| e.to_string())
+			})
 		},
 
 		"config.update" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
-						let (Key, Value_, Target) = if let Some(Object) = Parameters.as_object() {
-							let K = Object.get("key").and_then(Value::as_str).unwrap_or("").to_string();
-							let V = Object.get("value").cloned().unwrap_or_default();
-							let T = match Object.get("target").and_then(Value::as_u64) {
-								Some(0) => ConfigurationTarget::User,
-								Some(1) => ConfigurationTarget::Workspace,
-								_ => ConfigurationTarget::User,
-							};
-							(K, V, T)
-						} else {
-							let K = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
-							let V = Parameters.get(1).cloned().unwrap_or_default();
-							let T = match Parameters.get(2).and_then(Value::as_u64) {
-								Some(0) => ConfigurationTarget::User,
-								Some(1) => ConfigurationTarget::Workspace,
-								_ => ConfigurationTarget::User,
-							};
-							(K, V, T)
-						};
-						UpdateConfigurationValueAndNotify(run_time, Key, Value_, Target, "config.update").await
-					})
+			crate::effect!(run_time, {
+				let (Key, Value_, Target) = if let Some(Object) = Parameters.as_object() {
+					let K = Object.get("key").and_then(Value::as_str).unwrap_or("").to_string();
+					let V = Object.get("value").cloned().unwrap_or_default();
+					let T = match Object.get("target").and_then(Value::as_u64) {
+						Some(0) => ConfigurationTarget::User,
+						Some(1) => ConfigurationTarget::Workspace,
+						_ => ConfigurationTarget::User,
+					};
+					(K, V, T)
+				} else {
+					let K = string_at(&Parameters, 0);
+					let V = val_at(&Parameters, 1);
+					let T = match u64_at(&Parameters, 2) {
+						0 => ConfigurationTarget::User,
+						1 => ConfigurationTarget::Workspace,
+						_ => ConfigurationTarget::User,
+					};
+					(K, V, T)
 				};
-
-			Some(Ok(Box::new(effect)))
+				UpdateConfigurationValueAndNotify(run_time, Key, Value_, Target, "config.update").await
+			})
 		},
 
 		"Configuration.Inspect" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
-						let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
-						let section = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
-						let result = provider.InspectConfigurationValue(section, Default::default()).await;
-						result
-							.map(|Inspection| serde_json::to_value(Inspection).unwrap_or(Value::Null))
-							.map_err(|e| e.to_string())
-					})
-				};
-
-			Some(Ok(Box::new(effect)))
+			crate::effect!(run_time, {
+				let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
+				let section = string_at(&Parameters, 0);
+				let result = provider.InspectConfigurationValue(section, Default::default()).await;
+				result
+					.map(|Inspection| serde_json::to_value(Inspection).unwrap_or(Value::Null))
+					.map_err(|e| e.to_string())
+			})
 		},
 
 		"Configuration.Update" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
-						let key = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
-						let value = Parameters.get(1).cloned().unwrap_or_default();
-						let target = match Parameters.get(2).and_then(Value::as_u64) {
-							Some(0) => ConfigurationTarget::User,
-							Some(1) => ConfigurationTarget::Workspace,
-							_ => ConfigurationTarget::User,
-						};
-						UpdateConfigurationValueAndNotify(run_time, key, value, target, "Configuration.Update").await
-					})
+			crate::effect!(run_time, {
+				let key = string_at(&Parameters, 0);
+				let value = val_at(&Parameters, 1);
+				let target = match u64_at(&Parameters, 2) {
+					0 => ConfigurationTarget::User,
+					1 => ConfigurationTarget::Workspace,
+					_ => ConfigurationTarget::User,
 				};
-
-			Some(Ok(Box::new(effect)))
+				UpdateConfigurationValueAndNotify(run_time, key, value, target, "Configuration.Update").await
+			})
 		},
 
 		_ => None,

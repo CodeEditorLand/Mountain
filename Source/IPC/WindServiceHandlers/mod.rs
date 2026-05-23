@@ -341,6 +341,40 @@ macro_rules! forward_to_cocoon {
 	}};
 }
 
+/// Delegate an IPC arm to an atomic handler with a `dev_log!` prefix.
+///
+/// `rt` / `app` selects `RunTime.clone()` vs `ApplicationHandle.clone()`.
+/// Third token: a `$tag:literal` path for the log category.
+/// Optional `$msg:literal` after the tag: static message (else `"{}",
+/// command`). Optional trailing `$Arguments:ident`: pass arguments to the
+/// handler.
+macro_rules! call {
+	(rt, $tag:literal, $Fn:path, $Arguments:ident) => {{
+		dev_log!($tag, "{}", command);
+		$Fn(RunTime.clone(), $Arguments).await
+	}};
+	(rt, $tag:literal, $Fn:path) => {{
+		dev_log!($tag, "{}", command);
+		$Fn(RunTime.clone()).await
+	}};
+	(rt, $tag:literal, $msg:literal, $Fn:path, $Arguments:ident) => {{
+		dev_log!($tag, $msg);
+		$Fn(RunTime.clone(), $Arguments).await
+	}};
+	(rt, $tag:literal, $msg:literal, $Fn:path) => {{
+		dev_log!($tag, $msg);
+		$Fn(RunTime.clone()).await
+	}};
+	(app, $tag:literal, $Fn:path, $Arguments:ident) => {{
+		dev_log!($tag, "{}", command);
+		$Fn(ApplicationHandle.clone(), $Arguments).await
+	}};
+	(app, $tag:literal, $msg:literal, $Fn:path, $Arguments:ident) => {{
+		dev_log!($tag, $msg);
+		$Fn(ApplicationHandle.clone(), $Arguments).await
+	}};
+}
+
 /// Internal dispatcher for the single front-end Tauri command
 /// `MountainIPCInvoke` (registered in `Binary/Main/Entry.rs::invoke_handler!`,
 /// implemented in `Binary/IPC/InvokeCommand.rs`). The outer Tauri command
@@ -582,13 +616,9 @@ pub async fn mountain_ipc_invoke(
 				// `updateValue`; Mountain's native Effect-TS layer calls
 				// `get` / `update`. Alias both to the same handler so
 				// traffic from either rail lands in the same place.
-				"configuration:get" | "configuration:getValue" => {
-					dev_log!("config", "{}", command);
-					ConfigurationGet(RunTime.clone(), Arguments).await
-				},
+				"configuration:get" | "configuration:getValue" => call!(rt, "config", ConfigurationGet, Arguments),
 				"configuration:update" | "configuration:updateValue" => {
-					dev_log!("config", "{}", command);
-					ConfigurationUpdate(RunTime.clone(), Arguments).await
+					call!(rt, "config", ConfigurationUpdate, Arguments)
 				},
 				// `ConfigurationService` listens for `onDidChange` from
 				// the channel on the binary IPC rail. Mountain broadcasts
@@ -603,8 +633,7 @@ pub async fn mountain_ipc_invoke(
 				// identical to `configuration:get`; alias so both rails resolve
 				// the same underlying value.
 				"configuration:lookup" => {
-					dev_log!("config", "configuration:lookup (→ get)");
-					ConfigurationGet(RunTime.clone(), Arguments).await
+					call!(rt, "config", "configuration:lookup (→ get)", ConfigurationGet, Arguments)
 				},
 
 				// `configuration:inspect` is `IConfigurationService.inspect(key)`.
@@ -701,16 +730,12 @@ pub async fn mountain_ipc_invoke(
 				// same ApplicationState storage backing.
 				"storage:get" => StorageGet(RunTime.clone(), Arguments).await,
 				"storage:set" => StorageSet(RunTime.clone(), Arguments).await,
-				"storage:getItems" => {
-					// Workbench services poll this on every theme / scope
-					// change; suppress the bare banner and rely on the IPC
-					// `invoke:`/`done:` summary for volume + latency.
-					dev_log!("storage-verbose", "storage:getItems");
-					StorageGetItems(RunTime.clone(), Arguments).await
-				},
+				// Workbench services poll this on every theme / scope
+				// change; suppress the bare banner and rely on the IPC
+				// `invoke:`/`done:` summary for volume + latency.
+				"storage:getItems" => call!(rt, "storage-verbose", "storage:getItems", StorageGetItems, Arguments),
 				"storage:updateItems" => {
-					dev_log!("storage-verbose", "storage:updateItems");
-					StorageUpdateItems(RunTime.clone(), Arguments).await
+					call!(rt, "storage-verbose", "storage:updateItems", StorageUpdateItems, Arguments)
 				},
 				"storage:optimize" => {
 					dev_log!("storage", "storage:optimize");
@@ -733,10 +758,7 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				// Environment commands
-				"environment:get" => {
-					dev_log!("config", "environment:get");
-					EnvironmentGet(RunTime.clone(), Arguments).await
-				},
+				"environment:get" => call!(rt, "config", "environment:get", EnvironmentGet, Arguments),
 
 				// Native host commands
 				"native:showItemInFolder" => ShowItemInFolder(RunTime.clone(), Arguments).await,
@@ -1020,107 +1042,69 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				// Terminal commands
-				"terminal:create" => {
-					dev_log!("terminal", "terminal:create");
-					TerminalCreate(RunTime.clone(), Arguments).await
-				},
-				"terminal:sendText" => {
-					dev_log!("terminal", "terminal:sendText");
-					TerminalSendText(RunTime.clone(), Arguments).await
-				},
-				"terminal:dispose" => {
-					dev_log!("terminal", "terminal:dispose");
-					TerminalDispose(RunTime.clone(), Arguments).await
-				},
-				"terminal:show" => {
-					dev_log!("terminal", "terminal:show");
-					TerminalShow(RunTime.clone(), Arguments).await
-				},
-				"terminal:hide" => {
-					dev_log!("terminal", "terminal:hide");
-					TerminalHide(RunTime.clone(), Arguments).await
-				},
+				"terminal:create" => call!(rt, "terminal", "terminal:create", TerminalCreate, Arguments),
+				"terminal:sendText" => call!(rt, "terminal", "terminal:sendText", TerminalSendText, Arguments),
+				"terminal:dispose" => call!(rt, "terminal", "terminal:dispose", TerminalDispose, Arguments),
+				"terminal:show" => call!(rt, "terminal", "terminal:show", TerminalShow, Arguments),
+				"terminal:hide" => call!(rt, "terminal", "terminal:hide", TerminalHide, Arguments),
 
 				// Output channel commands
 				"output:create" => OutputCreate(ApplicationHandle.clone(), Arguments).await,
-				"output:append" => {
-					dev_log!("output", "output:append");
-					OutputAppend(ApplicationHandle.clone(), Arguments).await
-				},
-				"output:appendLine" => {
-					dev_log!("output", "output:appendLine");
-					OutputAppendLine(ApplicationHandle.clone(), Arguments).await
-				},
-				"output:clear" => {
-					dev_log!("output", "output:clear");
-					OutputClear(ApplicationHandle.clone(), Arguments).await
-				},
-				"output:show" => {
-					dev_log!("output", "output:show");
-					OutputShow(ApplicationHandle.clone(), Arguments).await
-				},
+				"output:append" => call!(app, "output", "output:append", OutputAppend, Arguments),
+				"output:appendLine" => call!(app, "output", "output:appendLine", OutputAppendLine, Arguments),
+				"output:clear" => call!(app, "output", "output:clear", OutputClear, Arguments),
+				"output:show" => call!(app, "output", "output:show", OutputShow, Arguments),
 
 				// TextFile commands
-				"textFile:read" => {
-					dev_log!("textfile", "textFile:read");
-					TextfileRead(RunTime.clone(), Arguments).await
-				},
-				"textFile:write" => {
-					dev_log!("textfile", "textFile:write");
-					TextfileWrite(RunTime.clone(), Arguments).await
-				},
+				"textFile:read" => call!(rt, "textfile", "textFile:read", TextfileRead, Arguments),
+				"textFile:write" => call!(rt, "textfile", "textFile:write", TextfileWrite, Arguments),
 				"textFile:save" => TextfileSave(RunTime.clone(), Arguments).await,
 
 				// Storage commands (additional)
-				"storage:delete" => {
-					dev_log!("storage", "storage:delete");
-					StorageDelete(RunTime.clone(), Arguments).await
-				},
-				"storage:keys" => {
-					dev_log!("storage", "storage:keys");
-					StorageKeys(RunTime.clone()).await
-				},
+				"storage:delete" => call!(rt, "storage", "storage:delete", StorageDelete, Arguments),
+				"storage:keys" => call!(rt, "storage", "storage:keys", StorageKeys),
 
 				// Notification commands (emit sky:// events for Sky to render)
-				"notification:show" => {
-					dev_log!("notification", "notification:show");
-					NotificationShow(ApplicationHandle.clone(), Arguments).await
-				},
+				"notification:show" => call!(app, "notification", "notification:show", NotificationShow, Arguments),
 				"notification:showProgress" => {
-					dev_log!("notification", "notification:showProgress");
-					NotificationShowProgress(ApplicationHandle.clone(), Arguments).await
+					call!(
+						app,
+						"notification",
+						"notification:showProgress",
+						NotificationShowProgress,
+						Arguments
+					)
 				},
 				"notification:updateProgress" => {
-					dev_log!("notification", "notification:updateProgress");
-					NotificationUpdateProgress(ApplicationHandle.clone(), Arguments).await
+					call!(
+						app,
+						"notification",
+						"notification:updateProgress",
+						NotificationUpdateProgress,
+						Arguments
+					)
 				},
 				"notification:endProgress" => {
-					dev_log!("notification", "notification:endProgress");
-					NotificationEndProgress(ApplicationHandle.clone(), Arguments).await
+					call!(
+						app,
+						"notification",
+						"notification:endProgress",
+						NotificationEndProgress,
+						Arguments
+					)
 				},
 
 				// Progress commands
-				"progress:begin" => {
-					dev_log!("progress", "progress:begin");
-					ProgressBegin(ApplicationHandle.clone(), Arguments).await
-				},
-				"progress:report" => {
-					dev_log!("progress", "progress:report");
-					ProgressReport(ApplicationHandle.clone(), Arguments).await
-				},
-				"progress:end" => {
-					dev_log!("progress", "progress:end");
-					ProgressEnd(ApplicationHandle.clone(), Arguments).await
-				},
+				"progress:begin" => call!(app, "progress", "progress:begin", ProgressBegin, Arguments),
+				"progress:report" => call!(app, "progress", "progress:report", ProgressReport, Arguments),
+				"progress:end" => call!(app, "progress", "progress:end", ProgressEnd, Arguments),
 
 				// QuickInput commands
 				"quickInput:showQuickPick" => {
-					dev_log!("quickinput", "quickInput:showQuickPick");
-					QuickInputShowQuickPick(RunTime.clone(), Arguments).await
+					call!(rt, "quickinput", "quickInput:showQuickPick", QuickInputShowQuickPick, Arguments)
 				},
 				"quickInput:showInputBox" => {
-					dev_log!("quickinput", "quickInput:showInputBox");
-					QuickInputShowInputBox(RunTime.clone(), Arguments).await
+					call!(rt, "quickinput", "quickInput:showInputBox", QuickInputShowInputBox, Arguments)
 				},
 
 				// Workspaces commands. VS Code's `IWorkspacesService`
@@ -1128,53 +1112,33 @@ pub async fn mountain_ipc_invoke(
 				// `addWorkspaceFolders`; Mountain's rail uses the
 				// shorter `getFolders` / `addFolder`. Alias both.
 				"workspaces:getFolders" | "workspaces:getWorkspaceFolders" | "workspaces:getWorkspace" => {
-					dev_log!("workspaces", "{}", command);
-					WorkspacesGetFolders(RunTime.clone()).await
+					call!(rt, "workspaces", WorkspacesGetFolders)
 				},
 				"workspaces:addFolder" | "workspaces:addWorkspaceFolders" => {
-					dev_log!("workspaces", "{}", command);
-					WorkspacesAddFolder(RunTime.clone(), Arguments).await
+					call!(rt, "workspaces", WorkspacesAddFolder, Arguments)
 				},
 				"workspaces:removeFolder" | "workspaces:removeWorkspaceFolders" => {
-					dev_log!("workspaces", "{}", command);
-					WorkspacesRemoveFolder(RunTime.clone(), Arguments).await
+					call!(rt, "workspaces", WorkspacesRemoveFolder, Arguments)
 				},
-				"workspaces:getName" => {
-					dev_log!("workspaces", "{}", command);
-					WorkspacesGetName(RunTime.clone()).await
-				},
+				"workspaces:getName" => call!(rt, "workspaces", WorkspacesGetName),
 				// Themes commands
-				"themes:getActive" => {
-					dev_log!("themes", "themes:getActive");
-					ThemesGetActive(RunTime.clone()).await
-				},
-				"themes:list" => {
-					dev_log!("themes", "themes:list");
-					ThemesList(RunTime.clone()).await
-				},
-				"themes:set" => {
-					dev_log!("themes", "themes:set");
-					ThemesSet(RunTime.clone(), Arguments).await
-				},
+				"themes:getActive" => call!(rt, "themes", "themes:getActive", ThemesGetActive),
+				"themes:list" => call!(rt, "themes", "themes:list", ThemesList),
+				"themes:set" => call!(rt, "themes", "themes:set", ThemesSet, Arguments),
 				// `IThemeService.getColorTheme()` - workbench channel method used
 				// by tokenization, decoration, and the colour-picker to read the
 				// active theme object. Wire shape differs from `themes:getActive`
 				// only in name; alias to the same handler.
-				"themes:getColorTheme" => {
-					dev_log!("themes", "themes:getColorTheme (→ getActive)");
-					ThemesGetActive(RunTime.clone()).await
-				},
+				"themes:getColorTheme" => call!(rt, "themes", "themes:getColorTheme (→ getActive)", ThemesGetActive),
 
 				// Search commands. Stock VS Code `SearchService` channel
 				// uses `textSearch` / `fileSearch`; Mountain's Effect-TS
 				// rail uses `findInFiles` / `findFiles`. Alias both.
 				"search:findInFiles" | "search:textSearch" | "search:searchText" => {
-					dev_log!("search", "{}", command);
-					SearchFindInFiles(RunTime.clone(), Arguments).await
+					call!(rt, "search", SearchFindInFiles, Arguments)
 				},
 				"search:findFiles" | "search:fileSearch" | "search:searchFile" => {
-					dev_log!("search", "{}", command);
-					SearchFindFiles(RunTime.clone(), Arguments).await
+					call!(rt, "search", SearchFindFiles, Arguments)
 				},
 				// Cancellation / onProgress channel methods: workbench's
 				// SearchService listens for these. We have no streaming
@@ -1945,18 +1909,11 @@ pub async fn mountain_ipc_invoke(
 				// xterm receives zero bytes - the terminal panel renders
 				// blank even though Mountain's PTY reader emits data
 				// continuously. Strip down to the integer id here.
-				"localPty:spawn" => {
-					// `localPty:spawn` is Cocoon's Sky bridge path; preserve
-					// the full `{id, name, pid}` shape because the older Wind
-					// callers expect it. New `localPty:createProcess` and
-					// `localPty:start` follow VS Code's typed contract below.
-					dev_log!("terminal", "{}", command);
-					TerminalCreate(RunTime.clone(), Arguments).await
-				},
-				"localPty:createProcess" => {
-					dev_log!("terminal", "{}", command);
-					LocalPTYCreateProcess(RunTime.clone(), Arguments).await
-				},
+				// `localPty:spawn` is Cocoon's Sky bridge path; preserve
+				// the full `{id, name, pid}` shape. New `localPty:createProcess`
+				// follows VS Code's typed contract.
+				"localPty:spawn" => call!(rt, "terminal", TerminalCreate, Arguments),
+				"localPty:createProcess" => call!(rt, "terminal", LocalPTYCreateProcess, Arguments),
 				"localPty:start" => {
 					// Eager-spawn pattern: `TerminalProvider::CreateTerminal`
 					// already started the shell and reader task during
@@ -1973,18 +1930,9 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("terminal", "{} no-op (eager-spawn)", command);
 					Ok(Value::Null)
 				},
-				"localPty:input" | "localPty:write" => {
-					dev_log!("terminal", "{}", command);
-					TerminalSendText(RunTime.clone(), Arguments).await
-				},
-				"localPty:shutdown" | "localPty:dispose" => {
-					dev_log!("terminal", "{}", command);
-					TerminalDispose(RunTime.clone(), Arguments).await
-				},
-				"localPty:resize" => {
-					dev_log!("terminal", "localPty:resize");
-					LocalPTYResize(RunTime.clone(), Arguments).await
-				},
+				"localPty:input" | "localPty:write" => call!(rt, "terminal", TerminalSendText, Arguments),
+				"localPty:shutdown" | "localPty:dispose" => call!(rt, "terminal", TerminalDispose, Arguments),
+				"localPty:resize" => call!(rt, "terminal", "localPty:resize", LocalPTYResize, Arguments),
 				"localPty:acknowledgeDataEvent" => {
 					// xterm flow-control heartbeat; no-op on Mountain side.
 					Ok(Value::Null)
