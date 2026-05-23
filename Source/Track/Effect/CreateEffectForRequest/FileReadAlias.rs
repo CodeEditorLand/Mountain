@@ -33,7 +33,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				if Path.is_empty() {
 					return Err(format!("{}: empty path (resource not found)", MethodNameOwned));
 				}
-				let PathBuf_ = std::path::PathBuf::from(StripFileUriScheme(&Path));
+				let PathBuf_ = std::path::PathBuf::from(strip_file_uri(&Path));
 				match MethodNameOwned.as_str() {
 					"stat" => {
 						fs_reader
