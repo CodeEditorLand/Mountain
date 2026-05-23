@@ -307,6 +307,27 @@ use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
+fn cocoon_payload(args:Vec<Value>) -> Value {
+	match args.len() {
+		0 => Value::Null,
+		1 => args.into_iter().next().unwrap(),
+		_ => Value::Array(args),
+	}
+}
+
+macro_rules! forward_to_cocoon {
+	($tag:literal, $command:ident, $Arguments:ident) => {{
+		dev_log!("ipc", "{}: {} (→ Cocoon)", $tag, $command);
+		let Payload = cocoon_payload($Arguments);
+		let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+		Ok(
+			crate::Vine::Client::SendRequest::Fn("cocoon-main", $command.clone(), Payload, 10_000)
+				.await
+				.unwrap_or(Value::Null),
+		)
+	}};
+}
+
 /// Internal dispatcher for the single front-end Tauri command
 /// `MountainIPCInvoke` (registered in `Binary/Main/Entry.rs::invoke_handler!`,
 /// implemented in `Binary/IPC/InvokeCommand.rs`). The outer Tauri command
@@ -2569,20 +2590,7 @@ pub async fn mountain_ipc_invoke(
 				// SCM - forward to Cocoon's vscode.scm namespace
 				// =====================================================================
 				"scm:createSourceControl" | "scm:getSourceControls" | "scm:setActiveProvider" => {
-					dev_log!("ipc", "scm: {} (→ Cocoon)", command);
-					let Payload = if Arguments.is_empty() {
-						Value::Null
-					} else if Arguments.len() == 1 {
-						Arguments.into_iter().next().unwrap()
-					} else {
-						Value::Array(Arguments)
-					};
-					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
-					Ok(
-						crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
-							.await
-							.unwrap_or(Value::Null),
-					)
+					forward_to_cocoon!("scm", command, Arguments)
 				},
 
 				// =====================================================================
@@ -2594,60 +2602,21 @@ pub async fn mountain_ipc_invoke(
 				| "debug:getBreakpoints"
 				| "debug:addBreakpoints"
 				| "debug:removeBreakpoints" => {
-					dev_log!("ipc", "debug: {} (→ Cocoon)", command);
-					let Payload = if Arguments.is_empty() {
-						Value::Null
-					} else if Arguments.len() == 1 {
-						Arguments.into_iter().next().unwrap()
-					} else {
-						Value::Array(Arguments)
-					};
-					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
-					Ok(
-						crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
-							.await
-							.unwrap_or(Value::Null),
-					)
+					forward_to_cocoon!("debug", command, Arguments)
 				},
 
 				// =====================================================================
 				// Tasks - forward to Cocoon's vscode.tasks namespace
 				// =====================================================================
 				"tasks:executeTask" | "tasks:getTasks" | "tasks:getTaskExecution" => {
-					dev_log!("ipc", "tasks: {} (→ Cocoon)", command);
-					let Payload = if Arguments.is_empty() {
-						Value::Null
-					} else if Arguments.len() == 1 {
-						Arguments.into_iter().next().unwrap()
-					} else {
-						Value::Array(Arguments)
-					};
-					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
-					Ok(
-						crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
-							.await
-							.unwrap_or(Value::Null),
-					)
+					forward_to_cocoon!("tasks", command, Arguments)
 				},
 
 				// =====================================================================
 				// Authentication - forward to Cocoon's vscode.authentication namespace
 				// =====================================================================
 				"auth:getSessions" | "auth:createSession" | "auth:removeSession" => {
-					dev_log!("ipc", "auth: {} (→ Cocoon)", command);
-					let Payload = if Arguments.is_empty() {
-						Value::Null
-					} else if Arguments.len() == 1 {
-						Arguments.into_iter().next().unwrap()
-					} else {
-						Value::Array(Arguments)
-					};
-					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
-					Ok(
-						crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
-							.await
-							.unwrap_or(Value::Null),
-					)
+					forward_to_cocoon!("auth", command, Arguments)
 				},
 
 				// Atom L2 + NodeDeferred: unknown-command fallback.
@@ -2676,13 +2645,7 @@ pub async fn mountain_ipc_invoke(
 						// Forward to Cocoon via cocoon:request bridge.
 						// Cocoon's RequestRoutingHandler + extension namespaces
 						// cover language:*, scm:*, debug:*, tasks:*, auth:*, etc.
-						let Payload = if Arguments.is_empty() {
-							Value::Null
-						} else if Arguments.len() == 1 {
-							Arguments.into_iter().next().unwrap()
-						} else {
-							Value::Array(Arguments)
-						};
+						let Payload = cocoon_payload(Arguments);
 						dev_log!("ipc", "deferred → Cocoon: {}", command);
 						let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
 						match crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 15_000)
