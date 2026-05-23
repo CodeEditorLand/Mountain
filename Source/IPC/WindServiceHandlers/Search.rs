@@ -43,11 +43,11 @@ pub async fn SearchFindInFiles(RunTime:Arc<ApplicationRunTime>, mut Arguments:Ve
 	let QueryValue = if Arguments.first().map(|V| V.is_object()).unwrap_or(false) {
 		Arguments.remove(0)
 	} else if let Some(Pattern) = Arguments.first().and_then(|V| V.as_str()) {
-		let IsRegex = Arguments.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+		let IsRegex = arg_bool(&Arguments, 1);
 
-		let IsCase = Arguments.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
+		let IsCase = arg_bool(&Arguments, 2);
 
-		let IsWord = Arguments.get(3).and_then(|V| V.as_bool()).unwrap_or(false);
+		let IsWord = arg_bool(&Arguments, 3);
 
 		json!({
 			"pattern": Pattern,
@@ -86,9 +86,9 @@ pub async fn SearchFindFiles(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Valu
 
 	let MaxResults = Arguments.get(2).and_then(|V| V.as_u64()).map(|N| N as usize);
 
-	let UseIgnoreFiles = Arguments.get(3).and_then(|V| V.as_bool()).unwrap_or(true);
+	let UseIgnoreFiles = arg_bool_true(&Arguments, 3);
 
-	let FollowSymlinks = Arguments.get(4).and_then(|V| V.as_bool()).unwrap_or(false);
+	let FollowSymlinks = arg_bool(&Arguments, 4);
 
 	dev_log!(
 		"search",
