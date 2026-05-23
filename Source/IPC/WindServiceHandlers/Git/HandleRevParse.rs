@@ -5,12 +5,15 @@
 
 use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::Git::Shared::{Generated::Fn as Generated, RunGit::Fn as RunGit};
+use crate::IPC::WindServiceHandlers::{
+	Git::Shared::{Generated::Fn as Generated, RunGit::Fn as RunGit},
+	Utilities::JsonValueHelpers::{arg_string, arg_string_or},
+};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let RepoPath = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
+	let RepoPath = arg_string(&Arguments, 0);
 
-	let Reference = Arguments.get(1).and_then(Value::as_str).unwrap_or("HEAD").to_string();
+	let Reference = arg_string_or(&Arguments, 1, "HEAD");
 
 	if RepoPath.is_empty() {
 		return Err("git:revParse requires repoPath".to_string());

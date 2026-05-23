@@ -7,12 +7,15 @@ use std::sync::Arc;
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 use serde_json::Value;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::{
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{arg_bool, arg_u64},
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-	let TerminalId = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0);
+	let TerminalId = arg_u64(&Arguments, 0);
 
-	let PreserveFocus = Arguments.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+	let PreserveFocus = arg_bool(&Arguments, 1);
 
 	RunTime
 		.Environment

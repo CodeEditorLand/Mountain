@@ -25,7 +25,7 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 use CommonLibrary::{Search::SearchProvider::SearchProvider, Workspace::WorkspaceProvider::WorkspaceProvider};
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::{IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{arg_bool, arg_bool_true}, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// `search:findInFiles` / `search:textSearch` / `search:searchText`.
 ///

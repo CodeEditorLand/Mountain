@@ -9,7 +9,10 @@ use std::sync::Arc;
 
 use serde_json::Value;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::{
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_bool,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let Uri = Arguments
@@ -18,7 +21,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.ok_or("label:getUri requires uri".to_string())?
 		.to_owned();
 
-	let Relative = Arguments.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+	let Relative = arg_bool(&Arguments, 1);
 
 	if !Relative {
 		let Label = if let Some(stripped) = Uri.strip_prefix("file://") {

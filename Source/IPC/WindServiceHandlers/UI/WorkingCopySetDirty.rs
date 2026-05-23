@@ -4,7 +4,10 @@ use std::sync::Arc;
 
 use serde_json::Value;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::{
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_bool_true,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let Uri = Arguments
@@ -12,7 +15,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.and_then(|V| V.as_str())
 		.ok_or("workingCopy:setDirty requires uri".to_string())?;
 
-	let Dirty = Arguments.get(1).and_then(|V| V.as_bool()).unwrap_or(true);
+	let Dirty = arg_bool_true(&Arguments, 1);
 
 	RunTime.Environment.ApplicationState.Feature.WorkingCopy.SetDirty(Uri, Dirty);
 

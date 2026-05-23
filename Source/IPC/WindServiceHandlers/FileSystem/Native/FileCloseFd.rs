@@ -6,7 +6,7 @@
 
 use serde_json::Value;
 
-use crate::{IPC::WindServiceHandlers::FileSystem::Native::FileOpenFd::GetFdTable, dev_log};
+use crate::{IPC::WindServiceHandlers::FileSystem::Native::FileOpenFd::GetFdTable, IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_u64, dev_log};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Fd = Arguments.first().and_then(Value::as_u64).unwrap_or(0) as u32;

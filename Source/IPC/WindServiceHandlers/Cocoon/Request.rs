@@ -5,6 +5,8 @@
 
 use serde_json::Value;
 
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_val;
+
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	crate::dev_log!("ipc", "cocoon:request method={:?}", Arguments.first());
 
@@ -14,7 +16,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 		None => Err("cocoon:request requires method string in slot 0".to_string()),
 
 		Some(Method) => {
-			let Payload = Arguments.get(1).cloned().unwrap_or(Value::Null);
+			let Payload = arg_val(&Arguments, 1);
 
 			// Boot-race guard: the renderer can dispatch `cocoon:request` before
 			// Cocoon's gRPC handshake completes. 5000 ms chosen because the

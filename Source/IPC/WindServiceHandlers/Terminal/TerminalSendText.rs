@@ -7,7 +7,10 @@ use std::sync::Arc;
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 use serde_json::Value;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::{
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let TerminalId = Arguments
@@ -15,7 +18,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.and_then(|V| V.as_u64())
 		.ok_or_else(|| "terminal:sendText requires terminal_id as first argument".to_string())?;
 
-	let Text = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Text = arg_string(&Arguments, 1);
 
 	RunTime
 		.Environment

@@ -12,11 +12,11 @@ use ring::{
 };
 use serde_json::{Value, json};
 
-use crate::dev_log;
+use crate::{IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string, dev_log};
 use super::Key::Fn as DeriveKey;
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Plaintext = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Plaintext = arg_string(&Arguments, 0);
 
 	if Plaintext.is_empty() {
 		return Ok(json!(""));

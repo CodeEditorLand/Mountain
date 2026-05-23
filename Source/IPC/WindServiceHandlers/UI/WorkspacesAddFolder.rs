@@ -9,6 +9,7 @@ use crate::{
 		DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
 		State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify,
 	},
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
@@ -21,7 +22,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.ok_or("workspaces:addFolder requires uri as first argument".to_string())?
 		.to_string();
 
-	let Name = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Name = arg_string(&Arguments, 1);
 
 	let Workspace = &RunTime.Environment.ApplicationState.Workspace;
 

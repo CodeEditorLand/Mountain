@@ -12,7 +12,10 @@ use std::sync::Arc;
 use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
 use serde_json::Value;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::{
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{arg_u64, arg_u64_or},
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let (TerminalId, Columns, Rows) = {
@@ -27,11 +30,11 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 			(Id, C, R)
 		} else {
-			let Id = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0);
+			let Id = arg_u64(&Arguments, 0);
 
-			let C = Arguments.get(1).and_then(|V| V.as_u64()).unwrap_or(80) as u16;
+			let C = arg_u64_or(&Arguments, 1, 80) as u16;
 
-			let R = Arguments.get(2).and_then(|V| V.as_u64()).unwrap_or(24) as u16;
+			let R = arg_u64_or(&Arguments, 2, 24) as u16;
 
 			(Id, C, R)
 		}

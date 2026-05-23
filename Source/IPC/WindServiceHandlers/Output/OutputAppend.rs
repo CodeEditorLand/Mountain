@@ -7,10 +7,12 @@ use CommonLibrary::IPC::SkyEvent::SkyEvent;
 use serde_json::{Value, json};
 use tauri::{AppHandle, Emitter};
 
-pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-	let ChannelName = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string;
 
-	let Text = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
+	let ChannelName = arg_string(&Arguments, 0);
+
+	let Text = arg_string(&Arguments, 1);
 
 	let _ = ApplicationHandle.emit(SkyEvent::OutputAppend.AsStr(), json!({ "channel": ChannelName, "text": Text }));
 

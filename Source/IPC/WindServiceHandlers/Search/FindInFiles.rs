@@ -5,7 +5,11 @@ use std::sync::Arc;
 
 use serde_json::{Value, json};
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::{
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_bool,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
+};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, mut Arguments:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Search::SearchProvider::SearchProvider;
@@ -13,11 +17,11 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, mut Arguments:Vec<Value>) -> Re
 	let QueryValue = if Arguments.first().map(|V| V.is_object()).unwrap_or(false) {
 		Arguments.remove(0)
 	} else if let Some(Pattern) = Arguments.first().and_then(|V| V.as_str()) {
-		let IsRegex = Arguments.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+		let IsRegex = arg_bool(&Arguments, 1);
 
-		let IsCase = Arguments.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
+		let IsCase = arg_bool(&Arguments, 2);
 
-		let IsWord = Arguments.get(3).and_then(|V| V.as_bool()).unwrap_or(false);
+		let IsWord = arg_bool(&Arguments, 3);
 
 		json!({
 			"pattern": Pattern,

@@ -6,10 +6,13 @@
 
 use serde_json::Value;
 
-use crate::{IPC::WindServiceHandlers::Git::Shared::TakePid::Fn as TakePid, dev_log};
+use crate::{
+	IPC::WindServiceHandlers::{Git::Shared::TakePid::Fn as TakePid, Utilities::JsonValueHelpers::arg_string},
+	dev_log,
+};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let OperationId = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
+	let OperationId = arg_string(&Arguments, 0);
 
 	if let Some(Pid) = TakePid(&OperationId) {
 		dev_log!("git", "[Git] cancel op={} pid={}", OperationId, Pid);

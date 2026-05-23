@@ -6,6 +6,8 @@
 
 use serde_json::{Value, json};
 
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string;
+
 pub async fn NativeReadClipboardText(_Arguments:Vec<Value>) -> Result<Value, String> {
 	match arboard::Clipboard::new() {
 		Ok(mut Cb) => Ok(json!(Cb.get_text().unwrap_or_default())),
@@ -15,7 +17,7 @@ pub async fn NativeReadClipboardText(_Arguments:Vec<Value>) -> Result<Value, Str
 }
 
 pub async fn NativeWriteClipboardText(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Text = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Text = arg_string(&Arguments, 0);
 
 	if let Ok(mut Cb) = arboard::Clipboard::new() {
 		let _ = Cb.set_text(Text);
@@ -35,7 +37,7 @@ pub async fn NativeReadClipboardFindText(_Arguments:Vec<Value>) -> Result<Value,
 }
 
 pub async fn NativeWriteClipboardFindText(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Text = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Text = arg_string(&Arguments, 0);
 
 	if let Ok(mut Cb) = arboard::Clipboard::new() {
 		let _ = Cb.set_text(Text);

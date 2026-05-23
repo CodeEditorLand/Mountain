@@ -5,14 +5,17 @@
 
 use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::Git::Shared::{Generated::Fn as Generated, RunGit::Fn as RunGit};
+use crate::IPC::WindServiceHandlers::{
+	Git::Shared::{Generated::Fn as Generated, RunGit::Fn as RunGit},
+	Utilities::JsonValueHelpers::arg_string,
+};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let RepoPath = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
+	let RepoPath = arg_string(&Arguments, 0);
 
-	let FromRef = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+	let FromRef = arg_string(&Arguments, 1);
 
-	let ToRef = Arguments.get(2).and_then(Value::as_str).unwrap_or("").to_string();
+	let ToRef = arg_string(&Arguments, 2);
 
 	if RepoPath.is_empty() || FromRef.is_empty() || ToRef.is_empty() {
 		return Err("git:revListCount requires repoPath, fromRef, toRef".to_string());

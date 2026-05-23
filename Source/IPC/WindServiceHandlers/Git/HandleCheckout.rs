@@ -4,16 +4,19 @@
 
 use serde_json::Value;
 
-use crate::IPC::WindServiceHandlers::Git::Shared::RunGit::Fn as RunGit;
+use crate::IPC::WindServiceHandlers::{
+	Git::Shared::RunGit::Fn as RunGit,
+	Utilities::JsonValueHelpers::{arg_bool, arg_string},
+};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let OperationId = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
+	let OperationId = arg_string(&Arguments, 0);
 
-	let RepoPath = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+	let RepoPath = arg_string(&Arguments, 1);
 
-	let Treeish = Arguments.get(2).and_then(Value::as_str).unwrap_or("").to_string();
+	let Treeish = arg_string(&Arguments, 2);
 
-	let Detached = Arguments.get(3).and_then(Value::as_bool).unwrap_or(false);
+	let Detached = arg_bool(&Arguments, 3);
 
 	if RepoPath.is_empty() || Treeish.is_empty() {
 		return Err("git:checkout requires repoPath and treeish".to_string());

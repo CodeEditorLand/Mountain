@@ -5,10 +5,10 @@
 
 use serde_json::Value;
 
-use crate::dev_log;
+use crate::{IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_u64, dev_log};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Pid = Arguments.first().and_then(Value::as_u64).unwrap_or(0) as u32;
+	let Pid = arg_u64(&Arguments, 0) as u32;
 
 	if Pid == 0 {
 		return Ok(Value::Null);

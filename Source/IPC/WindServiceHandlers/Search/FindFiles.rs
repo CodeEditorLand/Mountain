@@ -5,7 +5,11 @@ use std::sync::Arc;
 
 use serde_json::{Value, json};
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::{
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{arg_bool, arg_bool_true},
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
+};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Workspace::WorkspaceProvider::WorkspaceProvider;
@@ -19,9 +23,9 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 	let MaxResults = Arguments.get(2).and_then(|V| V.as_u64()).map(|N| N as usize);
 
-	let UseIgnoreFiles = Arguments.get(3).and_then(|V| V.as_bool()).unwrap_or(true);
+	let UseIgnoreFiles = arg_bool_true(&Arguments, 3);
 
-	let FollowSymlinks = Arguments.get(4).and_then(|V| V.as_bool()).unwrap_or(false);
+	let FollowSymlinks = arg_bool(&Arguments, 4);
 
 	dev_log!(
 		"search",

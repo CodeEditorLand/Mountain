@@ -252,7 +252,20 @@ use Utilities::{
 	ApplicationRoot::{Get::Fn as get_static_application_root, Set::Fn as set_static_application_root},
 	ChannelPriority::Fn as ResolveChannelPriority,
 	FiddeeRoot::Fn as FiddeeRoot,
-	JsonValueHelpers::Fn as v_str,
+	JsonValueHelpers::{
+		Fn as v_str,
+		arg_bool,
+		arg_bool_true,
+		arg_f64,
+		arg_i64,
+		arg_str,
+		arg_string,
+		arg_string_or,
+		arg_u64,
+		arg_u64_or,
+		arg_val,
+		req_string,
+	},
 	MetadataEncoding::Fn as metadata_to_istat,
 	PathExtraction::{Fn as extract_path_from_arg, percent_decode},
 	RecentlyOpened::{
@@ -738,8 +751,8 @@ pub async fn mountain_ipc_invoke(
 				// Atom H1c: added so workbench.js can surface diagnostic state
 				// into the same Mountain.dev.log that carries Rust-side events.
 				"diagnostic:log" => {
-					let Tag = Arguments.first().and_then(|V| V.as_str()).unwrap_or("webview").to_string();
-					let Message = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+					let Tag = arg_string_or(&Arguments, 0, "webview");
+					let Message = arg_string(&Arguments, 1);
 					let Extras = if Arguments.len() > 2 {
 						let Tail:Vec<String> = Arguments
 							.iter()
@@ -809,7 +822,7 @@ pub async fn mountain_ipc_invoke(
 				// (onStartupFinished, onLanguage:*, etc.); this path lets Wind's
 				// ExtensionsService trigger activation programmatically.
 				"extensions:activate" => {
-					let ExtensionId = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+					let ExtensionId = arg_string(&Arguments, 0);
 					dev_log!("extensions", "extensions:activate id={}", ExtensionId);
 					if ExtensionId.is_empty() {
 						Ok(Value::Null)
@@ -1245,7 +1258,7 @@ pub async fn mountain_ipc_invoke(
 					// the phase advances Starting → Ready → Restored → Eventually.
 					// Mountain emits `sky://lifecycle/phaseChanged` so any extension
 					// host or service waiting on a later phase wakes up.
-					let NewPhase = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(1) as u8;
+					let NewPhase = arg_u64_or(&Arguments, 0, 1) as u8;
 					RunTime
 						.Environment
 						.ApplicationState
@@ -1578,7 +1591,7 @@ pub async fn mountain_ipc_invoke(
 				},
 				"nativeHost:setWindowAlwaysOnTop" => {
 					dev_log!("window", "{}", command);
-					let OnTop = Arguments.first().and_then(|V| V.as_bool()).unwrap_or(false);
+					let OnTop = arg_bool(&Arguments, 0);
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.set_always_on_top(OnTop);
 					}
@@ -1598,7 +1611,7 @@ pub async fn mountain_ipc_invoke(
 				// Window.set_title as a best-effort (shows path in title).
 				"nativeHost:setRepresentedFilename" => {
 					dev_log!("window", "{}", command);
-					let Path = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+					let Path = arg_string(&Arguments, 0);
 					if !Path.is_empty() {
 						if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 							// Show just the filename component as the title; the
@@ -1624,8 +1637,8 @@ pub async fn mountain_ipc_invoke(
 				// `nativeHost:setMinimumSize` - enforce a minimum window size so
 				// the workbench never collapses to a 1×1 pixel frame.
 				"nativeHost:setMinimumSize" => {
-					let Width = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(400) as u32;
-					let Height = Arguments.get(1).and_then(|V| V.as_u64()).unwrap_or(300) as u32;
+					let Width = arg_u64_or(&Arguments, 0, 400) as u32;
+					let Height = arg_u64_or(&Arguments, 1, 300) as u32;
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.set_min_size(Some(tauri::Size::Physical(tauri::PhysicalSize {
 							width:Width,
@@ -1733,7 +1746,7 @@ pub async fn mountain_ipc_invoke(
 				// Network
 				"nativeHost:findFreePort" => NativeFindFreePort(Arguments).await,
 				"nativeHost:isPortFree" => {
-					let Port = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0) as u16;
+					let Port = arg_u64(&Arguments, 0) as u16;
 					if Port == 0 {
 						Ok(json!(false))
 					} else {
@@ -1748,7 +1761,7 @@ pub async fn mountain_ipc_invoke(
 				// VS Code uses this before every authenticated HTTP request so
 				// extensions that call `fetch` route through the right gateway.
 				"nativeHost:resolveProxy" => {
-					let Url = Arguments.first().and_then(|V| V.as_str()).unwrap_or("");
+					let Url = arg_str(&Arguments, 0);
 					let Scheme = if Url.starts_with("https") { "HTTPS" } else { "HTTP" };
 					let ProxyEnv = std::env::var(format!("{}_PROXY", Scheme))
 						.or_else(|_| std::env::var(format!("{}_proxy", Scheme.to_lowercase())))
@@ -1859,7 +1872,7 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("terminal", "localPty:setTerminalLayoutInfo");
 					use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
 					let StorageProvider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
-					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+					let Payload = arg_val(&Arguments, 0);
 					let _ = StorageProvider
 						.UpdateStorageValue(true, "terminal:layoutInfo".to_string(), Some(Payload))
 						.await;
@@ -2013,8 +2026,8 @@ pub async fn mountain_ipc_invoke(
 						Environment::Requires::Requires,
 						Terminal::TerminalProvider::TerminalProvider,
 					};
-					let TerminalId = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0);
-					let PropId = Arguments.get(1).and_then(|V| V.as_u64()).unwrap_or(0);
+					let TerminalId = arg_u64(&Arguments, 0);
+					let PropId = arg_u64(&Arguments, 1);
 					if TerminalId == 0 {
 						Ok(Value::Null)
 					} else if PropId == 1 {
@@ -2184,7 +2197,7 @@ pub async fn mountain_ipc_invoke(
 				},
 				"workspaces:removeRecentlyOpened" => {
 					dev_log!("workspaces", "workspaces:removeRecentlyOpened");
-					let Uri = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+					let Uri = arg_string(&Arguments, 0);
 					if !Uri.is_empty() {
 						MutateRecentlyOpened(|List| {
 							if let Some(Workspaces) = List.get_mut("workspaces").and_then(|V| V.as_array_mut()) {
@@ -2351,9 +2364,9 @@ pub async fn mountain_ipc_invoke(
 				// Emits a Sky event that triggers `IViewsService.openView(viewId)`.
 				"tree.reveal" | "tree:reveal" => {
 					use tauri::Emitter;
-					let ViewId = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-					let Handle = Arguments.get(1).and_then(|V| V.as_str()).map(String::from).unwrap_or_default();
-					let Options = Arguments.get(2).cloned().unwrap_or(Value::Null);
+					let ViewId = arg_string(&Arguments, 0);
+					let Handle = arg_string(&Arguments, 1);
+					let Options = arg_val(&Arguments, 2);
 					dev_log!("ipc", "tree.reveal viewId={} handle={}", ViewId, Handle);
 					let _ = ApplicationHandle.emit(
 						"sky://tree-view/reveal",
@@ -2370,7 +2383,7 @@ pub async fn mountain_ipc_invoke(
 				// Sky emits these when the VS Code workbench fires treeView.onDidChangeSelection,
 				// onDidCollapseElement, onDidExpandElement, onDidChangeVisibility.
 				"tree:selectionChanged" | "tree:collapseElement" | "tree:expandElement" | "tree:visibilityChanged" => {
-					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+					let Payload = arg_val(&Arguments, 0);
 					let Method = match command.as_str() {
 						"tree:selectionChanged" => "$treeView:selectionChanged",
 						"tree:collapseElement" => "$treeView:collapseElement",
@@ -2399,7 +2412,7 @@ pub async fn mountain_ipc_invoke(
 				// Effect path). This IPC arm lets Wind call it directly without gRPC.
 				"editor:revealRange" | "window:revealRange" => {
 					use tauri::Emitter;
-					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+					let Payload = arg_val(&Arguments, 0);
 					let _ = ApplicationHandle.emit("sky://editor/revealRange", &Payload);
 					Ok(Value::Null)
 				},
@@ -2456,7 +2469,7 @@ pub async fn mountain_ipc_invoke(
 				// This enables LSP-backed diagnostics, completions, hover to see
 				// up-to-date content without waiting for a file save.
 				"sky:model:contentChanged" => {
-					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+					let Payload = arg_val(&Arguments, 0);
 					let Uri = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
 					if !Uri.is_empty() {
 						let Content = Payload.get("content").and_then(Value::as_str).unwrap_or("").to_string();
@@ -2492,7 +2505,7 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				"sky:editor:activeChanged" => {
-					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+					let Payload = arg_val(&Arguments, 0);
 					let Uri = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
 					dev_log!("model", "[ActiveEditorChanged] uri={}", Uri);
 					if !Uri.is_empty() {
@@ -2522,7 +2535,7 @@ pub async fn mountain_ipc_invoke(
 				// Uses the public LanguageFeatureProviderRegistry trait to call the same
 				// pipeline as Mountain's own gRPC ProvideInlineCompletionItems handler.
 				"language:provideInlineCompletions" => {
-					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+					let Payload = arg_val(&Arguments, 0);
 					let UriStr = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
 
 					if UriStr.is_empty() {

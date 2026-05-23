@@ -4,6 +4,8 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Emitter};
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{arg_bool, arg_string, arg_string_or};
+
 fn NewProgressId() -> String {
 	format!(
 		"progress-{}",
@@ -15,11 +17,11 @@ fn NewProgressId() -> String {
 }
 
 pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-	let Location = Arguments.first().and_then(|V| V.as_str()).unwrap_or("notification").to_string();
+	let Location = arg_string_or(&Arguments, 0, "notification");
 
-	let Title = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Title = arg_string(&Arguments, 1);
 
-	let Cancellable = Arguments.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
+	let Cancellable = arg_bool(&Arguments, 2);
 
 	let Id = NewProgressId();
 

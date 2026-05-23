@@ -5,8 +5,10 @@
 
 use serde_json::{Value, json};
 
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string;
+
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Path = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Path = arg_string(&Arguments, 0);
 
 	if Path.is_empty() {
 		return Ok(json!(false));

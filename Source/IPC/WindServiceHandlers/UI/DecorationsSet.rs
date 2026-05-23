@@ -4,7 +4,10 @@ use std::sync::Arc;
 
 use serde_json::Value;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::{
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_val,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let Uri = Arguments
@@ -12,7 +15,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.and_then(|V| V.as_str())
 		.ok_or("decorations:set requires uri".to_string())?;
 
-	let Decoration = Arguments.get(1).cloned().unwrap_or(Value::Null);
+	let Decoration = arg_val(&Arguments, 1);
 
 	RunTime
 		.Environment
