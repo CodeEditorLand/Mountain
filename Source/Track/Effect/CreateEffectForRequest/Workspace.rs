@@ -179,11 +179,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// Returns the URI on success so the caller can confirm the file was saved.
 		"Workspace.Save" => {
 			crate::effect!(run_time, {
-				let UriVal = if Parameters.is_array() {
-					Parameters.get(0).cloned().unwrap_or_default()
-				} else {
-					Parameters.get("uri").cloned().unwrap_or(Parameters)
-				};
+				let UriVal = uri_from_params(Parameters);
 
 				// Fire `document.willSave` to Cocoon BEFORE writing to disk.
 				// This gives `onWillSaveTextDocument` listeners a chance to
@@ -243,11 +239,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// can drive the dialog independently.
 		"Workspace.SaveAs" => {
 			crate::effect!(run_time, {
-				let UriVal = if Parameters.is_array() {
-					Parameters.get(0).cloned().unwrap_or_default()
-				} else {
-					Parameters.get("uri").cloned().unwrap_or(Parameters)
-				};
+				let UriVal = uri_from_params(Parameters);
 				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
 					&run_time.Environment,
 					"sky://workspace/saveAs",
