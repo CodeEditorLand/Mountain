@@ -4,7 +4,10 @@ use CommonLibrary::{Environment::Requires::Requires, Secret::SecretProvider::Sec
 use serde_json::{Value, json};
 use tauri::Runtime;
 
-use crate::Track::Effect::MappedEffectType::MappedEffect;
+use crate::Track::Effect::{
+	CreateEffectForRequest::Utilities::Params::{string_at, string_at_or},
+	MappedEffectType::MappedEffect,
+};
 
 /// Helper: Accept either positional `[key, value?]` or an object
 /// `{ key, extension_id?, extensionId? }`, returning `(Key,
@@ -22,9 +25,9 @@ fn ExtractSecretKey(Parameters:&Value) -> (String, String) {
 
 		(Key, ExtensionId)
 	} else {
-		let Key = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+		let Key = string_at(Parameters, 0);
 
-		let ExtensionId = Parameters.get(2).and_then(Value::as_str).unwrap_or("unknown").to_string();
+		let ExtensionId = string_at_or(Parameters, 2, "unknown");
 
 		(Key, ExtensionId)
 	}
@@ -51,7 +54,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				let SecretValue = if let Some(Object) = Parameters.as_object() {
 					Object.get("value").and_then(Value::as_str).unwrap_or("").to_string()
 				} else {
-					Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string()
+					string_at(&Parameters, 1)
 				};
 				provider
 					.StoreSecret(ExtensionId, Key, SecretValue)

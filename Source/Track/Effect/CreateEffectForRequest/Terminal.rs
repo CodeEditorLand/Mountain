@@ -6,7 +6,7 @@ use tauri::Runtime;
 
 use crate::{
 	Track::Effect::{
-		CreateEffectForRequest::Utilities::Params::{bool_at, string_at, u64_at, val_at},
+		CreateEffectForRequest::Utilities::Params::{bool_at, i64_at, string_at, u64_at, u64_at_or, val_at},
 		MappedEffectType::MappedEffect,
 	},
 	dev_log,
@@ -25,7 +25,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$terminal:sendText" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-				let terminal_id = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u64).unwrap_or(0);
+				let terminal_id = i64_at(&Parameters, 0) as u64;
 				let text = string_at(&Parameters, 1);
 				provider
 					.SendTextToTerminal(terminal_id, text)
@@ -38,7 +38,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$terminal:dispose" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-				let terminal_id = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u64).unwrap_or(0);
+				let terminal_id = i64_at(&Parameters, 0) as u64;
 				provider
 					.DisposeTerminal(terminal_id)
 					.await
@@ -57,8 +57,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					},
 					_ => 0,
 				};
-				let cols = Parameters.get(1).and_then(Value::as_u64).map(|n| n as u16).unwrap_or(80);
-				let rows = Parameters.get(2).and_then(Value::as_u64).map(|n| n as u16).unwrap_or(24);
+				let cols = u64_at_or(&Parameters, 1, 80) as u16;
+				let rows = u64_at_or(&Parameters, 2, 24) as u16;
 				provider
 					.ResizeTerminal(terminal_id, cols, rows)
 					.await

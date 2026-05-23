@@ -23,17 +23,24 @@ use CommonLibrary::{
 use serde_json::{Value, json};
 use tauri::Runtime;
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
+use crate::{
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	Track::Effect::{
+		CreateEffectForRequest::Utilities::Params::{string_at, string_at_or},
+		MappedEffectType::MappedEffect,
+	},
+	dev_log,
+};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"UserInterface.ShowMessage" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
-				let severity_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("info");
-				let message = Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+				let severity_str = string_at_or(&Parameters, 0, "info");
+				let message = string_at(&Parameters, 1);
 				let options = Parameters.get(2).cloned();
-				let severity = match severity_str {
+				let severity = match severity_str.as_str() {
 					"warning" => MessageSeverity::Warning,
 					"error" => MessageSeverity::Error,
 					_ => MessageSeverity::Info,

@@ -17,7 +17,7 @@ use crate::{
 	IPC::SkyEmit::LogSkyEmit,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::Effect::{
-		CreateEffectForRequest::Utilities::Params::{string_at, val_at},
+		CreateEffectForRequest::Utilities::Params::{str_at, string_at, val_at},
 		MappedEffectType::MappedEffect,
 	},
 	dev_log,
@@ -29,7 +29,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			crate::effect!(run_time, {
 				let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
 
-				let first = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+				let first = str_at(&Parameters, 0);
 
 				let (ViewId, Options) = if Parameters.get(2).is_some() {
 					let vid = Parameters.get(1).and_then(Value::as_str).unwrap_or(first).to_string();

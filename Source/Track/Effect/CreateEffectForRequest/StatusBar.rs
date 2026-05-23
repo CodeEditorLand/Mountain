@@ -21,7 +21,10 @@ use CommonLibrary::{
 use serde_json::{Value, json};
 use tauri::Runtime;
 
-use crate::Track::Effect::MappedEffectType::MappedEffect;
+use crate::Track::Effect::{
+	CreateEffectForRequest::Utilities::Params::{obj_bool, obj_f64, obj_str, string_at},
+	MappedEffectType::MappedEffect,
+};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
@@ -38,9 +41,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				let item_id = Parameters.get("itemId").and_then(Value::as_str).unwrap_or(entry_id);
 
-				let ext_id = Parameters.get("extensionId").and_then(Value::as_str).unwrap_or("");
+				let ext_id = obj_str(&Parameters, "extensionId");
 
-				let text = Parameters.get("text").and_then(Value::as_str).unwrap_or("").to_string();
+				let text = obj_str(&Parameters, "text").to_string();
 
 				let tooltip = Parameters.get("tooltip").cloned();
 
@@ -50,9 +53,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				let background_color = Parameters.get("backgroundColor").cloned();
 
-				let is_aligned_left = Parameters.get("alignLeft").and_then(Value::as_bool).unwrap_or(false);
+				let is_aligned_left = obj_bool(&Parameters, "alignLeft");
 
-				let priority = Parameters.get("priority").and_then(Value::as_f64);
+				let priority = obj_f64(&Parameters, "priority");
 
 				let accessibility = Parameters.get("accessibilityInformation").cloned();
 
@@ -110,7 +113,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					.filter(|s| !s.is_empty())
 					.ok_or_else(|| "$setStatusBarMessage: missing or empty message id".to_string())?;
 
-				let text = Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+				let text = string_at(&Parameters, 1);
 
 				provider
 					.SetStatusBarMessage(message_id.to_string(), text)

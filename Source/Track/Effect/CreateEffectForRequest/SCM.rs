@@ -8,7 +8,10 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::{
-	Track::Effect::{CreateEffectForRequest::Utilities::Params::val_at, MappedEffectType::MappedEffect},
+	Track::Effect::{
+		CreateEffectForRequest::Utilities::Params::{i64_at, val_at},
+		MappedEffectType::MappedEffect,
+	},
 	dev_log,
 };
 
@@ -29,7 +32,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$scm:updateSourceControl" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-				let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
+				let handle = i64_at(&Parameters, 0) as u32;
 				let update = val_at(&Parameters, 1);
 				provider
 					.UpdateSourceControl(handle, update)
@@ -42,7 +45,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$scm:updateGroup" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-				let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
+				let handle = i64_at(&Parameters, 0) as u32;
 				let group_data = val_at(&Parameters, 1);
 				provider
 					.UpdateSourceControlGroup(handle, group_data)
@@ -55,7 +58,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$scm:registerInputBox" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-				let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
+				let handle = i64_at(&Parameters, 0) as u32;
 				let options = val_at(&Parameters, 1);
 				provider
 					.RegisterInputBox(handle, options)

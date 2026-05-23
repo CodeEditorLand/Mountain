@@ -6,7 +6,7 @@ use tauri::Runtime;
 use url::Url;
 
 use crate::Track::Effect::{
-	CreateEffectForRequest::Utilities::Params::{str_at, string_at, string_at_or},
+	CreateEffectForRequest::Utilities::Params::{i64_at_or, str_at, string_at, string_at_or},
 	MappedEffectType::MappedEffect,
 };
 
@@ -30,7 +30,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			crate::effect!(run_time, {
 				let provider:Arc<dyn DebugService> = run_time.Environment.Require();
 				let debug_type = string_at_or(&Parameters, 0, "node");
-				let provider_handle = Parameters.get(1).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(1);
+				let provider_handle = i64_at_or(&Parameters, 1, 1) as u32;
 				let sidecar_id = string_at_or(&Parameters, 2, "cocoon-main");
 				provider
 					.RegisterDebugConfigurationProvider(debug_type, provider_handle, sidecar_id)

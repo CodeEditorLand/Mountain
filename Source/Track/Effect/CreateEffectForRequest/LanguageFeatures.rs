@@ -25,14 +25,17 @@ use CommonLibrary::{
 use serde_json::{Value, json};
 use tauri::Runtime;
 
-use crate::Track::Effect::MappedEffectType::MappedEffect;
+use crate::Track::Effect::{
+	CreateEffectForRequest::Utilities::Params::{obj_str, obj_val},
+	MappedEffectType::MappedEffect,
+};
 
 fn CreateProviderEffect(Parameters:Value, ProviderKind:ProviderType) -> Option<Result<MappedEffect, String>> {
 	crate::effect!(run_time, {
 		let provider:Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
-		let id = Parameters.get("handle").and_then(Value::as_str).unwrap_or("").to_string();
-		let selector = Parameters.get("language_selector").cloned().unwrap_or_default();
-		let extension_id = Parameters.get("extension_id").cloned().unwrap_or_default();
+		let id = obj_str(&Parameters, "handle").to_string();
+		let selector = obj_val(&Parameters, "language_selector");
+		let extension_id = obj_val(&Parameters, "extension_id");
 		let options = Parameters.get("options").cloned();
 		provider
 			.RegisterProvider(id, ProviderKind, selector, extension_id, options)

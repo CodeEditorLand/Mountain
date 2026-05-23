@@ -31,7 +31,10 @@ use url::Url;
 use crate::{
 	IPC::SkyEmit::LogSkyEmit,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Track::Effect::{CreateEffectForRequest::Utilities::Params::string_at, MappedEffectType::MappedEffect},
+	Track::Effect::{
+		CreateEffectForRequest::Utilities::Params::{str_at, string_at},
+		MappedEffectType::MappedEffect,
+	},
 	dev_log,
 };
 
@@ -108,7 +111,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			crate::effect!(run_time, {
 				let provider:Arc<dyn CustomEditorProvider> = run_time.Environment.Require();
 				let view_type = string_at(&Parameters, 0);
-				let resource_uri_str = Parameters.get(1).and_then(Value::as_str).unwrap_or("");
+				let resource_uri_str = str_at(&Parameters, 1);
 				// Do not substitute a fallback path for a missing
 				// or malformed URI. A silent swap to
 				// `file:///tmp/test.txt` would:

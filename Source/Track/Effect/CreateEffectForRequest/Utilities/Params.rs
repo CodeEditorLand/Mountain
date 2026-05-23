@@ -22,6 +22,20 @@ pub fn bool_at(p:&Value, n:usize) -> bool { p.get(n).and_then(Value::as_bool).un
 
 pub fn bool_at_true(p:&Value, n:usize) -> bool { p.get(n).and_then(Value::as_bool).unwrap_or(true) }
 
+pub fn i64_at(p:&Value, n:usize) -> i64 { p.get(n).and_then(Value::as_i64).unwrap_or(0) }
+
+pub fn i64_at_or(p:&Value, n:usize, default:i64) -> i64 { p.get(n).and_then(Value::as_i64).unwrap_or(default) }
+
+pub fn u64_at_or(p:&Value, n:usize, default:u64) -> u64 { p.get(n).and_then(Value::as_u64).unwrap_or(default) }
+
+pub fn obj_str<'a>(p:&'a Value, key:&str) -> &'a str { p.get(key).and_then(Value::as_str).unwrap_or("") }
+
+pub fn obj_val(p:&Value, key:&str) -> Value { p.get(key).cloned().unwrap_or(Value::Null) }
+
+pub fn obj_bool(p:&Value, key:&str) -> bool { p.get(key).and_then(Value::as_bool).unwrap_or(false) }
+
+pub fn obj_f64(p:&Value, key:&str) -> Option<f64> { p.get(key).and_then(Value::as_f64) }
+
 pub fn str_obj_or_pos<'a>(p:&'a Value, key:&str, n:usize) -> &'a str {
 	if let Some(obj) = p.as_object() {
 		obj.get(key).and_then(Value::as_str).unwrap_or("")
