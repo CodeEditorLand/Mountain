@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Write bytes to disk, creating any missing parent directories.
 

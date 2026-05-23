@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Wall-clock nanoseconds since UNIX epoch. Used as the start
 //! tick for OTLP spans and per-IPC latency measurements.

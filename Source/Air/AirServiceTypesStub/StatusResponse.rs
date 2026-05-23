@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `GetStatus` response DTO. Carries uptime, request counts, health flag.
 

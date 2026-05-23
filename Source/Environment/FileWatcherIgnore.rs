@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Server-side ignore filter for file-watcher events.
 //!

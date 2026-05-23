@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Platform-specific filename for the Node executable.
 

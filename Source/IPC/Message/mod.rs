@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Core message types and routing for the IPC layer between Wind and
 //! Mountain. Callers spell `IPC::Message::Types::TauriIPCMessage` (no `pub

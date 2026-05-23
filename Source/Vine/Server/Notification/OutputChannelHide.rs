@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `outputChannel.hide` notification.
 //! Stock VS Code exposes `OutputChannel.hide()` as a counterpart to
 //! `show()`. Sky doesn't yet render a dismissable panel per-channel, so

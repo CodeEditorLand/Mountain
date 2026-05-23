@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Translate a `SchedulerConfig::Struct` into a configured Echo
 //! `SchedulerBuilder`. Worker counts are clamped to `[1, 256]` so the

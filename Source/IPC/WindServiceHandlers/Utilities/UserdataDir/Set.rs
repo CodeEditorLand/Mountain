@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Sets the userdata base directory (once, from Tauri's PathResolver).
 

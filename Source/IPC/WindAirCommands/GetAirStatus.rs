@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `GetAirStatus` Tauri command - call Air's status RPC and
 //! its health probe, fold both into an

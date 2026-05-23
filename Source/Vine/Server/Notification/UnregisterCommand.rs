@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `unregisterCommand` notification.
 //! Paired with `registerCommand`; removes the proxied
 //! `CommandHandler` so subsequent `commands.executeCommand` no longer

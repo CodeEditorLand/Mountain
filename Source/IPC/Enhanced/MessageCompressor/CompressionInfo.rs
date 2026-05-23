@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Per-batch compression metadata - algorithm name, level,
 //! and the achieved ratio. `none()` produces the

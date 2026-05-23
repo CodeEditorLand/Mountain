@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `measure_time!($name, { … })` - record the elapsed time of a block as
 //! a `dev_log` line under the lifecycle tag. No-op when the `Telemetry`

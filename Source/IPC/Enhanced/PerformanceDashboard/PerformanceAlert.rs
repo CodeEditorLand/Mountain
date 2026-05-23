@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Threshold-violation alert raised by the dashboard - what
 //! tripped, current vs threshold, severity, human-readable

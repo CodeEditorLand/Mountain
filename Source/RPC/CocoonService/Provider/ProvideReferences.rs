@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Resolve "find references" via the registered provider, mapping each
 //! result into the gRPC `Location` shape.

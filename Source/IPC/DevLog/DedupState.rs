@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Consecutive-duplicate suppression buffer used by the
 //! `dev_log!` macro under `Trace=short`. Holds the last logged

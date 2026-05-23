@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Generic encrypted-message wrapper carrying additional
 //! routing headers and a protocol version. The phantom `T`

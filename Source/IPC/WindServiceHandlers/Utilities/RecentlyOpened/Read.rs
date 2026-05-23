@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Reads and parses RecentlyOpened.json. Degrades to empty envelope on error.
 

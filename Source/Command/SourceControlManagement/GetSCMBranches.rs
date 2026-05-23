@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - list branches for an SCM provider. Drives the
 //! branch picker UI.

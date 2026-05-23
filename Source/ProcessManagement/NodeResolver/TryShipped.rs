@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Bundled Node lookup. Production: Tauri ships Node under
 //! `Resources/Node/bin/node` (`Resources/Node/node.exe` on Windows). Dev:

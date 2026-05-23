@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use serde_json::Value;
 
 use super::Support::RelayToSky::RelayToSky;

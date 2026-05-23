@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Subscribe to the global notification fan-out. Each call returns a
 //! fresh receiver that observes every notification fanned out AFTER

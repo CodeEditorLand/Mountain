@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - code completion suggestions. Delegates to
 //! `LanguageFeature::Completions::provide_completions_impl`.

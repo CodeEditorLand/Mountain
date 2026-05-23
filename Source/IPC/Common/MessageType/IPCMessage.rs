@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Standard IPC message: identifier, command name, JSON payload,
 //! creation timestamp, optional correlation ID, and a priority. Built

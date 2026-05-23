@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! nvm lookup. `NVM_BIN` wins (set inside an nvm-sourced shell). Fallback
 //! walks `$NVM_DIR/versions/node` and picks the lexicographically largest

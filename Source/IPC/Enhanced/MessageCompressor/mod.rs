@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! # Message Compressor and Batching
 //!

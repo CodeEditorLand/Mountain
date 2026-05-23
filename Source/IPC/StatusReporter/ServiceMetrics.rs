@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Per-service performance counters embedded inside
 //! `ServiceInfo::Struct`. Currently filled with mock values

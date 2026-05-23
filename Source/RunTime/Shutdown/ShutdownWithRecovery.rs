@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Robust shutdown that continues across individual service failures.
 //! Cocoon retry → terminal disposal → state save → flush. Errors collected

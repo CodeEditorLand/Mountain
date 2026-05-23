@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Legacy wire method `file:stat`. Not currently wired (native variant
 //! handles `file:stat`). Preserved for provider-routed callers.

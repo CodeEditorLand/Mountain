@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - full snapshot of every registered SCM provider,
 //! its resource groups, and the resources within those groups.

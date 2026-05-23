@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Connectivity slice of `IPCStatusReport::Struct` - is the
 //! IPC server reachable, when did it last heartbeat, and how

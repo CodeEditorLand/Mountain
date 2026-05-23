@@ -7,7 +7,7 @@
 //! `$updateWorkspaceFolders` request).
 //!
 //! The delta is computed by
-//! [`WorkspaceState::SetWorkspaceFoldersReturnDelta`] and shipped as a
+//! `WorkspaceState::SetWorkspaceFoldersReturnDelta` and shipped as a
 //! fire-and-forget Vine notification: Cocoon's `NotificationHandler` converts
 //! it into a `didChangeWorkspaceFolders` event on
 //! `WorkspaceEventEmitter`, which powers every extension's

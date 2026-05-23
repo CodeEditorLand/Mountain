@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Write a single value to workspace-scoped storage. Atomic per
 //! key - concurrent set/get against the same key serialise

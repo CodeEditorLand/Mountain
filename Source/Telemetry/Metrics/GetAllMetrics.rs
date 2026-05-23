@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Snapshot every metric currently held in the global registry.
 

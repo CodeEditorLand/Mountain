@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Collects default configuration values contributed by all scanned
 //! extensions. Walks each extension's `contributes.configuration.properties`

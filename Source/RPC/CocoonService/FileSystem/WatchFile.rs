@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `watch_file` gRPC endpoint - Cocoon calls this when an extension uses
 //! `vscode.workspace.createFileSystemWatcher`. Routes to Mountain's

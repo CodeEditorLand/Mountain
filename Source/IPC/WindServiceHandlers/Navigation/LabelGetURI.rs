@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Resolve a human-readable display label for a URI. Two modes:
 //!

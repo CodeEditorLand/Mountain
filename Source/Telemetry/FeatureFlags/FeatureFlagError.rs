@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Error type returned by `FeatureFlagRegistry` operations.
 

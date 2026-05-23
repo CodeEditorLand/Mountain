@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Persist a value to the OS keychain.
 

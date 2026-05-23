@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wind Service Handlers - dispatcher and sub-module aggregator.
 //! Domain files handle the individual handler implementations.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Cocoon → Mountain `registerCommand` notification.
 //! Stores the command as a `Proxied` handler in Mountain's

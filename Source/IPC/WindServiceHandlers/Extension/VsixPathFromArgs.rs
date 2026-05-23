@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Extract a filesystem path from the first arg of `extensions:install`.
 //! Wind's install dialog hands us either a raw string ("file:///..." or
 //! absolute path) or a Tauri-serialised `UriComponents` object; both forms

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `localGit:checkout(operationId, repoPath, treeish, detached?)`.
 //! `Detached=true` adds `--detach` so the caller can land on a

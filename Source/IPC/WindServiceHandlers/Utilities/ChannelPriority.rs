@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Maps a wire command string → Echo scheduler lane via the Common
 //! `Channel` registry's `Priority()` accessor. Unknown commands fall

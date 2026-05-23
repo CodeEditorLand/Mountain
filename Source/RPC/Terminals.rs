@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Terminal-emulation RPC service. Placeholder for the Cocoon PTY +
 //! shell-integration roadmap. Status: not yet wired; all exports are

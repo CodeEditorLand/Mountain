@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Search-results envelope returned by `SearchFiles`.
 

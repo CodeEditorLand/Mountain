@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Read a text file from disk verbatim. Distinct from
 //! `ModelOpen` - this returns the bytes without registering a

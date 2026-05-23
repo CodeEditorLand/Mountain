@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Lightweight in-flight batch counters - message count,
 //! current byte total, and elapsed time since the first

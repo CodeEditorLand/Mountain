@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `tls_check_cert_status` Tauri command - parse a cached
 //! cert's `valid_until` (RFC3339), compare against now, and

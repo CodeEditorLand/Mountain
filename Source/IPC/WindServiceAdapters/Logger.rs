@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single registered logger - resource URI inside Wind's log
 //! registry payload.

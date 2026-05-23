@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `webview.postMessage` notification.
 //! Emitted by `Cocoon/.../Services/Window/WebviewPanel.ts:125` when an
 //! extension calls `WebviewPanel.webview.postMessage(...)`. Stock VS

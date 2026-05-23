@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! New (atomic) Tauri IPC server orchestrator. The legacy entry point lives
 //! in `IPC::TauriIPCServer_Old`; consumers migrate to

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Returns the cached static application root path.
 

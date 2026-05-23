@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Air daemon resource metrics DTO returned by `GetAirMetrics`.
 

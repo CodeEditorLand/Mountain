@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Snapshot the Mountain process environment as a `HashMap`.
 //! Inherited by every PTY spawned through `TerminalCreate`. Includes

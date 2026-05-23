@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! File-system-domain handlers for `CocoonService`. Eleven entry points
 //! covering read/write/stat, directory ops, watch, glob/text search, and

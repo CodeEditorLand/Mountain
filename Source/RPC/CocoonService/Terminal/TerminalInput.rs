@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward bytes received from Cocoon to the PTY master writer.
 

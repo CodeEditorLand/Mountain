@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Open a document in the workbench via `sky://editor/openDocument`.
 

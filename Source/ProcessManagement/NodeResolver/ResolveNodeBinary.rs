@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Resolve the Node binary used to spawn Cocoon and cache for the life of
 //! the process. If everything fails returns `node` so `Command::new` still

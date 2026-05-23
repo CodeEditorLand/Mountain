@@ -77,10 +77,10 @@
 //!
 //! ## Modules
 //!
-//! - [`Client`]: gRPC client for connecting to Cocoon services
-//! - [`Error`]: Comprehensive error types for Vine operations
-//! - [`Generated`]: Auto-generated protobuf code from Vine.proto
-//! - [`Server`]: gRPC server implementations for Mountain services
+//! - [`self::Client`]: gRPC client for connecting to Cocoon services
+//! - [`self::Error`]: Comprehensive error types for Vine operations
+//! - [`self::Generated`]: Auto-generated protobuf code from Vine.proto
+//! - [`self::Server`]: gRPC server implementations for Mountain services
 
 // --- Sub-modules ---
 pub mod Client;

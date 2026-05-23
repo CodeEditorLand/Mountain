@@ -1,4 +1,4 @@
-#![allow(non_snake_case, dead_code)]
+#![allow(dead_code)]
 
 //! # UriComponents - VS Code marshalling helpers
 //!

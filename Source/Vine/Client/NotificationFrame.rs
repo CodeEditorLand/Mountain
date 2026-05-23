@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! One observed notification frame fanned out from `SendNotification`
 //! (or, once the streaming-channel multiplexer is live, from

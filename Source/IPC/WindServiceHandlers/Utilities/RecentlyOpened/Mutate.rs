@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Reads, mutates, and writes back RecentlyOpened.json atomically.
 

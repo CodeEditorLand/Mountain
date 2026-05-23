@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `extensionHostMessage` notification.
 //! Forwards the extension-host binary protocol reply to Wind via the
 //! `cocoon:extensionHostReply` Tauri event. Wind's extension-host bridge

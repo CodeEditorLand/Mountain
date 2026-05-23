@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `mountain_get_collaboration_sessions` Tauri command -
 //! returns every active `CollaborationSession::Struct`.

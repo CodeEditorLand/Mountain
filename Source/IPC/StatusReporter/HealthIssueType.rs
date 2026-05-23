@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Discriminator for `HealthIssue::Struct` - the kind of
 //! anomaly the reporter detected during a health check.

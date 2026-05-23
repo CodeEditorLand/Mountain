@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - register keybindings contributed by an extension.
 //! Stub returns success; pending real implementation that validates,

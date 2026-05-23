@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Cancel an effect that exceeds a wall-clock budget. Wraps `Run` in
 //! `tokio::time::timeout` and converts the elapsed-error into

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Append a line (text + `\n`) to an output channel. Twin of
 //! `OutputAppend` with the newline pre-applied so the renderer

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - detect chord-sequence overlaps in the current
 //! keybinding registry. Stub returns no conflicts; pending real

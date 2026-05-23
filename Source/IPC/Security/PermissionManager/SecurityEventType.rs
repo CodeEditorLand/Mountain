@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Discriminator for `SecurityEvent::Struct` - the kind of
 //! audit-log entry being recorded.

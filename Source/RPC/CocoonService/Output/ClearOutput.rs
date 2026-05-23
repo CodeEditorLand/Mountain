@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Clear an output channel via `sky://output/clear`.
 

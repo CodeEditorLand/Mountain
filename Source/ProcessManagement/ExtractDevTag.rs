@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Cocoon stdout-line inspector. Detects the `[DEV:<TAG>]` prefix written by
 //! `Cocoon/Source/Services/DevLog.ts::CocoonDevLog` and returns the lower-

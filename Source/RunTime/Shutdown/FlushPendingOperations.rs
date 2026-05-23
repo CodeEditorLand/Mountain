@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Drain pending UI requests, replying with a "shutting down" error to each
 //! awaiting caller so they unblock cleanly.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! # TreeView (Tauri command surface)
 //!

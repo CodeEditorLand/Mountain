@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `outputChannel.append` notification.
 //! Twin of `output.append`; see `OutputCreate.rs` for the duplicate-wire
 //! rationale.

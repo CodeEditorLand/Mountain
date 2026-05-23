@@ -133,5 +133,6 @@ pub mod LandFixTier;
 pub mod Binary;
 
 /// Main entry point for both mobile and desktop builds.
+#[allow(unexpected_cfgs)]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn main() { Binary::Main::Entry::Fn(); }

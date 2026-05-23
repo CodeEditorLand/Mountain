@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! IPC response: correlation ID, payload, success flag, optional error
 //! string, and timestamp. Built through `Success` / `Error` constructors

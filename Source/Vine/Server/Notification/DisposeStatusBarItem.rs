@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `disposeStatusBarItem` notification.
 //! Emitted once by `Cocoon/.../Services/Window/StatusBar.ts:139` when an
 //! extension calls `StatusBarItem.dispose()` (or the whole subscription

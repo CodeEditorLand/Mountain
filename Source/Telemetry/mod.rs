@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Telemetry & observability surface. Currently a feature-gated stub stack:
 //! tracing/metrics live behind `--features Telemetry`; the build flags

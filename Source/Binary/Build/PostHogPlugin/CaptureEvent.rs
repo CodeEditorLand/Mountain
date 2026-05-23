@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Capture a named event with optional properties. Stamps the standard
 //! Mountain identity (`$app`, `$app_version`, `$build_mode`,

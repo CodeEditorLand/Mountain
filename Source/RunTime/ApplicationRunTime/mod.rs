@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Echo-scheduler-powered runtime that executes `ActionEffect` pipelines.
 //! Method-per-file impls live as siblings under `RunTime/Execute/` and

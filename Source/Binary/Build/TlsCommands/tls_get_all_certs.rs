@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `tls_get_all_certs` Tauri command - hostname → cert info
 //! map for the diagnostic panel.

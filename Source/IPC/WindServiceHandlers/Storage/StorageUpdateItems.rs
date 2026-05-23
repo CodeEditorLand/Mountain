@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Bulk insert + delete in one round-trip. VS Code's
 //! `IndexedDBStorageDatabase` batches every write through this

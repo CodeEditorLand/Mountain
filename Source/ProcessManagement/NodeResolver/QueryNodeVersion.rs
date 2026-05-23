@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Run `node --version` on the resolved binary and return its reported
 //! version string (e.g. `v24.8.0`). Returns `None` when the binary cannot be

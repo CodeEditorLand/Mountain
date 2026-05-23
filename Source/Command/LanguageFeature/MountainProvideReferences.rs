@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - find all references to a symbol. Delegates to
 //! `LanguageFeature::References::provide_references_impl`.

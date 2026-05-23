@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! LSP-compatible position: zero-based line + character offset.
 

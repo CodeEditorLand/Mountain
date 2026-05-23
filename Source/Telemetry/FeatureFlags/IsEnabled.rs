@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Convenience accessor for the global feature-flag registry.
 

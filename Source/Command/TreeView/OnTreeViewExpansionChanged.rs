@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - notify the provider when a tree node is
 //! expanded / collapsed.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward a terminal-opened notification to Sky on
 //! `sky://terminal/create` (NOT `/opened` - `SkyBridge.ts:1736` listens on

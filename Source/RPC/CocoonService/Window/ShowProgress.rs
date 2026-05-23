@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Begin a progress notification. Mints a millisecond handle, emits
 //! `sky://progress/start` so the workbench can render the bar.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `setStatusBarText` notification.
 //! Emitted three times by `Cocoon/.../Services/Window/StatusBar.ts`
 //! (`:92`, `:123`, `:131`) whenever an extension calls

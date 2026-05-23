@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - return the absolute path of the running Mountain
 //! executable. Wire identifier kept snake_case to match Wind's

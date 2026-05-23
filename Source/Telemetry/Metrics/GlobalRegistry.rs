@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Process-wide singleton with a 10 000-entry ring buffer.
 

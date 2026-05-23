@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single health-check finding: what went wrong, how serious,
 //! when detected, and (optionally) when resolved. Carried in

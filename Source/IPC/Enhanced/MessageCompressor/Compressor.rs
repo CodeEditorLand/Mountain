@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `Compressor::Struct` - message batching + compression
 //! engine. Buffers messages until size or time triggers a

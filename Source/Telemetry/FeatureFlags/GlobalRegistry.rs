@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Module-private singleton holding the process-wide
 //! `FeatureFlagRegistry::Struct`. Convenience free functions in sibling

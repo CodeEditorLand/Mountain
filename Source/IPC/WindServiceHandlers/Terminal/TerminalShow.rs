@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Bring a terminal to the foreground in the panel. When
 //! `PreserveFocus` is `true`, the active editor keeps keyboard

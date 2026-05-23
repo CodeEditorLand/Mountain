@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Generate a fresh UUID-v4 (simple form) for use as an Air request id.
 //! Each Air RPC carries one of these so Mountain can correlate replies

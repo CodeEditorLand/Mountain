@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Post-install/uninstall Cocoon notification.
 //!
 //! `$deltaExtensions` adds or removes the supplied descriptors from

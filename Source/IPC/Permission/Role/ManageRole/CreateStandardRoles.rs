@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Build the standard `user` / `developer` / `admin` role
 //! triple. Used by `Validator::Struct::InitializeDefaults` and

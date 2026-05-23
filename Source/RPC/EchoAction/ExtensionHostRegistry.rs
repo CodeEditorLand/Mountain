@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tracks which extension host owns which extension id. Populated from
 //! `$deltaExtensions` + `InitExtensionHost` payloads; read by

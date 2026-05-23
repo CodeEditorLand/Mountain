@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Fire-and-forget notification to a sidecar. No response, no per-call
 //! timeout. Prefers the streaming multiplexer under

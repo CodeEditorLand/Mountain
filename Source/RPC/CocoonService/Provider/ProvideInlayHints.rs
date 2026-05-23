@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward an inlay-hints request to the registered provider.
 

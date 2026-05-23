@@ -1,8 +1,8 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Utilities for Wind handlers - one `pub fn Fn` per atomic file.
 //! Shared-state modules (ApplicationRoot, LocalhostUrl, UserdataDir,
-//! RecentlyOpened) are directory modules; #[path] overrides are required
+//! RecentlyOpened) are directory modules; `#[path]` overrides are required
 //! because the old .rs files still exist in the same directory.
 
 #[path = "ApplicationRoot/mod.rs"]

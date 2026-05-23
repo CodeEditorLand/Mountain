@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Homebrew lookup. Apple Silicon, Intel macOS, and Linuxbrew probe paths.
 

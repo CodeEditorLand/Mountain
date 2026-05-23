@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Spawns `git`, registers the PID, awaits output, returns
 //! `(exit_code, stdout, stderr)`.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Clear the entire path-canon cache. Diagnostic / shutdown use.
 

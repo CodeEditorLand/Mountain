@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Retry a failing effect with exponential back-off, doubling the inter-
 //! attempt delay after each failure to avoid overwhelming the recovering

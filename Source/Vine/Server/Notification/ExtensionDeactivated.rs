@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `ExtensionDeactivated` notification.
 //! Log-only today - Wind listens on `cocoon:extensionActivated` for the
 //! positive half; extensions rarely deactivate at runtime outside

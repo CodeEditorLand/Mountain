@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `nativeHost:relaunch` - restart the process with the same argv.
 //! VS Code calls this from `ILifecycleMainService.relaunch()` when an

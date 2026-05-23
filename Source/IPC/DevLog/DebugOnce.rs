@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Emit a tagged dev-log line exactly once per process, keyed
 //! on `Key`. Subsequent calls with the same key are dropped

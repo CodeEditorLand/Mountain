@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `extensions:isActive(id) -> bool` - predicate over the
 //! scanner's registry. Currently a "scanned & present" check;

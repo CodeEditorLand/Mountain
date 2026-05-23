@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Legacy wire method `file:write` (UTF-8 content). Routes via RunTime's
 //! `FileSystemWriter` trait. Not currently wired into dispatch.

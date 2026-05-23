@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Return every key in global storage as a JSON array. Used by
 //! Wind's storage-debug surfaces and by extensions iterating

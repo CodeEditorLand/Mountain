@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - return the full environment of the Mountain
 //! process. The process inherits the user's shell environment on every

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Return an authentication session for the requested provider. Cocoon
 //! auth providers register themselves via `RegisterAuthenticationProvider`

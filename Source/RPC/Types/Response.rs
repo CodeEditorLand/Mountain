@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Generic response envelope for shared RPC types.
 

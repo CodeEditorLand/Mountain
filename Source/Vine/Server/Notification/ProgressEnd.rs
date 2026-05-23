@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `progress.end` notification.
 //! Fires once per `vscode.window.withProgress(...)` call when the task
 //! settles. Forwarded onto `sky://notification/progress-end` so Sky's

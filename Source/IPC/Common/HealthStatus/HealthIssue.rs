@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tagged health issue. Each variant carries a free-form description
 //! string; `Severity` and `Description` accessors normalise the

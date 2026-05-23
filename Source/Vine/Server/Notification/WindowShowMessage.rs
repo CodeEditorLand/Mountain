@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `window.showMessage` notification.
 //! Fires when an extension calls `vscode.window.showInformationMessage`
 //! / `showWarningMessage` / `showErrorMessage`. Forwards on

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Native TreeView provider for the workspace file explorer. Implements
 //! `CommonLibrary::TreeView::TreeViewProvider`.

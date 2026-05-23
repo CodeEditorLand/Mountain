@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Create a directory (and any missing parents).
 

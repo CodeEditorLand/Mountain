@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Insert `$mid: 1` into a `UriComponents` object if it isn't already
 //! tagged. Non-object values pass through unchanged so call sites can

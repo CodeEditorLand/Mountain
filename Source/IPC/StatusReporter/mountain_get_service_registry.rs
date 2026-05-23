@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `mountain_get_service_registry` Tauri command - returns
 //! the full `ServiceRegistry::Struct` snapshot.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Last path segment (filename + extension) of a URI. Used by
 //! the editor tabs and breadcrumbs where only the file's name

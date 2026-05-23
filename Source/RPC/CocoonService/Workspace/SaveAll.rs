@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Save every dirty editor (optionally including untitled) via
 //! `sky://editor/saveAll`.

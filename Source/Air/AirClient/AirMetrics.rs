@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Metrics from the Air daemon.
 

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Display label for the current workspace's root folder.
 //! Prefers the explicit `Name` if the user set one

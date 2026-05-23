@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `tree:getChildren`.
 //! Renderer-side tree-view child lookup. Mirrors the Cocoon→Mountain

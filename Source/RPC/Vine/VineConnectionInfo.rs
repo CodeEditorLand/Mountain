@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Vine gRPC connection info DTO.
 

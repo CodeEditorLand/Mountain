@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tagged hover content payload. Plain-text and Markdown are the
 //! common shapes; `Markup` carries an optional language hint for

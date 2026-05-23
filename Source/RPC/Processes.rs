@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Child-process RPC service. Placeholder for spawn + stdio + signal
 //! handling for Cocoon. Status: not yet wired; all exports are cfg-gated

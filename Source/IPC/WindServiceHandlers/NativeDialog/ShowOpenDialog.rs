@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! `nativeHost:showOpenDialog` handler. Wires VS Code's
 //! `nativeHostService.showOpenDialog(options)` contract to Tauri's
 //! dialog plugin.

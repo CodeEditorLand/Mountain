@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Initialise the OpenTelemetry stack: tracer + meter providers. Only
 //! compiled when the `Telemetry` feature is on.

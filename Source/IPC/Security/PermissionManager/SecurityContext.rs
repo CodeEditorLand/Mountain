@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Security envelope used by `Manager::Struct::validate_permission`.
 //! Carries the user id, roles, direct permissions, origin IP,

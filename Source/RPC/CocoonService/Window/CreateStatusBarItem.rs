@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Register a status-bar entry through the `StatusBarProvider` trait so
 //! the entry lives in

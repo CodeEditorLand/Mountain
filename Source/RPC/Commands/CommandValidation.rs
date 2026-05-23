@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Command-input validation hook. Currently a placeholder.
 

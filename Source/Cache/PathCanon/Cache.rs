@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Process-global canonical-path cache backing store.
 

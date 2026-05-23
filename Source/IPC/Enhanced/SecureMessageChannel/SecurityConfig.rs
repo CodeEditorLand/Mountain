@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tunables for the secure-message channel - encryption /
 //! HMAC algorithm, key-rotation cadence, nonce / tag sizes,

@@ -1,10 +1,9 @@
-#![allow(non_snake_case)]
 
 //! `file:watch` - register a native filesystem watcher for a URI.
 //!
 //! VS Code's `DiskFileSystemProvider.watch(resource, opts)` sends:
-//!   Arguments[0] = resource URI (object or path string)
-//!   Arguments[1] = `{ recursive: boolean, excludes: string[] }`
+//!   Arguments\[0\] = resource URI (object or path string)
+//!   Arguments\[1\] = `{ recursive: boolean, excludes: string[] }`
 //!
 //! Returns a numeric token that the caller passes to `file:unwatch`.
 //! The token is stored as the string key in `WatcherProvider::RegisterWatcher`.

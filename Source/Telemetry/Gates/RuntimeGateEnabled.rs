@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Predicate over the boot-time gate set.
 

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Mountain's own sandbox-config payload (input to
 //! `WindServiceAdapter::convert_to_wind_configuration`).

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Cocoon → Mountain submission gate. The `EchoActionServer` wraps every
 //! inbound `MountainService` gRPC call in an Echo work-stealing scheduler

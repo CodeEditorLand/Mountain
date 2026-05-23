@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Wind-shaped storage service: get / set against the
 //! injected `StorageProvider` trait.

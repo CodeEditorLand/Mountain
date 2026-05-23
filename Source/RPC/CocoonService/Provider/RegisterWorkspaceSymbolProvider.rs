@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Register a Cocoon-side workspace-symbol provider.
 

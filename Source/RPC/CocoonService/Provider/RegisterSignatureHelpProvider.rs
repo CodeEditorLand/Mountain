@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Register a Cocoon-side signature-help provider. Uses the
 //! signature-help-specific request shape (carries trigger characters).

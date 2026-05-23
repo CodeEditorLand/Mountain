@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Canonicalise without caching. For one-shot calls where the result is
 //! immediately discarded - avoids polluting the cache with paths that won't be

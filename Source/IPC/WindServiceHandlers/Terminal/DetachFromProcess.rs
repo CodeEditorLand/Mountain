@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `localPty:detachFromProcess` - signal that the workbench is detaching
 //! from a live PTY (e.g. on window close while keeping the process alive).

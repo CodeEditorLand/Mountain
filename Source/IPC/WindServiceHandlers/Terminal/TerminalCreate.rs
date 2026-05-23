@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Spawn a new PTY through `TerminalProvider::CreateTerminal`.
 //! `Options` carries shell path, args, cwd, env, name. Returns a

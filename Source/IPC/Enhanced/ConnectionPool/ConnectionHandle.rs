@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Per-connection state - id, lifecycle timestamps, rolling
 //! health score, error / success counters, and a

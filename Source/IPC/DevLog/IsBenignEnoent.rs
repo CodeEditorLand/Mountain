@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Recognise known-optional probe paths so `stat ENOENT`
 //! lines for them downgrade to debug-once instead of full

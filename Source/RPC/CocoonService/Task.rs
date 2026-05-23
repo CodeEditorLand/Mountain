@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Task-domain handlers for `CocoonService`.
 //! `RegisterTaskProvider::Fn`, `ExecuteTask::Fn`, `TerminateTask::Fn`.

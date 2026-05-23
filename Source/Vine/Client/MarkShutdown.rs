@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Flip the global Vine-client shutdown flag. Called from
 //! `RunTime::Shutdown::ShutdownCocoonWithRetry` immediately before

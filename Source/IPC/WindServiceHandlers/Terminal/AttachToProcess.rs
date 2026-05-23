@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `localPty:attachToProcess` - reconnect the workbench to an existing
 //! Mountain-owned PTY after a window reload.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `languages.setDocumentLanguage` notification.
 //! Emitted when an extension calls
 //! `vscode.languages.setTextDocumentLanguage(document, languageId)`.

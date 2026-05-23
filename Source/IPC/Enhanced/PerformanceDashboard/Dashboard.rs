@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `PerformanceDashboard` aggregator + 25-method impl. Holds
 //! the metric ring-buffer, trace store, alert ring, statistics

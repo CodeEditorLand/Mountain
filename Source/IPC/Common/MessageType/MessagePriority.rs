@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Priority ladder used by `IPCMessage::Struct` and `IPCCommand::Struct`.
 //! Ordered so callers can compare with `<` / `>`. `Default` is `Normal`.

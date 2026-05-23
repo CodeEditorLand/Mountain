@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Whether the Vine client has been marked shutting down.
 

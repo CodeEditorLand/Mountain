@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `terminal.sendText` / `terminal.show` / `terminal.hide` /
 //! `terminal.dispose` notifications. Shared atom because the four wire
 //! methods all fan through the same `sky://terminal/*` relay and the

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Scope of a configuration entry: Global / Workspace / Folder.
 

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Mountain → Cocoon initialization payload (workspace folders +
 //! configuration). Stores parsed folders into `ApplicationState.Workspace`

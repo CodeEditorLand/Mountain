@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Wrapper around `ring::aead::LessSafeKey` plus metadata -
 //! creation timestamp, random key id, and a usage counter the

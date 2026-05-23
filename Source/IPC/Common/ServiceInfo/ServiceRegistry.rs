@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Map of registered services keyed by name + a configurable discovery
 //! cadence. `ShouldDiscover` returns true once the configured interval

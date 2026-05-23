@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward terminal stdout bytes to Sky on `sky://terminal/data` as
 //! lossy-decoded UTF-8.

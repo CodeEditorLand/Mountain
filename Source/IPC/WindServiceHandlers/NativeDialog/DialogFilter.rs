@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Tauri-shaped filter entry for native open/save dialogs. Pairs a
 //! human-readable category name ("VSIX Extensions") with a list of
 //! extensions (`["vsix"]`). Consumed by `tauri_plugin_dialog`'s

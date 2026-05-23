@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Round-trip a `getChildren` request to the Cocoon-side
 //! `TreeDataProvider` over Vine. Returns an empty list when no provider

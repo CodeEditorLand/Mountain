@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `tls_renew_certificate` Tauri command - regenerates the
 //! cached server cert for `hostname`. The renewal fires inside a

@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Canonical userdata base directory (Tauri `app_data_dir`) + first-access
 //! scaffolding. Seeded by `AppLifecycle::Dirs` so every `/User/...` URI the

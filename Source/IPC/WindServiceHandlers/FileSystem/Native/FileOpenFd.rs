@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `file:open` - open a file and return an integer file descriptor.
 //!
@@ -7,8 +6,8 @@
 //! process-global `HashMap<u32, File>` guarded by a `Mutex`. FDs start
 //! from 1 and increment with each successful open.
 //!
-//! Arguments[0] = resource URI or path string
-//! Arguments[1] = options: `{ create?: boolean, unlock?: boolean }`
+//! Arguments\[0\] = resource URI or path string
+//! Arguments\[1\] = options: `{ create?: boolean, unlock?: boolean }`
 //!
 //! Returns: integer fd number, or 0 on error (VS Code ignores the error
 //! for read-only opens and falls back to the full-read path).

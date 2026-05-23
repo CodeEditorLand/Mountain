@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `ApplyUpdate` Tauri command - tell Air to install a
 //! previously downloaded update package.

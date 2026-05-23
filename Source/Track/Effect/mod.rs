@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Effect creation and routing for `Track`. Two siblings:
 //! `CreateEffectForRequest::Fn` (the central router with one domain

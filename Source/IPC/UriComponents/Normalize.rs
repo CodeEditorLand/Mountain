@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Normalise an `extensionLocation` (or any similar) field that arrives
 //! as either a URL string, a pre-built `UriComponents` object (possibly

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Run a synchronous, blocking state operation off-thread with a hard
 //! timeout. The thread is allowed to finish in the background after

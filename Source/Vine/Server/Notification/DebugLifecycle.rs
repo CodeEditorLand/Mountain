@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `debug.addBreakpoints` / `debug.removeBreakpoints` /
 //! `debug.consoleAppend` notifications. Fans on `sky://debug/<suffix>`
 //! so the Sky-side debug view picks up breakpoint changes and console

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Central thread-safe registry of `FeatureFlag::Struct` entries.
 //! Backed by a `parking_lot::RwLock<HashMap>`; `new` seeds defaults

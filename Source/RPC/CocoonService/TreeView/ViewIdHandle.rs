@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Hash a `viewId` string into the same `u32` that
 //! `RegisterTreeViewProvider::Fn` uses as a registration handle. Lets

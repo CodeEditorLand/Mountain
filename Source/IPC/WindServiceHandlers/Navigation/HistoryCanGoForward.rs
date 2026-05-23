@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Predicate: is the forward-stack non-empty? Twin of
 //! `HistoryCanGoBack`.

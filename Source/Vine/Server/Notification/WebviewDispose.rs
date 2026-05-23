@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `webview.dispose` notification.
 //! Emitted by `Cocoon/.../Services/Window/WebviewPanel.ts:155` when the
 //! extension disposes a webview panel or the user closes the tab. Sky's

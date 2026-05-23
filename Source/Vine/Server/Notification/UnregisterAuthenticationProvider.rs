@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! `authentication` provider-unregistration atom.
 
 use serde_json::Value;

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Display an info-severity message via the `UserInterfaceProvider`.
 

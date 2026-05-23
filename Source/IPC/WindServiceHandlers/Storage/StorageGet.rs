@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Read a single value from persistent storage by key. The
 //! `false` first arg to `GetStorageValue` selects the

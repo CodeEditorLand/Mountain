@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `update_scm_group` notification.
 //!
 //! Parallels the typed `RPC/CocoonService/SCM.rs::UpdateScmGroup` gRPC;

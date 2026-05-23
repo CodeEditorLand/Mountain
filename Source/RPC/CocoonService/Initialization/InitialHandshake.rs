@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Cocoon → Mountain ready ping. No payload; Mountain replies with the
 //! init-extension-host data via `InitExtensionHost::Fn`.

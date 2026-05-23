@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! `extensions:uninstall` IPC handler - removes the install directory,
 //! clears the registry entry, and notifies Cocoon + Wind. Symmetric with
 //! `ExtensionInstall`.

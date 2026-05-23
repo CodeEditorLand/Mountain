@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Close a text model. Drops the entry from
 //! `ApplicationState.Feature.Documents`. Idempotent - closing

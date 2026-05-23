@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! UI-layer IPC handlers - one `pub async fn Fn` per file.
 
 pub mod DecorationsClear;

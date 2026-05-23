@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `Validator::Struct` - role-based access control engine.
 //! Holds the role / permission tables and the operation →

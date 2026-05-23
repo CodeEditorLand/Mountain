@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Append a single formatted line to the session's
 //! `Mountain.dev.log`. The file sink is lazy: opens on first

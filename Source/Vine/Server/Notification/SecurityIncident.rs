@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `security.incident` notification.
 //! Emitted by `Cocoon/.../Services/SecurityService.ts:284` when the
 //! Cocoon-side security policy flags a policy breach (extension violated

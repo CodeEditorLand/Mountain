@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 #![allow(unused_imports, unused_variables)]
 
 //! # Environment

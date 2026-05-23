@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - paginated commit log for the SCM viewlet's
 //! Timeline panel.

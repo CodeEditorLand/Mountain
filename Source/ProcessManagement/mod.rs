@@ -47,10 +47,9 @@
 //!
 //! # Module Contents
 //!
-//! - [`CocoonManagement`]: Cocoon sidecar process lifecycle management
-//! - [`InitializationData`]: Initialization data construction
+//! - [`self::CocoonManagement`]: Cocoon sidecar process lifecycle management
+//! - [`self::InitializationData`]: Initialization data construction
 
-#![allow(non_snake_case)]
 
 pub mod CocoonManagement;
 

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - generic shared-process service health probe.
 //! Hard-coded readiness map for the three currently-shipped services

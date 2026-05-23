@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Convenience wrapper for IPC dispatch instrumentation. Emits
 //! `land:mountain:ipc:invoke` with the wire `method` name. Pair with

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Atomically removes and returns a PID (for cancel operations).
 

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Authentication response DTO returned by `AuthenticateUser`.
 

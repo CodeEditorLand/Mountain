@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Resource usage information from the Air daemon.
 

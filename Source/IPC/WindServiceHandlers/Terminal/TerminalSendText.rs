@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Pipe text into a terminal's PTY stdin. Used both for direct
 //! key forwarding (xterm.js → Mountain → PTY) and for

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Aggregate state for the TestProvider: registered controllers and
 //! currently active test runs. Held inside `ApplicationState` behind a

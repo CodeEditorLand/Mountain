@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Combined status report - basic IPC slice + performance
 //! metrics + health monitor - emitted to Sky periodically and

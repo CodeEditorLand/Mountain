@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `CheckForUpdates` Tauri command - delegate the update probe
 //! to Air's gRPC service and shape the response into

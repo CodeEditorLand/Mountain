@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Append text to an output channel via `sky://output/append`.
 

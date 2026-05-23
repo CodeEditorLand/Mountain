@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Aggregate IPC perf snapshot: throughput, latency (avg + peak),
 //! compression ratio, pool utilisation, memory + CPU usage, and

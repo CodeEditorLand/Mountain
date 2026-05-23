@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Dispose every active PTY through `TerminalProvider::DisposeTerminal`.
 //! Errors per terminal are collected; the loop never aborts early.

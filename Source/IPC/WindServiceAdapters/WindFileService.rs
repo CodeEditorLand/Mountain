@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Wind-shaped file service: read / write / stat over the
 //! injected `FileSystemReader` / `FileSystemWriter` traits.

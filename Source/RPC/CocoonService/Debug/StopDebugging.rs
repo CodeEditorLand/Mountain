@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Stop an active debug session. Emits `sky://debug/sessionEnd` (NOT
 //! `/stop` - Sky listens on the former at `SkyBridge.ts:2234`;

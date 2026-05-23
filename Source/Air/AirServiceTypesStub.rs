@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Air-integration type stubs. Twenty children: one per request/response
 //! DTO, the placeholder `AirClientType::Struct`, and the

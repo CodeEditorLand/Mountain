@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - fetch the final resolved keybindings (default +
 //! extension contributions + user overrides, weighted) for the keyboard

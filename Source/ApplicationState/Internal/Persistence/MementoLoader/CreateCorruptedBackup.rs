@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Timestamped corruption backup: write the failed-to-parse content
 //! to a `.json.corrupted.YYYYMMDD_HHMMSS` sibling so several

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single-tick IPC status report sent to Sky: connection
 //! state, queue depth, listener inventory, recent message

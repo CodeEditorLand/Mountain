@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Pick the system default shell. Unix: `$SHELL`, then probe
 //! `/bin/{zsh,bash,sh}`. Windows: PowerShell 7 if installed,

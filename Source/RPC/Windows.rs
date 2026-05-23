@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Window-management RPC service. Placeholder for the Grove + Cocoon
 //! extension-host roadmap (window/document/webview lifecycle). Status:

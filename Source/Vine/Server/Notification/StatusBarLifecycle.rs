@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `statusBar.update` / `statusBar.dispose` notifications.
 //! Each `vscode.window.createStatusBarItem(...)` instance fires
 //! `statusBar.update` with text / tooltip / alignment; `statusBar.dispose`

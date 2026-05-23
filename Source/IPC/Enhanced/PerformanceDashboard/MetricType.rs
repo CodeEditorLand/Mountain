@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Discriminator for `PerformanceMetric::Struct` - tags each
 //! sample with the underlying counter so the dashboard can

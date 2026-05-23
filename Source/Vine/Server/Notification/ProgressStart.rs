@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `progress.start` notification.
 //! Fires at the top of every `vscode.window.withProgress(...)` call.
 //! Normalises onto `sky://notification/progress-begin` so Sky's progress

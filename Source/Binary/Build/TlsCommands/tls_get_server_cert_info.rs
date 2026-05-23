@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `tls_get_server_cert_info` Tauri command - certificate info
 //! lookup for one hostname (returns `None` when no cached cert).

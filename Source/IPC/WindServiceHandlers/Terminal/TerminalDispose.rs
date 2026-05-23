@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Close a PTY, kill its child, and drop the entry from the
 //! provider's terminal registry. Idempotent - disposing an

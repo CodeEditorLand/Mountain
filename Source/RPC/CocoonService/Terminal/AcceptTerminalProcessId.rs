@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward the resolved PID for a terminal to Sky on
 //! `sky://terminal/processId`.

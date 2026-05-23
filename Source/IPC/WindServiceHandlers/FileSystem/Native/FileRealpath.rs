@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method `file:realpath`. Emits a VS Code `UriComponents` (`$mid: 1`)
 //! so the renderer reviver promotes it to a real `URI` with `.fsPath` /

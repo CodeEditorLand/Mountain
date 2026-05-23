@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `mountain_attempt_recovery` Tauri command - dispose +
 //! reinitialise the IPC server and zero the error counter.

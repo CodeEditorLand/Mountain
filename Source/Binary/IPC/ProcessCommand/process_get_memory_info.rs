@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - return process memory in `{ private, shared,
 //! residentSet }` form (bytes). Per-platform: `ps` on macOS, `tasklist`

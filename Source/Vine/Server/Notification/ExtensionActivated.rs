@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `ExtensionActivated` notification.
 //! Fires once per extension when its `activate` export resolves (or
 //! finishes registering contributions). Forwarded to Wind on

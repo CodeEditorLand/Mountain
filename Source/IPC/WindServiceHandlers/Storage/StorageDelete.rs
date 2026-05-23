@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Delete a key from global storage. The `true` first arg to
 //! `UpdateStorageValue` targets the global (cross-workspace)

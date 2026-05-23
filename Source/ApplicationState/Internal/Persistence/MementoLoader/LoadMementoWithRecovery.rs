@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Result-typed memento loader. Returns `Ok(empty)` for missing
 //! files, `Err(FileSystemIO)` for read failures, and

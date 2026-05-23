@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Machine-stable distinct ID for the dev session. When the `Brand`
 //! env var is populated, it wins - same value across every process in

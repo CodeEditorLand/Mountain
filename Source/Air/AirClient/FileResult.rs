@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Result of a file search.
 

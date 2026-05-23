@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! `unregister_uri_handler` — disposes a URI-handler provider handle.
 //! Logs the optional bound scheme alongside the handle for traceability.
 

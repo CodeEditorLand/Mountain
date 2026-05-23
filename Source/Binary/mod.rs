@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 #![allow(unused_imports, unused_variables)]
 
 //! # Binary
@@ -9,16 +8,16 @@
 //!
 //! ## Module Layout
 //!
-//! - [`Main`]: Application entry point and orchestration
-//! - [`Build`]: Tauri application builder configuration
-//! - [`Register`]: Command and service registration
-//! - [`Service`]: Service initialization (Vine, Cocoon, Configuration)
-//! - [`Initialize`]: Application state initialization
-//! - [`IPC`]: IPC command handlers bridging the frontend invoke calls to Rust
-//! - [`Tray`]: System tray integration
-//! - [`Extension`]: Extension startup and management
-//! - [`Shutdown`]: Graceful shutdown handling
-//! - [`Debug`]: Debug and trace logging utilities
+//! - [`self::Main`]: Application entry point and orchestration
+//! - [`self::Build`]: Tauri application builder configuration
+//! - [`self::Register`]: Command and service registration
+//! - [`self::Service`]: Service initialization (Vine, Cocoon, Configuration)
+//! - [`self::Initialize`]: Application state initialization
+//! - [`self::IPC`]: IPC command handlers bridging the frontend invoke calls to Rust
+//! - [`self::Tray`]: System tray integration
+//! - [`self::Extension`]: Extension startup and management
+//! - [`self::Shutdown`]: Graceful shutdown handling
+//! - [`self::Debug`]: Debug and trace logging utilities
 //!
 //! ## Architectural Role
 //!

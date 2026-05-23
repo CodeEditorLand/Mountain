@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Where the resolved Node binary came from. Ordered by preference (override
 //! first, PATH last). `AsLabel` returns the lowercase ident used in log

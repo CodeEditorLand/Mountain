@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Aggregated health snapshot - 0-100 score plus the list of
 //! `HealthIssue::Struct` entries that drove the deductions, and

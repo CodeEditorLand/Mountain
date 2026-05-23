@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Clear an output channel. Emits `sky://output/clear` with the
 //! channel name; Sky drops the channel's scroll buffer.

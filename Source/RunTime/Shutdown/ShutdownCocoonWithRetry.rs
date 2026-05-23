@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Send `$shutdown` over gRPC to Cocoon (3 attempts), then SIGKILL the child
 //! regardless of gRPC outcome. The hard-kill (Atom I6) is critical: a gRPC

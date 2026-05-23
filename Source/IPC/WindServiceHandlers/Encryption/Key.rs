@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Machine-stable 256-bit key derivation for AES-256-GCM.
 //!

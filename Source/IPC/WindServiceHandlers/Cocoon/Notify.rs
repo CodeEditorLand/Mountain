@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `cocoon:notify`.
 //! Fire-and-forget renderer→Cocoon notification bridge for one-way wire

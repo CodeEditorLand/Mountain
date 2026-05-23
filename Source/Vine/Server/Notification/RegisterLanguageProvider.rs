@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Handles all `register_*` / `register_*_provider` gRPC notifications from
 //! the Cocoon extension host. Each such notification wires a language-feature

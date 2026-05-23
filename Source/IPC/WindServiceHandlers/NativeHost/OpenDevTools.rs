@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `nativeHost:openDevTools` - open the WebKit inspector for the main window.
 //! Requires the `devtools` Tauri feature (already enabled in the debug profile

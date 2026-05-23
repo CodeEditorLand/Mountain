@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `register_scm_provider` notification.
 //!
 //! Replaces the previous behaviour where this wire-method fell through

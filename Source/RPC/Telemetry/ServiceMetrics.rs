@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Per-service metric snapshot DTO.
 

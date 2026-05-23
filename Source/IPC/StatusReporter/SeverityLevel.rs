@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Severity rating attached to a `HealthIssue::Struct`. Drives
 //! whether the alert is informational (Low) or pages on-call

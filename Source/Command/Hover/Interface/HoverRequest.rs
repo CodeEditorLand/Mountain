@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Inbound hover request DTO: document URI + cursor position.
 

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `mountain_get_performance_metrics` Tauri command - returns
 //! the latest cached `PerformanceMetrics::Struct` snapshot.

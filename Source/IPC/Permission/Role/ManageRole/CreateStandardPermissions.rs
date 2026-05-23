@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Build the standard `Permission::Struct` set covering file,
 //! config, storage, system, and admin categories. Sensitive

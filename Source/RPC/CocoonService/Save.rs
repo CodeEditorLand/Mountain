@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Save Participants domain handlers for CocoonService.
 //!
 //! Typed gRPC RPCs: participate_in_save.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Connection lifecycle, pooling, and health monitoring for IPC. Submodules:
 //! `Manager` (pool + handles), `Types` (`ConnectionHandle`, `Stats`),

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `Pool::Struct` - bounded connection pool with health
 //! monitoring, idle/lifetime cleanup, wait-queue timeouts, and

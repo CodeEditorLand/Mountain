@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables)]
+#![allow(unused_variables)]
 //! Workspace folder handlers: get / add / remove / get-name. Thin
 //! wrappers over `ApplicationState::Workspace` that re-broadcast via
 //! `UpdateWorkspaceFoldersAndNotify` so Wind + Sky pick up the new

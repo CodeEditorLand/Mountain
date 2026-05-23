@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Generates a UUID v4 string for use as a git operation ID.
 

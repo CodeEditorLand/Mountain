@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single search hit returned inside `SearchResultsDTO::Struct`.
 

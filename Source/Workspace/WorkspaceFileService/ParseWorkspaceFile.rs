@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Parse a `.code-workspace` file's content and resolve every folder path to a
 //! `file://` URI.

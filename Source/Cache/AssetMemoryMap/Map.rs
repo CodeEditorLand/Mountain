@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Process-global asset cache backing store. Lazily initialised on first
 //! request.

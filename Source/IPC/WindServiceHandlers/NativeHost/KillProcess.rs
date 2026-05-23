@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `nativeHost:killProcess` - send SIGKILL (Unix) or TerminateProcess
 //! (Windows) to a child process. VS Code uses this to forcibly stop

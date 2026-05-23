@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Write text to a file on disk. Counterpart to `TextfileRead`;
 //! does not touch the document registry. After a successful disk

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Snapshot every runtime gate enabled at boot. Populates the
 //! `RuntimeGates::GATES` singleton on first call.

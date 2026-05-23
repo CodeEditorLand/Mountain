@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `openExternal` notification.
 //! Emitted by `Cocoon/.../APIFactoryService.ts:393` when an extension
 //! calls `vscode.env.openExternal(uri)`. Delegates to the platform's

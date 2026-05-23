@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Wind-shaped environment-variable accessor. Reads
 //! `APP_ROOT` / `USER_DATA_PATH` from the process env so Wind's

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `localGit:cancel(operationId)` - SIGTERM (Unix) or
 //! `taskkill /T /F` (Windows) the pid stashed for

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Extension lifecycle: scan bundled + user-installed extension trees, parse
 //! their `package.json` manifests, install VSIX archives. Mountain owns the

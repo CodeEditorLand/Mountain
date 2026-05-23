@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Load `Path` into the cache (or return the existing entry).
 //!

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Download-completion DTO returned by `DownloadUpdate` and
 //! `DownloadFile`.

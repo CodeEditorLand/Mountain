@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `dns_health_check` Tauri command - thin wrapper over
 //! `dns_get_health_status` that flattens to a `bool` for

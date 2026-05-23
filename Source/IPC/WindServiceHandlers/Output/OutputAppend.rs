@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Append text to an output channel. Emits the
 //! `sky://output/append` Tauri event with `{channel, text}`.

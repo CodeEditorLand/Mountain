@@ -1,8 +1,7 @@
-#![allow(non_snake_case)]
 
 //! `file:close` - close an fd returned by `file:open` and free the entry.
 //!
-//! Arguments[0] = integer fd (as returned by FileOpenFd).
+//! Arguments\[0\] = integer fd (as returned by FileOpenFd).
 //! Silently ignores unknown fds (VS Code may call close on an already-
 //! closed fd during workbench teardown).
 

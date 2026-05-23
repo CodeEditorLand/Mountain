@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Extension-related state. Three sub-stores (`ExtensionRegistry`,
 //! `ProviderRegistration`, `ScannedExtensions`) plus the composite `State`

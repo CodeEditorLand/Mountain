@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Health classification for `ConnectionHandle::Struct` -
 //! `Healthy` (default), `Unhealthy` (failed health check),

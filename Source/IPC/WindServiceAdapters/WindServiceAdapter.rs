@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Bridge between Mountain's runtime and Wind's expected
 //! service interfaces. `convert_to_wind_configuration` turns

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Encryption handlers for VS Code's `IEncryptionService` channel.
 //! `encryption:encrypt` and `encryption:decrypt` are called by the

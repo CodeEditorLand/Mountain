@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Vine client - thread-safe gRPC client for a Cocoon sidecar process.
 //! Pool of `CocoonClient` connections keyed by identifier, automatic

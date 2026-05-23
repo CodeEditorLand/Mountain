@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Wipe both the back- and forward-stacks. Issued on workspace
 //! close / reload so a stale URL list doesn't leak into the next

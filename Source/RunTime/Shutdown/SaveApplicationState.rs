@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Persist the global memento to disk before the runtime tears down. Creates
 //! the parent directory if missing.

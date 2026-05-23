@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Diagnostic snapshot of the canonical-path cache.
 

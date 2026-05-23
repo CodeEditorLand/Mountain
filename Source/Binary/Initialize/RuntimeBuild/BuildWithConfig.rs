@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Construct an Echo scheduler from a custom `SchedulerConfig::Struct`.
 //! Returns an `Arc<Scheduler>` ready for use; emits lifecycle dev-log

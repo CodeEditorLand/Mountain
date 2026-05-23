@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `nativeHost:showMessageBox`.
 //! Surfaces a blocking modal message dialog via `tauri_plugin_dialog`.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `MarshalledId.Uri` constant from VS Code's
 //! `src/vs/base/common/marshallingIds.ts`. The renderer's URI reviver

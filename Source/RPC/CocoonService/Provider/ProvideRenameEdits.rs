@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward a rename-edits request to the registered provider.
 

@@ -46,7 +46,6 @@
 //! can layer on later by resolving a publisher identifier + version to a
 //! VSIX URL, downloading to a temp file, and calling `InstallVsix`.
 
-#![allow(non_snake_case)]
 
 use std::{
 	fs::{self, File},

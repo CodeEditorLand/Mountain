@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `true` when `Trace=short` is set - enables path aliasing
 //! and consecutive-duplicate compression in `dev_log!`.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Substring search across the workspace, capped at 1,000 matches. Skips
 //! hidden directories plus `node_modules` and `target`. Runs the walk in

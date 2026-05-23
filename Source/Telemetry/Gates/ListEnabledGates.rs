@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Owned `Vec<String>` snapshot of every enabled runtime gate. Useful
 //! for diagnostic dumps where the borrow returned by `GetRuntimeGates`

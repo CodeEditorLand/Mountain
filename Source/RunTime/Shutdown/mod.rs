@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Graceful shutdown of every Mountain service. `Shutdown` orchestrates;
 //! `ShutdownWithRecovery` continues across per-service failures.

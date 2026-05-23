@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Health-issue severity ladder. Ordered Low → Medium → High →
 //! Critical so callers can compare with `<` / `>`. Drives the

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Air daemon status DTO returned by `GetAirStatus`.
 

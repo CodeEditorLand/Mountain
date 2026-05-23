@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Per-direction message + byte counters with a fixed start time so
 //! `MessagesPerSecond*` / `BytesPerSecond*` are derivable as

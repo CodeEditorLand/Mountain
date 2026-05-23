@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Sliding-window IPC performance snapshot - throughput,
 //! latency, compression ratio, pool utilization, plus host

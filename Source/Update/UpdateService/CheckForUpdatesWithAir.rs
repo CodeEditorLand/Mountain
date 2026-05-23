@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Mode-aware update check. Routes to `CheckForUpdates::Fn` (Tauri) or
 //! `CheckForUpdatesViaAir::Fn` (Air gRPC) per `UpdateMode::Enum`.

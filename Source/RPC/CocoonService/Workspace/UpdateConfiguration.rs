@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward a Cocoon-side configuration change to Sky for workbench
 //! settings refresh.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `encryption:decrypt(value: string) -> string`
 //!

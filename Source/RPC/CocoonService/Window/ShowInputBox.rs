@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Display an input-box UI. Returns `cancelled:true` with empty value
 //! when the user dismisses without confirming.

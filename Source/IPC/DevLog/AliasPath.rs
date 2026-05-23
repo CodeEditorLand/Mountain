@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Replace the long Tauri app-data prefix with `$APP` so
 //! `Trace=short` lines stay readable.

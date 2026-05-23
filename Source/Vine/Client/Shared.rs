@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Module-private state for the Vine client: connection pool, per-
 //! connection metadata, the broadcast fan-out, the shutdown flag, plus

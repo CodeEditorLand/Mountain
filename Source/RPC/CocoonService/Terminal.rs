@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Terminal-domain handlers for `CocoonService`. Eight entry points cover
 //! lifecycle (open/close), I/O (input/data), notifications (opened/closed/

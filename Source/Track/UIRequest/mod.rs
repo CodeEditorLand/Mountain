@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! UI request resolution. Single Tauri command lives in
 //! `ResolveUIRequest.rs`; callers spell

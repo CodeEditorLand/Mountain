@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Replace an open model's content. Increments `Version`,
 //! recomputes `Lines`, marks `IsDirty=true`. Mirrors VS Code's

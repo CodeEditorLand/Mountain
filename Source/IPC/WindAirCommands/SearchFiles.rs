@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `SearchFiles` Tauri command - query Air's full-text index
 //! and shape hits into `SearchResultsDTO::Struct`.

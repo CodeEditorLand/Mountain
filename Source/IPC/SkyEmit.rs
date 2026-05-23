@@ -32,7 +32,6 @@
 //! in what order, and with what payload size - without re-running or
 //! adding ad-hoc prints.
 
-#![allow(non_snake_case)]
 
 use serde::Serialize;
 use tauri::Emitter;

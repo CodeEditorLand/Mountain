@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Wire all 9 `WindAirCommands` Tauri commands into a Tauri
 //! `Builder`. The dispatcher itself is kept here so the command

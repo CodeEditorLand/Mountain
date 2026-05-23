@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! # Keybinding (Tauri command surface)
 //!

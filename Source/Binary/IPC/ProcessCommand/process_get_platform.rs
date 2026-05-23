@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - return the Wind/Node-style platform identifier
 //! (`darwin` / `win32` / `linux` / fallthrough). Mirrors

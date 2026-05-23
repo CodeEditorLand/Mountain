@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Pairs an extension identifier with the host that owns it. Used by
 //! `EchoActionServer` to scope priority/telemetry when more than one

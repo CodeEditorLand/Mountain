@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `WebviewReady` notification.
 //! Fires when a webview the extension owns has finished loading its
 //! entry HTML. Log-only today - Sky's webview shim handles the DOM-side

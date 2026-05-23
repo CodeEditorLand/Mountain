@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `tls_initialize` Tauri command - loads the CA from the
 //! keyring or generates a fresh one. Must run before any other

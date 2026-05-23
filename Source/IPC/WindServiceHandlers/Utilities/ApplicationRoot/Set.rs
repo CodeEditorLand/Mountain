@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Sets the static application root path (once, at startup).
 

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward a document-formatting request to the registered provider.
 

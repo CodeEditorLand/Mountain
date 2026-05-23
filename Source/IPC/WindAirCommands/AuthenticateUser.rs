@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `AuthenticateUser` Tauri command - delegate sign-in to
 //! Air's auth service for the named provider (GitHub / GitLab

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single in-span structured log: timestamp, message, level,
 //! free-form fields. Carried inside `TraceSpan::Struct::logs`.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `nativeHost:reload` - reload the webview without restarting the process.
 //! VS Code calls this from `ILifecycleMainService.reload()` for "Reload

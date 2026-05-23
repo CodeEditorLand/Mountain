@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Per-channel message counters used to compute throughput
 //! and average processing time inside `IPCStatusReport::Struct`.

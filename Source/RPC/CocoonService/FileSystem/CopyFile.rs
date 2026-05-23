@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Copy a file, creating any missing target parents first.
 

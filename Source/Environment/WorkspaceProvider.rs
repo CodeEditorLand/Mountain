@@ -1,6 +1,6 @@
 //! # WorkspaceProvider (Environment)
 //!
-//! Implements [`WorkspaceProvider`] and [`WorkspaceEditApplier`] traits for
+//! Implements `WorkspaceProvider` and `WorkspaceEditApplier` traits for
 //! [`MountainEnvironment`], exposing workspace-level functionality to the
 //! frontend via gRPC through `AirService`.
 //!

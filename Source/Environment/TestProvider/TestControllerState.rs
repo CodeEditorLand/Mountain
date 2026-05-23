@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Per-controller registration record. Carries the extension-provided
 //! identifier, label, owning sidecar, active flag, and supported test

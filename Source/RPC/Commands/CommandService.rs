@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Command registration and execution service.
 

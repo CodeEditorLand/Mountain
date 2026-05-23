@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Register a webview panel through the `WebviewProvider` trait so the
 //! panel is tracked in `ApplicationState::WebviewState`. Without trait

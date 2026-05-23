@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Send a request and await a response. Validates method-name length
 //! and message size, prefers the streaming multiplexer when

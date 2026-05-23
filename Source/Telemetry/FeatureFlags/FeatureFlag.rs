@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Feature flag with metadata: name, on/off state, description, category,
 //! and the reason it was last toggled.

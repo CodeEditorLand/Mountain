@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method `file:writeBinary`. Active in dispatch. Mirrors the read
 //! path: RunTime `FileSystemWriter` does the actual byte write with create

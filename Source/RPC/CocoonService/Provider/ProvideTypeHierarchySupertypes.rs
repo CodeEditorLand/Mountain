@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward a type hierarchy supertypes request to the registered provider.
 

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single MemoryMap-backed asset cache entry. Holds the file-backed mapping
 //! plus metadata computed once at load time.

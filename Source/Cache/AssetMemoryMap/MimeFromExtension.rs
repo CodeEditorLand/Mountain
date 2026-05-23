@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Map a file extension to its IANA media type. Mirrors the inline helper in
 //! `Binary/Build/Scheme.rs` so the cache layer is self-contained.

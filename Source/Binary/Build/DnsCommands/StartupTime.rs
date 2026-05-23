@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! DNS server startup-time storage. The wall-clock instant the
 //! Hickory server bound its UDP socket is captured once and

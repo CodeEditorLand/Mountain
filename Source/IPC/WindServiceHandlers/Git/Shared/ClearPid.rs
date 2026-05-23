@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Removes a completed PID from the registry.
 

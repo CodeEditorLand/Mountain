@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Bulk-read every key/value pair as `[key, value]` tuples.
 //! VS Code's `NativeWorkbenchStorageService` calls this exactly

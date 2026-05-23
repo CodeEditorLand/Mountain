@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Application updater. Two paths: Tauri's bundled updater (always available)
 //! and Air-delegated updates (feature-gated). `CheckForUpdatesWithAir::Fn`

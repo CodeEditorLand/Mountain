@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `dns_test_resolution` Tauri command - thin wrapper over
 //! `dns_resolve` that flattens to a `bool` for automated

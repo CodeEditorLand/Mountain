@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Per-channel coalescing buffer for `outputChannel.append` notifications.
 //!

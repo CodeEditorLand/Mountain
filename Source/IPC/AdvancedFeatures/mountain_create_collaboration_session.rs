@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `mountain_create_collaboration_session` Tauri command -
 //! create a fresh `CollaborationSession::Struct` with the

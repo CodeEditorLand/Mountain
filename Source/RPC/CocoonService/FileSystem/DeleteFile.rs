@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Remove a file or recursively remove a directory.
 

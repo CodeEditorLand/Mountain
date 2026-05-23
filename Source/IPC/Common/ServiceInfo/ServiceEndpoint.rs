@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Network endpoint metadata: protocol, host, port, optional Unix-domain
 //! socket path. `NewUnix` is the convenience constructor for the

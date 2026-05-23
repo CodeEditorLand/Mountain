@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward a task-termination request to Sky over
 //! `sky://task/terminate`.

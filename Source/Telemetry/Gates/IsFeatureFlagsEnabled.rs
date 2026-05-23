@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Compile-time gate - `true` under the `RuntimeFeatureFlags` feature.
 

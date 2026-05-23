@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single TTL-bound cache entry: payload, insertion timestamp
 //! (UNIX seconds), and time-to-live in seconds.

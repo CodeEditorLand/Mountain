@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_imports, unused_variables)]
+#![allow(unused_imports, unused_variables)]
 
 //! Mountain RPC services. The active surface is `CocoonService` - the tonic
 //! server impl that Cocoon dials into. The other modules here

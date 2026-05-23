@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! File-indexing summary DTO returned by `IndexFiles`.
 

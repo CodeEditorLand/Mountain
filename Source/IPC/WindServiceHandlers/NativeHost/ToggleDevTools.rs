@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `nativeHost:toggleDevTools` - open the inspector if closed, close it if
 //! open. Used by the Help → Toggle Developer Tools menu item.

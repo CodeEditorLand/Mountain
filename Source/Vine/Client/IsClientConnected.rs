@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Whether the named sidecar currently has a live entry in the
 //! connection pool. Cheap read of the shared map; no RPC issued. Useful

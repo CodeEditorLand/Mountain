@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Discover available terminal profiles. Probes every well-
 //! known shell location plus `/etc/shells` (Unix) or known

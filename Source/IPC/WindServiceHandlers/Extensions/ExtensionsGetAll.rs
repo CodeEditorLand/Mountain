@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `extensions:getAll` - every scanned extension's raw
 //! manifest, no `ILocalExtension` reshape. Used by tooling /

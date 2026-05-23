@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Snapshot of the entire navigation history as a `Vec<String>`.
 //! Used by the navigate-history quick-pick (Cmd+Alt+-) which

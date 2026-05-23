@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Distributed trace span: trace + span ids, parent linkage,
 //! operation name, start / end / duration, tag bag, embedded

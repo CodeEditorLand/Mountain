@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Wrap a Mountain command execution in an `INFO`-level span. Errors are
 //! returned as `CommonError` (the project-wide error type from

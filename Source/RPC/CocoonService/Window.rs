@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Window-domain handlers for `CocoonService`. Sixteen entry points cover
 //! show/hide messages, status-bar items, webview panels, and the prompt

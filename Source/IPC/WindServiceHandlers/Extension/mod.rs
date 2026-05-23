@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Extension-management IPC handler atoms. One `pub async fn` per file;
 //! file name mirrors the exported function name. Dispatcher in
 //! `WindServiceHandlers/mod.rs` routes `extensions:install` and

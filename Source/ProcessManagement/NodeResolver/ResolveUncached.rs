@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! First-hit-wins ladder over the manager-specific lookups. Falls back to
 //! `node` on PATH if every manager misses.

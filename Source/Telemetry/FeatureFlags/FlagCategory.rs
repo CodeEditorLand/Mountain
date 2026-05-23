@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Categories of feature flags. Determines flag scope/audience and is used
 //! to bulk-query the registry by group.

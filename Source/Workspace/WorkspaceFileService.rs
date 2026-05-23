@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Parsing and serialization of VS Code `.code-workspace` JSON files.
 //!

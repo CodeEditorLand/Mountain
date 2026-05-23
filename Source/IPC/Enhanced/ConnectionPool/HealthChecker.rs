@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Per-connection health-probe helper used by
 //! `Pool::Struct::start_health_monitoring`. Currently runs a

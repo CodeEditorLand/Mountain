@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `statusBar.message` notification.
 //! Emitted when an extension calls `vscode.window.setStatusBarMessage`
 //! (one-shot text, optional auto-hide). Canonical channel is

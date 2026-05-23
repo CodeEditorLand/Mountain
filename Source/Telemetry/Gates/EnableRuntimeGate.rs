@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Add a gate to the runtime set after boot.
 //!

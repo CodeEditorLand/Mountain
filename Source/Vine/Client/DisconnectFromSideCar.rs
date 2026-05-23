@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Disconnect from a sidecar process. Removes the entry from both the
 //! connection pool and the metadata tracker.

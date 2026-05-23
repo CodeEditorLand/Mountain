@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Wire method `file:mkdir`. `create_dir_all` is recursive; matches the
 //! Electron default VS Code expects.

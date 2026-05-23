@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Serialised encrypted-message envelope - key id (so
 //! decryption can find the right key during rotation), nonce,

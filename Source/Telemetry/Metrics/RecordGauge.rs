@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Convenience: record a gauge against the global registry without labels.
 

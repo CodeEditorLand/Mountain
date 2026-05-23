@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tunable knobs for the performance dashboard - update
 //! cadence, retention window, alert threshold, sampling rate,

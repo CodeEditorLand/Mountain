@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! NLS (National Language Support) placeholder resolution for extension
 //! manifests. VS Code extensions embed `%key%` tokens in their `package.json`

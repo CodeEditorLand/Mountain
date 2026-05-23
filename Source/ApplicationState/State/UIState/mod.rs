@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! User-interface request state. Holds pending sync UI interactions
 //! (dialogs/prompts) keyed by request id. Single child file owns the struct;

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `$HOME/.fiddee` - the user-scope dotfile root. Holds VS Code-style
 //! extensions (`~/.fiddee/extensions`), recently-opened workspaces

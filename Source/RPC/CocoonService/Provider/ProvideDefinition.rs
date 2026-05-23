@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Resolve "go to definition" via the registered provider, mapping each
 //! result location into the gRPC `Location` shape.

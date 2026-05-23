@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `Role::Struct` - RBAC role descriptor. Builder methods
 //! deduplicate permissions on insert, expose

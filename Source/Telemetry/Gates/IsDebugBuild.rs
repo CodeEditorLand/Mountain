@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Compile-time gate - evaluates to `true` under `cfg!(debug_assertions)`.
 

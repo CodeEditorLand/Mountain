@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Dispatch a `register_*_provider` method string to the correct ProviderType.
 //! Returns `true` if recognised.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! OTEL integration handle. Currently a placeholder.
 

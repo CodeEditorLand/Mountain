@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Update-availability DTO returned by `CheckForUpdates`.
 

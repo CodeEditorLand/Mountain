@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Snapshot of asset-cache stats for diagnostics.
 

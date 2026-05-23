@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Hide a terminal panel without disposing the underlying PTY.
 //! The child process keeps running; subsequent `TerminalShow`

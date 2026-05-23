@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Serde-Value helpers shared across Wind handlers. `v_str` extracts a
 //! string from either a raw JSON string or a VS Code `UriComponents`

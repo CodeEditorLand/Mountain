@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Save-intent hint from Wind. Actual disk write happens via `TextfileWrite`.
 //! Returns an `IStat`-shaped object (mtime/size) so the workbench's

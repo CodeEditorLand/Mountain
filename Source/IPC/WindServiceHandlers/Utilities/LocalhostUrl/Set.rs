@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Sets the localhost plugin base URL (once, at startup).
 

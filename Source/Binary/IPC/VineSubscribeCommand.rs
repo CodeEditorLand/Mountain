@@ -2,7 +2,7 @@
 //!
 //! Tauri command surface that exposes the process-wide Vine
 //! notification broadcast (`Vine::Client::SubscribeNotifications`)
-//! to Sky / Wind via a Tauri Channel<NotificationFramePayload>.
+//! to Sky / Wind via a Tauri `Channel<NotificationFramePayload>`.
 //!
 //! Wind / Sky subscribers consume each frame as it arrives - same
 //! ordering, same drop-oldest semantics as the in-process Rust

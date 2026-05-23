@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Returns the global PID registry for cancel-by-OperationId.
 

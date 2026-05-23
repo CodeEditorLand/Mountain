@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Cancel an in-flight Mountain-originated operation by request id. Looks
 //! up the cancellation token in `Service.ActiveOperations` and fires it.

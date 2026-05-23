@@ -27,7 +27,6 @@
 //! - Prefix `[RenderDevLog]` is added so grep can always separate TS-originated
 //!   lines from native `dev_log!` entries that share the same tag.
 
-#![allow(non_snake_case)]
 
 use crate::dev_log;
 

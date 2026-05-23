@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Configuration RPC service. `ConfigurationService::Struct` owns the
 //! key/value store; `ConfigurationScope::Enum` and

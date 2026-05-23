@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Per-service descriptor: name, version, lifecycle state, performance
 //! counters, dependency list, optional endpoint. Health is the

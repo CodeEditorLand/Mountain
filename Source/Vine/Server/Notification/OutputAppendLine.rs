@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `output.appendLine` notification.
 //! Emitted by `Cocoon/.../Services/Window/OutputChannel.ts:56` whenever
 //! an extension calls `OutputChannel.appendLine(text)`. The stock

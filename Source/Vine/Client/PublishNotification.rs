@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Internal: publish a notification to the broadcast. Called from
 //! `SendNotification::Fn` after the wire send succeeds, and from the

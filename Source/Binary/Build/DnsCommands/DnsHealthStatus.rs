@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Aggregated DNS health snapshot (server / zone / forward
 //! status + most recent error) returned by

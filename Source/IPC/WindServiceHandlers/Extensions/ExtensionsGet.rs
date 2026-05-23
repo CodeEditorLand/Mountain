@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `extensions:get(id)` - fetch a single extension's manifest
 //! by `<publisher>.<name>` identifier. Returns `null` when the

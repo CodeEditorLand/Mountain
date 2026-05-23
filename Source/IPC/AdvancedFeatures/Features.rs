@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `AdvancedFeatures` aggregator - holds the runtime handle,
 //! cumulative `PerformanceStats::Struct`, the realtime

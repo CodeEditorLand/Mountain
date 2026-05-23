@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward a semantic-tokens-full request to the registered provider.
 

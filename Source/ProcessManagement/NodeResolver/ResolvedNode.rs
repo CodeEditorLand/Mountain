@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Result of a Node binary resolution attempt. Carries both the path and the
 //! source so log lines can distinguish shipped Node from system Node.

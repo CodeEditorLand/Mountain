@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Remove a value from the OS keychain.
 

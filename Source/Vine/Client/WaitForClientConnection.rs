@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Await Cocoon's gRPC connection without polling. `GetConnectionNotify`
 //! returns a shared `tokio::sync::Notify` that `ConnectToSideCar` fires

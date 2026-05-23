@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Cumulative IPC counters - sent / received message totals,
 //! rolled-up average processing time, peak rate, error count,

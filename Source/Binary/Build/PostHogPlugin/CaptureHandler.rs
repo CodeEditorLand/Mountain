@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Capture a `land:mountain:handler:complete` event for one IPC handler
 //! invocation. `Feature` is the Mountain-side route key (e.g.

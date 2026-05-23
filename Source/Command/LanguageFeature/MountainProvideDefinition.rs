@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - go-to-definition. Delegates to
 //! `LanguageFeature::Definition::provide_definition_impl`.

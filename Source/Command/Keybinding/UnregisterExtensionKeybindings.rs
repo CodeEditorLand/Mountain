@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - remove keybindings registered by a given extension.
 //! Stub returns success; pending real implementation that filters by

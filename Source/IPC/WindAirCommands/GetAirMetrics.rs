@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `GetAirMetrics` Tauri command - pull memory / CPU / disk /
 //! network counters from Air, optionally filtered by metric

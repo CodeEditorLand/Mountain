@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Application self-update. Tauri's bundled updater + optional Air gRPC
 //! delegation. Currently dormant - zero call sites; kept atomized for the

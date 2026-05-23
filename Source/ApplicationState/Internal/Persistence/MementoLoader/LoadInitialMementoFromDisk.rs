@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Best-effort synchronous memento loader for `ApplicationState`'s
 //! `default()` path. Failures don't propagate - corrupted files are

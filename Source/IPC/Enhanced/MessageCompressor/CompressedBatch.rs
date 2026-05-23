@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Result envelope returned by `Compressor::Struct::flush_batch`.
 //! Carries the message count, original / compressed byte

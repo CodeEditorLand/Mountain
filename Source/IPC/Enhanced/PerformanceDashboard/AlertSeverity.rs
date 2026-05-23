@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Severity tag for a `PerformanceAlert::Struct`.
 

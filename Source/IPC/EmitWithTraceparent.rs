@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Wrap `app_handle.emit(name, payload)` so every outbound Sky-side
 //! Tauri event carries a W3C `_traceparent` field on its JSON payload.

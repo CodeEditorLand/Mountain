@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Build a `tracing::Span` with structured attributes attached. Returns
 //! `()` when the `Telemetry` feature is off so call sites don't need

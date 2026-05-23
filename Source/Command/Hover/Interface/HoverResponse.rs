@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Outbound hover response DTO: ordered list of `HoverContent::Enum`
 //! plus an optional `Range::Struct` the hover applies to. Range is

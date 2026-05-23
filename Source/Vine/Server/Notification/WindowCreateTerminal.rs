@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `window.createTerminal` notification.
 //! Fire-and-forget from Cocoon's `vscode.window.createTerminal(...)`
 //! shim. Spawns the PTY via the registered `TerminalProvider` so the

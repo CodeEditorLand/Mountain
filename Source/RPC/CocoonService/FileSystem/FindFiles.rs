@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Walk every workspace root collecting paths that match `pattern`
 //! (globset). Falls back to cwd when no roots are open.

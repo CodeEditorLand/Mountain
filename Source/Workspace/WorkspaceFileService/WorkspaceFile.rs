@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Top-level shape of a `.code-workspace` JSON document. Private to the
 //! parser; exposed only as `pub(super)` for the sibling

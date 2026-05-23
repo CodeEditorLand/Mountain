@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Display a quick-pick UI through the `UserInterfaceProvider`. The
 //! returned label strings are mapped back to indices via linear search

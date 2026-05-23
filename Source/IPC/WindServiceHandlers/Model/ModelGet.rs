@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Snapshot a single open text model. Returns
 //! `{ uri, content, version, languageId }` or `null` when the

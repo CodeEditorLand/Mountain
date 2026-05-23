@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables)]
+#![allow(unused_variables)]
 //! File decoration handlers (URI → badge / tooltip / colour) backing
 //! `vscode.window.registerFileDecorationProvider`. Mountain's
 //! `ApplicationState::Feature::Decorations` owns the map keyed on URI

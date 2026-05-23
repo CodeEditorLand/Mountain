@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Window-namespace UI commands from Cocoon's window shim.
 //! ShowMessage is fire-and-forget (no selection reply needed).

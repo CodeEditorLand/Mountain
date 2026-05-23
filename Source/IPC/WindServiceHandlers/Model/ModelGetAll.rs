@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Bulk snapshot of every open text model. Used by Wind on
 //! workbench restore to repopulate the Monaco model registry

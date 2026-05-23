@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `Manager::Struct` - the IPC RBAC enforcement core. Holds
 //! the role / permission tables and the rolling 1k audit log;

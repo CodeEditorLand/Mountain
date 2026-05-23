@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Cocoon → Mountain `window.createTextEditorDecorationType` /
 //! `window.disposeTextEditorDecorationType` notifications. Forwards the

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `webview.setTitle` / `webview.setIconPath` /
 //! `webview.setHtml` / `webview.postMessage` / `webview.updateView` /
 //! `webview.viewState` / `webview.dispose` notifications. Shared atom

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - dispatch SCM operations (commit / push / pull).
 //!

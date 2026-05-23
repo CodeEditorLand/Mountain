@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Top-level shutdown orchestrator. Emits the `sky://lifecycle/willShutdown`
 //! event so Wind/Sky can flush dirty editors, dispose sockets, and cancel

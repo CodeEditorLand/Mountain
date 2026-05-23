@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Hydrate the running process's environment from the compile-baked
 //! `Constants` so child processes spawned later (Cocoon Node, Sky

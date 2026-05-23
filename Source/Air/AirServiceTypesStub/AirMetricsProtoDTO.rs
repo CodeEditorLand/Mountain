@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Inner metrics payload for `MetricsResponse`.
 

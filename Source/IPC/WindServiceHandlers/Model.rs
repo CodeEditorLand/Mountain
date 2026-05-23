@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! # Text Model registry + TextFile handlers
 //!

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! New (atomic) Wind ↔ Mountain state synchronisation. The legacy single-
 //! file implementation lives in `IPC::WindAdvancedSync` (sibling of this

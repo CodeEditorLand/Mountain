@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Register an authentication provider in `ApplicationState`. Cocoon-side
 //! providers (GitHub, Microsoft, etc.) call this on activation; later

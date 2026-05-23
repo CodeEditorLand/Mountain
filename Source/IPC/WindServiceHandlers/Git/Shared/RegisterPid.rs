@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Registers a spawned PID under its OperationId.
 

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Returns the userdata base directory, falling back to platform defaults.
 

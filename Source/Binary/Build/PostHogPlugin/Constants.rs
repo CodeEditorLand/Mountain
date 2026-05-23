@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Build-time PostHog credentials baked from `.env.Land.PostHog` via
 //! `cargo:rustc-env`. `env!` always resolves at compile time so even a

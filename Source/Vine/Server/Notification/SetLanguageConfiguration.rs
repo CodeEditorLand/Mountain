@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `set_language_configuration` notification.
 //! Emitted by `Cocoon/.../APIFactoryService.ts:557` when an extension
 //! calls `vscode.languages.setLanguageConfiguration(languageId, config)`.

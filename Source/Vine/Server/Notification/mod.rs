@@ -39,7 +39,6 @@
 //!   `notif-drop` / `grpc` tag; the caller always returns `Empty` to Cocoon
 //!   because notifications are fire-and-forget.
 
-#![allow(non_snake_case)]
 
 // --- Shared support utilities ---
 pub mod Support;

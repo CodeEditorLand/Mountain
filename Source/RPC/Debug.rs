@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Debug-Adapter-Protocol RPC service. Placeholder for the Cocoon DAP
 //! roadmap. Status: not yet wired; all exports are cfg-gated behind the

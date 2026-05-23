@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tree-view-domain handlers for `CocoonService`.
 //! `RegisterTreeViewProvider::Fn`, `GetTreeChildren::Fn`, plus private

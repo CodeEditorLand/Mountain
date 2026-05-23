@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Cocoon legacy aliases: `openDocument`, `readFile`, `stat` - short-hand
 //! routes used by Cocoon's Effect-TS Workspace + FileSystem services before

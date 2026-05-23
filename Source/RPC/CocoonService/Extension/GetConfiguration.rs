@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Look up a workspace configuration value for the requesting extension.
 //! Composes `section.key` when both are present, otherwise falls back to

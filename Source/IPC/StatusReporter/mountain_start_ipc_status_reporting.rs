@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `mountain_start_ipc_status_reporting` Tauri command - kick
 //! off the periodic Sky-emit loop with `interval_seconds`

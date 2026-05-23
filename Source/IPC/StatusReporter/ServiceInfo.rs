@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single-service descriptor produced by service discovery.
 //! Carries identity, status, lifecycle timings, dependency

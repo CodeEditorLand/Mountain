@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `dns_resolve` Tauri command - manual resolution helper used
 //! by the diagnostic panel and by `dns_test_resolution`.

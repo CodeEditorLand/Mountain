@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables)]
+#![allow(unused_variables)]
 //! Notification toast handlers. Both the plain-message and the
 //! progress-bar variants go through here; each emits on an
 //! `SkyEvent::Notification*` channel so Sky's toast stack renders

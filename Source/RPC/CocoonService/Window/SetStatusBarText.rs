@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Update the text of a status-bar entry. Re-issues `SetStatusBarEntry`
 //! so the stored DTO's `Text` field is refreshed in

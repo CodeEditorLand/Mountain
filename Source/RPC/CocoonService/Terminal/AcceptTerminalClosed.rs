@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward a terminal-closed notification to Sky on `sky://terminal/exit`.
 //! (`/closed` had no consumer.)

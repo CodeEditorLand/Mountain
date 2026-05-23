@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Local-time session timestamp (`%Y%m%dT%H%M%S`) cached once
 //! per process. Must agree with

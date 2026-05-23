@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Converts `std::fs::Metadata` to VS Code's `IStat` wire shape. The
 //! `FileType` bits are VS Code's enum (File=1, Directory=2,

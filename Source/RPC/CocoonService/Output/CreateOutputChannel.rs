@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Create a new output channel and notify Sky over `sky://output/create`.
 

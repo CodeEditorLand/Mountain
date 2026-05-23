@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `Permission::Struct` - RBAC permission descriptor.
 //! `category.action` name shape (validated by `Validate`),

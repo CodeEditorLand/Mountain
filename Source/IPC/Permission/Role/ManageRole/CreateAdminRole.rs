@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Standard `admin` role - full access including system /
 //! external / execute and `role.manage` for changing role

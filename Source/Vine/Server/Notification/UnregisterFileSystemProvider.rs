@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! `unregister_file_system_provider` — disposes a scheme-bound FS provider.
 //! Logs the scheme so routing mismatches are visible after disposal.
 

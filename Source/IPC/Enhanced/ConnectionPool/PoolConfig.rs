@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Connection-pool tunables: max / min connection counts plus
 //! the four millisecond budgets (acquire timeout, max

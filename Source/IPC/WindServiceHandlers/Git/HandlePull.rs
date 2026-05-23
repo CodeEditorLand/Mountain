@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `localGit:pull(operationId, repoPath) -> bool`. Three-call
 //! sequence: read HEAD, `pull --ff-only`, read HEAD again.

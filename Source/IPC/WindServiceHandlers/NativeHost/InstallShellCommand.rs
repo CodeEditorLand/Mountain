@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `nativeHost:installShellCommand` - create a `land` (or `code`) symlink in
 //! `/usr/local/bin` pointing at the running executable so the user can launch

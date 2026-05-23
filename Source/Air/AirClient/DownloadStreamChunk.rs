@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single chunk of data from a streaming download. Carries the binary
 //! payload plus progress + completion metadata.

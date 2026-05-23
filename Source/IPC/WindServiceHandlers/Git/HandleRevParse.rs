@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `localGit:revParse(repoPath, ref) -> string`. Defaults
 //! `ref=HEAD` so the caller can pass two args or three. Output

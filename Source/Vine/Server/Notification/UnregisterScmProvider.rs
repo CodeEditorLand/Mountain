@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `unregister_scm_provider` notification.
 //! Emitted by `Cocoon/.../ScmNamespace.ts:82` when
 //! `vscode.scm.createSourceControl(...).dispose()` fires. The paired

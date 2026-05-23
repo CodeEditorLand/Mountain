@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Converts a JSON array value to `Vec<String>`.
 

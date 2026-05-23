@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single-worker scheduler for debugging. Predictable execution order
 //! makes step-through and trace inspection tractable. Compile-time

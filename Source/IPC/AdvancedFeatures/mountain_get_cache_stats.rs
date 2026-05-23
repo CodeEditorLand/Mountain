@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `mountain_get_cache_stats` Tauri command - returns the
 //! `MessageCache::Struct` snapshot (entries + hit / miss

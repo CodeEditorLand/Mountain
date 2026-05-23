@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Bounded ring buffer of recent metric observations. Oldest entries are
 //! evicted FIFO once `MaxEntries` is reached. The registry is `Sync`

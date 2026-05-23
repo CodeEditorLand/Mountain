@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+#![allow(unused_variables, dead_code, unused_imports)]
 
 //! Workspace-contains glob matcher for VS Code `workspaceContains:<pattern>`
 //! activation events.

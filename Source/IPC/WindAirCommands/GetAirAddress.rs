@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Resolve the Air daemon's gRPC address. Currently hard-coded
 //! to `DEFAULT_AIR_SERVER_ADDRESS`; future revisions will read

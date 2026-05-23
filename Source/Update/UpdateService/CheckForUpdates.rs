@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Check for updates using Tauri's bundled updater. Notifies the user, asks
 //! for install consent, and runs `download_and_install` on accept.

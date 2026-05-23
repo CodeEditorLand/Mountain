@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Parse `options.filters` from a VS Code `showOpenDialog` call into the
 //! `DialogFilter` shape the Tauri dialog plugin accepts. Silently skips
 //! malformed or empty entries - the user still gets the picker, just

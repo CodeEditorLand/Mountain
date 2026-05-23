@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Register a Cocoon SCM provider in `ApplicationState` AND route through
 //! the `SourceControlManagementProvider` trait so SCM state is materialised

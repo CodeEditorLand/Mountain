@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Result envelope returned by `tls_generate_cert`.
 

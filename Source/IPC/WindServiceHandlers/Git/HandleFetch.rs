@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `localGit:fetch(operationId, repoPath)`. Plain `git fetch`
 //! against the configured upstream - no remote argument, no

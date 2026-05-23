@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Predicate: is the back-stack non-empty? Drives the
 //! enabled-state of the workbench's back-arrow button.

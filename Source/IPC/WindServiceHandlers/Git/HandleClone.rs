@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `localGit:clone(operationId, cloneUrl, targetPath, ref?)`.
 //! Optional `ref` becomes `--branch <ref>` so callers can

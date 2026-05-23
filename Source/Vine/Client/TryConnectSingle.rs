@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single connection attempt without retry logic. Tunes h2 transport
 //! windows for loopback-to-Cocoon traffic (4 MB stream / 16 MB connection)

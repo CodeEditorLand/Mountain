@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward a call hierarchy outgoing request to the registered provider.
 

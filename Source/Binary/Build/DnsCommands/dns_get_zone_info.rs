@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `dns_get_zone_info` Tauri command - returns the static
 //! `land.playform.cloud` zone snapshot (records + DNSSEC flag) used by

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Return every scanned extension projected into the gRPC `ExtensionInfo`
 //! shape.

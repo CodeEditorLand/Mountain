@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Wire-format selector for the compressor - Brotli, Gzip, or
 //! Zlib. The compressor delegates to the matching encoder /

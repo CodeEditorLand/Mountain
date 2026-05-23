@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `register_scm_resource_group` notification.
 //!
 //! Pairs with `RegisterScmProvider`: an SCM provider creates one or more

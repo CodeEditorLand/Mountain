@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unused_variables)]
+#![allow(unused_variables)]
 
 //! Wire method: `decorations:get`.
 //! Reads a URI decoration from cache, then falls back to a registered

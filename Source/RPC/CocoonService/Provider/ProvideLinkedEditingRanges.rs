@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward a linked-editing-ranges request to the registered provider.
 

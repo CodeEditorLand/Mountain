@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Update a progress notification with a new message + increment.
 

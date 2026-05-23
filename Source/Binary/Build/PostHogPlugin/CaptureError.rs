@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Convenience wrapper that emits an error event under the
 //! `land:mountain:error` name with `error_tag` + `error_message`. The

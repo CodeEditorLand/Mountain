@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Lifecycle state of a discovered Mountain service.
 

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `localGit:isAvailable -> bool`. Cheap `git --version` probe
 //! cached in a `OnceLock` for the process lifetime so the UI's

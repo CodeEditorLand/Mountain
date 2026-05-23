@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Filter a state map in-place by a validator predicate. Logs at warn
 //! level when entries are removed so corruption is visible without

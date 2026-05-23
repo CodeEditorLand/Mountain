@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Enumerate the entries of a directory by name.
 

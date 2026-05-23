@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Command-domain handlers for `CocoonService`.
 //! `RegisterCommand::Fn`, `ExecuteContributedCommand::Fn`,

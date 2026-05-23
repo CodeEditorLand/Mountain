@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Bring up the global PostHog client and emit
 //! `land:mountain:session:start`. Must be called once during boot;

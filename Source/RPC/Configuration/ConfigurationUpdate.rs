@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Configuration-update DTO. Carries key + value + scope.
 

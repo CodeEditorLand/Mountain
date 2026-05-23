@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single diff target URI used by Wind's `--diff` launch
 //! flag. Mirrors `vscode.IDiffEditorInput::resource`.

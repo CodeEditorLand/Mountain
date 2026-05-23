@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - request a tree view refresh, optionally targeting
 //! specific item handles. `None` refreshes the entire tree.

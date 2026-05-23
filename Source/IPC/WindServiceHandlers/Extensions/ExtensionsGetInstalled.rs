@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `extensions:getInstalled(type?)` - return scanned extensions reshaped as
 //! VS Code's `ILocalExtension[]` so `ExtensionManagementChannelClient

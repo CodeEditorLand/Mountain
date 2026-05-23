@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! User-scope install destination for VSIX unpacks. Matches the user-scope
 //! scan path in `Binary/Extension/ScanPathConfigure.rs` so VSIX-installed
 //! extensions are discovered on the next Mountain boot without a sync step.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Single DNS zone record (name / type / TTL / data) returned
 //! inside `ZoneInfo::Struct`.

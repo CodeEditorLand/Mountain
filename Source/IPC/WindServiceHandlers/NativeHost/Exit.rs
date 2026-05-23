@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `nativeHost:exit` - exit with an explicit code.
 //! VS Code calls this from `NativeHostMainService.exit(code)` when an

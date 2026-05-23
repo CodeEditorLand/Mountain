@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `--wait` payload: marker file URI plus the path list whose
 //! close events the launcher is blocked on.

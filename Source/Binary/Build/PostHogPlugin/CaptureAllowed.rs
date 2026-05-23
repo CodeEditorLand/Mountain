@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Capture gate. Combines the compile-time `debug_assertions` check with
 //! the master telemetry kill switch (`Capture`) and the per-pipe

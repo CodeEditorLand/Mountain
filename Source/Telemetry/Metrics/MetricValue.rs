@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tagged value carried by `Metric::Struct`. Counter/Gauge/Histogram cover
 //! the OTEL primitive shapes; Boolean/Text are escape hatches for

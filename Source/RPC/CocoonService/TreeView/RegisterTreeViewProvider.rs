@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Register a Cocoon-contributed tree-view provider in `ApplicationState`
 //! and notify Sky via the coalesced `EnqueueTreeViewEmit` batcher.

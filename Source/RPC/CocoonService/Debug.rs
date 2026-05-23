@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Debug-domain handlers for `CocoonService`.
 //! `RegisterDebugAdapter::Fn`, `StartDebugging::Fn`, `StopDebugging::Fn`.

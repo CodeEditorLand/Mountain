@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `window.showTextDocument` notification.
 //! Fires when an extension calls
 //! `vscode.window.showTextDocument(uri, options)`. Extension activation

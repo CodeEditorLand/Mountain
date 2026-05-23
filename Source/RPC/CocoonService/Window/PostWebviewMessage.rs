@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Push a message from the extension into the webview via
 //! `sky://webview/post-message`. Canonical kebab-case channel;

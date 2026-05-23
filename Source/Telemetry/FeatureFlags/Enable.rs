@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Toggle a feature flag on through the global registry.
 

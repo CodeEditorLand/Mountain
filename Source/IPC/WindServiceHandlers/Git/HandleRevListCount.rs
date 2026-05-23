@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `localGit:revListCount(repoPath, fromRef, toRef) -> u64`.
 //! Equivalent to `git rev-list --count from..to` - counts

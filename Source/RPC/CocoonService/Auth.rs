@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Authentication domain handlers for `CocoonService`. Two gRPC entry
 //! points: `GetAuthenticationSession::Fn` and

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Bidirectional streaming multiplexer for the Vine gRPC bus.
 //!

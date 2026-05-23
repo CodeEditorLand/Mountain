@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `mountain_get_comprehensive_status` Tauri command -
 //! assembles a `ComprehensiveStatusReport::Struct` (basic

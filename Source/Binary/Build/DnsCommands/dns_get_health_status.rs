@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `dns_get_health_status` Tauri command - aggregated server /
 //! zone / forward status snapshot.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `mountain_get_ipc_status_history` Tauri command - returns
 //! the last-100 ring buffer of `IPCStatusReport::Struct`.

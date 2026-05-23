@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Language-feature-provider handlers for `CocoonService`. 44 entry points
 //! split between `Register*` (21 files: hover/completion/definition/...,

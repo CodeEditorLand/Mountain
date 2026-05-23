@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Build a `UriComponents` from a fully-formed URL string. Handles
 //! `file://` (authority-optional) and any other scheme generically

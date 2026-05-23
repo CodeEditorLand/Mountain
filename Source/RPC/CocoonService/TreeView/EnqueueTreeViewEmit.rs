@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Coalesce 30+ Mountain → Sky `tree-view/create` emits at boot into a
 //! single batched payload per frame. Uses the channel-drain pattern: a

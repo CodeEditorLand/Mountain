@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - switch the working tree to a different branch.
 //!

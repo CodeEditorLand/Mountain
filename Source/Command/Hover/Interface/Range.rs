@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Inclusive document range bounded by a start and end
 //! `Position::Struct`. Half-open at the end per LSP convention.

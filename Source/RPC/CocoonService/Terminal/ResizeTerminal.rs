@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `resize_terminal` gRPC endpoint. Resizes the PTY backing a terminal so
 //! the shell receives SIGWINCH and readline/shells repaint correctly. Also

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Bring up the `tracing` global subscriber with an OpenTelemetry-aware
 //! formatter. The level filter respects `RUST_LOG`; otherwise it falls

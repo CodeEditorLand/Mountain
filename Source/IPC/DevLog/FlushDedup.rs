@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Flush the consecutive-duplicate buffer - emits a `(xN)` tail
 //! line if the pending count is greater than 1, then clears.

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Push a URI onto the navigation history. Called by Wind every
 //! time the active editor changes, so the back/forward chain

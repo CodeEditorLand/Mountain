@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Bootstrap helper - construct `Features::Struct`, stash a
 //! clone in Tauri state, spawn the monitor tasks. Called from

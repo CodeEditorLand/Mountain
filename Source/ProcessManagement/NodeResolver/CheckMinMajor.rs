@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Warn when the resolved Node's major version is below `Require`. Does NOT
 //! fail the spawn - Cocoon's bundled code mostly degrades gracefully on older

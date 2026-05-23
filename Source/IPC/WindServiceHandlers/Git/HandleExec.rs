@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! `localGit:exec` - arbitrary `git` argv. Used by the Git
 //! extension for commands not on the curated `clone/pull/…`

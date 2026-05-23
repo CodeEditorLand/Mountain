@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Realtime collaboration session record - id, participant
 //! list, currently-active document URIs, last activity tick,

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Build a `file://` `UriComponents` from an absolute filesystem path.
 //! Path is emitted verbatim - no percent-encoding, no normalisation -

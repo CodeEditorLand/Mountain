@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Stub `AirClient` type used while the `AirIntegration` feature is off.
 //! Every method returns the same "feature not implemented" error.

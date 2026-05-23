@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Open a text model: read content from disk, derive language
 //! ID from the extension, register the resulting

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! `extensions:install` IPC handler - local VSIX only. Gallery installs are
 //! declined (Land has no marketplace backend) and return `null`.
 //!

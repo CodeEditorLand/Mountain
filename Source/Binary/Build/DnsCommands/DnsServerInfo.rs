@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Basic DNS server information returned to the webview by
 //! `dns_get_server_info`.

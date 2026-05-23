@@ -1,11 +1,10 @@
-#![allow(non_snake_case)]
 
 //! `file:unwatch` - unregister a native filesystem watcher by its token.
 //!
 //! VS Code's `DiskFileSystemProvider` calls this when an extension disposes
 //! its `FileSystemWatcher` or when the workspace is closed.
 //!
-//! Arguments[0] = the numeric token string returned by `file:watch`.
+//! Arguments\[0\] = the numeric token string returned by `file:watch`.
 
 use std::sync::Arc;
 

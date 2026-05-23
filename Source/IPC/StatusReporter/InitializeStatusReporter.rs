@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Bootstrap helper - construct the `StatusReporter::Reporter`
 //! and stash a clone in the app's Tauri state so the

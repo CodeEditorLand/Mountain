@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 //! Cocoon → Mountain `output.replace` notification.
 //! Emitted when an extension calls `LogOutputChannel.replace(value)` to
 //! swap the channel's entire contents. Sky doesn't yet have a dedicated

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Resolves a raw cwd string to a PathBuf. Falls back to current dir.
 

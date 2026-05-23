@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Minimal OS slice surfaced to Wind - just the release / OS
 //! identifier string.

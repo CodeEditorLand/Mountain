@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Wind-shaped configuration service - read / write of
 //! configuration values via the injected

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Map a Cocoon→Mountain wire method name to an Echo priority lane.
 //!

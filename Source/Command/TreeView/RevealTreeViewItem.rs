@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Tauri command - focus / scroll-into-view a specific tree item.
 //! `Options` carries the LSP-shaped `select`, `focus`, `expand`

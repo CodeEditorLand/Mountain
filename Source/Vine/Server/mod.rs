@@ -79,7 +79,6 @@
 //!   Mountain)
 //! - `CocoonServiceImpl`: Implementation of CocoonService (Mountain → Cocoon)
 
-#![allow(non_snake_case)]
 
 pub mod Initialize;
 

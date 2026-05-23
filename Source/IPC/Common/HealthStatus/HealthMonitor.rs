@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Aggregate health monitor: a 0-100 score, the list of currently
 //! tracked issues (each paired with its severity for fast filtering),

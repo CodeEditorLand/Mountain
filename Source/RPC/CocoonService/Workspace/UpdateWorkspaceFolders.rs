@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Apply folder additions/removals to `ApplicationState.Workspace`. URIs
 //! drive removal matching; new folders are appended after the existing

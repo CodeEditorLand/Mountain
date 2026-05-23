@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! macOS / Linux GUI launches (Finder double-click, Dock, Spotlight,
 //! `open <bundle>.app`) hand the app a minimal environment:

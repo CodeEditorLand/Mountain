@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward a document-range-formatting request to the registered provider.
 

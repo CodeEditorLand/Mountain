@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Fire-and-forget OTLP span exporter. Sends a single
 //! `resourceSpans` payload over plain HTTP to the collector at

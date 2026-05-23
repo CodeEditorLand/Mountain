@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Lifecycle state of a service. `IsOperational` covers the three
 //! states a caller can still send work to (Running / Degraded /

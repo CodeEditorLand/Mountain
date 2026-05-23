@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Returns the cached localhost plugin base URL.
 

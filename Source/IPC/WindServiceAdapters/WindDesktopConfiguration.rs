@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Mirror of Wind's `IDesktopConfiguration` interface - the
 //! shape Sky deserialises on boot. Built by

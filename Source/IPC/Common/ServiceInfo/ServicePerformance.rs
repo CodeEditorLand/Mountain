@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Per-service request/error counters and a rolling-mean response
 //! latency. `RecordRequest` updates the running average using

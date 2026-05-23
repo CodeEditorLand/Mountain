@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Shared helper for notification atoms that are pure sky-event relays.
 //!

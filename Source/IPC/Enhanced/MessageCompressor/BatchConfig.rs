@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Compressor / batcher tunables - max batch size, max delay
 //! before flushing, the size threshold below which messages

@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Forward a webview→extension message to Sky on
 //! `sky://webview/post-message`. The protobuf `oneof` is normalised to

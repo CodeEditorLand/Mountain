@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Snapshot every flag currently held by the global registry.
 

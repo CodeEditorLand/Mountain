@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 
 //! Inspect a path: type, size, mtime in ms-since-epoch.
 
