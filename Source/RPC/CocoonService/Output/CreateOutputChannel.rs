@@ -17,10 +17,13 @@ pub async fn Fn(
 ) -> Result<Response<CreateOutputChannelResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] create_output_channel: '{}'", Request.name);
 
+	// Sky's InstallEditorAndOutput.ts destructures { id, name }.
+	// The old `{ channel }` key made both fields undefined, keying the
+	// output channel on the string "undefined" in Sky's map.
 	let _ = Service
 		.environment
 		.ApplicationHandle
-		.emit("sky://output/create", json!({ "channel": Request.name }));
+		.emit("sky://output/create", json!({ "id": Request.name, "name": Request.name }));
 
 	Ok(Response::new(CreateOutputChannelResponse { channel_id:Request.name.clone() }))
 }
