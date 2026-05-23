@@ -114,8 +114,14 @@ fn resolve_static_application_path(Path:&str) -> String {
 
 /// Decode percent-encoded characters in URI paths.
 /// Handles: %20 (space), %23 (#), %25 (%), %5B ([), %5D (]), etc.
+/// Decode percent-encoded characters in URI paths, handling multi-byte UTF-8
+/// sequences correctly. Accumulates raw decoded bytes then validates as UTF-8,
+/// falling back to lossy conversion for malformed sequences. Casting bytes
+/// directly to `char` (the old approach) corrupts non-ASCII paths: bytes
+/// >127 (accented names, CJK, etc.) became private-use codepoints instead
+/// of valid UTF-8 characters, causing silent ENOENTs on every file op.
 pub fn percent_decode(Input:&str) -> String {
-	let mut Result = String::with_capacity(Input.len());
+	let mut DecodedBytes:Vec<u8> = Vec::with_capacity(Input.len());
 
 	let Bytes = Input.as_bytes();
 
@@ -128,7 +134,7 @@ pub fn percent_decode(Input:&str) -> String {
 			let Low = hex_digit(Bytes[I + 2]);
 
 			if let (Some(H), Some(L)) = (High, Low) {
-				Result.push((H * 16 + L) as char);
+				DecodedBytes.push(H * 16 + L);
 
 				I += 3;
 
@@ -136,12 +142,12 @@ pub fn percent_decode(Input:&str) -> String {
 			}
 		}
 
-		Result.push(Bytes[I] as char);
+		DecodedBytes.push(Bytes[I]);
 
 		I += 1;
 	}
 
-	Result
+	String::from_utf8(DecodedBytes).unwrap_or_else(|E| String::from_utf8_lossy(E.as_bytes()).into_owned())
 }
 
 fn hex_digit(Byte:u8) -> Option<u8> {

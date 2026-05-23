@@ -17,7 +17,7 @@
 //! - EndLineNumber/EndColumn: Position end (1-based, same convention)
 //! - Source: Diagnostic source (e.g., compiler, linter)
 //! - Code: Diagnostic code for quick fix lookup
-//! - ModelVersionIdentifier: Document version for tracking
+//! - ModelVersionId: Document version for tracking
 //! - RelatedInformation: Related diagnostic information
 //! - Tags: Additional marker tags (deprecated, unnecessary)
 
@@ -67,7 +67,7 @@ pub struct MarkerDataDTO {
 
 	/// Document version marker is associated with
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub ModelVersionIdentifier:Option<u64>,
+	pub ModelVersionId:Option<u64>,
 
 	/// Related diagnostic information
 	#[serde(skip_serializing_if = "Option::is_none")]
@@ -133,7 +133,7 @@ impl MarkerDataDTO {
 			EndColumn,
 			Source:None,
 			Code:None,
-			ModelVersionIdentifier:None,
+			ModelVersionId:None,
 			RelatedInformation:None,
 			Tags:None,
 		})

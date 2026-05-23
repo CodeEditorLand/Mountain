@@ -19,7 +19,7 @@
 //! - `EndLineNumber` / `EndColumn` - 1-based, same convention
 //! - `Source` - diagnostic source string (e.g. `"tslint"`)
 //! - `Code` - diagnostic code for quick-fix lookup
-//! - `ModelVersionIdentifier` - document version for change tracking
+//! - `ModelVersionId` - document version for change tracking
 //!
 //! ## Notification flow
 //!
