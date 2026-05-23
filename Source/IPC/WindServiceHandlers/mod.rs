@@ -341,7 +341,6 @@ macro_rules! forward_to_cocoon {
 	}};
 }
 
-
 /// Internal dispatcher for the single front-end Tauri command
 /// `MountainIPCInvoke` (registered in `Binary/Main/Entry.rs::invoke_handler!`,
 /// implemented in `Binary/IPC/InvokeCommand.rs`). The outer Tauri command
