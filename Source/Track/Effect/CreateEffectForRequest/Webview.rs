@@ -60,7 +60,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						let RawSuffix = Method.trim_start_matches("$webview:").trim_start_matches("webview.");
 						let Suffix:&str = match RawSuffix {
 							"setHtml" => "set-html",
-							"postMessage" => "post-message",
+							"postMessage" => "postMessage",
 							Other => Other,
 						};
 						let Payload:Value = if Parameters.is_object() {

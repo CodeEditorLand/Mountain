@@ -603,6 +603,7 @@ impl MountainService for MountainVinegRPCService {
 			"webview.setTitle"
 			| "webview.setIconPath"
 			| "webview.setHtml"
+			| "webview.setOptions"
 			| "webview.updateView"
 			| "webview.reveal" => {
 
