@@ -11,7 +11,10 @@ use tauri::Runtime;
 use crate::{
 	ApplicationState::State::ApplicationState::ApplicationState,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Track::Effect::MappedEffectType::MappedEffect,
+	Track::Effect::{
+		CreateEffectForRequest::Utilities::Params::{array_unwrap, ensure_array},
+		MappedEffectType::MappedEffect,
+	},
 	dev_log,
 };
 
@@ -24,11 +27,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				use tauri::Emitter;
 
 				let AppHandle = run_time.Environment.ApplicationHandle.clone();
-				let Payload = if Parameters.is_array() {
-					Parameters.get(0).cloned().unwrap_or_default()
-				} else {
-					Parameters
-				};
+				let Payload = array_unwrap(Parameters);
 				let Message = Payload.get("message").and_then(Value::as_str).unwrap_or("").to_string();
 				let Level = Payload.get("level").and_then(Value::as_str).unwrap_or("info").to_string();
 				let Items = Payload.get("items").and_then(Value::as_array).cloned().unwrap_or_default();
@@ -91,7 +90,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			crate::effect!(run_time, {
 				use tauri::Emitter;
 
-				let Args = if Parameters.is_array() { Parameters } else { json!([Parameters]) };
+				let Args = ensure_array(Parameters);
 
 				let Channel = match MethodNameOwned.as_str() {
 					"Window.ShowQuickPick" => "sky://quickpick/show",

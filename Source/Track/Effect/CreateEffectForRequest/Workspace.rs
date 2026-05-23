@@ -15,7 +15,14 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 use tauri::Runtime;
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
+use crate::{
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	Track::Effect::{
+		CreateEffectForRequest::Utilities::Params::{array_unwrap, uri_from_params},
+		MappedEffectType::MappedEffect,
+	},
+	dev_log,
+};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
@@ -109,11 +116,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 		"$updateWorkspaceFolders" => {
 			crate::effect!(run_time, {
-				let Payload = if Parameters.is_array() {
-					Parameters.get(0).cloned().unwrap_or_default()
-				} else {
-					Parameters
-				};
+				let Payload = array_unwrap(Parameters);
 				let Additions:Vec<(String, String)> = Payload
 					.get("additions")
 					.and_then(Value::as_array)

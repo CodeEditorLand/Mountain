@@ -4,7 +4,7 @@
 //! (named). The `str_obj_or_pos` helper handles the 7 sites that accept both
 //! shapes.
 
-use serde_json::Value;
+use serde_json::{Value, json};
 
 pub fn str_at(p:&Value, n:usize) -> &str { p.get(n).and_then(Value::as_str).unwrap_or("") }
 
@@ -29,6 +29,23 @@ pub fn str_obj_or_pos<'a>(p:&'a Value, key:&str, n:usize) -> &'a str {
 		p.get(n).and_then(Value::as_str).unwrap_or("")
 	}
 }
+
+/// Unwrap one level of outer array: `[payload]` → `payload`, else identity.
+/// Handles callers that always wrap in an array vs those that send the value
+/// directly.
+pub fn array_unwrap(p:Value) -> Value { if p.is_array() { p.get(0).cloned().unwrap_or_default() } else { p } }
+
+/// Extract a URI parameter that may arrive as `[uri]`, `{uri:…}`, or bare.
+pub fn uri_from_params(p:Value) -> Value {
+	if p.is_array() {
+		p.get(0).cloned().unwrap_or_default()
+	} else {
+		p.get("uri").cloned().unwrap_or(p)
+	}
+}
+
+/// Ensure the value is a JSON array; wraps non-arrays in `[value]`.
+pub fn ensure_array(p:Value) -> Value { if p.is_array() { p } else { json!([p]) } }
 
 /// Strip a leading `file://` or `file:///` scheme. Handles the
 /// `file://localhost/...` form by removing the host segment.
