@@ -38,7 +38,7 @@ pub async fn WebviewLifecycle(Service:&MountainVinegRPCService, MethodName:&str,
 	let Suffix = match RawSuffix {
 		"setHtml" => "set-html",
 
-		"postMessage" => "post-message",
+		"postMessage" => "postMessage",
 
 		Other => Other,
 	};
