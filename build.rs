@@ -180,7 +180,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		if let Some(Parent) = ExtensionsManifest.parent() {
 			let _ = std::fs::create_dir_all(Parent);
 		}
-		let _ = std::fs::write(ExtensionsManifest, "[]");
+		// Write a valid empty CacheBlob - the parser expects
+		// { version, count, extensions } not a bare array.
+		let _ = std::fs::write(
+			ExtensionsManifest,
+			r#"{"version":1,"count":0,"extensions":[]}"#,
+		);
 	}
 
 	// Skip resource-path validation when generating docs. tauri_build::build()
