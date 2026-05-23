@@ -6,11 +6,9 @@
 
 use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string;
-use crate::IPC::WindServiceHandlers::Git::Shared::{
-	AsStringArray::Fn as AsStringArray,
-	Generated::Fn as Generated,
-	RunGit::Fn as RunGit,
+use crate::IPC::WindServiceHandlers::{
+	Git::Shared::{AsStringArray::Fn as AsStringArray, Generated::Fn as Generated, RunGit::Fn as RunGit},
+	Utilities::JsonValueHelpers::arg_string,
 };
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
@@ -30,7 +28,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 		Some(First) if First.is_array() => {
 			let Argv = AsStringArray(First);
 
-			let Cwd = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+			let Cwd = arg_string(&Arguments, 1);
 
 			(Argv, Cwd, String::new())
 		},

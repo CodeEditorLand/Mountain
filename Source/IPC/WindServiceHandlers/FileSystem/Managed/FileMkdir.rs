@@ -10,7 +10,11 @@ use CommonLibrary::{
 };
 use serde_json::Value;
 
-use crate::{IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_bool_true, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::{
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_bool_true,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
+};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let path = Arguments
@@ -19,7 +23,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.as_str()
 		.ok_or("Directory path must be a string".to_string())?;
 
-	let recursive = Arguments.get(1).and_then(|v| v.as_bool()).unwrap_or(true);
+	let recursive = arg_bool_true(&Arguments, 1);
 
 	let provider:Arc<dyn FileSystemWriter> = RunTime.Environment.Require();
 
