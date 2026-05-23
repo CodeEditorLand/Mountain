@@ -25,7 +25,7 @@ use std::{
 use serde_json::{Value, json};
 use tokio::fs::File;
 
-use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg, dev_log};
+use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as extract_path_from_arg, dev_log};
 
 static NEXT_FD:AtomicU32 = AtomicU32::new(1);
 
@@ -35,9 +35,9 @@ pub struct FdTable {
 
 static FD_TABLE:OnceLock<FdTable> = OnceLock::new();
 
-pub fn GetFdTable() -> &'static FdTable { FD_TABLE.get_or_init(|| FdTable { Files:Mutex::new(HashMap::new()) }) }
+pub(crate) fn GetFdTable() -> &'static FdTable { FD_TABLE.get_or_init(|| FdTable { Files:Mutex::new(HashMap::new()) }) }
 
-pub async fn FileOpenFd(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let ResourceArg = Arguments.first().ok_or("file:open: missing resource")?;
 
 	let Path = extract_path_from_arg(ResourceArg)?;

@@ -12,9 +12,9 @@
 
 use std::path::PathBuf;
 
-use crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot;
+use crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::Fn as FiddeeRoot;
 
-pub fn UserExtensionDirectory() -> PathBuf {
+pub fn Fn() -> PathBuf {
 	if let Ok(Override) = std::env::var("Lodge") {
 		if let Some(Stripped) = Override.strip_prefix("~/") {
 			if let Some(HomeDirectory) = dirs::home_dir() {

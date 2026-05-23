@@ -14,7 +14,7 @@ use serde_json::Value;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn FileUnwatch(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let Token = Arguments
 		.first()
 		.and_then(|V| {

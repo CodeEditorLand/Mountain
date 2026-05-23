@@ -46,4 +46,5 @@ pub mod HandleRevListCount;
 
 pub mod HandleRevParse;
 
+#[path = "Git/Shared/mod.rs"]
 pub(crate) mod Shared;

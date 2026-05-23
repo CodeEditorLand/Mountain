@@ -5,8 +5,10 @@
 
 pub mod Cocoon;
 
+#[path = "Commands/mod.rs"]
 pub mod Commands;
 
+#[path = "Configuration/mod.rs"]
 pub mod Configuration;
 
 pub mod Encryption;
@@ -31,6 +33,7 @@ pub mod Navigation;
 
 pub mod Output;
 
+#[path = "Search/mod.rs"]
 pub mod Search;
 
 pub mod Sky;
@@ -78,8 +81,13 @@ use Update::{
 	IsLatestVersion::Fn as UpdateIsLatestVersion,
 	QuitAndInstall::Fn as UpdateQuitAndInstall,
 };
-use Commands::*;
-use Configuration::*;
+use Commands::{Execute::Fn as CommandsExecute, GetAll::Fn as CommandsGetAll};
+use Configuration::{
+	EnvironmentGet::Fn as EnvironmentGet,
+	Get::Fn as ConfigurationGet,
+	Update::Fn as ConfigurationUpdate,
+	Workbench::Fn as WorkbenchConfiguration,
+};
 use Encryption::{Decrypt::Fn as Decrypt, Encrypt::Fn as Encrypt};
 use Extensions::{
 	ExtensionsGet::Fn as ExtensionsGet,
@@ -89,33 +97,33 @@ use Extensions::{
 };
 use FileSystem::{
 	Managed::{
-		FileCopy::*,
-		FileDelete::*,
-		FileExists::*,
-		FileMkdir::*,
-		FileMove::*,
-		FileRead::*,
-		FileReadBinary::*,
-		FileReaddir::*,
-		FileStat::*,
-		FileWrite::*,
-		FileWriteBinary::*,
+		FileCopy::Fn as FileCopy,
+		FileDelete::Fn as FileDelete,
+		FileExists::Fn as FileExists,
+		FileMkdir::Fn as FileMkdir,
+		FileMove::Fn as FileMove,
+		FileRead::Fn as FileRead,
+		FileReadBinary::Fn as FileReadBinary,
+		FileReaddir::Fn as FileReaddir,
+		FileStat::Fn as FileStat,
+		FileWrite::Fn as FileWrite,
+		FileWriteBinary::Fn as FileWriteBinary,
 	},
 	Native::{
-		FileCloneNative::*,
-		FileCloseFd::FileCloseFd,
-		FileDeleteNative::*,
-		FileExistsNative::*,
-		FileMkdirNative::*,
-		FileOpenFd::FileOpenFd,
-		FileReadNative::*,
-		FileReaddirNative::*,
-		FileRealpath::*,
-		FileRenameNative::*,
-		FileStatNative::*,
-		FileUnwatch::FileUnwatch,
-		FileWatch::FileWatch,
-		FileWriteNative::*,
+		FileCloneNative::Fn as FileCloneNative,
+		FileCloseFd::Fn as FileCloseFd,
+		FileDeleteNative::Fn as FileDeleteNative,
+		FileExistsNative::Fn as FileExistsNative,
+		FileMkdirNative::Fn as FileMkdirNative,
+		FileOpenFd::Fn as FileOpenFd,
+		FileReadNative::Fn as FileReadNative,
+		FileReaddirNative::Fn as FileReaddirNative,
+		FileRealpath::Fn as FileRealpath,
+		FileRenameNative::Fn as FileRenameNative,
+		FileStatNative::Fn as FileStatNative,
+		FileUnwatch::Fn as FileUnwatch,
+		FileWatch::Fn as FileWatch,
+		FileWriteNative::Fn as FileWriteNative,
 	},
 };
 use Model::{
@@ -183,7 +191,7 @@ use Output::{
 	OutputCreate::Fn as OutputCreate,
 	OutputShow::Fn as OutputShow,
 };
-use Search::*;
+use Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchFindInFiles};
 use Storage::{
 	StorageDelete::Fn as StorageDelete,
 	StorageGet::Fn as StorageGet,
@@ -243,14 +251,14 @@ use UI::{
 	WorkspacesRemoveFolder::Fn as WorkspacesRemoveFolder,
 };
 use Utilities::{
-	ApplicationRoot::{get_static_application_root, set_static_application_root},
+	ApplicationRoot::{Get::Fn as get_static_application_root, Set::Fn as set_static_application_root},
 	ChannelPriority::Fn as ResolveChannelPriority,
 	FiddeeRoot::Fn as FiddeeRoot,
 	JsonValueHelpers::Fn as v_str,
 	MetadataEncoding::Fn as metadata_to_istat,
-	PathExtraction::{extract_path_from_arg, percent_decode},
-	RecentlyOpened::{MutateRecentlyOpened, ReadRecentlyOpened, RecentlyOpenedPath},
-	UserdataDir::{ensure_userdata_dirs, get_userdata_base_dir, set_userdata_base_dir},
+	PathExtraction::{Fn as extract_path_from_arg, percent_decode},
+	RecentlyOpened::{Mutate::Fn as MutateRecentlyOpened, Path::Fn as RecentlyOpenedPath, Read::Fn as ReadRecentlyOpened},
+	UserdataDir::{Ensure::Fn as ensure_userdata_dirs, Get::Fn as get_userdata_base_dir, Set::Fn as set_userdata_base_dir},
 };
 use Echo::Task::Priority::Priority as EchoPriority;
 use serde_json::{Value, json};
@@ -917,11 +925,11 @@ pub async fn mountain_ipc_invoke(
 				// it in ScannedExtensions, and return the ILocalExtension wrapper
 				// so the sidebar refreshes without a window reload.
 				"extensions:install" => {
-					Extension::ExtensionInstall::ExtensionInstall(ApplicationHandle.clone(), RunTime.clone(), Arguments)
+					Extension::ExtensionInstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments)
 						.await
 				},
 				"extensions:uninstall" => {
-					Extension::ExtensionUninstall::ExtensionUninstall(
+					Extension::ExtensionUninstall::Fn(
 						ApplicationHandle.clone(),
 						RunTime.clone(),
 						Arguments,
@@ -2275,39 +2283,39 @@ pub async fn mountain_ipc_invoke(
 				// via tokio::process. See Batch 4 in HANDOFF §-10.
 				"git:exec" => {
 					dev_log!("git", "git:exec");
-					Git::HandleExec::HandleExec(Arguments).await
+					Git::HandleExec::Fn(Arguments).await
 				},
 				"git:clone" => {
 					dev_log!("git", "git:clone");
-					Git::HandleClone::HandleClone(Arguments).await
+					Git::HandleClone::Fn(Arguments).await
 				},
 				"git:pull" => {
 					dev_log!("git", "git:pull");
-					Git::HandlePull::HandlePull(Arguments).await
+					Git::HandlePull::Fn(Arguments).await
 				},
 				"git:checkout" => {
 					dev_log!("git", "git:checkout");
-					Git::HandleCheckout::HandleCheckout(Arguments).await
+					Git::HandleCheckout::Fn(Arguments).await
 				},
 				"git:revParse" => {
 					dev_log!("git", "git:revParse");
-					Git::HandleRevParse::HandleRevParse(Arguments).await
+					Git::HandleRevParse::Fn(Arguments).await
 				},
 				"git:fetch" => {
 					dev_log!("git", "git:fetch");
-					Git::HandleFetch::HandleFetch(Arguments).await
+					Git::HandleFetch::Fn(Arguments).await
 				},
 				"git:revListCount" => {
 					dev_log!("git", "git:revListCount");
-					Git::HandleRevListCount::HandleRevListCount(Arguments).await
+					Git::HandleRevListCount::Fn(Arguments).await
 				},
 				"git:cancel" => {
 					dev_log!("git", "git:cancel");
-					Git::HandleCancel::HandleCancel(Arguments).await
+					Git::HandleCancel::Fn(Arguments).await
 				},
 				"git:isAvailable" => {
 					dev_log!("git", "git:isAvailable");
-					Git::HandleIsAvailable::HandleIsAvailable(Arguments).await
+					Git::HandleIsAvailable::Fn(Arguments).await
 				},
 
 				// Tree-view child lookup from the renderer side. Mirrors the
@@ -2419,6 +2427,40 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				// Sky pushes active editor info when user switches tabs.
+				// Sky sends model content changes (debounced) so Cocoon's
+				// DocumentContentCache stays in sync with what the user is typing.
+				// This enables LSP-backed diagnostics, completions, hover to see
+				// up-to-date content without waiting for a file save.
+				"sky:model:contentChanged" => {
+					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+					let Uri = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
+					let Content = Payload.get("content").and_then(Value::as_str).unwrap_or("").to_string();
+					let Version = Payload.get("version").and_then(Value::as_i64).unwrap_or(1);
+					if Uri.is_empty() {
+						return Ok(Value::Null);
+					}
+					// Update in-memory document state.
+					if let Some(mut Doc) = RunTime.Environment.ApplicationState.Feature.Documents.Get(&Uri) {
+						Doc.Version = Version;
+						Doc.Lines = Content.lines().map(|L| L.to_owned()).collect();
+						Doc.IsDirty = true;
+						RunTime.Environment.ApplicationState.Feature.Documents.AddOrUpdate(Uri.clone(), Doc);
+					}
+					// Notify Cocoon so onDidChangeTextDocument fires in extensions.
+					let Payload2 = json!([
+						{ "external": Uri.clone(), "$mid": 1 },
+						{ "content": Content, "versionId": Version, "isDirty": true, "changes": [] }
+					]);
+					tokio::spawn(async move {
+						let _ = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							"$acceptModelChanged".to_string(),
+							Payload2,
+						).await;
+					});
+					Ok(Value::Null)
+				},
+
 				"sky:editor:activeChanged" => {
 					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
 					let Uri = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();

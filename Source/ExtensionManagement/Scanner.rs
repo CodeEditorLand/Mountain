@@ -195,7 +195,7 @@ fn IsUserExtensionScanPath(DirectoryPath:&std::path::Path) -> bool {
 	// `VsixInstaller::InstallVsix` for local VSIX drops and by the scan
 	// path list in `ScanPathConfigure`. Resolved through the
 	// `Utilities::FiddeeRoot` atom so the dotfile name lives in one place.
-	let UserRoot = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot().join("extensions");
+	let UserRoot = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::Fn().join("extensions");
 
 	if Normalised == UserRoot {
 		return true;

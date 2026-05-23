@@ -17,9 +17,9 @@
 use serde_json::{Value, json};
 use tauri::AppHandle;
 
-use crate::{IPC::WindServiceHandlers::NativeDialog::ParseDialogFilters::ParseDialogFilters, dev_log};
+use crate::{IPC::WindServiceHandlers::NativeDialog::ParseDialogFilters::Fn as ParseDialogFilters, dev_log};
 
-pub async fn ShowOpenDialog(ApplicationHandle:AppHandle, Args:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(ApplicationHandle:AppHandle, Args:Vec<Value>) -> Result<Value, String> {
 	use tauri_plugin_dialog::DialogExt;
 
 	dev_log!("folder", "showOpenDialog: {:?}", Args);

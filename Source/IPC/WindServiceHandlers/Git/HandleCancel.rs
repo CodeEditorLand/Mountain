@@ -8,9 +8,9 @@
 
 use serde_json::Value;
 
-use crate::{IPC::WindServiceHandlers::Git::Shared::TakePid, dev_log};
+use crate::{IPC::WindServiceHandlers::Git::Shared::TakePid::Fn as TakePid, dev_log};
 
-pub async fn HandleCancel(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let OperationId = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
 
 	if let Some(Pid) = TakePid(&OperationId) {

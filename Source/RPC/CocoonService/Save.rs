@@ -11,7 +11,7 @@ use crate::{
 	dev_log,
 };
 
-pub async fn ParticipateInSave(
+pub async fn Fn(
 	Service:&CocoonServiceImpl,
 
 	req:ParticipateInSaveRequest,

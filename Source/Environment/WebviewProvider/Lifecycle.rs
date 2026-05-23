@@ -92,7 +92,7 @@ pub(super) async fn create_webview_panel_impl(
 	// tauri::manager which has no assets when frontendDist is null.
 	let title_clone = title.clone();
 
-	let WebviewHostUrl = crate::IPC::WindServiceHandlers::Utilities::LocalhostUrl::get_localhost_url()
+	let WebviewHostUrl = crate::IPC::WindServiceHandlers::Utilities::LocalhostUrl::Get::Fn()
 		.map(|Base| format!("{}/Mountain/WebviewHost", Base))
 		.unwrap_or_else(|| "http://localhost:15536/Mountain/WebviewHost".to_string());
 

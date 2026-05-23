@@ -10,12 +10,12 @@ use tauri::{AppHandle, Emitter};
 
 use crate::{
 	ExtensionManagement::VsixInstaller,
-	IPC::WindServiceHandlers::Extension::NotifyCocoonDeltaExtensions::NotifyCocoonDeltaExtensions,
+	IPC::WindServiceHandlers::Extension::NotifyCocoonDeltaExtensions::Fn as NotifyCocoonDeltaExtensions,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
 
-pub async fn ExtensionUninstall(
+pub async fn Fn(
 	ApplicationHandle:AppHandle,
 
 	Runtime:Arc<ApplicationRunTime>,

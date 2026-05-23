@@ -10,7 +10,7 @@ use serde_json::Value;
 
 use crate::{IPC::WindServiceHandlers::FileSystem::Native::FileOpenFd::GetFdTable, dev_log};
 
-pub async fn FileCloseFd(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Fd = Arguments.first().and_then(Value::as_u64).unwrap_or(0) as u32;
 
 	if Fd == 0 {

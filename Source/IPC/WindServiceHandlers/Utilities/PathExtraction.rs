@@ -8,7 +8,7 @@
 
 use serde_json::Value;
 
-use super::{ApplicationRoot::get_static_application_root, UserdataDir::get_userdata_base_dir};
+use super::{ApplicationRoot::Get::Fn as get_static_application_root, UserdataDir::Get::Fn as get_userdata_base_dir};
 use crate::dev_log;
 
 /// Extract a filesystem path from a VS Code argument.
@@ -17,7 +17,7 @@ use crate::dev_log;
 ///
 /// Windows URI paths have a leading slash: `/C:/Users/...` → strip it.
 /// Unix paths start with `/` normally.
-pub fn extract_path_from_arg(Arg:&Value) -> Result<String, String> {
+pub fn Fn(Arg:&Value) -> Result<String, String> {
 	if let Some(Path) = Arg.as_str() {
 		return Ok(normalize_uri_path(Path));
 	}
@@ -146,7 +146,7 @@ pub fn percent_decode(Input:&str) -> String {
 	Result
 }
 
-pub fn hex_digit(Byte:u8) -> Option<u8> {
+fn hex_digit(Byte:u8) -> Option<u8> {
 	match Byte {
 		b'0'..=b'9' => Some(Byte - b'0'),
 

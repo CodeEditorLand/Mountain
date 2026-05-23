@@ -188,7 +188,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 	if let Ok(Home) = std::env::var("HOME") {
 		// Primary user-scope root post-rename. Resolved through the
 		// `FiddeeRoot` atom so any future rename touches a single file.
-		let FiddeeRoot = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot();
+		let FiddeeRoot = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::Fn();
 
 		if Candidate.starts_with(&FiddeeRoot) || PathToCheck.starts_with(&FiddeeRoot) {
 			return true;

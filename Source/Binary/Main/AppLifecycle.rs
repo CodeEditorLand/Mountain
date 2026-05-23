@@ -162,7 +162,7 @@ pub fn AppLifecycleSetup(
 
 	dev_log!("lifecycle", "[Lifecycle] [Setup] LocalhostUrl={}", localhost_url);
 
-	crate::IPC::WindServiceHandlers::Utilities::LocalhostUrl::set_localhost_url(localhost_url.clone());
+	crate::IPC::WindServiceHandlers::Utilities::LocalhostUrl::Set::Fn(localhost_url.clone());
 
 	let app_handle_for_setup = app_handle.clone();
 
@@ -315,7 +315,7 @@ pub fn AppLifecycleSetup(
 
 		// Set the canonical userdata base so WindServiceHandlers resolves
 		// /User/... paths to the real Tauri app_data_dir (not hardcoded "FIDDEE").
-		crate::IPC::WindServiceHandlers::Utilities::UserdataDir::set_userdata_base_dir(
+		crate::IPC::WindServiceHandlers::Utilities::UserdataDir::Set::Fn(
 			AppDataDir.to_string_lossy().to_string(),
 		);
 
@@ -360,7 +360,7 @@ pub fn AppLifecycleSetup(
 				ExeParent
 			});
 
-		crate::IPC::WindServiceHandlers::Utilities::ApplicationRoot::set_static_application_root(
+		crate::IPC::WindServiceHandlers::Utilities::ApplicationRoot::Set::Fn(
 			SkyTargetDir.to_string_lossy().to_string(),
 		);
 

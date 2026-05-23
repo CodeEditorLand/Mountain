@@ -192,7 +192,7 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 /// `None` when the file is missing/malformed, the entry has no resolvable
 /// path, the path doesn't exist on disk, or it isn't a directory.
 fn ResolveRecentlyOpenedTopFolder() -> Option<PathBuf> {
-	use crate::IPC::WindServiceHandlers::Utilities::RecentlyOpened::ReadRecentlyOpened;
+	use crate::IPC::WindServiceHandlers::Utilities::RecentlyOpened::Read::Fn as ReadRecentlyOpened;
 
 	let Recent = ReadRecentlyOpened().ok()?;
 

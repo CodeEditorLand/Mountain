@@ -25,7 +25,7 @@ const COCOON_SIDE_CAR_IDENTIFIER:&str = "cocoon-main";
 /// feedback isn't blocked on a stalled extension host.
 const COCOON_DELTA_TIMEOUT_MS:u64 = 10_000;
 
-pub fn NotifyCocoonDeltaExtensions(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
+pub fn Fn(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 	tokio::spawn(async move {
 		let Parameters = json!({
 			"toAdd": ToAdd,

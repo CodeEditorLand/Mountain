@@ -11,7 +11,7 @@ use tokio::process::Command;
 
 use crate::dev_log;
 
-pub async fn HandleIsAvailable(_Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(_Arguments:Vec<Value>) -> Result<Value, String> {
 	// Cache only a `true` result - once git is confirmed available it stays
 	// available for the process lifetime.  A `false` result is NOT cached:
 	// the first probe may run before EnhanceShellEnvironment has extended

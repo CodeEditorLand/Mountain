@@ -8,9 +8,13 @@
 
 use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::Git::Shared::{AsStringArray, Generated, RunGit};
+use crate::IPC::WindServiceHandlers::Git::Shared::{
+	AsStringArray::Fn as AsStringArray,
+	Generated::Fn as Generated,
+	RunGit::Fn as RunGit,
+};
 
-pub async fn HandleExec(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let (Argv, Cwd, OperationId) = match Arguments.first() {
 		Some(First) if First.is_object() => {
 			let Obj = First.as_object().unwrap();

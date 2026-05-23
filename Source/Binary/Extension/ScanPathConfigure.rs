@@ -198,7 +198,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 
 		ScanPathsGuard.push(OverridePath);
 	} else {
-		let UserExtensionPath = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot().join("extensions");
+		let UserExtensionPath = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::Fn().join("extensions");
 
 		dev_log!(
 			"extensions",

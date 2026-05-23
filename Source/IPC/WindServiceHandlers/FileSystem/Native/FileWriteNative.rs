@@ -8,9 +8,9 @@
 
 use serde_json::{Value, json};
 
-use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg, dev_log};
+use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as extract_path_from_arg, dev_log};
 
-pub async fn FileWriteNative(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let ResourceArg = Arguments.get(0).ok_or("Missing file path")?;
 
 	// Capture the `external` field (full file:// URI) from the URI object
@@ -79,7 +79,7 @@ pub async fn FileWriteNative(Arguments:Vec<Value>) -> Result<Value, String> {
 	// conflict caused by the pre-write etag being stale after the write.
 	match tokio::fs::metadata(&Path).await {
 		Ok(Meta) => {
-			Ok(crate::IPC::WindServiceHandlers::Utilities::MetadataEncoding::metadata_to_istat(
+			Ok(crate::IPC::WindServiceHandlers::Utilities::MetadataEncoding::Fn(
 				&Meta,
 			))
 		},

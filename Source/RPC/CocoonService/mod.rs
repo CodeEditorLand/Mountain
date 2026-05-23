@@ -827,7 +827,7 @@ impl CocoonService for CocoonServiceImpl {
 
 		request:Request<ParticipateInSaveRequest>,
 	) -> Result<Response<ParticipateInSaveResponse>, Status> {
-		Save::ParticipateInSave(self, request.into_inner()).await
+		Save::Fn(self, request.into_inner()).await
 	}
 
 	async fn get_secret(&self, request:Request<GetSecretRequest>) -> Result<Response<GetSecretResponse>, Status> {

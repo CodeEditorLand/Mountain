@@ -7,9 +7,9 @@
 
 use serde_json::{Value, json};
 
-use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg, dev_log};
+use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as extract_path_from_arg, dev_log};
 
-pub async fn FileReaddirNative(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing directory path")?)?;
 
 	// Emit at the default-visible `vfs` level instead of

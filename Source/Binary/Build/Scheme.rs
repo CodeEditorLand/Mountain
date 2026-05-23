@@ -1160,7 +1160,7 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 	}
 
 	// Fallback: read from filesystem (dev mode where assets aren't embedded)
-	let StaticRoot = crate::IPC::WindServiceHandlers::Utilities::ApplicationRoot::get_static_application_root();
+	let StaticRoot = crate::IPC::WindServiceHandlers::Utilities::ApplicationRoot::Get::Fn();
 
 	if let Some(Root) = StaticRoot {
 		let FilesystemPath = std::path::Path::new(&Root).join(&CleanPath);
@@ -1410,7 +1410,7 @@ fn _VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 	// `Binary/Main/AppLifecycle.rs` to the resolved `Sky/Target/`
 	// directory at startup so we can read the same `pre/` files the
 	// embedded resolver would have served.
-	let StaticRoot = crate::IPC::WindServiceHandlers::Utilities::ApplicationRoot::get_static_application_root();
+	let StaticRoot = crate::IPC::WindServiceHandlers::Utilities::ApplicationRoot::Get::Fn();
 
 	if let Some(Root) = StaticRoot {
 		let FilesystemPath = std::path::Path::new(&Root).join(&ResolvedPath);

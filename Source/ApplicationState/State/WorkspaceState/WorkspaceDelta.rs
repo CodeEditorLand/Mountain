@@ -174,7 +174,7 @@ fn PersistRecentlyOpened(Added:&[WorkspaceFolderStateDTO]) {
 		return;
 	}
 
-	let Path = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot()
+	let Path = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::Fn()
 		.join("workspaces")
 		.join("RecentlyOpened.json");
 

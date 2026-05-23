@@ -25,16 +25,16 @@ use crate::{
 	IPC::{
 		UriComponents::FromFilePath::Fn as UriFromFilePath,
 		WindServiceHandlers::Extension::{
-			NotifyCocoonDeltaExtensions::NotifyCocoonDeltaExtensions,
-			UserExtensionDirectory::UserExtensionDirectory,
-			VsixPathFromArgs::VsixPathFromArgs,
+			NotifyCocoonDeltaExtensions::Fn as NotifyCocoonDeltaExtensions,
+			UserExtensionDirectory::Fn as UserExtensionDirectory,
+			VsixPathFromArgs::Fn as VsixPathFromArgs,
 		},
 	},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
 
-pub async fn ExtensionInstall(
+pub async fn Fn(
 	ApplicationHandle:AppHandle,
 
 	Runtime:Arc<ApplicationRunTime>,

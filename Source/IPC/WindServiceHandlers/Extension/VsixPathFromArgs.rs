@@ -9,7 +9,7 @@ use std::path::PathBuf;
 
 use serde_json::Value;
 
-pub fn VsixPathFromArgs(Args:&[Value]) -> Option<PathBuf> {
+pub fn Fn(Args:&[Value]) -> Option<PathBuf> {
 	let Raw = Args.first()?;
 
 	let RawString = if let Some(AsStr) = Raw.as_str() {

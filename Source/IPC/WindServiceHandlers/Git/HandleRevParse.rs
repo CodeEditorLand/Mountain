@@ -7,9 +7,9 @@
 
 use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::Git::Shared::{Generated, RunGit};
+use crate::IPC::WindServiceHandlers::Git::Shared::{Generated::Fn as Generated, RunGit::Fn as RunGit};
 
-pub async fn HandleRevParse(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let RepoPath = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
 
 	let Reference = Arguments.get(1).and_then(Value::as_str).unwrap_or("HEAD").to_string();

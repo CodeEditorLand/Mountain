@@ -11,12 +11,12 @@ use serde_json::Value;
 use crate::{
 	IPC::{
 		DevLog,
-		WindServiceHandlers::Utilities::{MetadataEncoding::metadata_to_istat, PathExtraction::extract_path_from_arg},
+		WindServiceHandlers::Utilities::{MetadataEncoding::Fn as metadata_to_istat, PathExtraction::Fn as extract_path_from_arg},
 	},
 	dev_log,
 };
 
-pub async fn FileStatNative(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing file path")?)?;
 
 	// Per-path stat emits at very high volume during workbench boot
