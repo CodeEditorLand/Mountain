@@ -34,33 +34,9 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::Track::Effect::{
-	CreateEffectForRequest::Utilities::Params::{bool_at, str_at},
+	CreateEffectForRequest::Utilities::Params::{bool_at, str_at, strip_file_uri},
 	MappedEffectType::MappedEffect,
 };
-
-/// Strip a leading `file://` (or `file:///`) scheme from the incoming path.
-/// Cocoon sends full URIs like `file:///<home>/.fiddee/extensions/...`
-/// through `FileSystem.ReadFile`/`WriteFile`/`ReadDirectory`; `PathBuf` from
-/// such a string treats the scheme literally and every read 404s. Without
-/// this the redhat.java activation (and any other extension that uses the
-/// gRPC fs.readFile path for its own package.json) fails with "Resource not
-/// found: file:///...".
-fn StripFileUriScheme(Input:&str) -> &str {
-	if let Some(Rest) = Input.strip_prefix("file://") {
-		// `file:///Users/...` - the third slash is part of the path, keep it.
-		if Rest.starts_with('/') {
-			return Rest;
-		}
-
-		// `file://localhost/Users/...` - rarely used, but normalise by
-		// stripping host-up-to-first-slash. Fall through on failure.
-		if let Some(Idx) = Rest.find('/') {
-			return &Rest[Idx..];
-		}
-	}
-
-	Input
-}
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
@@ -86,7 +62,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					return Ok(json!(payload));
 				}
 				let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
-				let path = std::path::PathBuf::from(StripFileUriScheme(path_str));
+				let path = std::path::PathBuf::from(strip_file_uri(path_str));
 				fs_reader
 					.ReadFile(&path)
 					.await
@@ -102,7 +78,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				if path_str.is_empty() {
 					return Err("FileSystem.WriteFile: empty path (resource not found)".to_string());
 				}
-				let path = std::path::PathBuf::from(StripFileUriScheme(path_str));
+				let path = std::path::PathBuf::from(strip_file_uri(path_str));
 				let content = Parameters.get(1).cloned();
 				let content_bytes = match content {
 					Some(Value::Array(arr)) => arr.into_iter().filter_map(|v| v.as_u64().map(|n| n as u8)).collect(),
@@ -131,7 +107,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					return Err("FileSystem.ReadDirectory: empty path (resource not found)".to_string());
 				}
 				let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
-				let path = std::path::PathBuf::from(StripFileUriScheme(path_str));
+				let path = std::path::PathBuf::from(strip_file_uri(path_str));
 				fs_reader
 					.ReadDirectory(&path)
 					.await
@@ -153,7 +129,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				if path_str.is_empty() {
 					return Err("FileSystem.Stat: empty path (resource not found)".to_string());
 				}
-				let path = std::path::PathBuf::from(StripFileUriScheme(path_str));
+				let path = std::path::PathBuf::from(strip_file_uri(path_str));
 				fs_reader
 					.StatFile(&path)
 					.await
@@ -166,7 +142,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			crate::effect!(run_time, {
 				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
 				let path_str = str_at(&Parameters, 0);
-				let path = std::path::PathBuf::from(StripFileUriScheme(path_str));
+				let path = std::path::PathBuf::from(strip_file_uri(path_str));
 				fs_writer
 					.CreateDirectory(&path, true)
 					.await
@@ -179,7 +155,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			crate::effect!(run_time, {
 				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
 				let path_str = str_at(&Parameters, 0);
-				let path = std::path::PathBuf::from(StripFileUriScheme(path_str));
+				let path = std::path::PathBuf::from(strip_file_uri(path_str));
 				let recursive = bool_at(&Parameters, 1);
 				fs_writer
 					.Delete(&path, recursive, false)
@@ -196,8 +172,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				let target = str_at(&Parameters, 1);
 				fs_writer
 					.Rename(
-						&std::path::PathBuf::from(StripFileUriScheme(source)),
-						&std::path::PathBuf::from(StripFileUriScheme(target)),
+						&std::path::PathBuf::from(strip_file_uri(source)),
+						&std::path::PathBuf::from(strip_file_uri(target)),
 						true,
 					)
 					.await
@@ -213,8 +189,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				let target = str_at(&Parameters, 1);
 				fs_writer
 					.Copy(
-						&std::path::PathBuf::from(StripFileUriScheme(source)),
-						&std::path::PathBuf::from(StripFileUriScheme(target)),
+						&std::path::PathBuf::from(strip_file_uri(source)),
+						&std::path::PathBuf::from(strip_file_uri(target)),
 						true,
 					)
 					.await

@@ -41,7 +41,11 @@ use tauri::Emitter;
 use url::Url;
 
 use super::MountainEnvironment::MountainEnvironment;
-use crate::dev_log;
+use crate::{
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	Track::Effect::CreateEffectForRequest::Utilities::Proxy::proxy_cocoon,
+	dev_log,
+};
 
 /// Process-global custom editor registry: ViewType → SidecarId.
 /// Populated by `RegisterCustomEditorProvider`, consumed by
@@ -157,20 +161,25 @@ impl CustomEditorProvider for MountainEnvironment {
 		// stored the document under this key when it returned its
 		// `CustomDocument` from `openCustomDocument`); the cancellation
 		// token id is unused by our shim path and we send `0`.
-		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+		let run_time:Arc<ApplicationRunTime> =
+			self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 		let DocumentIdentifier = json!({
 			"viewType": ViewType,
 			"resource": { "external": ResourceURI.to_string() },
 		});
 
-		let RPCMethod = format!("{}$onSaveCustomDocument", ProxyTarget::ExtHostCustomEditors.GetTargetPrefix());
-
 		let RPCParameters = json!([DocumentIdentifier, 0]);
 
-		match IPCProvider
-			.SendRequestToSideCar("cocoon-main".to_string(), RPCMethod, RPCParameters, 30_000)
-			.await
+		match proxy_cocoon(
+			&run_time,
+			ProxyTarget::ExtHostCustomEditors,
+			"onSaveCustomDocument",
+			RPCParameters,
+			30_000,
+		)
+		.await
+		.map_err(|e| CommonError::IPCError { Description:e })
 		{
 			Ok(_) => {
 				dev_log!(

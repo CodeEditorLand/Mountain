@@ -36,9 +36,8 @@ pub mod TestRunStatus;
 use std::sync::Arc;
 
 use CommonLibrary::{
-	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
-	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider, SkyEvent::SkyEvent},
+	IPC::{DTO::ProxyTarget::ProxyTarget, SkyEvent::SkyEvent},
 	Testing::TestController::TestController,
 };
 use async_trait::async_trait;
@@ -47,7 +46,11 @@ use tauri::Emitter;
 use uuid::Uuid;
 
 use super::MountainEnvironment::MountainEnvironment;
-use crate::dev_log;
+use crate::{
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	Track::Effect::CreateEffectForRequest::Utilities::Proxy::proxy_cocoon,
+	dev_log,
+};
 
 #[async_trait]
 impl TestController for MountainEnvironment {
@@ -177,16 +180,12 @@ impl MountainEnvironment {
 
 		let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Running).await;
 
-		let IPCProviderHandle:Arc<dyn IPCProvider> = self.Require();
-
-		let RPCMethod = format!("{}$runTests", ProxyTarget::ExtHostTesting.GetTargetPrefix());
+		let run_time:Arc<ApplicationRunTime> =
+			self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 		let RPCParams = json!({ "RunIdentifier": RunIdentifier, "TestRunRequest": TestRunRequest });
 
-		match IPCProviderHandle
-			.SendRequestToSideCar(SideCarIdentifier.to_string(), RPCMethod, RPCParams, 300000)
-			.await
-		{
+		match proxy_cocoon(&run_time, ProxyTarget::ExtHostTesting, "runTests", RPCParams, 300000).await {
 			Ok(Response) => {
 				if let Ok(Results) = serde_json::from_value::<Vec<TestResult::Struct>>(Response) {
 					let _ = Self::StoreTestResults(self, RunIdentifier, Results).await;
@@ -219,7 +218,7 @@ impl MountainEnvironment {
 
 				let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Errored).await;
 
-				Err(Error)
+				Err(CommonError::IPCError { Description:Error })
 			},
 		}
 	}
