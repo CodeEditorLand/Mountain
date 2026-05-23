@@ -202,19 +202,36 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				)
 				.await;
 
-				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
+				let SaveResult = match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
 					&run_time.Environment,
 					"sky://workspace/save",
 					UriVal.clone(),
 				)
 				.await
 				{
-					Ok(Result) => Ok(if Result.is_null() { UriVal } else { Result }),
+					Ok(Result) => {
+						if Result.is_null() {
+							UriVal.clone()
+						} else {
+							Result
+						}
+					},
 					Err(Error) => {
 						dev_log!("ipc", "warn: [Workspace.Save] Sky did not answer ({:?}); ok", Error);
-						Ok(UriVal)
+						UriVal.clone()
 					},
-				}
+				};
+
+				// Notify Cocoon that the file was saved so `onDidSaveTextDocument`
+				// fires for extension-triggered saves (format-on-save, etc.).
+				let _ = crate::Vine::Client::SendNotification::Fn(
+					"cocoon-main".to_string(),
+					"$acceptModelSaved".to_string(),
+					serde_json::json!({ "uri": UriVal }),
+				)
+				.await;
+
+				Ok(SaveResult)
 			})
 		},
 

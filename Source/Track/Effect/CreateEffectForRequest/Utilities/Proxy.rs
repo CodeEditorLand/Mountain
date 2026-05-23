@@ -27,4 +27,5 @@ pub async fn proxy_cocoon(
 	let method = format!("{}${}", target.GetTargetPrefix(), method_suffix);
 	ipc.SendRequestToSideCar("cocoon-main".to_string(), method, params, timeout_ms)
 		.await
+		.map_err(|e| e.to_string())
 }

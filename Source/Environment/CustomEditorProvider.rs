@@ -37,7 +37,7 @@ use CommonLibrary::{
 };
 use async_trait::async_trait;
 use serde_json::{Value, json};
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 use url::Url;
 
 use super::MountainEnvironment::MountainEnvironment;

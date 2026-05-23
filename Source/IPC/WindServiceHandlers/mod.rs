@@ -341,43 +341,6 @@ macro_rules! forward_to_cocoon {
 	}};
 }
 
-/// Delegate an IPC arm to an atomic handler with a `dev_log!` prefix.
-///
-/// `rt` / `app` selects `RunTime.clone()` vs `ApplicationHandle.clone()`.
-/// Third token: a `$tag:literal` path for the log category.
-/// Optional `$msg:literal` after the tag: static message (else `"{}",
-/// command`). Optional trailing `$Arguments:ident`: pass arguments to the
-/// handler.
-macro_rules! call {
-	(rt, $tag:literal, $Fn:path, $Arguments:ident) => {{
-		dev_log!($tag, "{}", command);
-		$Fn(RunTime.clone(), $Arguments).await
-	}};
-	(rt, $tag:literal, $Fn:path) => {{
-		dev_log!($tag, "{}", command);
-		$Fn(RunTime.clone()).await
-	}};
-	(rt, $tag:literal, $msg:literal, $Fn:path, $Arguments:ident) => {{
-		dev_log!($tag, $msg);
-		$Fn(RunTime.clone(), $Arguments).await
-	}};
-	(rt, $tag:literal, $msg:literal, $Fn:path) => {{
-		dev_log!($tag, $msg);
-		$Fn(RunTime.clone()).await
-	}};
-	(app, $tag:literal, $Fn:path, $Arguments:ident) => {{
-		dev_log!($tag, "{}", command);
-		$Fn(ApplicationHandle.clone(), $Arguments).await
-	}};
-	(app, $tag:literal, $msg:literal, $Fn:path, $Arguments:ident) => {{
-		dev_log!($tag, $msg);
-		$Fn(ApplicationHandle.clone(), $Arguments).await
-	}};
-	(app, $tag:literal, $msg:literal, $Fn:path) => {{
-		dev_log!($tag, $msg);
-		$Fn(ApplicationHandle.clone()).await
-	}};
-}
 
 /// Internal dispatcher for the single front-end Tauri command
 /// `MountainIPCInvoke` (registered in `Binary/Main/Entry.rs::invoke_handler!`,
@@ -613,6 +576,39 @@ pub async fn mountain_ipc_invoke(
 			let RunTime = DispatchRuntime;
 			let command = DispatchCommand;
 			let Arguments = DispatchArgs;
+
+			// Defined here (not at module level) so macro hygiene resolves
+			// `RunTime`, `ApplicationHandle`, and `command` from this scope.
+			macro_rules! call {
+				(rt, $tag:literal, $Fn:path, $Arguments:ident) => {{
+					dev_log!($tag, "{}", command);
+					$Fn(RunTime.clone(), $Arguments).await
+				}};
+				(rt, $tag:literal, $Fn:path) => {{
+					dev_log!($tag, "{}", command);
+					$Fn(RunTime.clone()).await
+				}};
+				(rt, $tag:literal, $msg:literal, $Fn:path, $Arguments:ident) => {{
+					dev_log!($tag, $msg);
+					$Fn(RunTime.clone(), $Arguments).await
+				}};
+				(rt, $tag:literal, $msg:literal, $Fn:path) => {{
+					dev_log!($tag, $msg);
+					$Fn(RunTime.clone()).await
+				}};
+				(app, $tag:literal, $Fn:path, $Arguments:ident) => {{
+					dev_log!($tag, "{}", command);
+					$Fn(ApplicationHandle.clone(), $Arguments).await
+				}};
+				(app, $tag:literal, $msg:literal, $Fn:path, $Arguments:ident) => {{
+					dev_log!($tag, $msg);
+					$Fn(ApplicationHandle.clone(), $Arguments).await
+				}};
+				(app, $tag:literal, $msg:literal, $Fn:path) => {{
+					dev_log!($tag, $msg);
+					$Fn(ApplicationHandle.clone()).await
+				}};
+			}
 
 			let MatchResult = match command.as_str() {
 				// Configuration commands. VS Code's stock

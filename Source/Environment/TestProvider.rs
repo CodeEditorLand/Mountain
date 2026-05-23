@@ -42,7 +42,7 @@ use CommonLibrary::{
 };
 use async_trait::async_trait;
 use serde_json::{Value, json};
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 use uuid::Uuid;
 
 use super::MountainEnvironment::MountainEnvironment;

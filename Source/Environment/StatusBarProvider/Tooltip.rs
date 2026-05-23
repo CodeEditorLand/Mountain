@@ -6,6 +6,7 @@
 use std::sync::Arc;
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::DTO::ProxyTarget::ProxyTarget};
+use tauri::Manager;
 use serde_json::{Value, json};
 
 use super::super::MountainEnvironment::MountainEnvironment;
