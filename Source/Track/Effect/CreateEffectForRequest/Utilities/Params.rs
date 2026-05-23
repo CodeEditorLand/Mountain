@@ -29,3 +29,17 @@ pub fn str_obj_or_pos<'a>(p:&'a Value, key:&str, n:usize) -> &'a str {
 		p.get(n).and_then(Value::as_str).unwrap_or("")
 	}
 }
+
+/// Strip a leading `file://` or `file:///` scheme. Handles the
+/// `file://localhost/...` form by removing the host segment.
+pub fn strip_file_uri(input:&str) -> &str {
+	if let Some(rest) = input.strip_prefix("file://") {
+		if rest.starts_with('/') {
+			return rest;
+		}
+		if let Some(idx) = rest.find('/') {
+			return &rest[idx..];
+		}
+	}
+	input
+}

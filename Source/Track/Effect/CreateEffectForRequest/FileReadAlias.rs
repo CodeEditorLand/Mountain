@@ -9,27 +9,10 @@ use CommonLibrary::{Environment::Requires::Requires, FileSystem::FileSystemReade
 use serde_json::{Value, json};
 use tauri::Runtime;
 
-use crate::Track::Effect::{CreateEffectForRequest::Utilities::Params::str_obj_or_pos, MappedEffectType::MappedEffect};
-
-/// Strip a leading `file://` (or `file:///`) scheme from the incoming path.
-/// Mirrors the helper in `FileSystem.rs`; inlined here to avoid a cross-module
-/// dependency on a private function in a sibling module.
-/// Cocoon sends full URIs like `file:///<home>/.fiddee/extensions/...` through
-/// the legacy `openDocument`/`readFile`/`stat` routes; without stripping,
-/// `PathBuf` roots at the literal scheme string and every read 404s.
-fn StripFileUriScheme(Input:&str) -> &str {
-	if let Some(Rest) = Input.strip_prefix("file://") {
-		if Rest.starts_with('/') {
-			return Rest;
-		}
-
-		if let Some(Idx) = Rest.find('/') {
-			return &Rest[Idx..];
-		}
-	}
-
-	Input
-}
+use crate::Track::Effect::{
+	CreateEffectForRequest::Utilities::Params::{str_obj_or_pos, strip_file_uri},
+	MappedEffectType::MappedEffect,
+};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {

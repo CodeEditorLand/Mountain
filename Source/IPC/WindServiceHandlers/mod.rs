@@ -373,6 +373,10 @@ macro_rules! call {
 		dev_log!($tag, $msg);
 		$Fn(ApplicationHandle.clone(), $Arguments).await
 	}};
+	(app, $tag:literal, $msg:literal, $Fn:path) => {{
+		dev_log!($tag, $msg);
+		$Fn(ApplicationHandle.clone()).await
+	}};
 }
 
 /// Internal dispatcher for the single front-end Tauri command
@@ -823,18 +827,9 @@ pub async fn mountain_ipc_invoke(
 				| "commands:onDidExecuteCommand" => Ok(Value::Null),
 
 				// Extension host commands
-				"extensions:getAll" => {
-					dev_log!("extensions", "extensions:getAll");
-					ExtensionsGetAll(RunTime.clone()).await
-				},
-				"extensions:get" => {
-					dev_log!("extensions", "extensions:get");
-					ExtensionsGet(RunTime.clone(), Arguments).await
-				},
-				"extensions:isActive" => {
-					dev_log!("extensions", "extensions:isActive");
-					ExtensionsIsActive(RunTime.clone(), Arguments).await
-				},
+				"extensions:getAll" => call!(rt, "extensions", "extensions:getAll", ExtensionsGetAll),
+				"extensions:get" => call!(rt, "extensions", "extensions:get", ExtensionsGet, Arguments),
+				"extensions:isActive" => call!(rt, "extensions", "extensions:isActive", ExtensionsIsActive, Arguments),
 				// `extensions:activate(extensionId)` - send `$activateByEvent`
 				// to Cocoon so the extension host starts the extension. VS Code
 				// normally drives activation via the workbench's activation events
@@ -1147,71 +1142,34 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				// Decorations commands
-				"decorations:get" => {
-					dev_log!("decorations", "decorations:get");
-					DecorationsGet(RunTime.clone(), Arguments).await
-				},
-				"decorations:getMany" => {
-					dev_log!("decorations", "decorations:getMany");
-					DecorationsGetMany(RunTime.clone(), Arguments).await
-				},
-				"decorations:set" => {
-					dev_log!("decorations", "decorations:set");
-					DecorationsSet(RunTime.clone(), Arguments).await
-				},
-				"decorations:clear" => {
-					dev_log!("decorations", "decorations:clear");
-					DecorationsClear(RunTime.clone(), Arguments).await
-				},
+				"decorations:get" => call!(rt, "decorations", "decorations:get", DecorationsGet, Arguments),
+				"decorations:getMany" => call!(rt, "decorations", "decorations:getMany", DecorationsGetMany, Arguments),
+				"decorations:set" => call!(rt, "decorations", "decorations:set", DecorationsSet, Arguments),
+				"decorations:clear" => call!(rt, "decorations", "decorations:clear", DecorationsClear, Arguments),
 
 				// WorkingCopy commands
-				"workingCopy:isDirty" => {
-					dev_log!("workingcopy", "workingCopy:isDirty");
-					WorkingCopyIsDirty(RunTime.clone(), Arguments).await
-				},
+				"workingCopy:isDirty" => call!(rt, "workingcopy", "workingCopy:isDirty", WorkingCopyIsDirty, Arguments),
 				"workingCopy:setDirty" => {
-					dev_log!("workingcopy", "workingCopy:setDirty");
-					WorkingCopySetDirty(RunTime.clone(), Arguments).await
+					call!(rt, "workingcopy", "workingCopy:setDirty", WorkingCopySetDirty, Arguments)
 				},
 				"workingCopy:getAllDirty" => {
-					dev_log!("workingcopy", "workingCopy:getAllDirty");
-					WorkingCopyGetAllDirty(RunTime.clone()).await
+					call!(rt, "workingcopy", "workingCopy:getAllDirty", WorkingCopyGetAllDirty)
 				},
 				"workingCopy:getDirtyCount" => {
-					dev_log!("workingcopy", "workingCopy:getDirtyCount");
-					WorkingCopyGetDirtyCount(RunTime.clone()).await
+					call!(rt, "workingcopy", "workingCopy:getDirtyCount", WorkingCopyGetDirtyCount)
 				},
 
 				// Keybinding commands
-				"keybinding:add" => {
-					dev_log!("keybinding", "keybinding:add");
-					KeybindingAdd(RunTime.clone(), Arguments).await
-				},
-				"keybinding:remove" => {
-					dev_log!("keybinding", "keybinding:remove");
-					KeybindingRemove(RunTime.clone(), Arguments).await
-				},
-				"keybinding:lookup" => {
-					dev_log!("keybinding", "keybinding:lookup");
-					KeybindingLookup(RunTime.clone(), Arguments).await
-				},
-				"keybinding:getAll" => {
-					dev_log!("keybinding", "keybinding:getAll");
-					KeybindingGetAll(RunTime.clone()).await
-				},
+				"keybinding:add" => call!(rt, "keybinding", "keybinding:add", KeybindingAdd, Arguments),
+				"keybinding:remove" => call!(rt, "keybinding", "keybinding:remove", KeybindingRemove, Arguments),
+				"keybinding:lookup" => call!(rt, "keybinding", "keybinding:lookup", KeybindingLookup, Arguments),
+				"keybinding:getAll" => call!(rt, "keybinding", "keybinding:getAll", KeybindingGetAll),
 
 				// Lifecycle commands
-				"lifecycle:getPhase" => {
-					dev_log!("lifecycle", "lifecycle:getPhase");
-					LifecycleGetPhase(RunTime.clone()).await
-				},
-				"lifecycle:whenPhase" => {
-					dev_log!("lifecycle", "lifecycle:whenPhase");
-					LifecycleWhenPhase(RunTime.clone(), Arguments).await
-				},
+				"lifecycle:getPhase" => call!(rt, "lifecycle", "lifecycle:getPhase", LifecycleGetPhase),
+				"lifecycle:whenPhase" => call!(rt, "lifecycle", "lifecycle:whenPhase", LifecycleWhenPhase, Arguments),
 				"lifecycle:requestShutdown" => {
-					dev_log!("lifecycle", "lifecycle:requestShutdown");
-					LifecycleRequestShutdown(ApplicationHandle.clone()).await
+					call!(app, "lifecycle", "lifecycle:requestShutdown", LifecycleRequestShutdown)
 				},
 				"lifecycle:advancePhase" | "lifecycle:setPhase" => {
 					dev_log!("lifecycle", "{}", command);
