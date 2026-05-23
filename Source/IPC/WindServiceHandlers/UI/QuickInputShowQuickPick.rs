@@ -51,6 +51,9 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		..Default::default()
 	};
 
+	// Extract before move into ShowQuickPick.
+	let CanPickMany = Options.CanPickMany == Some(true);
+
 	let Result = RunTime
 		.Environment
 		.ShowQuickPick(Items, Some(Options))
@@ -62,7 +65,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		// single string. .next() was always returning only the first item
 		// even for multi-select, silently discarding all other selections.
 		Some(Labels) => {
-			if Options.CanPickMany == Some(true) {
+			if CanPickMany {
 				Ok(json!(Labels))
 			} else {
 				Ok(Labels.into_iter().next().map(|S| json!(S)).unwrap_or(Value::Null))

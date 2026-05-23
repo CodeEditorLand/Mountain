@@ -38,10 +38,14 @@ pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Val
 			Builder = Builder.title(&Title);
 		}
 		if let Some(DetailText) = Detail.as_deref() {
-			// Use .body() not .title() - detail is the message body text.
-			// Calling .title(DetailText) overwrites the dialog title with
-			// the detail string, losing the original title entirely.
-			Builder = Builder.body(DetailText);
+			// MessageDialogBuilder has no .body() method. Append the detail
+			// text to the message so it appears in the dialog body rather
+			// than overwriting the title (the original bug).
+			let Combined = format!("{}\n\n{}", &Message, DetailText);
+			Builder = Handle.dialog().message(&Combined).kind(Kind);
+			if !Title.is_empty() {
+				Builder = Builder.title(&Title);
+			}
 		}
 		Builder.blocking_show()
 	})
