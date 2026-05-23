@@ -9,7 +9,7 @@ use tauri::AppHandle;
 
 use crate::dev_log;
 
-pub async fn Quit(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
 	dev_log!("lifecycle", "nativeHost:quit - exiting cleanly");
 
 	ApplicationHandle.exit(0);

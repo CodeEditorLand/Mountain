@@ -12,7 +12,7 @@ use serde_json::Value;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn StorageUpdateItems(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
 
 	if let Some(Updates) = Arguments.first().and_then(|V| V.as_object()) {

@@ -15,7 +15,7 @@ use crate::{
 	dev_log,
 };
 
-pub async fn TextfileSave(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let ResourceArg = Arguments.first().ok_or("textFile:save requires a resource argument")?;
 
 	let Path = extract_path_from_arg(ResourceArg).unwrap_or_default();

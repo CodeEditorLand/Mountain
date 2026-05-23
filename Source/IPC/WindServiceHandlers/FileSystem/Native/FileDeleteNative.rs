@@ -4,9 +4,9 @@
 //! directories; `useTrash` is accepted but not yet implemented (future
 //! atom: trash.rs on macOS/Linux via `trash-rs`, Windows via SHFileOp).
 
-use serde_json::Value;
+use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg;
+use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg, dev_log};
 
 pub async fn FileDeleteNative(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing file path")?)?;
@@ -30,6 +30,25 @@ pub async fn FileDeleteNative(Arguments:Vec<Value>) -> Result<Value, String> {
 		tokio::fs::remove_file(&Path).await
 	}
 	.map_err(|E| format!("Failed to delete: {} ({})", Path, E))?;
+
+	// Notify Cocoon so `onDidDeleteFiles` fires for extensions (GitLens, etc.)
+	let FileUri = format!("file://{}", Path);
+	dev_log!("vfs", "file:delete ok path={}", Path);
+	tokio::spawn(async move {
+		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
+			"cocoon-main".to_string(),
+			"$acceptDidDeleteFiles".to_string(),
+			json!({ "files": [{ "uri": FileUri }] }),
+		)
+		.await
+		{
+			dev_log!(
+				"vfs",
+				"warn: [FileDeleteNative] $acceptDidDeleteFiles notify failed: {:?}",
+				Error
+			);
+		}
+	});
 
 	Ok(Value::Null)
 }

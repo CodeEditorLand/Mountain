@@ -8,7 +8,7 @@
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager};
 
-pub async fn NativeGetEnvironmentPaths(ApplicationHandle:AppHandle) -> Result<Value, String> {
+pub async fn Fn(ApplicationHandle:AppHandle) -> Result<Value, String> {
 	let PathResolver = ApplicationHandle.path();
 
 	let AppDataDir = PathResolver.app_data_dir().unwrap_or_default();

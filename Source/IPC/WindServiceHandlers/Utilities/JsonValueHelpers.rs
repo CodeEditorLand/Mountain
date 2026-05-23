@@ -7,7 +7,7 @@
 
 use serde_json::Value;
 
-pub fn v_str(Value:&Value) -> Option<String> {
+pub fn Fn(Value:&Value) -> Option<String> {
 	if let Some(s) = Value.as_str() {
 		return Some(s.to_string());
 	}

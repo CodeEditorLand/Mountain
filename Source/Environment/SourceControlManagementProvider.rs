@@ -198,6 +198,20 @@ impl SourceControlManagementProvider for MountainEnvironment {
 				}
 			}
 
+			if let Some(placeholder) = UpdateData.InputBoxPlaceholder {
+				if let Some(input_box) = &mut Provider.InputBox {
+					input_box.Placeholder = placeholder;
+				}
+			}
+
+			if let Some(template) = UpdateData.CommitTemplate {
+				Provider.CommitTemplate = Some(template);
+			}
+
+			if let Some(cmd) = UpdateData.AcceptInputCommand {
+				Provider.AcceptInputCommand = Some(cmd);
+			}
+
 			let ProviderClone = Provider.clone();
 
 			// Release lock before emitting

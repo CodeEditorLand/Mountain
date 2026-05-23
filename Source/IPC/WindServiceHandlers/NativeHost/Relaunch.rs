@@ -10,7 +10,7 @@ use tauri::AppHandle;
 
 use crate::dev_log;
 
-pub async fn Relaunch(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
 	dev_log!("lifecycle", "nativeHost:relaunch - restarting process");
 
 	// restart() calls std::process::exit internally - return type is `!`

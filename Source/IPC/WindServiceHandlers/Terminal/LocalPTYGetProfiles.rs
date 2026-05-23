@@ -12,7 +12,7 @@
 
 use serde_json::{Value, json};
 
-pub async fn LocalPTYGetProfiles() -> Result<Value, String> {
+pub async fn Fn() -> Result<Value, String> {
 	let mut Profiles = Vec::new();
 
 	#[cfg(unix)]

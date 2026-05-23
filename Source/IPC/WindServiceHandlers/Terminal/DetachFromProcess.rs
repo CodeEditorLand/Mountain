@@ -16,7 +16,7 @@ use serde_json::Value;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn DetachFromProcess(_RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(_RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let TerminalId = match Arguments.first() {
 		Some(Value::Number(N)) => N.as_u64().unwrap_or(0),
 

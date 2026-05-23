@@ -11,7 +11,7 @@ use serde_json::Value;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn TextfileRead(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let Path = Arguments
 		.first()
 		.and_then(|V| V.as_str())

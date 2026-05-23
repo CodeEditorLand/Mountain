@@ -18,7 +18,7 @@ use tauri::{AppHandle, Emitter};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn SkyReplayEvents(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let mut TreeViewCount:usize = 0;
 
 	let mut ScmCount:usize = 0;

@@ -8,7 +8,7 @@
 
 use serde_json::{Value, json};
 
-pub async fn LocalPTYGetDefaultShell() -> Result<Value, String> {
+pub async fn Fn() -> Result<Value, String> {
 	#[cfg(unix)]
 	{
 		let Shell = std::env::var("SHELL").unwrap_or_else(|_| {

@@ -16,7 +16,7 @@ const CLI_NAME:&str = "land";
 
 const SYMLINK_DIR:&str = "/usr/local/bin";
 
-pub async fn InstallShellCommand(_Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(_Arguments:Vec<Value>) -> Result<Value, String> {
 	let ExePath = std::env::current_exe().map_err(|E| format!("installShellCommand: cannot get exe path: {E}"))?;
 
 	let Target = PathBuf::from(SYMLINK_DIR).join(CLI_NAME);

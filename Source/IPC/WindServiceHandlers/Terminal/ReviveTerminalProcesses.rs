@@ -37,7 +37,7 @@ use serde_json::{Value, json};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn ReviveTerminalProcesses(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let States:Vec<Value> = match Arguments.first() {
 		Some(Value::Array(Array)) => Array.clone(),
 

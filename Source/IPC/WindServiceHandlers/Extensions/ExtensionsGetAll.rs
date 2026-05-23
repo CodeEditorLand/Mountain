@@ -14,7 +14,7 @@ use serde_json::{Value, json};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn ExtensionsGetAll(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Extensions = RunTime
 		.Environment
 		.GetExtensions()

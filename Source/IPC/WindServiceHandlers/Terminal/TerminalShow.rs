@@ -11,7 +11,7 @@ use serde_json::Value;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn TerminalShow(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let TerminalId = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0);
 
 	let PreserveFocus = Arguments.get(1).and_then(|V| V.as_bool()).unwrap_or(false);

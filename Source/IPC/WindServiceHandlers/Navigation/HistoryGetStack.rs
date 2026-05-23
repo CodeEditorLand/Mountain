@@ -10,7 +10,7 @@ use serde_json::Value;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn HistoryGetStack(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Stack = RunTime.Environment.ApplicationState.Feature.NavigationHistory.GetStack();
 
 	Ok(Value::Array(Stack.into_iter().map(Value::String).collect()))

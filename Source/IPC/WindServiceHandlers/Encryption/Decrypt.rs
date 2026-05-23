@@ -12,9 +12,9 @@ use ring::aead::{AES_256_GCM, Aad, LessSafeKey, Nonce, UnboundKey};
 use serde_json::{Value, json};
 
 use crate::dev_log;
-use super::super::Encryption::Key::DeriveKey;
+use super::Key::Fn as DeriveKey;
 
-pub async fn Decrypt(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Ciphertext = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	if Ciphertext.is_empty() {

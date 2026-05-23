@@ -11,6 +11,6 @@
 use serde_json::Value;
 use tauri::AppHandle;
 
-pub async fn NativeShowOpenDialog(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-	crate::IPC::WindServiceHandlers::NativeDialog::ShowOpenDialog::ShowOpenDialog(ApplicationHandle, Arguments).await
+pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
+	crate::IPC::WindServiceHandlers::NativeDialog::ShowOpenDialog::Fn(ApplicationHandle, Arguments).await
 }

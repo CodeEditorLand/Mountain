@@ -18,7 +18,7 @@ use tauri::AppHandle;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn TreeGetChildren(
+pub async fn Fn(
 	ApplicationHandle:AppHandle,
 
 	RunTime:Arc<ApplicationRunTime>,

@@ -4,9 +4,9 @@
 //! preserves content but not xattrs/acls; callers that need metadata
 //! should use an OS-specific clone atom (future work).
 
-use serde_json::Value;
+use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg;
+use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg, dev_log};
 
 pub async fn FileCloneNative(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Source = extract_path_from_arg(Arguments.get(0).ok_or("Missing source path")?)?;
@@ -26,6 +26,25 @@ pub async fn FileCloneNative(Arguments:Vec<Value>) -> Result<Value, String> {
 	tokio::fs::copy(&Source, &Target)
 		.await
 		.map_err(|E| format!("Failed to clone: {} -> {} ({})", Source, Target, E))?;
+
+	// Notify Cocoon so `onDidCreateFiles` fires for the newly copied file.
+	let NewUri = format!("file://{}", Target);
+	dev_log!("vfs", "file:clone ok {} -> {}", Source, Target);
+	tokio::spawn(async move {
+		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
+			"cocoon-main".to_string(),
+			"$acceptDidCreateFiles".to_string(),
+			json!({ "files": [{ "uri": NewUri }] }),
+		)
+		.await
+		{
+			dev_log!(
+				"vfs",
+				"warn: [FileCloneNative] $acceptDidCreateFiles notify failed: {:?}",
+				Error
+			);
+		}
+	});
 
 	Ok(Value::Null)
 }

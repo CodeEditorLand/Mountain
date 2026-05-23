@@ -9,7 +9,7 @@ use serde_json::Value;
 
 use crate::dev_log;
 
-pub async fn KillProcess(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Pid = Arguments.first().and_then(Value::as_u64).unwrap_or(0) as u32;
 
 	if Pid == 0 {

@@ -13,7 +13,7 @@ const CLI_NAME:&str = "land";
 
 const SYMLINK_DIR:&str = "/usr/local/bin";
 
-pub async fn UninstallShellCommand(_Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(_Arguments:Vec<Value>) -> Result<Value, String> {
 	let Target = PathBuf::from(SYMLINK_DIR).join(CLI_NAME);
 
 	dev_log!("shell-cmd", "uninstallShellCommand: removing {}", Target.display());

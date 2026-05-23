@@ -10,7 +10,7 @@ use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn ModelGetAll(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let All = RunTime
 		.Environment
 		.ApplicationState

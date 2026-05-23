@@ -7,7 +7,7 @@
 
 use serde_json::{Value, json};
 
-pub async fn LocalPTYFreePortKillProcess(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Port = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0) as u16;
 
 	if Port > 0 {

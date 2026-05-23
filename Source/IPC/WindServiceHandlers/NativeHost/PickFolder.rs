@@ -23,7 +23,7 @@ use crate::{
 	dev_log,
 };
 
-pub async fn NativePickFolder(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
 	use std::path::PathBuf;
 
 	use tauri_plugin_dialog::DialogExt;

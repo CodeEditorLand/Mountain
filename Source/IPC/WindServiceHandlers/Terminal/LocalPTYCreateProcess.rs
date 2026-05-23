@@ -12,11 +12,11 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::{
-	IPC::WindServiceHandlers::Terminal::TerminalCreate::TerminalCreate,
+	IPC::WindServiceHandlers::Terminal::TerminalCreate::Fn as TerminalCreate,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
-pub async fn LocalPTYCreateProcess(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	match TerminalCreate(RunTime, Arguments).await {
 		Ok(Response) => {
 			let TerminalIdOption = Response.get("id").and_then(serde_json::Value::as_u64);

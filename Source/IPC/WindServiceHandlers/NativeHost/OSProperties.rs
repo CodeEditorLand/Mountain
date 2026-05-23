@@ -11,7 +11,7 @@ use serde_json::{Value, json};
 
 static OS_PROPERTIES_CACHE:OnceLock<Value> = OnceLock::new();
 
-pub async fn NativeOSProperties() -> Result<Value, String> {
+pub async fn Fn() -> Result<Value, String> {
 	if let Some(Cached) = OS_PROPERTIES_CACHE.get() {
 		return Ok(Cached.clone());
 	}

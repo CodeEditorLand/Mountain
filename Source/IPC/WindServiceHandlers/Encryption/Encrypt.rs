@@ -15,9 +15,9 @@ use ring::{
 use serde_json::{Value, json};
 
 use crate::dev_log;
-use super::super::Encryption::Key::DeriveKey;
+use super::Key::Fn as DeriveKey;
 
-pub async fn Encrypt(Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Plaintext = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	if Plaintext.is_empty() {

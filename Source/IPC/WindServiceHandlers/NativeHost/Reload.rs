@@ -9,7 +9,7 @@ use tauri::{AppHandle, Manager};
 
 use crate::dev_log;
 
-pub async fn Reload(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
 	dev_log!("lifecycle", "nativeHost:reload - reloading webview");
 
 	if let Some(Window) = ApplicationHandle.get_webview_window("main") {

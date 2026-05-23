@@ -21,7 +21,7 @@ pub const DOTFILE_NAME:&str = ".fiddee";
 /// Returns `$HOME/.fiddee` (or `$USERPROFILE\.fiddee` on Windows).
 /// Falls back to a relative `.fiddee` so callers always get a valid
 /// `PathBuf` - matches the previous `$HOME/.land` resolution semantics.
-pub fn FiddeeRoot() -> PathBuf {
+pub fn Fn() -> PathBuf {
 	if let Some(Home) = dirs::home_dir() {
 		return Home.join(DOTFILE_NAME);
 	}

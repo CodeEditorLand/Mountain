@@ -13,7 +13,7 @@ use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn StorageGetItems(RunTime:Arc<ApplicationRunTime>, _Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>, _Arguments:Vec<Value>) -> Result<Value, String> {
 	let provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
 
 	match provider.GetAllStorage(true).await {

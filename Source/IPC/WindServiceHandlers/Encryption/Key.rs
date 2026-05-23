@@ -20,7 +20,7 @@ static DERIVED_KEY:OnceLock<Option<[u8; 32]>> = OnceLock::new();
 /// Returns `Err` when no machine-bound seed is available on this system so
 /// that callers can propagate the failure instead of encrypting with a
 /// predictable constant.
-pub fn DeriveKey() -> Result<[u8; 32], String> {
+pub fn Fn() -> Result<[u8; 32], String> {
 	DERIVED_KEY
 		.get_or_init(ComputeKey)
 		.ok_or_else(|| "encryption unavailable: machine ID lookup failed".to_string())

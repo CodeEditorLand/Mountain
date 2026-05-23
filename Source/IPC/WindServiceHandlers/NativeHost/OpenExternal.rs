@@ -9,7 +9,7 @@ use serde_json::Value;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn OpenExternal(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	// Accept both a plain URI string and the object shape
 	// `{ uri: "..." }` that some VS Code callers emit.
 	let url_str = match Arguments.first() {

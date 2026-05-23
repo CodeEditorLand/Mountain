@@ -66,7 +66,7 @@ fn CacheIndex(TypeFilter:Option<u8>) -> usize {
 	}
 }
 
-pub async fn ExtensionsGetInstalled(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let TypeFilter:Option<u8> = Arguments.first().and_then(|V| V.as_u64()).map(|N| N as u8);
 
 	// Fast path: return cached response if available (built on first call per

@@ -19,7 +19,7 @@ use serde_json::{Value, json};
 // restart the editor (same behaviour as stock VS Code on Electron).
 static DARK_MODE_CACHE:OnceLock<bool> = OnceLock::new();
 
-pub async fn NativeGetColorScheme() -> Result<Value, String> {
+pub async fn Fn() -> Result<Value, String> {
 	let Dark = *DARK_MODE_CACHE.get_or_init(detect_dark_mode);
 
 	let HighContrast = {

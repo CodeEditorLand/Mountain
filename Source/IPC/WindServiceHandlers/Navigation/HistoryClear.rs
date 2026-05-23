@@ -10,7 +10,7 @@ use serde_json::Value;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn HistoryClear(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	RunTime.Environment.ApplicationState.Feature.NavigationHistory.Clear();
 
 	Ok(Value::Null)

@@ -60,33 +60,32 @@ use Cocoon::{
 	Request::Fn as CocoonRequest,
 };
 use ExtensionHost::{
-	DebugService::{ExtensionHostDebugClose, ExtensionHostDebugReload},
-	Starter::{
-		ExtensionHostStarterCreate,
-		ExtensionHostStarterGetExitInfo,
-		ExtensionHostStarterKill,
-		ExtensionHostStarterStart,
-		ExtensionHostStarterWaitForExit,
-	},
+	DebugServiceClose::Fn as ExtensionHostDebugClose,
+	DebugServiceReload::Fn as ExtensionHostDebugReload,
+	StarterCreate::Fn as ExtensionHostStarterCreate,
+	StarterGetExitInfo::Fn as ExtensionHostStarterGetExitInfo,
+	StarterKill::Fn as ExtensionHostStarterKill,
+	StarterStart::Fn as ExtensionHostStarterStart,
+	StarterWaitForExit::Fn as ExtensionHostStarterWaitForExit,
 };
-use Sky::ReplayEvents::SkyReplayEvents;
-use TreeView::GetChildren::TreeGetChildren;
-use Update::UpdateService::{
-	UpdateApplyUpdate,
-	UpdateCheckForUpdates,
-	UpdateDownloadUpdate,
-	UpdateGetInitialState,
-	UpdateIsLatestVersion,
-	UpdateQuitAndInstall,
+use Sky::ReplayEvents::Fn as SkyReplayEvents;
+use TreeView::GetChildren::Fn as TreeGetChildren;
+use Update::{
+	ApplyUpdate::Fn as UpdateApplyUpdate,
+	CheckForUpdates::Fn as UpdateCheckForUpdates,
+	DownloadUpdate::Fn as UpdateDownloadUpdate,
+	GetInitialState::Fn as UpdateGetInitialState,
+	IsLatestVersion::Fn as UpdateIsLatestVersion,
+	QuitAndInstall::Fn as UpdateQuitAndInstall,
 };
 use Commands::*;
 use Configuration::*;
-use Encryption::{Decrypt::Decrypt, Encrypt::Encrypt};
+use Encryption::{Decrypt::Fn as Decrypt, Encrypt::Fn as Encrypt};
 use Extensions::{
-	ExtensionsGet::ExtensionsGet,
-	ExtensionsGetAll::ExtensionsGetAll,
-	ExtensionsGetInstalled::ExtensionsGetInstalled,
-	ExtensionsIsActive::ExtensionsIsActive,
+	ExtensionsGet::Fn as ExtensionsGet,
+	ExtensionsGetAll::Fn as ExtensionsGetAll,
+	ExtensionsGetInstalled::Fn as ExtensionsGetInstalled,
+	ExtensionsIsActive::Fn as ExtensionsIsActive,
 };
 use FileSystem::{
 	Managed::{
@@ -120,116 +119,138 @@ use FileSystem::{
 	},
 };
 use Model::{
-	ModelClose::ModelClose,
-	ModelGet::ModelGet,
-	ModelGetAll::ModelGetAll,
-	ModelOpen::ModelOpen,
-	ModelUpdateContent::ModelUpdateContent,
-	TextfileRead::TextfileRead,
-	TextfileSave::TextfileSave,
-	TextfileWrite::TextfileWrite,
+	ModelClose::Fn as ModelClose,
+	ModelGet::Fn as ModelGet,
+	ModelGetAll::Fn as ModelGetAll,
+	ModelOpen::Fn as ModelOpen,
+	ModelUpdateContent::Fn as ModelUpdateContent,
+	TextfileRead::Fn as TextfileRead,
+	TextfileSave::Fn as TextfileSave,
+	TextfileWrite::Fn as TextfileWrite,
 };
 use NativeHost::{
-	Clipboard::{
-		NativeHasClipboard,
-		NativeReadClipboardBuffer,
-		NativeReadClipboardFindText,
-		NativeReadClipboardText,
-		NativeReadImage,
-		NativeTriggerPaste,
-		NativeWriteClipboardBuffer,
-		NativeWriteClipboardFindText,
-		NativeWriteClipboardText,
-	},
-	Exit::Exit,
-	FindFreePort::*,
-	GetColorScheme::*,
-	GetEnvironmentPaths::NativeGetEnvironmentPaths,
-	InstallShellCommand::InstallShellCommand,
-	IsFullscreen::*,
-	IsMaximized::*,
-	IsRunningUnderARM64Translation::NativeIsRunningUnderARM64Translation,
-	KillProcess::KillProcess,
-	MoveItemToTrash::NativeMoveItemToTrash,
-	OSProperties::*,
-	OSStatistics::*,
-	OpenDevTools::OpenDevTools,
-	OpenExternal::*,
-	PickFolder::*,
-	Quit::Quit,
-	Relaunch::Relaunch,
-	Reload::Reload,
-	ShowItemInFolder::*,
-	ShowMessageBox::NativeShowMessageBox,
-	ShowOpenDialog::*,
-	ShowSaveDialog::{NativeShowSaveDialog, UserInterfaceShowSaveDialog},
-	ToggleDevTools::ToggleDevTools,
-	UninstallShellCommand::UninstallShellCommand,
+	ClipboardHas::Fn as NativeHasClipboard,
+	ClipboardReadBuffer::Fn as NativeReadClipboardBuffer,
+	ClipboardReadFindText::Fn as NativeReadClipboardFindText,
+	ClipboardReadImage::Fn as NativeReadImage,
+	ClipboardReadText::Fn as NativeReadClipboardText,
+	ClipboardTriggerPaste::Fn as NativeTriggerPaste,
+	ClipboardWriteBuffer::Fn as NativeWriteClipboardBuffer,
+	ClipboardWriteFindText::Fn as NativeWriteClipboardFindText,
+	ClipboardWriteText::Fn as NativeWriteClipboardText,
+	Exit::Fn as Exit,
+	FindFreePort::Fn as NativeFindFreePort,
+	GetColorScheme::Fn as NativeGetColorScheme,
+	GetEnvironmentPaths::Fn as NativeGetEnvironmentPaths,
+	InstallShellCommand::Fn as InstallShellCommand,
+	IsFullscreen::Fn as NativeIsFullscreen,
+	IsMaximized::Fn as NativeIsMaximized,
+	IsRunningUnderARM64Translation::Fn as NativeIsRunningUnderARM64Translation,
+	KillProcess::Fn as KillProcess,
+	MoveItemToTrash::Fn as NativeMoveItemToTrash,
+	OSProperties::Fn as NativeOSProperties,
+	OSStatistics::Fn as NativeOSStatistics,
+	OpenDevTools::Fn as OpenDevTools,
+	OpenExternal::Fn as OpenExternal,
+	PickFolder::Fn as NativePickFolder,
+	Quit::Fn as Quit,
+	Relaunch::Fn as Relaunch,
+	Reload::Fn as Reload,
+	ShowItemInFolder::Fn as ShowItemInFolder,
+	ShowMessageBox::Fn as NativeShowMessageBox,
+	ShowOpenDialog::Fn as NativeShowOpenDialog,
+	ShowSaveDialog::Fn as NativeShowSaveDialog,
+	ShowSaveDialogUI::Fn as UserInterfaceShowSaveDialog,
+	ToggleDevTools::Fn as ToggleDevTools,
+	UninstallShellCommand::Fn as UninstallShellCommand,
 };
 use Navigation::{
-	HistoryCanGoBack::HistoryCanGoBack,
-	HistoryCanGoForward::HistoryCanGoForward,
-	HistoryClear::HistoryClear,
-	HistoryGetStack::HistoryGetStack,
-	HistoryGoBack::HistoryGoBack,
-	HistoryGoForward::HistoryGoForward,
-	HistoryPush::HistoryPush,
-	LabelGetBase::LabelGetBase,
-	LabelGetURI::LabelGetURI,
-	LabelGetWorkspace::LabelGetWorkspace,
+	HistoryCanGoBack::Fn as HistoryCanGoBack,
+	HistoryCanGoForward::Fn as HistoryCanGoForward,
+	HistoryClear::Fn as HistoryClear,
+	HistoryGetStack::Fn as HistoryGetStack,
+	HistoryGoBack::Fn as HistoryGoBack,
+	HistoryGoForward::Fn as HistoryGoForward,
+	HistoryPush::Fn as HistoryPush,
+	LabelGetBase::Fn as LabelGetBase,
+	LabelGetURI::Fn as LabelGetURI,
+	LabelGetWorkspace::Fn as LabelGetWorkspace,
 };
 use Output::{
-	OutputAppend::OutputAppend,
-	OutputAppendLine::OutputAppendLine,
-	OutputClear::OutputClear,
-	OutputCreate::OutputCreate,
-	OutputShow::OutputShow,
+	OutputAppend::Fn as OutputAppend,
+	OutputAppendLine::Fn as OutputAppendLine,
+	OutputClear::Fn as OutputClear,
+	OutputCreate::Fn as OutputCreate,
+	OutputShow::Fn as OutputShow,
 };
 use Search::*;
 use Storage::{
-	StorageDelete::StorageDelete,
-	StorageGet::StorageGet,
-	StorageGetItems::StorageGetItems,
-	StorageKeys::StorageKeys,
-	StorageSet::StorageSet,
-	StorageUpdateItems::StorageUpdateItems,
+	StorageDelete::Fn as StorageDelete,
+	StorageGet::Fn as StorageGet,
+	StorageGetItems::Fn as StorageGetItems,
+	StorageKeys::Fn as StorageKeys,
+	StorageSet::Fn as StorageSet,
+	StorageUpdateItems::Fn as StorageUpdateItems,
 };
 use Terminal::{
-	AttachToProcess::AttachToProcess,
-	DetachFromProcess::DetachFromProcess,
-	LocalPTYCreateProcess::LocalPTYCreateProcess,
-	LocalPTYFreePortKillProcess::LocalPTYFreePortKillProcess,
-	LocalPTYGetDefaultShell::LocalPTYGetDefaultShell,
-	LocalPTYGetEnvironment::LocalPTYGetEnvironment,
-	LocalPTYGetProfiles::LocalPTYGetProfiles,
-	LocalPTYResize::LocalPTYResize,
-	ReviveTerminalProcesses::ReviveTerminalProcesses,
-	SerializeTerminalState::SerializeTerminalState,
-	TerminalCreate::TerminalCreate,
-	TerminalDispose::TerminalDispose,
-	TerminalHide::TerminalHide,
-	TerminalSendText::TerminalSendText,
-	TerminalShow::TerminalShow,
+	AttachToProcess::Fn as AttachToProcess,
+	DetachFromProcess::Fn as DetachFromProcess,
+	LocalPTYCreateProcess::Fn as LocalPTYCreateProcess,
+	LocalPTYFreePortKillProcess::Fn as LocalPTYFreePortKillProcess,
+	LocalPTYGetDefaultShell::Fn as LocalPTYGetDefaultShell,
+	LocalPTYGetEnvironment::Fn as LocalPTYGetEnvironment,
+	LocalPTYGetProfiles::Fn as LocalPTYGetProfiles,
+	LocalPTYResize::Fn as LocalPTYResize,
+	ReviveTerminalProcesses::Fn as ReviveTerminalProcesses,
+	SerializeTerminalState::Fn as SerializeTerminalState,
+	TerminalCreate::Fn as TerminalCreate,
+	TerminalDispose::Fn as TerminalDispose,
+	TerminalHide::Fn as TerminalHide,
+	TerminalSendText::Fn as TerminalSendText,
+	TerminalShow::Fn as TerminalShow,
 };
 use UI::{
-	Decoration::*,
-	Keybinding::*,
-	Lifecycle::*,
-	Notification::*,
-	Progress::*,
-	QuickInput::*,
-	Theme::*,
-	WorkingCopy::*,
-	Workspace::*,
+	DecorationsClear::Fn as DecorationsClear,
+	DecorationsGet::Fn as DecorationsGet,
+	DecorationsGetMany::Fn as DecorationsGetMany,
+	DecorationsSet::Fn as DecorationsSet,
+	KeybindingAdd::Fn as KeybindingAdd,
+	KeybindingGetAll::Fn as KeybindingGetAll,
+	KeybindingLookup::Fn as KeybindingLookup,
+	KeybindingRemove::Fn as KeybindingRemove,
+	LifecycleGetPhase::Fn as LifecycleGetPhase,
+	LifecycleRequestShutdown::Fn as LifecycleRequestShutdown,
+	LifecycleWhenPhase::Fn as LifecycleWhenPhase,
+	NotificationEndProgress::Fn as NotificationEndProgress,
+	NotificationShow::Fn as NotificationShow,
+	NotificationShowProgress::Fn as NotificationShowProgress,
+	NotificationUpdateProgress::Fn as NotificationUpdateProgress,
+	ProgressBegin::Fn as ProgressBegin,
+	ProgressEnd::Fn as ProgressEnd,
+	ProgressReport::Fn as ProgressReport,
+	QuickInputShowInputBox::Fn as QuickInputShowInputBox,
+	QuickInputShowQuickPick::Fn as QuickInputShowQuickPick,
+	ThemesGetActive::Fn as ThemesGetActive,
+	ThemesList::Fn as ThemesList,
+	ThemesSet::Fn as ThemesSet,
+	WorkingCopyGetAllDirty::Fn as WorkingCopyGetAllDirty,
+	WorkingCopyGetDirtyCount::Fn as WorkingCopyGetDirtyCount,
+	WorkingCopyIsDirty::Fn as WorkingCopyIsDirty,
+	WorkingCopySetDirty::Fn as WorkingCopySetDirty,
+	WorkspacesAddFolder::Fn as WorkspacesAddFolder,
+	WorkspacesGetFolders::Fn as WorkspacesGetFolders,
+	WorkspacesGetName::Fn as WorkspacesGetName,
+	WorkspacesRemoveFolder::Fn as WorkspacesRemoveFolder,
 };
 use Utilities::{
-	ApplicationRoot::*,
-	ChannelPriority::*,
-	JsonValueHelpers::*,
-	MetadataEncoding::*,
-	PathExtraction::*,
-	RecentlyOpened::*,
-	UserdataDir::*,
+	ApplicationRoot::{get_static_application_root, set_static_application_root},
+	ChannelPriority::Fn as ResolveChannelPriority,
+	FiddeeRoot::Fn as FiddeeRoot,
+	JsonValueHelpers::Fn as v_str,
+	MetadataEncoding::Fn as metadata_to_istat,
+	PathExtraction::{extract_path_from_arg, percent_decode},
+	RecentlyOpened::{MutateRecentlyOpened, ReadRecentlyOpened, RecentlyOpenedPath},
+	UserdataDir::{ensure_userdata_dirs, get_userdata_base_dir, set_userdata_base_dir},
 };
 use Echo::Task::Priority::Priority as EchoPriority;
 use serde_json::{Value, json};
@@ -254,6 +275,10 @@ use CommonLibrary::{
 	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
 	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
 	IPC::SkyEvent::SkyEvent,
+	LanguageFeature::{
+		DTO::PositionDTO::PositionDTO,
+		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
+	},
 	Storage::StorageProvider::StorageProvider,
 };
 
@@ -2293,6 +2318,47 @@ pub async fn mountain_ipc_invoke(
 				// ask first. Delegated to atomic handler.
 				"tree:getChildren" => TreeGetChildren(ApplicationHandle.clone(), RunTime.clone(), Arguments).await,
 
+				// `treeView.reveal(element)` - focus/expand a specific item in the tree.
+				// Emits a Sky event that triggers `IViewsService.openView(viewId)`.
+				"tree.reveal" | "tree:reveal" => {
+					use tauri::Emitter;
+					let ViewId = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+					let Handle = Arguments.get(1).and_then(|V| V.as_str()).map(String::from).unwrap_or_default();
+					let Options = Arguments.get(2).cloned().unwrap_or(Value::Null);
+					dev_log!("ipc", "tree.reveal viewId={} handle={}", ViewId, Handle);
+					let _ = ApplicationHandle.emit("sky://tree-view/reveal", json!({
+						"viewId": ViewId,
+						"handle": Handle,
+						"options": Options,
+					}));
+					Ok(Value::Null)
+				},
+
+				// Tree view UI interaction events forwarded from Sky → Mountain → Cocoon.
+				// Sky emits these when the VS Code workbench fires treeView.onDidChangeSelection,
+				// onDidCollapseElement, onDidExpandElement, onDidChangeVisibility.
+				"tree:selectionChanged" | "tree:collapseElement" | "tree:expandElement" | "tree:visibilityChanged" => {
+					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+					let Method = match command {
+						"tree:selectionChanged" => "$treeView:selectionChanged",
+						"tree:collapseElement" => "$treeView:collapseElement",
+						"tree:expandElement" => "$treeView:expandElement",
+						_ => "$treeView:visibilityChanged",
+					};
+					tokio::spawn(async move {
+						if let Err(E) = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							Method.to_string(),
+							Payload,
+						)
+						.await
+						{
+							dev_log!("ipc", "warn: [tree] Cocoon notify {} failed: {:?}", Method, E);
+						}
+					});
+					Ok(Value::Null)
+				},
+
 				// SkyBridge event replay - delegated to atomic handler.
 				"sky:replay-events" => SkyReplayEvents(ApplicationHandle.clone(), RunTime.clone()).await,
 
@@ -2379,6 +2445,41 @@ pub async fn mountain_ipc_invoke(
 				// These are VS Code language-intelligence channels. Mountain has no
 				// native implementation - Cocoon's extension host processes them via
 				// the LanguageProviderRegistry. All go through cocoon:request bridge.
+				// Sky Bridge inline completion request: Sky's Monaco InlineCompletionsProvider
+				// calls this when the editor requests ghost text for a cursor position.
+				// Uses the public LanguageFeatureProviderRegistry trait to call the same
+				// pipeline as Mountain's own gRPC ProvideInlineCompletionItems handler.
+				"language:provideInlineCompletions" => {
+					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+					let UriStr = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
+
+					if UriStr.is_empty() {
+						Ok(json!({ "items": [] }))
+					} else {
+						let Line = Payload.get("position").and_then(|P| P.get("line")).and_then(Value::as_u64).unwrap_or(0) as i64 + 1;
+						let Character = Payload.get("position").and_then(|P| P.get("character")).and_then(Value::as_u64).unwrap_or(0) as i64 + 1;
+						let Context = Payload.get("context").cloned().unwrap_or_else(|| json!({ "triggerKind": 0 }));
+
+						match url::Url::parse(&UriStr) {
+							Ok(Uri) => {
+								let Position = PositionDTO { LineNumber:Line, Column:Character };
+								match RunTime.Environment.ProvideInlineCompletionItems(Uri, Position, Context).await {
+									Ok(Some(Result)) => {
+										let Items = Result.get("items").cloned().unwrap_or_else(|| if Result.is_array() { Result } else { json!([]) });
+										Ok(json!({ "items": Items }))
+									},
+									Ok(None) => Ok(json!({ "items": [] })),
+									Err(Error) => {
+										dev_log!("ipc", "warn: language:provideInlineCompletions error: {}", Error);
+										Ok(json!({ "items": [] }))
+									},
+								}
+							},
+							Err(_) => Ok(json!({ "items": [] })),
+						}
+					}
+				},
+
 				"languages:getAll" | "languages:getEncodedLanguageId" => {
 					dev_log!("extensions", "languages: {} (→ Cocoon)", command);
 					let Payload = Arguments.into_iter().next().unwrap_or(Value::Null);

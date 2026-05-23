@@ -18,7 +18,7 @@ use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
-pub async fn ModelOpen(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())

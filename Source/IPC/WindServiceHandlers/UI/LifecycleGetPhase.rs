@@ -1,0 +1,15 @@
+#![allow(non_snake_case, unused_variables)]
+
+//! Wire method: `lifecycle:getPhase`.
+
+use std::sync::Arc;
+
+use serde_json::{Value, json};
+
+use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+
+pub async fn Fn(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Phase = RunTime.Environment.ApplicationState.Feature.Lifecycle.GetPhase();
+
+	Ok(json!(Phase))
+}
