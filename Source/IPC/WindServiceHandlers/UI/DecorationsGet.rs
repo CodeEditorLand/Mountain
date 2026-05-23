@@ -7,6 +7,7 @@
 use std::sync::Arc;
 
 use serde_json::Value;
+use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 

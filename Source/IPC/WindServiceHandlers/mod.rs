@@ -2352,7 +2352,7 @@ pub async fn mountain_ipc_invoke(
 				// onDidCollapseElement, onDidExpandElement, onDidChangeVisibility.
 				"tree:selectionChanged" | "tree:collapseElement" | "tree:expandElement" | "tree:visibilityChanged" => {
 					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
-					let Method = match command {
+					let Method = match command.as_str() {
 						"tree:selectionChanged" => "$treeView:selectionChanged",
 						"tree:collapseElement" => "$treeView:collapseElement",
 						"tree:expandElement" => "$treeView:expandElement",
@@ -2439,36 +2439,35 @@ pub async fn mountain_ipc_invoke(
 				"sky:model:contentChanged" => {
 					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
 					let Uri = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
-					let Content = Payload.get("content").and_then(Value::as_str).unwrap_or("").to_string();
-					let Version = Payload.get("version").and_then(Value::as_i64).unwrap_or(1);
-					if Uri.is_empty() {
-						return Ok(Value::Null);
+					if !Uri.is_empty() {
+						let Content = Payload.get("content").and_then(Value::as_str).unwrap_or("").to_string();
+						let Version = Payload.get("version").and_then(Value::as_i64).unwrap_or(1);
+						// Update in-memory document state.
+						if let Some(mut Doc) = RunTime.Environment.ApplicationState.Feature.Documents.Get(&Uri) {
+							Doc.Version = Version;
+							Doc.Lines = Content.lines().map(|L| L.to_owned()).collect();
+							Doc.IsDirty = true;
+							RunTime
+								.Environment
+								.ApplicationState
+								.Feature
+								.Documents
+								.AddOrUpdate(Uri.clone(), Doc);
+						}
+						// Notify Cocoon so onDidChangeTextDocument fires in extensions.
+						let Payload2 = json!([
+							{ "external": Uri.clone(), "$mid": 1 },
+							{ "content": Content, "versionId": Version, "isDirty": true, "changes": [] }
+						]);
+						tokio::spawn(async move {
+							let _ = crate::Vine::Client::SendNotification::Fn(
+								"cocoon-main".to_string(),
+								"$acceptModelChanged".to_string(),
+								Payload2,
+							)
+							.await;
+						});
 					}
-					// Update in-memory document state.
-					if let Some(mut Doc) = RunTime.Environment.ApplicationState.Feature.Documents.Get(&Uri) {
-						Doc.Version = Version;
-						Doc.Lines = Content.lines().map(|L| L.to_owned()).collect();
-						Doc.IsDirty = true;
-						RunTime
-							.Environment
-							.ApplicationState
-							.Feature
-							.Documents
-							.AddOrUpdate(Uri.clone(), Doc);
-					}
-					// Notify Cocoon so onDidChangeTextDocument fires in extensions.
-					let Payload2 = json!([
-						{ "external": Uri.clone(), "$mid": 1 },
-						{ "content": Content, "versionId": Version, "isDirty": true, "changes": [] }
-					]);
-					tokio::spawn(async move {
-						let _ = crate::Vine::Client::SendNotification::Fn(
-							"cocoon-main".to_string(),
-							"$acceptModelChanged".to_string(),
-							Payload2,
-						)
-						.await;
-					});
 					Ok(Value::Null)
 				},
 
@@ -2523,7 +2522,7 @@ pub async fn mountain_ipc_invoke(
 
 						match url::Url::parse(&UriStr) {
 							Ok(Uri) => {
-								let Position = PositionDTO { LineNumber:Line, Column:Character };
+								let Position = PositionDTO { LineNumber:Line as u32, Column:Character as u32 };
 								match RunTime.Environment.ProvideInlineCompletionItems(Uri, Position, Context).await {
 									Ok(Some(Result)) => {
 										let Items = Result

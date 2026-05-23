@@ -87,7 +87,7 @@ use crate::{
 	Binary::Build::ServiceRegistry::ServiceRegistry as ServiceRegistryFn,
 	Binary::Build::TauriBuild::TauriBuild as TauriBuildFn,
 	Binary::Build::WindowBuild::WindowBuild as WindowBuildFn,
-	Binary::Extension::ExtensionPopulate::ExtensionPopulate as ExtensionPopulateFn,
+	Binary::Extension::ExtensionPopulate::Fn as ExtensionPopulateFn,
 	Binary::Extension::ScanPathConfigure::ScanPathConfigure as ScanPathConfigureFn,
 	Binary::Initialize::CliParse::Parse as CliParseFn,
 	Binary::Initialize::LogLevel::Resolve as ResolveLogLevel,

@@ -112,6 +112,8 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 			Count:None,
 
+			AcceptInputCommand:None,
+
 			InputBox:None,
 		};
 
@@ -200,7 +202,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 			if let Some(placeholder) = UpdateData.InputBoxPlaceholder {
 				if let Some(input_box) = &mut Provider.InputBox {
-					input_box.Placeholder = placeholder;
+					input_box.Placeholder = Some(placeholder);
 				}
 			}
 

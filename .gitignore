@@ -54,6 +54,8 @@ Target/debug/bundle/macos
 !/Target/debug/*.exe
 !/Target/debug/Mountain
 !/Target/debug/Mountain.exe
+# Re-ignore Mountain if it's a directory (build artifacts folder), keep it if it's a binary
+Target/debug/Mountain/
 
 # ------------------------------ Release Build ------------------------------
 /Target/release/*
@@ -87,6 +89,8 @@ Target/release/bundle/macos
 !/Target/release/*.exe
 !/Target/release/Mountain
 !/Target/release/Mountain.exe
+# Re-ignore Mountain if it's a directory (build artifacts folder), keep it if it's a binary
+Target/release/Mountain/
 
 # ------------------------------ Windows MSVC Build ------------------------------
 /Target/x86_64-pc-windows-msvc/*
