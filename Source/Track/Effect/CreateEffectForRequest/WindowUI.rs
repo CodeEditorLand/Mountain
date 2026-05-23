@@ -21,41 +21,69 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
+						use std::sync::atomic::{AtomicU64, Ordering as AO};
+
 						use tauri::Emitter;
+
 						let AppHandle = run_time.Environment.ApplicationHandle.clone();
 						let Payload = if Parameters.is_array() {
 							Parameters.get(0).cloned().unwrap_or_default()
 						} else {
 							Parameters
 						};
-						let Id = format!(
-							"notification-{}",
-							std::time::SystemTime::now()
-								.duration_since(std::time::UNIX_EPOCH)
-								.map(|D| D.as_millis())
-								.unwrap_or(0)
-						);
 						let Message = Payload.get("message").and_then(Value::as_str).unwrap_or("").to_string();
 						let Level = Payload.get("level").and_then(Value::as_str).unwrap_or("info").to_string();
-						let Items = Payload.get("items").cloned().unwrap_or(json!([]));
+						let Items = Payload.get("items").and_then(Value::as_array).cloned().unwrap_or_default();
 						let Options = Payload.get("options").cloned().unwrap_or(json!({}));
+
+						if Items.is_empty() {
+							// Fire-and-forget: no action buttons needed.
+							let _ = AppHandle.emit(
+								"sky://notification/show",
+								json!({
+									"message": Message,
+									"severity": Level,
+									"actions": [],
+									"options": Options,
+								}),
+							);
+							return Ok(Value::Null);
+						}
+
+						// Round-trip: emit to the show-message-request channel
+						// (which INotificationService handles with real action
+						// buttons) and block until the user clicks or dismisses.
+						static UI_MSG_SEQ:AtomicU64 = AtomicU64::new(1);
+						let Nonce = format!("msg-{}", UI_MSG_SEQ.fetch_add(1, AO::Relaxed));
+
+						let (tx, rx) = tokio::sync::oneshot::channel();
+						run_time.Environment.ApplicationState.UI.AddPendingRequest(Nonce.clone(), tx);
+
+						let Actions:Vec<serde_json::Value> = Items
+							.iter()
+							.map(|Item| if Item.is_string() { json!({ "title": Item }) } else { Item.clone() })
+							.collect();
+
 						if let Err(Error) = AppHandle.emit(
-							"sky://notification/show",
+							"sky://ui/show-message-request",
 							json!({
-								"id": Id,
-								"message": Message,
-								"severity": Level,
-								"actions": Items,
-								"options": Options,
+								"RequestIdentifier": Nonce,
+								"Payload": {
+									"Severity": Level,
+									"Message": Message,
+									"Options": { "Actions": Actions },
+								},
 							}),
 						) {
-							dev_log!(
-								"notification",
-								"warn: [Window.ShowMessage] sky://notification/show emit failed: {}",
-								Error
-							);
+							run_time.Environment.ApplicationState.UI.RemovePendingRequest(&Nonce);
+							dev_log!("notification", "warn: [Window.ShowMessage] emit failed: {}", Error);
+							return Ok(Value::Null);
 						}
-						Ok(Value::Null)
+
+						match rx.await {
+							Ok(Ok(Value)) => Ok(Value),
+							_ => Ok(Value::Null),
+						}
 					})
 				};
 

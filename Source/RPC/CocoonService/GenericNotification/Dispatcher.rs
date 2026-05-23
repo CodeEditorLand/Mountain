@@ -362,7 +362,7 @@ pub async fn Fn(
 			let _ = Service
 				.environment
 				.ApplicationHandle
-				.emit("sky://webview/post-message", json!({ "handle": Handle, "message": Message }));
+				.emit("sky://webview/postMessage", json!({ "handle": Handle, "message": Message }));
 		},
 
 		// ---- Secrets (fire-and-forget variants) ----

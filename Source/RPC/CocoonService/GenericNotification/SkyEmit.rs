@@ -22,7 +22,7 @@ pub fn HandleOnDidReceiveMessage(Params:Value, Env:&MountainEnvironment) {
 
 	let _ = Env
 		.ApplicationHandle
-		.emit("sky://webview/post-message", json!({ "handle": Handle, "message": Message }));
+		.emit("sky://webview/postMessage", json!({ "handle": Handle, "message": Message }));
 }
 
 pub fn HandleWebviewPostMessage(Params:Value, Env:&MountainEnvironment) {

@@ -1205,7 +1205,18 @@ impl MountainService for MountainVinegRPCService {
 
 				// Forward all unknown notifications as Tauri events so Wind
 				// can subscribe to any Cocoon-originated event.
-				let EventName = format!("cocoon:{}", MethodName);
+				// Sanitize: Tauri only allows [a-zA-Z0-9\-/:_] in event names.
+				// Dots → slashes (e.g. "webview.setOptions" → "webview/setOptions");
+				// any other invalid char → "-".
+				let SanitizedMethod: String = MethodName
+					.chars()
+					.map(|C| match C {
+						'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '/' | ':' | '_' => C,
+						'.' => '/',
+						_ => '-',
+					})
+					.collect();
+				let EventName = format!("cocoon:{}", SanitizedMethod);
 
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
 
