@@ -1,4 +1,3 @@
-
 //! Forward a document-range-formatting request to the registered provider.
 
 use serde_json::json;

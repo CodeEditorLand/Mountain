@@ -1,4 +1,3 @@
-
 //! Look up a single scanned extension by id and project the manifest into
 //! the gRPC `ExtensionInfo` shape.
 

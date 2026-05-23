@@ -1,4 +1,3 @@
-
 //! `tls_renew_certificate` Tauri command - regenerates the
 //! cached server cert for `hostname`. The renewal fires inside a
 //! `std::sync::Mutex` so the lock must not be held across an await

@@ -1,4 +1,3 @@
-
 //! Default scheduler bring-up: forward to `BuildWithConfig::Fn` with
 //! `SchedulerConfig::Struct::default()`. The default adapts to the
 //! active build profile (CPU count workers, telemetry under

@@ -1,4 +1,3 @@
-
 //! Per-connection state - id, lifecycle timestamps, rolling
 //! health score, error / success counters, and a
 //! `ConnectionHealth::Enum` summary. `update_health` adjusts

@@ -1,4 +1,3 @@
-
 //! Display an error-severity message via the `UserInterfaceProvider`.
 
 use tonic::{Response, Status};

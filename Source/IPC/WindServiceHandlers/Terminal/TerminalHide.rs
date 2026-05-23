@@ -1,4 +1,3 @@
-
 //! Hide a terminal panel without disposing the underlying PTY.
 //! The child process keeps running; subsequent `TerminalShow`
 //! reopens the same session. Mirrors

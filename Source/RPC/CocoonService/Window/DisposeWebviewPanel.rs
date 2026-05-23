@@ -1,4 +1,3 @@
-
 //! Dispose a webview panel. The Sky listener at `SkyBridge.ts:2344`
 //! destructures `{ panelId }`; the older sibling emitter at
 //! `RPC/CocoonService/mod.rs:1235` already uses `panelId` - keep this

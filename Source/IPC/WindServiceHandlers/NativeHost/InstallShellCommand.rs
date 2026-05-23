@@ -1,4 +1,3 @@
-
 //! `nativeHost:installShellCommand` - create a `land` (or `code`) symlink in
 //! `/usr/local/bin` pointing at the running executable so the user can launch
 //! the editor from a terminal. Mirrors VS Code's "Install 'code' command in

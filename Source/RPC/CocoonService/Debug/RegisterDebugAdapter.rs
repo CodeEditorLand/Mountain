@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-contributed debug adapter in `ApplicationState` and
 //! notify Sky so the debug-launcher UI can light up.
 

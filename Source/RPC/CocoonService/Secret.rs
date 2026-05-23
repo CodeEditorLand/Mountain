@@ -1,4 +1,3 @@
-
 //! Secret-storage domain handlers for `CocoonService`.
 //! `GetSecret::Fn`, `StoreSecret::Fn`, `DeleteSecret::Fn`.
 

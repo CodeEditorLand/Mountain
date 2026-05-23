@@ -1,4 +1,3 @@
-
 //! Tauri command - serialise tree-view state (expansion, selection,
 //! scroll position) for cross-session restore.
 //!

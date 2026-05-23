@@ -1,4 +1,3 @@
-
 //! Status of the Air daemon.
 
 #[derive(Debug, Clone)]

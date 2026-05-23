@@ -1,4 +1,3 @@
-
 //! # LanguageFeature (Tauri command surface)
 //!
 //! Bridges Monaco-Editor language requests from Sky into the Mountain

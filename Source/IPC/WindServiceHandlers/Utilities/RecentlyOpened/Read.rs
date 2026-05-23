@@ -1,4 +1,3 @@
-
 //! Reads and parses RecentlyOpened.json. Degrades to empty envelope on error.
 
 use serde_json::{Value, json};

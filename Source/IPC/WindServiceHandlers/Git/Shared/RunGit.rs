@@ -1,4 +1,3 @@
-
 //! Spawns `git`, registers the PID, awaits output, returns
 //! `(exit_code, stdout, stderr)`.
 

@@ -1,4 +1,3 @@
-
 //! Await Cocoon's gRPC connection without polling. `GetConnectionNotify`
 //! returns a shared `tokio::sync::Notify` that `ConnectToSideCar` fires
 //! once the handshake succeeds; `WaitForClientConnection` simply awaits

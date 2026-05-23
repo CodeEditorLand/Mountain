@@ -1,4 +1,3 @@
-
 //! `SearchFiles` response DTO.
 
 use crate::Air::AirServiceTypesStub::FileResultProtoDTO;

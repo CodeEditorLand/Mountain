@@ -1,4 +1,3 @@
-
 //! Open-document metadata DTO.
 
 use serde::{Deserialize, Serialize};

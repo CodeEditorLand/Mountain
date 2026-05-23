@@ -1,4 +1,3 @@
-
 //! Bulk insert + delete in one round-trip. VS Code's
 //! `IndexedDBStorageDatabase` batches every write through this
 //! shape: `{ insert: [[key,value], …] | { key: value }, delete: [keys…] }`.

@@ -1,4 +1,3 @@
-
 //! Create a directory (and any missing parents).
 
 use tonic::{Response, Status};

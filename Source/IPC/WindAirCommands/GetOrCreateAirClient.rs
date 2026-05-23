@@ -1,4 +1,3 @@
-
 //! Connect-on-each-call helper. TODO: replace with a state-
 //! managed singleton once Air-side connection pooling lands.
 

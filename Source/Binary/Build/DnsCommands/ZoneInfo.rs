@@ -1,4 +1,3 @@
-
 //! Authoritative-zone snapshot returned by `dns_get_zone_info`:
 //! origin, record list (one entry per `ZoneRecord::Struct`),
 //! and DNSSEC presence flag.

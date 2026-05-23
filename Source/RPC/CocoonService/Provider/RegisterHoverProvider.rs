@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side hover provider.
 
 use tonic::{Response, Status};

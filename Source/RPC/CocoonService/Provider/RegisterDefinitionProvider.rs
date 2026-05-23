@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side definition provider.
 
 use tonic::{Response, Status};

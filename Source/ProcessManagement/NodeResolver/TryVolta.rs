@@ -1,4 +1,3 @@
-
 //! Volta shim lookup. `VOLTA_HOME` wins; otherwise `~/.volta`. Volta installs
 //! shim binaries under `<VOLTA_HOME>/bin`.
 

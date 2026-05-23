@@ -1,4 +1,3 @@
-
 //! Warn when the resolved Node's major version is below `Require`. Does NOT
 //! fail the spawn - Cocoon's bundled code mostly degrades gracefully on older
 //! engines and operators should be free to experiment on unreleased Node

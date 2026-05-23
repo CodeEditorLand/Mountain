@@ -1,4 +1,3 @@
-
 //! Wrapper around `ring::aead::LessSafeKey` plus metadata -
 //! creation timestamp, random key id, and a usage counter the
 //! channel bumps on each encrypt. Private constructors are

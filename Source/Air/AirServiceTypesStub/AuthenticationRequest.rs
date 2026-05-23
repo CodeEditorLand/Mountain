@@ -1,4 +1,3 @@
-
 //! `AuthenticateUser` request DTO.
 
 #[derive(Debug, Clone)]

@@ -1,4 +1,3 @@
-
 //! Memory-mapped asset cache for the bundled workbench (and any other
 //! static-disk asset served via `vscode-file://`, `tauri://`, or `land://`
 //! scheme handlers).

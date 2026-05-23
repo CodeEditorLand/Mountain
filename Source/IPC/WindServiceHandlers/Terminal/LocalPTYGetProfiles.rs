@@ -1,4 +1,3 @@
-
 //! Discover available terminal profiles. Probes every well-
 //! known shell location plus `/etc/shells` (Unix) or known
 //! Windows install paths. The first existing match flags

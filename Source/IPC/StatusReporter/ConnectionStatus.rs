@@ -1,4 +1,3 @@
-
 //! Connectivity slice of `IPCStatusReport::Struct` - is the
 //! IPC server reachable, when did it last heartbeat, and how
 //! long has the current connection been alive.

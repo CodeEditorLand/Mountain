@@ -1,4 +1,3 @@
-
 //! `ProvideInlineCompletionItems` gRPC RPC handler.
 //!
 //! Called by Mountain's `IInlineCompletionsProvider` (wired into Monaco via

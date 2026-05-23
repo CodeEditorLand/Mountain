@@ -1,4 +1,3 @@
-
 //! Tauri command - deserialise + apply tree-view state captured by
 //! `PersistTreeView` (sibling). Called when a tree view is recreated
 //! or the workspace is reloaded.

@@ -1,4 +1,3 @@
-
 //! `mountain_perform_health_check` Tauri command - runs a
 //! synchronous health-check pass and returns the resulting
 //! `HealthMonitor::Struct`.

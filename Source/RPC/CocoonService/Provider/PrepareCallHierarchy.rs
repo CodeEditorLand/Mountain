@@ -1,4 +1,3 @@
-
 //! `PrepareCallHierarchy` gRPC RPC handler.
 //!
 //! The entry-point call for VS Code's call hierarchy feature. Mountain calls

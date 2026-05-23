@@ -1,4 +1,3 @@
-
 //! # HealthCommand - Wind SharedProcessProxy bridge
 //!
 //! Tauri commands invoked directly by Wind's `SharedProcessProxy`

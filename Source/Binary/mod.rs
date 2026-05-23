@@ -13,7 +13,8 @@
 //! - [`self::Register`]: Command and service registration
 //! - [`self::Service`]: Service initialization (Vine, Cocoon, Configuration)
 //! - [`self::Initialize`]: Application state initialization
-//! - [`self::IPC`]: IPC command handlers bridging the frontend invoke calls to Rust
+//! - [`self::IPC`]: IPC command handlers bridging the frontend invoke calls to
+//!   Rust
 //! - [`self::Tray`]: System tray integration
 //! - [`self::Extension`]: Extension startup and management
 //! - [`self::Shutdown`]: Graceful shutdown handling

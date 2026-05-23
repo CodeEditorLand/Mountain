@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side selection-range provider.
 
 use tonic::{Response, Status};

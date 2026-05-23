@@ -1,4 +1,3 @@
-
 //! Inbound hover request DTO: document URI + cursor position.
 
 use serde::{Deserialize, Serialize};

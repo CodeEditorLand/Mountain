@@ -1,4 +1,3 @@
-
 //! Authentication response DTO returned by `AuthenticateUser`.
 
 use serde::{Deserialize, Serialize};

@@ -1,4 +1,3 @@
-
 //! Tauri command - quick fixes and refactorings for a code range.
 //! Delegates to `LanguageFeature::CodeActions::provide_code_actions_impl`.
 

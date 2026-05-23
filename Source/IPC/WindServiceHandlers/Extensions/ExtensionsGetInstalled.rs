@@ -1,4 +1,3 @@
-
 //! `extensions:getInstalled(type?)` - return scanned extensions reshaped as
 //! VS Code's `ILocalExtension[]` so `ExtensionManagementChannelClient
 //! .getInstalled` can destructure `extension.identifier.id`,

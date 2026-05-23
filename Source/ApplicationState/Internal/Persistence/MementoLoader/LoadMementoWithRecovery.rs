@@ -1,4 +1,3 @@
-
 //! Result-typed memento loader. Returns `Ok(empty)` for missing
 //! files, `Err(FileSystemIO)` for read failures, and
 //! `Err(SerializationError)` for parse failures (with a timestamped

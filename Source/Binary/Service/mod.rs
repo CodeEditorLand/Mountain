@@ -1,4 +1,3 @@
-
 //! # Binary::Service
 //!
 //! External service startup functions called from `Binary::Main::AppLifecycle`.

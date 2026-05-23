@@ -1,4 +1,3 @@
-
 //! `PrepareTypeHierarchy` gRPC RPC handler.
 //!
 //! Entry point for VS Code's type hierarchy feature. Returns the root

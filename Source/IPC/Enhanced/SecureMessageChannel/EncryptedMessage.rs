@@ -1,4 +1,3 @@
-
 //! Serialised encrypted-message envelope - key id (so
 //! decryption can find the right key during rotation), nonce,
 //! AES-256-GCM ciphertext, HMAC tag, and a millisecond

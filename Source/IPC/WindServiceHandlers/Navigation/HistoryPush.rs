@@ -1,4 +1,3 @@
-
 //! Push a URI onto the navigation history. Called by Wind every
 //! time the active editor changes, so the back/forward chain
 //! reflects the user's actual jump trail.

@@ -1,4 +1,3 @@
-
 //! Homebrew lookup. Apple Silicon, Intel macOS, and Linuxbrew probe paths.
 
 use std::path::PathBuf;

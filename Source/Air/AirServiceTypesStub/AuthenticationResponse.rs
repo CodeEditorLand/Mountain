@@ -1,4 +1,3 @@
-
 //! `AuthenticateUser` response DTO.
 
 #[derive(Debug, Clone)]

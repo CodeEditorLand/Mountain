@@ -1,4 +1,3 @@
-
 //! # TestProvider (Environment)
 //!
 //! `TestController` impl for `MountainEnvironment`. Hosts the

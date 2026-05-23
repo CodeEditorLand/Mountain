@@ -1,4 +1,3 @@
-
 //! Tauri command - list resources for a given SCM provider. The
 //! resources map is keyed by `(group_id, …)`; we flatten across
 //! groups and filter by `ProviderHandle == ProviderIdentifier`.

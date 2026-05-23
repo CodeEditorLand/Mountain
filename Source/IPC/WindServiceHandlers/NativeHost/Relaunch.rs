@@ -1,4 +1,3 @@
-
 //! `nativeHost:relaunch` - restart the process with the same argv.
 //! VS Code calls this from `ILifecycleMainService.relaunch()` when an
 //! extension update is applied, the user picks "Restart to Apply", or

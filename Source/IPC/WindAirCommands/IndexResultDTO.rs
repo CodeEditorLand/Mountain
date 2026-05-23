@@ -1,4 +1,3 @@
-
 //! File-indexing summary DTO returned by `IndexFiles`.
 
 use serde::{Deserialize, Serialize};

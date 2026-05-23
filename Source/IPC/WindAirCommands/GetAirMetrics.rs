@@ -1,4 +1,3 @@
-
 //! `GetAirMetrics` Tauri command - pull memory / CPU / disk /
 //! network counters from Air, optionally filtered by metric
 //! type ("performance", "resources", "requests").

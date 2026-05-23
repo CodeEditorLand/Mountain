@@ -1,4 +1,3 @@
-
 //! Snapshot of the entire navigation history as a `Vec<String>`.
 //! Used by the navigate-history quick-pick (Cmd+Alt+-) which
 //! lists every recently-visited file inline.

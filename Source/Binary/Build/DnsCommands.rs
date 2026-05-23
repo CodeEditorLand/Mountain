@@ -1,4 +1,3 @@
-
 //! # DNS commands
 //!
 //! Tauri commands that surface the Mist-managed DNS server

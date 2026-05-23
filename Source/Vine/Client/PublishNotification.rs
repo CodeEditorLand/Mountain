@@ -1,4 +1,3 @@
-
 //! Internal: publish a notification to the broadcast. Called from
 //! `SendNotification::Fn` after the wire send succeeds, and from the
 //! streaming multiplexer once it lands. `try_send` semantics - no

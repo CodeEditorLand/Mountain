@@ -1,4 +1,3 @@
-
 //! Realtime collaboration session record - id, participant
 //! list, currently-active document URIs, last activity tick,
 //! and the permission slot.

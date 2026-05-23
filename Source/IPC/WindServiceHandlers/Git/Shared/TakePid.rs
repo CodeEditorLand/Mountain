@@ -1,4 +1,3 @@
-
 //! Atomically removes and returns a PID (for cancel operations).
 
 pub fn Fn(OperationId:&str) -> Option<u32> {

@@ -1,4 +1,3 @@
-
 //! Search-results envelope returned by `SearchFiles`.
 
 use serde::{Deserialize, Serialize};

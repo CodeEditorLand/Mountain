@@ -1,4 +1,3 @@
-
 //! Process-global canonical-path cache backing store.
 
 use std::{path::PathBuf, time::Duration};

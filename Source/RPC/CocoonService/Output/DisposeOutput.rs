@@ -1,4 +1,3 @@
-
 //! Dispose an output channel via `sky://output/dispose`.
 
 use serde_json::json;

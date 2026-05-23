@@ -1,4 +1,3 @@
-
 //! Cocoon → Mountain `window.applyTextEdits` notification.
 //!
 //! Fired when an extension calls `editor.edit(editBuilder => { ... })`.

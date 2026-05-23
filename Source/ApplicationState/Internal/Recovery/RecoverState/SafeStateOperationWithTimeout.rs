@@ -1,4 +1,3 @@
-
 //! Run a synchronous, blocking state operation off-thread with a hard
 //! timeout. The thread is allowed to finish in the background after
 //! the timeout fires; only the receiver gives up. Used during

@@ -1,4 +1,3 @@
-
 //! # Permission Manager (IPC Security)
 //!
 //! Role-based access control for the IPC layer with built-in

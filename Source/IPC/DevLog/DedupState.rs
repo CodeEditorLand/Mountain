@@ -1,4 +1,3 @@
-
 //! Consecutive-duplicate suppression buffer used by the
 //! `dev_log!` macro under `Trace=short`. Holds the last logged
 //! key + a repeat count; the macro flushes a `(xN)` tail when

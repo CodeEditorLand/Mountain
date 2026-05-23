@@ -1,4 +1,3 @@
-
 //! Authentication domain handlers for `CocoonService`. Two gRPC entry
 //! points: `GetAuthenticationSession::Fn` and
 //! `RegisterAuthenticationProvider::Fn`.

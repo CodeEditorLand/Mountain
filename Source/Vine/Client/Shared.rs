@@ -1,4 +1,3 @@
-
 //! Module-private state for the Vine client: connection pool, per-
 //! connection metadata, the broadcast fan-out, the shutdown flag, plus
 //! the constants and message-size validator that every entry-point shares.

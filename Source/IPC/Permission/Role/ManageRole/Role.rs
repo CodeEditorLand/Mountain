@@ -1,4 +1,3 @@
-
 //! `Role::Struct` - RBAC role descriptor. Builder methods
 //! deduplicate permissions on insert, expose
 //! `HasPermission` / `PermissionCount` lookups, and

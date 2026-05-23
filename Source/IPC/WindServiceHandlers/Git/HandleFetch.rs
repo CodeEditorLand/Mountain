@@ -1,4 +1,3 @@
-
 //! `localGit:fetch(operationId, repoPath)`. Plain `git fetch`
 //! against the configured upstream - no remote argument, no
 //! `--all`, mirroring stock VS Code's `LocalGitService.fetch`.

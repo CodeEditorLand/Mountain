@@ -1,4 +1,3 @@
-
 //! Clear the entire asset cache. Called on shutdown or on an explicit flush
 //! signal.
 

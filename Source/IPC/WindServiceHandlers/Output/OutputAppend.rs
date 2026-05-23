@@ -1,4 +1,3 @@
-
 //! Append text to an output channel. Emits the
 //! `sky://output/append` Tauri event with `{channel, text}`.
 //! Sky's output-channel panel mounts the text into its scroll

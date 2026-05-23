@@ -1,4 +1,3 @@
-
 //! Single health-check finding: what went wrong, how serious,
 //! when detected, and (optionally) when resolved. Carried in
 //! `HealthMonitor::Struct::issues_detected`.

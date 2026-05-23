@@ -1,4 +1,3 @@
-
 //! Single file result inside `SearchFilesResponse`.
 
 #[derive(Debug, Clone)]

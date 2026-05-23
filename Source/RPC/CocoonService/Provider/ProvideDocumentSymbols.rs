@@ -1,4 +1,3 @@
-
 //! Forward a document-symbols request to the registered provider.
 
 use tonic::{Response, Status};

@@ -1,4 +1,3 @@
-
 //! `GetStatus` response DTO. Carries uptime, request counts, health flag.
 
 #[derive(Debug, Clone)]

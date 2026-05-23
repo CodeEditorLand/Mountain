@@ -1,4 +1,3 @@
-
 //! Tauri command - return user-defined keybinding overrides. Stub
 //! returns an empty array; pending persistence layer wired through
 //! `KeybindingProvider`.

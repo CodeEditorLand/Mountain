@@ -1,4 +1,3 @@
-
 //! # Output channel handlers
 //!
 //! `vscode.window.createOutputChannel(...)` flows in from Cocoon

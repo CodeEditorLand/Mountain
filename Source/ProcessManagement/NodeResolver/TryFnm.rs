@@ -1,4 +1,3 @@
-
 //! fnm shim lookup. `FNM_MULTISHELL_PATH` (active shell) wins; otherwise
 //! probe the per-OS multishell cache directories.
 

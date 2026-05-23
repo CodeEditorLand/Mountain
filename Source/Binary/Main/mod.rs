@@ -1,4 +1,3 @@
-
 //! # Binary::Main
 //!
 //! Application orchestration layer providing entry point, IPC command

@@ -1,4 +1,3 @@
-
 //! Aggregated pool counters surfaced to the dashboard - total
 //! / active / idle / healthy connection counts, queue size,
 //! average wait time, total / successful operation tallies,

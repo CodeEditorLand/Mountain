@@ -1,4 +1,3 @@
-
 //! Display a warning-severity message via the `UserInterfaceProvider`.
 
 use tonic::{Response, Status};

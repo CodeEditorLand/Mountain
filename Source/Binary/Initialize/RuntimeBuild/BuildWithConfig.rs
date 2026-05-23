@@ -1,4 +1,3 @@
-
 //! Construct an Echo scheduler from a custom `SchedulerConfig::Struct`.
 //! Returns an `Arc<Scheduler>` ready for use; emits lifecycle dev-log
 //! lines with feature-gated detail (Telemetry, Debug).

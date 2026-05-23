@@ -1,4 +1,3 @@
-
 //! Tauri command - stage / unstage a single resource. The standard
 //! `git add` / `git restore --staged` flow.
 //!

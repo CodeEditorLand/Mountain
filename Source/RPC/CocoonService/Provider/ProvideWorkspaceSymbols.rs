@@ -1,4 +1,3 @@
-
 //! Forward a workspace-symbols query to the registered provider.
 
 use tonic::{Response, Status};

@@ -1,4 +1,3 @@
-
 //! Apply a sequence of text edits to a document via
 //! `sky://editor/applyEdits`. Each edit carries a `range` (start/end
 //! position) plus the replacement `newText`.

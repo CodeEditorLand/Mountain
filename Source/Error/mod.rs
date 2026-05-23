@@ -1,4 +1,3 @@
-
 //! Local error stack - currently unused.
 //!
 //! Every Mountain consumer uses `CommonLibrary::Error::CommonError`

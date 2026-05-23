@@ -1,4 +1,3 @@
-
 //! `dns_get_forward_allowlist` Tauri command - returns the
 //! external domains the forwarder is allowed to query.
 

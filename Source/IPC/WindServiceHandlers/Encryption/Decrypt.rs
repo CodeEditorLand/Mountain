@@ -1,4 +1,3 @@
-
 //! `encryption:decrypt(value: string) -> string`
 //!
 //! Reverses `encryption:encrypt`: base64-decodes, splits the 12-byte nonce

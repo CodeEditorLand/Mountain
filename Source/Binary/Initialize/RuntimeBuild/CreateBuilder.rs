@@ -1,4 +1,3 @@
-
 //! Translate a `SchedulerConfig::Struct` into a configured Echo
 //! `SchedulerBuilder`. Worker counts are clamped to `[1, 256]` so the
 //! caller can't accidentally request 0 workers or oversaturate.

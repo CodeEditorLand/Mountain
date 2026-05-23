@@ -1,4 +1,3 @@
-
 //! Save-intent hint from Wind. Actual disk write happens via `TextfileWrite`.
 //! Returns an `IStat`-shaped object (mtime/size) so the workbench's
 //! `TextFileEditorModel` can update its etag cache and clear the dirty dot

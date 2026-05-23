@@ -1,4 +1,3 @@
-
 //! `ApplyUpdate` Tauri command - tell Air to install a
 //! previously downloaded update package.
 

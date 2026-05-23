@@ -1,4 +1,3 @@
-
 //! Append a line (text + `\n`) to an output channel. Twin of
 //! `OutputAppend` with the newline pre-applied so the renderer
 //! doesn't need its own line-mode toggle.

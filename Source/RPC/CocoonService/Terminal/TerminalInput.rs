@@ -1,4 +1,3 @@
-
 //! Forward bytes received from Cocoon to the PTY master writer.
 
 use tonic::{Response, Status};

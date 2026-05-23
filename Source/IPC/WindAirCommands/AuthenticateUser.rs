@@ -1,4 +1,3 @@
-
 //! `AuthenticateUser` Tauri command - delegate sign-in to
 //! Air's auth service for the named provider (GitHub / GitLab
 //! / Microsoft / etc).

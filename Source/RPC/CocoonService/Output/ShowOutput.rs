@@ -1,4 +1,3 @@
-
 //! Show an output channel in the workbench panel via
 //! `sky://output/show`.
 

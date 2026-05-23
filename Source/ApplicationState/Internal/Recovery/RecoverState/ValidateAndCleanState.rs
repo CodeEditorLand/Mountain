@@ -1,4 +1,3 @@
-
 //! Filter a state map in-place by a validator predicate. Logs at warn
 //! level when entries are removed so corruption is visible without
 //! drowning the recovery path in chatter when nothing changes.

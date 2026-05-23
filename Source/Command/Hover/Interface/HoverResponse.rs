@@ -1,4 +1,3 @@
-
 //! Outbound hover response DTO: ordered list of `HoverContent::Enum`
 //! plus an optional `Range::Struct` the hover applies to. Range is
 //! omitted in serialised form when absent.

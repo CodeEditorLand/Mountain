@@ -1,4 +1,3 @@
-
 //! Tauri command - return the full environment of the Mountain
 //! process. The process inherits the user's shell environment on every
 //! supported platform, so this is `process.env` for renderer code.

@@ -1,4 +1,3 @@
-
 //! `localGit:revListCount(repoPath, fromRef, toRef) -> u64`.
 //! Equivalent to `git rev-list --count from..to` - counts
 //! commits the GitLens / SCM viewlet "ahead/behind" badges

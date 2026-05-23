@@ -1,4 +1,3 @@
-
 //! # TreeView (Tauri command surface)
 //!
 //! Bridges tree-view UI requests from Sky (file explorer, SCM

@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side on-type-formatting provider. Uses the
 //! type-formatting-specific request shape (carries trigger characters).
 

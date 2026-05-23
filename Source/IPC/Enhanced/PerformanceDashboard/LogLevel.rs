@@ -1,4 +1,3 @@
-
 //! Severity tag for `TraceLog::Struct` entries.
 
 use serde::{Deserialize, Serialize};

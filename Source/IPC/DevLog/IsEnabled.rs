@@ -1,4 +1,3 @@
-
 //! Tag-resolution helper. Reads `Trace` once into a static
 //! list, then matches against four rules per call:
 //!

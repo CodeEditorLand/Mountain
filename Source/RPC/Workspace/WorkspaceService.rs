@@ -1,4 +1,3 @@
-
 //! File-and-workspace RPC service.
 
 use std::path::PathBuf;

@@ -1,4 +1,3 @@
-
 //! Remove a value from the OS keychain.
 
 use tonic::{Response, Status};

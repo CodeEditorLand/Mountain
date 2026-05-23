@@ -1,4 +1,3 @@
-
 //! Terminal-domain handlers for `CocoonService`. Eight entry points cover
 //! lifecycle (open/close), I/O (input/data), notifications (opened/closed/
 //! processId), and resize.

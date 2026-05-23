@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side completion provider.
 
 use tonic::{Response, Status};

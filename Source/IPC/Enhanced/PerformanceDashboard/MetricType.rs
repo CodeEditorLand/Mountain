@@ -1,4 +1,3 @@
-
 //! Discriminator for `PerformanceMetric::Struct` - tags each
 //! sample with the underlying counter so the dashboard can
 //! group them.

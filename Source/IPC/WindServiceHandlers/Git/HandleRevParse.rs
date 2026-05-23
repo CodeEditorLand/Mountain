@@ -1,4 +1,3 @@
-
 //! `localGit:revParse(repoPath, ref) -> string`. Defaults
 //! `ref=HEAD` so the caller can pass two args or three. Output
 //! is trimmed - `git rev-parse` ships a trailing newline that

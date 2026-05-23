@@ -1,4 +1,3 @@
-
 //! Write a single value to workspace-scoped storage. Atomic per
 //! key - concurrent set/get against the same key serialise
 //! through the StorageProvider's lock.

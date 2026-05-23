@@ -1,4 +1,3 @@
-
 //! Map of registered services keyed by name + a configurable discovery
 //! cadence. `ShouldDiscover` returns true once the configured interval
 //! has elapsed since the last `MarkDiscovery` (or `Register` /

@@ -1,4 +1,3 @@
-
 //! # Binary::Debug
 //!
 //! Debug tracing infrastructure for the Mountain binary.

@@ -1,4 +1,3 @@
-
 //! Snapshot the Mountain process environment as a `HashMap`.
 //! Inherited by every PTY spawned through `TerminalCreate`. Includes
 //! the keys merged in by `EnhanceShellEnvironment` at boot, so a

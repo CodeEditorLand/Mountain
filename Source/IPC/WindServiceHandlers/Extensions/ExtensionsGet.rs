@@ -1,4 +1,3 @@
-
 //! `extensions:get(id)` - fetch a single extension's manifest
 //! by `<publisher>.<name>` identifier. Returns `null` when the
 //! id isn't in the scanner's registry; non-error outcome so

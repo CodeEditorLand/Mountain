@@ -1,4 +1,3 @@
-
 //! Bring a terminal to the foreground in the panel. When
 //! `PreserveFocus` is `true`, the active editor keeps keyboard
 //! focus (mirrors `vscode.Terminal.show(preserveFocus)`).

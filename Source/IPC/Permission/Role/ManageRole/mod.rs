@@ -1,4 +1,3 @@
-
 //! # ManageRole
 //!
 //! Role + permission types for the RBAC engine. Each `Role`

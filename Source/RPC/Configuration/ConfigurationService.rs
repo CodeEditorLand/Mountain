@@ -1,4 +1,3 @@
-
 //! Configuration read/write service.
 
 use std::collections::HashMap;

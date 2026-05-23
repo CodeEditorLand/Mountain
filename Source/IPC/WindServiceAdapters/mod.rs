@@ -1,4 +1,3 @@
-
 //! # Wind service adapters
 //!
 //! Mountain → Wind bridge: takes Mountain's sandbox config

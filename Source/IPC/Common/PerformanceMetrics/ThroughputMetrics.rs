@@ -1,4 +1,3 @@
-
 //! Per-direction message + byte counters with a fixed start time so
 //! `MessagesPerSecond*` / `BytesPerSecond*` are derivable as
 //! divisions over the elapsed period.

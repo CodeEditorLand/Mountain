@@ -1,4 +1,3 @@
-
 //! Forward a rename-edits request to the registered provider.
 
 use tonic::{Response, Status};

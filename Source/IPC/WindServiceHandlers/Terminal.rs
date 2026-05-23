@@ -1,4 +1,3 @@
-
 //! # Terminal handlers
 //!
 //! Two related responsibilities:

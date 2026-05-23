@@ -1,4 +1,3 @@
-
 //! # Connection pool
 //!
 //! Bounded IPC connection pool with health monitoring,

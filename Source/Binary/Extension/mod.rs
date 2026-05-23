@@ -1,4 +1,3 @@
-
 //! # Binary::Extension
 //!
 //! Extension startup utilities called from `Binary::Main::AppLifecycle`.

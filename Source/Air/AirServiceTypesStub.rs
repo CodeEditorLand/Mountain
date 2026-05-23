@@ -1,4 +1,3 @@
-
 //! Air-integration type stubs. Twenty children: one per request/response
 //! DTO, the placeholder `AirClientType::Struct`, and the
 //! `DEFAULT_AIR_SERVER_ADDRESS::Const` server-address constant. Every

@@ -1,4 +1,3 @@
-
 //! # SourceControlManagement (Tauri command surface)
 //!
 //! Bridges SCM-viewlet UI requests from Sky to the

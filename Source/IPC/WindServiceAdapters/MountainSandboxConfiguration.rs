@@ -1,4 +1,3 @@
-
 //! Mountain's own sandbox-config payload (input to
 //! `WindServiceAdapter::convert_to_wind_configuration`).
 //! Private to this module; the trio of nested DTOs

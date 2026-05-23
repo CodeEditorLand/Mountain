@@ -1,4 +1,3 @@
-
 //! Build-time PostHog credentials baked from `.env.Land.PostHog` via
 //! `cargo:rustc-env`. `env!` always resolves at compile time so even a
 //! clean checkout builds without a populated `.env`.

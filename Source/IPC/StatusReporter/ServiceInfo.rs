@@ -1,4 +1,3 @@
-
 //! Single-service descriptor produced by service discovery.
 //! Carries identity, status, lifecycle timings, dependency
 //! list, performance counters, and the gRPC endpoint.

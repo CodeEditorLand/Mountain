@@ -1,4 +1,3 @@
-
 //! Single connection attempt without retry logic. Tunes h2 transport
 //! windows for loopback-to-Cocoon traffic (4 MB stream / 16 MB connection)
 //! so a single rust-analyzer diagnostic emit (200-500 KB) doesn't cause

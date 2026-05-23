@@ -1,4 +1,3 @@
-
 //! # Service Discovery and Information
 //!
 //! Tracks every service Mountain talks to: its lifecycle state,

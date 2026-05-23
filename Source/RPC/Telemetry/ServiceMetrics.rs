@@ -1,4 +1,3 @@
-
 //! Per-service metric snapshot DTO.
 
 use serde::{Deserialize, Serialize};

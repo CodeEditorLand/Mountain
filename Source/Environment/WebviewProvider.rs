@@ -1,4 +1,3 @@
-
 //! # WebviewProvider (Environment)
 //!
 //! Implements the `WebviewProvider` trait for `MountainEnvironment`, providing

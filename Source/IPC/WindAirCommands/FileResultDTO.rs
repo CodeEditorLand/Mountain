@@ -1,4 +1,3 @@
-
 //! Single search hit returned inside `SearchResultsDTO::Struct`.
 
 use serde::{Deserialize, Serialize};

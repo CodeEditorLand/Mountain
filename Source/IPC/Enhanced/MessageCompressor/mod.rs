@@ -1,4 +1,3 @@
-
 //! # Message Compressor and Batching
 //!
 //! Buffers IPC messages into batches, then compresses on

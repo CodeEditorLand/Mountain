@@ -1,4 +1,3 @@
-
 //! # TLS certificate management commands
 //!
 //! Tauri commands that expose the local CA + server cert cache

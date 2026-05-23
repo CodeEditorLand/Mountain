@@ -1,4 +1,3 @@
-
 //! Vine client - thread-safe gRPC client for a Cocoon sidecar process.
 //! Pool of `CocoonClient` connections keyed by identifier, automatic
 //! reconnect with exponential back-off, per-connection health metadata,

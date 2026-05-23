@@ -1,4 +1,3 @@
-
 //! Information about file indexing.
 
 #[derive(Debug, Clone)]

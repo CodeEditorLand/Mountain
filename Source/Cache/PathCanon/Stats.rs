@@ -1,4 +1,3 @@
-
 //! Capture a diagnostic snapshot of the cache.
 
 use crate::Cache::PathCanon::{Cache::CACHE, CacheStats};

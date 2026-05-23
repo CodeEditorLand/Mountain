@@ -1,4 +1,3 @@
-
 //! Build the standard `user` / `developer` / `admin` role
 //! triple. Used by `Validator::Struct::InitializeDefaults` and
 //! by tests.

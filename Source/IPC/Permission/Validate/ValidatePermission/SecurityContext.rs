@@ -1,4 +1,3 @@
-
 //! Per-request security envelope - user identity, role list,
 //! direct permissions, origin IP, and request timestamp. Used
 //! by `Validator::Struct::ValidatePermission` to decide

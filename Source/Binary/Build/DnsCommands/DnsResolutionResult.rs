@@ -1,4 +1,3 @@
-
 //! Result envelope from a manual DNS resolution test
 //! (`dns_resolve`). Carries the resolved address list and a
 //! success flag so callers can branch without parsing strings.

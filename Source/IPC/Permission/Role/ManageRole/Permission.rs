@@ -1,4 +1,3 @@
-
 //! `Permission::Struct` - RBAC permission descriptor.
 //! `category.action` name shape (validated by `Validate`),
 //! human description, category bucket, and an `IsSensitive`

@@ -1,4 +1,3 @@
-
 //! # Keybinding (Tauri command surface)
 //!
 //! Bridges keyboard-shortcut UI requests from Sky into the

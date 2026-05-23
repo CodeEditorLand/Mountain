@@ -1,4 +1,3 @@
-
 //! # ProcessCommand - Wind ProcessPolyfill bridge
 //!
 //! Tauri commands invoked directly (not through `MountainIPCInvoke`)

@@ -1,4 +1,3 @@
-
 //! Start a debug session. Mints a session id, emits `sky://debug/start` so
 //! the workbench can render the debug toolbar/console.
 

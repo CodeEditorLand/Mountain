@@ -1,4 +1,3 @@
-
 //! Per-connection health-probe helper used by
 //! `Pool::Struct::start_health_monitoring`. Currently runs a
 //! simulated 10ms ping; real implementations would send a

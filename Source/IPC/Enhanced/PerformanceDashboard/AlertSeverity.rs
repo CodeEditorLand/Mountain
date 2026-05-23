@@ -1,4 +1,3 @@
-
 //! Severity tag for a `PerformanceAlert::Struct`.
 
 use serde::{Deserialize, Serialize};

@@ -1,4 +1,3 @@
-
 //! `SearchFiles` request DTO.
 
 #[derive(Debug, Clone)]

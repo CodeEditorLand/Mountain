@@ -1,4 +1,3 @@
-
 //! Encryption handlers for VS Code's `IEncryptionService` channel.
 //! `encryption:encrypt` and `encryption:decrypt` are called by the
 //! workbench to store and retrieve secrets (extension secrets, auth tokens,

@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side rename provider.
 
 use tonic::{Response, Status};

@@ -1,4 +1,3 @@
-
 //! `localGit:clone(operationId, cloneUrl, targetPath, ref?)`.
 //! Optional `ref` becomes `--branch <ref>` so callers can
 //! shallow-clone a tag or branch.

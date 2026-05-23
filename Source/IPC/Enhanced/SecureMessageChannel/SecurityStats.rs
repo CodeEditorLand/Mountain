@@ -1,4 +1,3 @@
-
 //! Snapshot of the channel's current key, age, usage count,
 //! number of retained previous keys, and the active config.
 

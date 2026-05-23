@@ -1,4 +1,3 @@
-
 //! Tauri command - register keybindings contributed by an extension.
 //! Stub returns success; pending real implementation that validates,
 //! checks permissions, persists to ApplicationState, and updates the

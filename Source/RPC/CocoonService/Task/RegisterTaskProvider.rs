@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-contributed task provider in `ApplicationState`. The
 //! gRPC proto carries no handle, so we hash the task `type` string for
 //! the registration handle.

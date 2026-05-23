@@ -1,4 +1,3 @@
-
 //! # Health Status Monitoring
 //!
 //! Component-level health tracking for IPC subsystems. The score is

@@ -1,4 +1,3 @@
-
 //! `Pool::Struct` - bounded connection pool with health
 //! monitoring, idle/lifetime cleanup, wait-queue timeouts, and
 //! statistics. Acquire via `get_connection` (drops a permit on

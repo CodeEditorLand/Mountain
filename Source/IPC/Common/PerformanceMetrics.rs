@@ -1,4 +1,3 @@
-
 //! # IPC Performance Metrics
 //!
 //! Two complementary observation primitives:

@@ -1,4 +1,3 @@
-
 //! Result envelope returned by `tls_generate_cert`.
 
 use serde::{Deserialize, Serialize};

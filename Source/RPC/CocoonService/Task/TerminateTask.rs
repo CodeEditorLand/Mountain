@@ -1,4 +1,3 @@
-
 //! Forward a task-termination request to Sky over
 //! `sky://task/terminate`.
 

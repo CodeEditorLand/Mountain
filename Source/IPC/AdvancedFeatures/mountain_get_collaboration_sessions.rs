@@ -1,4 +1,3 @@
-
 //! `mountain_get_collaboration_sessions` Tauri command -
 //! returns every active `CollaborationSession::Struct`.
 

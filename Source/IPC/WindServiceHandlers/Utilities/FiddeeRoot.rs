@@ -1,4 +1,3 @@
-
 //! `$HOME/.fiddee` - the user-scope dotfile root. Holds VS Code-style
 //! extensions (`~/.fiddee/extensions`), recently-opened workspaces
 //! (`~/.fiddee/workspaces/RecentlyOpened.json`), per-extension storage

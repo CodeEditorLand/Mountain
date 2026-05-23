@@ -1,4 +1,3 @@
-
 //! Pick the system default shell. Unix: `$SHELL`, then probe
 //! `/bin/{zsh,bash,sh}`. Windows: PowerShell 7 if installed,
 //! else stock Windows PowerShell. Used by Wind's "Open Default

@@ -1,4 +1,3 @@
-
 //! `dns_get_zone_info` Tauri command - returns the static
 //! `land.playform.cloud` zone snapshot (records + DNSSEC flag) used by
 //! the diagnostic panel.

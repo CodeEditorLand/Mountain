@@ -1,4 +1,3 @@
-
 //! # Binary::Register
 //!
 //! Startup registration steps invoked from `Binary::Main::AppLifecycle`.

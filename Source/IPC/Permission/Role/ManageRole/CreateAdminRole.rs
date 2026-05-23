@@ -1,4 +1,3 @@
-
 //! Standard `admin` role - full access including system /
 //! external / execute and `role.manage` for changing role
 //! definitions at runtime.

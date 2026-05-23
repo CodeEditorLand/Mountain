@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side reference provider.
 
 use tonic::{Response, Status};

@@ -1,4 +1,3 @@
-
 //! Server-side ignore filter for file-watcher events.
 //!
 //! Events that match the ignore list never cross the

@@ -1,4 +1,3 @@
-
 //! Top-level shutdown orchestrator. Emits the `sky://lifecycle/willShutdown`
 //! event so Wind/Sky can flush dirty editors, dispose sockets, and cancel
 //! async tasks before the runtime tears down. Then calls

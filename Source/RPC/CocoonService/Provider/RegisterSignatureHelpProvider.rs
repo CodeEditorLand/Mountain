@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side signature-help provider. Uses the
 //! signature-help-specific request shape (carries trigger characters).
 

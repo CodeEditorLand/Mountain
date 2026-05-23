@@ -1,4 +1,3 @@
-
 //! Update the text of a status-bar entry. Re-issues `SetStatusBarEntry`
 //! so the stored DTO's `Text` field is refreshed in
 //! `ActiveStatusBarItems` (HashMap insert acts as create-or-update).

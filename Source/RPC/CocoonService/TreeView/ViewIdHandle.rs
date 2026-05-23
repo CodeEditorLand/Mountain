@@ -1,4 +1,3 @@
-
 //! Hash a `viewId` string into the same `u32` that
 //! `RegisterTreeViewProvider::Fn` uses as a registration handle. Lets
 //! `GetTreeChildren::Fn` look up the registered provider without the

@@ -1,4 +1,3 @@
-
 //! Cocoon → Mountain `window.setTextEditorDecorations` notification.
 //!
 //! Fired whenever an extension calls `editor.setDecorations(decorationType,

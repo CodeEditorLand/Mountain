@@ -1,4 +1,3 @@
-
 //! `CheckForUpdates` request DTO.
 
 #[derive(Debug, Clone)]

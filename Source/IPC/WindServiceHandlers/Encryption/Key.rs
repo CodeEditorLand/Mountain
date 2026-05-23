@@ -1,4 +1,3 @@
-
 //! Machine-stable 256-bit key derivation for AES-256-GCM.
 //!
 //! The key is derived once per process from the host's hardware UUID using

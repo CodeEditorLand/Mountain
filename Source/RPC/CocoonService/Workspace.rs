@@ -1,4 +1,3 @@
-
 //! Workspace-domain handlers for `CocoonService`. Five entry points cover
 //! document open/save, edit application, configuration changes, and
 //! workspace-folder updates.

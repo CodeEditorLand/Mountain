@@ -1,4 +1,3 @@
-
 //! Parsing and serialization of VS Code `.code-workspace` JSON files.
 //!
 //! The format is a JSON object with at minimum a `folders` array; each entry

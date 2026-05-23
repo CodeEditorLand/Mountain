@@ -1,4 +1,3 @@
-
 //! Vine gRPC service health enum.
 
 use serde::{Deserialize, Serialize};

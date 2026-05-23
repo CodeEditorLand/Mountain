@@ -1,4 +1,3 @@
-
 //! Result envelope returned by `Compressor::Struct::flush_batch`.
 //! Carries the message count, original / compressed byte
 //! totals, the compressed bytes (`None` when below threshold),

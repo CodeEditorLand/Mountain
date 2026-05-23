@@ -1,4 +1,3 @@
-
 //! Returns the global PID registry for cancel-by-OperationId.
 
 use std::{collections::HashMap, sync::Mutex};

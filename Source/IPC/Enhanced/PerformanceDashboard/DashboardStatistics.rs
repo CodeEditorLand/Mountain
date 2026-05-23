@@ -1,4 +1,3 @@
-
 //! Aggregated dashboard counters - cumulative metric / trace /
 //! alert counts plus the rolled-up averages and last-update
 //! tick.

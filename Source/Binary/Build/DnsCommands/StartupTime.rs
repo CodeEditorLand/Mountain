@@ -1,4 +1,3 @@
-
 //! DNS server startup-time storage. The wall-clock instant the
 //! Hickory server bound its UDP socket is captured once and
 //! returned to the webview via `dns_get_server_info`.

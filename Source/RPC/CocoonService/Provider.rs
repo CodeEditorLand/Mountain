@@ -1,4 +1,3 @@
-
 //! Language-feature-provider handlers for `CocoonService`. 44 entry points
 //! split between `Register*` (21 files: hover/completion/definition/...,
 //! the on-type-formatting / signature-help / semantic-tokens variants

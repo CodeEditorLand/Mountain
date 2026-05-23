@@ -1,4 +1,3 @@
-
 //! `file:watch` - register a native filesystem watcher for a URI.
 //!
 //! VS Code's `DiskFileSystemProvider.watch(resource, opts)` sends:

@@ -1,4 +1,3 @@
-
 //! asdf shim lookup. The shim resolves the active `.tool-versions` entry on
 //! every call.
 

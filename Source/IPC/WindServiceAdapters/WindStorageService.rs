@@ -1,4 +1,3 @@
-
 //! Wind-shaped storage service: get / set against the
 //! injected `StorageProvider` trait.
 

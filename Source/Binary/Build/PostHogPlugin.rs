@@ -1,4 +1,3 @@
-
 //! # PostHog Plugin
 //!
 //! Debug-only PostHog analytics integration. Captures lifecycle events,

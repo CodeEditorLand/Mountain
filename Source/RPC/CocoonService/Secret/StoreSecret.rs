@@ -1,4 +1,3 @@
-
 //! Persist a value to the OS keychain.
 
 use tonic::{Response, Status};

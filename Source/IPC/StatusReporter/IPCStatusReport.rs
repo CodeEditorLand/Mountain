@@ -1,4 +1,3 @@
-
 //! Single-tick IPC status report sent to Sky: connection
 //! state, queue depth, listener inventory, recent message
 //! stats, error count, uptime.

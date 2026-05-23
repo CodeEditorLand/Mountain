@@ -1,4 +1,3 @@
-
 //! Read a value from the OS keychain. The gRPC proto carries only `key`;
 //! the app name is used as the keyring service scope.
 

@@ -1,4 +1,3 @@
-
 //! # ValidatePermission
 //!
 //! Role-based access control for IPC operations. Two atoms:

@@ -1,4 +1,3 @@
-
 //! Command-input validation hook. Currently a placeholder.
 
 pub struct Struct;

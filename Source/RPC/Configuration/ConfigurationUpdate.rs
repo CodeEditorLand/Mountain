@@ -1,4 +1,3 @@
-
 //! Configuration-update DTO. Carries key + value + scope.
 
 use serde::{Deserialize, Serialize};

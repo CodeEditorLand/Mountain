@@ -1,4 +1,3 @@
-
 //! Wrapper for an asynchronous Air download stream. Adapts the tonic
 //! streaming API into a `next().await` iterator that yields
 //! `DownloadStreamChunk::Struct` items. Cfg-gated on `AirIntegration`

@@ -1,4 +1,3 @@
-
 //! # Hover Interface
 //!
 //! Type definitions for the Hover language feature. LSP-shaped DTOs.

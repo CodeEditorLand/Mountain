@@ -27,7 +27,6 @@
 //! - Prefix `[RenderDevLog]` is added so grep can always separate TS-originated
 //!   lines from native `dev_log!` entries that share the same tag.
 
-
 use crate::dev_log;
 
 /// Accept BOTH casings for the tag/message parameter names so the JS

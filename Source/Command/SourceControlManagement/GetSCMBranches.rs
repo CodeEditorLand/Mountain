@@ -1,4 +1,3 @@
-
 //! Tauri command - list branches for an SCM provider. Drives the
 //! branch picker UI.
 //!

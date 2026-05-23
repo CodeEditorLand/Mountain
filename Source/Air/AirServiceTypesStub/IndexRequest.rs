@@ -1,4 +1,3 @@
-
 //! `IndexFiles` request DTO.
 
 #[derive(Debug, Clone)]

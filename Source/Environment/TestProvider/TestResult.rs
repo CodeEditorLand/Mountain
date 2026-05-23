@@ -1,4 +1,3 @@
-
 //! Per-test outcome: identifier, fully-qualified name, status, optional
 //! duration in ms, and optional error/stack-trace pair populated on
 //! failures.

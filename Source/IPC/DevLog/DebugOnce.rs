@@ -1,4 +1,3 @@
-
 //! Emit a tagged dev-log line exactly once per process, keyed
 //! on `Key`. Subsequent calls with the same key are dropped
 //! from the console; the file sink still records the first

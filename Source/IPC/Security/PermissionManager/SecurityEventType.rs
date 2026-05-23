@@ -1,4 +1,3 @@
-
 //! Discriminator for `SecurityEvent::Struct` - the kind of
 //! audit-log entry being recorded.
 

@@ -1,4 +1,3 @@
-
 //! Command-domain handlers for `CocoonService`.
 //! `RegisterCommand::Fn`, `ExecuteContributedCommand::Fn`,
 //! `UnregisterCommand::Fn`.

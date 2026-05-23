@@ -1,4 +1,3 @@
-
 //! Wind profile-state slice: every known profile, the home
 //! directory, and the active profile descriptor.
 

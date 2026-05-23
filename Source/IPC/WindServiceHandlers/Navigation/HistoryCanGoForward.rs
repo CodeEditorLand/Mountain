@@ -1,4 +1,3 @@
-
 //! Predicate: is the forward-stack non-empty? Twin of
 //! `HistoryCanGoBack`.
 

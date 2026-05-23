@@ -1,4 +1,3 @@
-
 //! Forward a code-lens request to the registered provider.
 
 use tonic::{Response, Status};

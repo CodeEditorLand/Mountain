@@ -1,4 +1,3 @@
-
 //! Read a text file from disk verbatim. Distinct from
 //! `ModelOpen` - this returns the bytes without registering a
 //! `DocumentStateDTO`. Used by tooling paths that want raw

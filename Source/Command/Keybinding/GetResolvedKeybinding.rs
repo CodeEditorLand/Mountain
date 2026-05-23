@@ -1,4 +1,3 @@
-
 //! Tauri command - fetch the final resolved keybindings (default +
 //! extension contributions + user overrides, weighted) for the keyboard
 //! shortcuts UI.

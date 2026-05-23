@@ -1,4 +1,3 @@
-
 //! Tauri command - debug-adapter-protocol service health probe. Stub
 //! returns `false`; pending DAP wire-up.
 

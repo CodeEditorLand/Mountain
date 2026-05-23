@@ -1,4 +1,3 @@
-
 //! Bidirectional streaming multiplexer for the Vine gRPC bus.
 //!
 //! Owns one bidirectional h2 stream per sidecar. Inbound notifications

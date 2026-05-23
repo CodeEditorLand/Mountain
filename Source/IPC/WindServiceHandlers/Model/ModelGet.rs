@@ -1,4 +1,3 @@
-
 //! Snapshot a single open text model. Returns
 //! `{ uri, content, version, languageId }` or `null` when the
 //! URI isn't currently open. `content` is rejoined from

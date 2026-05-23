@@ -1,4 +1,3 @@
-
 //! Metrics from the Air daemon.
 
 #[derive(Debug, Clone)]

@@ -1,4 +1,3 @@
-
 //! Forward a call hierarchy outgoing request to the registered provider.
 
 use serde_json::json;

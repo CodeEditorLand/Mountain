@@ -1,4 +1,3 @@
-
 //! `nativeHost:uninstallShellCommand` - remove the `land` symlink from
 //! `/usr/local/bin`. Mirrors VS Code's "Uninstall 'code' command from PATH".
 

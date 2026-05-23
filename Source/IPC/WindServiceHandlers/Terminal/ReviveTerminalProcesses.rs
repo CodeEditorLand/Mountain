@@ -1,4 +1,3 @@
-
 //! Revive serialised terminal processes after a window reload.
 //!
 //! VS Code calls `localPty:reviveTerminalProcesses` with the array previously
@@ -17,8 +16,8 @@
 //! ]
 //! ```
 //!
-//! Arguments\[1\] is the locale string used for date formatting in VS Code's UI;
-//! Mountain ignores it.
+//! Arguments\[1\] is the locale string used for date formatting in VS Code's
+//! UI; Mountain ignores it.
 //!
 //! ## Behaviour
 //! - Each entry is forwarded to `TerminalCreate` with `{ shellPath, cwd, name

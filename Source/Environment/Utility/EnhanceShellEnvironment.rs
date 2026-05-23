@@ -1,4 +1,3 @@
-
 //! macOS / Linux GUI launches (Finder double-click, Dock, Spotlight,
 //! `open <bundle>.app`) hand the app a minimal environment:
 //! `PATH=/usr/bin:/bin:/usr/sbin:/sbin`, no `NVM_DIR`, no `HOMEBREW_PREFIX`,

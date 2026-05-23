@@ -1,4 +1,3 @@
-
 //! Register a webview panel through the `WebviewProvider` trait so the
 //! panel is tracked in `ApplicationState::WebviewState`. Without trait
 //! registration `DisposeWebviewPanel` later fails with "unknown handle"

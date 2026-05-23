@@ -1,4 +1,3 @@
-
 //! Shared helper for provider-unregistration notification atoms.
 //!
 //! Every `unregister_*_provider` wire method does the same three steps:

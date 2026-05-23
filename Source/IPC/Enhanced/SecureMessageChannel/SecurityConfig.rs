@@ -1,4 +1,3 @@
-
 //! Tunables for the secure-message channel - encryption /
 //! HMAC algorithm, key-rotation cadence, nonce / tag sizes,
 //! and the maximum allowed message size (DOS guard).

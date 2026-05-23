@@ -1,4 +1,3 @@
-
 //! Keybinding registration state. Callers spell
 //! `Keybindings::KeybindingState::{KeybindingEntry, KeybindingState}`.
 

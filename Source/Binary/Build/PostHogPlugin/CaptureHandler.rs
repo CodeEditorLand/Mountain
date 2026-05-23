@@ -1,4 +1,3 @@
-
 //! Capture a `land:mountain:handler:complete` event for one IPC handler
 //! invocation. `Feature` is the Mountain-side route key (e.g.
 //! `file:read`, `extensions:getInstalled`); `DurationMs` measures the

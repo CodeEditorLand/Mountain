@@ -1,4 +1,3 @@
-
 //! LSP-compatible position: zero-based line + character offset.
 
 use serde::{Deserialize, Serialize};

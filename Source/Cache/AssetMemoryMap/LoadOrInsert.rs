@@ -1,4 +1,3 @@
-
 //! Load `Path` into the cache (or return the existing entry).
 //!
 //! Returns `Err` only if the file cannot be opened or memory-mapped; missing

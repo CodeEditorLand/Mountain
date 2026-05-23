@@ -1,4 +1,3 @@
-
 //! Lifecycle state of a discovered Mountain service.
 
 use serde::{Deserialize, Serialize};

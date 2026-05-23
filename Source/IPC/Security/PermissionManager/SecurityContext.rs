@@ -1,4 +1,3 @@
-
 //! Security envelope used by `Manager::Struct::validate_permission`.
 //! Carries the user id, roles, direct permissions, origin IP,
 //! and request timestamp. `ipc_default` produces the loopback

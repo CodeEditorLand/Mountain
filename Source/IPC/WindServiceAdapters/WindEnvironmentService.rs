@@ -1,4 +1,3 @@
-
 //! Wind-shaped environment-variable accessor. Reads
 //! `APP_ROOT` / `USER_DATA_PATH` from the process env so Wind's
 //! desktop bootstrap can stay agnostic to the Tauri side.

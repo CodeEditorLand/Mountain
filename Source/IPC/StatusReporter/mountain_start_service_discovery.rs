@@ -1,4 +1,3 @@
-
 //! `mountain_start_service_discovery` Tauri command - kicks
 //! off the periodic service-discovery background task driven
 //! by `ServiceRegistry::Struct::discovery_interval`.

@@ -1,4 +1,3 @@
-
 //! Information about a downloaded file.
 
 #[derive(Debug, Clone)]

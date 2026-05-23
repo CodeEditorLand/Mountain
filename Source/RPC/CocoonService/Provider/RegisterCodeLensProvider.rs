@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side code-lens provider.
 
 use tonic::{Response, Status};

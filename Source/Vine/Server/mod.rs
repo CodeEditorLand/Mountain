@@ -79,7 +79,6 @@
 //!   Mountain)
 //! - `CocoonServiceImpl`: Implementation of CocoonService (Mountain → Cocoon)
 
-
 pub mod Initialize;
 
 pub mod MountainVinegRPCService;

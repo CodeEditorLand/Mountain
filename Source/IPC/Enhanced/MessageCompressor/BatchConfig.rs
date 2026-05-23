@@ -1,4 +1,3 @@
-
 //! Compressor / batcher tunables - max batch size, max delay
 //! before flushing, the size threshold below which messages
 //! pass through uncompressed, and the algorithm + level pair.

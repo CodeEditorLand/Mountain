@@ -1,4 +1,3 @@
-
 //! Return an authentication session for the requested provider. Cocoon
 //! auth providers register themselves via `RegisterAuthenticationProvider`
 //! and live in `ApplicationState`; the full OAuth dance requires Mountain

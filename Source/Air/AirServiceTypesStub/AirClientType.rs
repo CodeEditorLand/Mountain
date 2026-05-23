@@ -1,4 +1,3 @@
-
 //! Stub `AirClient` type used while the `AirIntegration` feature is off.
 //! Every method returns the same "feature not implemented" error.
 //!

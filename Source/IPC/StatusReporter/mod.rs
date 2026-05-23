@@ -1,4 +1,3 @@
-
 //! # IPC Status Reporter
 //!
 //! Mountain-side observability for the Wind ↔ Mountain bridge.

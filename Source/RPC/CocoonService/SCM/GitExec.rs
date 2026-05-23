@@ -1,4 +1,3 @@
-
 //! Spawn `git` with the requested args inside `repository_path` (or cwd
 //! if unset). stdout lines are returned verbatim; stderr lines are
 //! prefixed with `stderr: ` so the extension can differentiate.

@@ -1,4 +1,3 @@
-
 //! Inner metrics payload for `MetricsResponse`.
 
 #[derive(Debug, Clone)]

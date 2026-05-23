@@ -1,4 +1,3 @@
-
 //! `mountain_get_performance_stats` Tauri command - returns
 //! the cumulative `PerformanceStats::Struct`.
 

@@ -1,4 +1,3 @@
-
 //! Tauri command - extension-host (Cocoon) health probe. Wire name
 //! kept snake_case to match Wind's `SharedProcessProxy` invoker.
 //!

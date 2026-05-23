@@ -1,4 +1,3 @@
-
 //! `Channel::Struct` - AES-256-GCM + HMAC-SHA256 secure
 //! message channel with automatic key rotation and replay
 //! protection. The struct + 18-method impl + Clone + utility

@@ -1,4 +1,3 @@
-
 //! `ApplicationRunTimeTrait::Run` - submit an `ActionEffect` to the Echo
 //! work-stealing scheduler and block on the oneshot reply.
 

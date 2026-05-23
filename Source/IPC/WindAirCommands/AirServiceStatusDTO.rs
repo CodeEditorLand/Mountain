@@ -1,4 +1,3 @@
-
 //! Air daemon status DTO returned by `GetAirStatus`.
 
 use serde::{Deserialize, Serialize};

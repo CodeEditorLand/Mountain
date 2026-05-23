@@ -1,4 +1,3 @@
-
 //! Tunable knobs for the performance dashboard - update
 //! cadence, retention window, alert threshold, sampling rate,
 //! and the trace ring-buffer cap.

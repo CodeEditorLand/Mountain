@@ -1,4 +1,3 @@
-
 //! Air daemon resource metrics DTO returned by `GetAirMetrics`.
 
 use serde::{Deserialize, Serialize};

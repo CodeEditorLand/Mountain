@@ -1,4 +1,3 @@
-
 //! Build a `UriComponents` from a fully-formed URL string. Handles
 //! `file://` (authority-optional) and any other scheme generically
 //! (`scheme:path` + optional `//authority`). Fragment / query are split

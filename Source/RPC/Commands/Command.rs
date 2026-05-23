@@ -1,4 +1,3 @@
-
 //! Command definition DTO.
 
 use serde::{Deserialize, Serialize};

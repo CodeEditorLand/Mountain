@@ -1,4 +1,3 @@
-
 //! # Text Model registry + TextFile handlers
 //!
 //! Two related responsibilities sharing the same dispatcher

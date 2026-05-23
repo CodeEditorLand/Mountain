@@ -1,4 +1,3 @@
-
 //! Robust shutdown that continues across individual service failures.
 //! Cocoon retry → terminal disposal → state save → flush. Errors collected
 //! into one summary instead of crashing.

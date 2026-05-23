@@ -1,4 +1,3 @@
-
 //! IPC response: correlation ID, payload, success flag, optional error
 //! string, and timestamp. Built through `Success` / `Error` constructors
 //! that stamp the timestamp from the chrono UTC clock.

@@ -1,4 +1,3 @@
-
 //! Threshold-violation alert raised by the dashboard - what
 //! tripped, current vs threshold, severity, human-readable
 //! message.

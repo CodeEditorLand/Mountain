@@ -1,4 +1,3 @@
-
 //! Update a registered SCM provider's resource-state group via the trait
 //! (which mutates state and emits the deduplicated UI event). Falls back
 //! to a direct Sky emit if the trait wiring is unavailable.

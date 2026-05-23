@@ -1,4 +1,3 @@
-
 //! Local-time session timestamp (`%Y%m%dT%H%M%S`) cached once
 //! per process. Must agree with
 //! `WindServiceHandlers::nativeHost:getEnvironmentPaths` so the

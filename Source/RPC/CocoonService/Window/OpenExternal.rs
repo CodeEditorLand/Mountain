@@ -1,4 +1,3 @@
-
 //! Forward an `OpenExternal` request to Sky on
 //! `sky://native/openExternal` so the webview can launch the URI in the
 //! system browser/handler.

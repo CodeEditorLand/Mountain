@@ -1,4 +1,3 @@
-
 //! Pairs an extension identifier with the host that owns it. Used by
 //! `EchoActionServer` to scope priority/telemetry when more than one
 //! extension host is active (Grove + Cocoon).

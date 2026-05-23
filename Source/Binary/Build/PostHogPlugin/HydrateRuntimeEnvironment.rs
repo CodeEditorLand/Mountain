@@ -1,4 +1,3 @@
-
 //! Hydrate the running process's environment from the compile-baked
 //! `Constants` so child processes spawned later (Cocoon Node, Sky
 //! webview) see the same telemetry config Mountain itself was built

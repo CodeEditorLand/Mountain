@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side call-hierarchy provider.
 
 use tonic::{Response, Status};

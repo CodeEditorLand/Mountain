@@ -1,4 +1,3 @@
-
 //! `Pick` env-var override. Returns `Some` when the path exists, logs a
 //! warning when it doesn't, and returns `None` otherwise.
 

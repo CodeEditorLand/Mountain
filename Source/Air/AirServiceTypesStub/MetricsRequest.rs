@@ -1,4 +1,3 @@
-
 //! `GetMetrics` request DTO.
 
 #[derive(Debug, Clone)]

@@ -1,4 +1,3 @@
-
 //! Forward a type hierarchy subtypes request to the registered provider.
 
 use serde_json::json;

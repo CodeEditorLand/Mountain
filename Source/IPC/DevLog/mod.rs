@@ -1,4 +1,3 @@
-
 //! # DevLog - Tag-filtered development logging
 //!
 //! Tag-gated logging used across Mountain. Controlled by the

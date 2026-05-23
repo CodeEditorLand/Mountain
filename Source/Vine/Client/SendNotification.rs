@@ -1,4 +1,3 @@
-
 //! Fire-and-forget notification to a sidecar. No response, no per-call
 //! timeout. Prefers the streaming multiplexer under
 //! `LAND_VINE_STREAMING=1`; falls through to unary on any failure.

@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side linked-editing-range provider.
 
 use tonic::{Response, Status};

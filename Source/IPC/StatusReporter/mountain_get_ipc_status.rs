@@ -1,4 +1,3 @@
-
 //! `mountain_get_ipc_status` Tauri command - one-shot status
 //! report (basic IPC slice only).
 

@@ -1,4 +1,3 @@
-
 //! `localGit:isAvailable -> bool`. Cheap `git --version` probe
 //! cached in a `OnceLock` for the process lifetime so the UI's
 //! periodic poll doesn't re-exec git every interval.

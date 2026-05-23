@@ -1,4 +1,3 @@
-
 //! `resize_terminal` gRPC endpoint. Resizes the PTY backing a terminal so
 //! the shell receives SIGWINCH and readline/shells repaint correctly. Also
 //! emits `sky://terminal/resize` so the Sky xterm.js panel reflows its

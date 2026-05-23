@@ -1,4 +1,3 @@
-
 //! `mountain_get_health_status` Tauri command - returns the
 //! current `HealthMonitor::Struct` (score + active issues).
 

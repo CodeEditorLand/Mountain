@@ -1,4 +1,3 @@
-
 //! Substring search across the workspace, capped at 1,000 matches. Skips
 //! hidden directories plus `node_modules` and `target`. Runs the walk in
 //! `tokio::task::spawn_blocking` so the event loop stays responsive.

@@ -1,4 +1,3 @@
-
 //! # Performance Dashboard
 //!
 //! Advanced monitoring + distributed-tracing module. Records

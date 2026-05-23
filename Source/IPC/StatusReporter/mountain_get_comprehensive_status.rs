@@ -1,4 +1,3 @@
-
 //! `mountain_get_comprehensive_status` Tauri command -
 //! assembles a `ComprehensiveStatusReport::Struct` (basic
 //! status + performance metrics + health) in one call.

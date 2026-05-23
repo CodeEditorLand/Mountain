@@ -1,4 +1,3 @@
-
 //! Extended file information.
 
 #[derive(Debug, Clone)]

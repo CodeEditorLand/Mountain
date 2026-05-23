@@ -1,4 +1,3 @@
-
 //! Effect creation and routing for `Track`. Two siblings:
 //! `CreateEffectForRequest::Fn` (the central router with one domain
 //! sub-module per file) and `MappedEffectType::MappedEffect` (the typed

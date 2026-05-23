@@ -1,4 +1,3 @@
-
 //! Open a text model: read content from disk, derive language
 //! ID from the extension, register the resulting
 //! `DocumentStateDTO` in `ApplicationState.Feature.Documents`,

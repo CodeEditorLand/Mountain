@@ -1,4 +1,3 @@
-
 //! Aggregate IPC perf snapshot: throughput, latency (avg + peak),
 //! compression ratio, pool utilisation, memory + CPU usage, and
 //! success/failure counters. `RecordMessage` updates the running mean

@@ -1,4 +1,3 @@
-
 //! Tauri command - remove keybindings registered by a given extension.
 //! Stub returns success; pending real implementation that filters by
 //! source identifier and clears the affected resolution cache.

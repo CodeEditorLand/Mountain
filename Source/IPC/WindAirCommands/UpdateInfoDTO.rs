@@ -1,4 +1,3 @@
-
 //! Update-availability DTO returned by `CheckForUpdates`.
 
 use serde::{Deserialize, Serialize};

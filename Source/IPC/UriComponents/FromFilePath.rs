@@ -1,4 +1,3 @@
-
 //! Build a `file://` `UriComponents` from an absolute filesystem path.
 //! Path is emitted verbatim - no percent-encoding, no normalisation -
 //! mirroring what VS Code's `URI.file(…)` readers expect.

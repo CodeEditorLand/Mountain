@@ -1,4 +1,3 @@
-
 //! Command registration and execution service.
 
 use std::collections::HashMap;

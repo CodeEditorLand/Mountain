@@ -1,4 +1,3 @@
-
 //! `nativeHost:openDevTools` - open the WebKit inspector for the main window.
 //! Requires the `devtools` Tauri feature (already enabled in the debug profile
 //! via `TAURI_DEV_TOOLS` env or cargo feature flag).

@@ -1,4 +1,3 @@
-
 //! Close a text model. Drops the entry from
 //! `ApplicationState.Feature.Documents`. Idempotent - closing
 //! an already-closed URI is a no-op.

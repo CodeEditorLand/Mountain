@@ -1,4 +1,3 @@
-
 //! Look up a contributed command and execute it. Marshals the first
 //! protobuf `argument` oneof into `serde_json::Value` for the executor.
 

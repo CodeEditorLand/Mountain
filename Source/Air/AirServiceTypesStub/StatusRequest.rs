@@ -1,4 +1,3 @@
-
 //! `GetStatus` request DTO.
 
 #[derive(Debug, Clone)]

@@ -1,4 +1,3 @@
-
 //! Capture gate. Combines the compile-time `debug_assertions` check with
 //! the master telemetry kill switch (`Capture`) and the per-pipe
 //! `Report` toggle, both baked at build time. Cheap early-exit consulted

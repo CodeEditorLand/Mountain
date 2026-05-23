@@ -1,4 +1,3 @@
-
 //! Forward a signature-help request to the registered provider.
 
 use serde_json::json;

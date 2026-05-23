@@ -1,4 +1,3 @@
-
 //! Source-control-management RPC service. Placeholder for git repo
 //! discovery, change tracking, commit/push operations. TODO: zero callers
 //! as of 2026-05-02.

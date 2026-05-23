@@ -1,4 +1,3 @@
-
 //! `DownloadFile` response DTO.
 
 #[derive(Debug, Clone)]

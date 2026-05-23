@@ -1,4 +1,3 @@
-
 //! # Local Git subprocess handlers
 //!
 //! Mirrors stock VS Code's `ILocalGitService` API

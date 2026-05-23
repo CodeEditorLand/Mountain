@@ -1,4 +1,3 @@
-
 //! Download-completion DTO returned by `DownloadUpdate` and
 //! `DownloadFile`.
 

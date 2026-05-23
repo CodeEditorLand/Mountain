@@ -1,4 +1,3 @@
-
 //! Health check: connection exists in the pool, last activity within
 //! `HEALTH_CHECK_INTERVAL_MS`, and failure count below the retry
 //! threshold.

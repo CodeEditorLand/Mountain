@@ -1,4 +1,3 @@
-
 //! gRPC client wrapper around `Air::AirClient::AirClient` -
 //! adds reconnect support and PascalCase logging consistent
 //! with the WindAirCommands surface.

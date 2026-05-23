@@ -1,4 +1,3 @@
-
 //! Window-domain handlers for `CocoonService`. Sixteen entry points cover
 //! show/hide messages, status-bar items, webview panels, and the prompt
 //! family (quick-pick / input-box / progress).

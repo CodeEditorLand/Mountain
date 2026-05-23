@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side document-highlight provider.
 
 use tonic::{Response, Status};

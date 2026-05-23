@@ -1,4 +1,3 @@
-
 //! Tagged hover content payload. Plain-text and Markdown are the
 //! common shapes; `Markup` carries an optional language hint for
 //! syntax-highlighted code blocks.

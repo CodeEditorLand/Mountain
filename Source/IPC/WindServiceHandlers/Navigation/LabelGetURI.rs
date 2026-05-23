@@ -1,4 +1,3 @@
-
 //! Resolve a human-readable display label for a URI. Two modes:
 //!
 //! - `Relative=false`: strip the `file://` scheme and return the raw absolute

@@ -1,4 +1,3 @@
-
 //! Resolves a raw cwd string to a PathBuf. Falls back to current dir.
 
 use std::path::PathBuf;

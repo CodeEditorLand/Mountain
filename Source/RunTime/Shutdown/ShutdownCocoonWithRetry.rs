@@ -1,4 +1,3 @@
-
 //! Send `$shutdown` over gRPC to Cocoon (3 attempts), then SIGKILL the child
 //! regardless of gRPC outcome. The hard-kill (Atom I6) is critical: a gRPC
 //! failure (transport error, broken pipe) used to leave the child orphaned,

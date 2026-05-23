@@ -1,4 +1,3 @@
-
 //! `Compressor::Struct` - message batching + compression
 //! engine. Buffers messages until size or time triggers a
 //! flush, then emits a `CompressedBatch::Struct` using the

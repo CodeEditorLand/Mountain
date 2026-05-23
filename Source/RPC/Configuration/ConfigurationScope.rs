@@ -1,4 +1,3 @@
-
 //! Scope of a configuration entry: Global / Workspace / Folder.
 
 use serde::{Deserialize, Serialize};

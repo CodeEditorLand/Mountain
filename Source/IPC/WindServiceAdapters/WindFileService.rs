@@ -1,4 +1,3 @@
-
 //! Wind-shaped file service: read / write / stat over the
 //! injected `FileSystemReader` / `FileSystemWriter` traits.
 

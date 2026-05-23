@@ -1,4 +1,3 @@
-
 //! # Binary::IPC
 //!
 //! All `#[tauri::command]` handlers exposed to the frontend invoke system.

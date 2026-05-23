@@ -1,4 +1,3 @@
-
 //! Tauri command - focus / scroll-into-view a specific tree item.
 //! `Options` carries the LSP-shaped `select`, `focus`, `expand`
 //! booleans (matches `vscode.TreeView.reveal`).

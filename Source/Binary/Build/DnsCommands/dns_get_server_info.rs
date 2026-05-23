@@ -1,4 +1,3 @@
-
 //! `dns_get_server_info` Tauri command - returns port, running
 //! flag, and startup time.
 

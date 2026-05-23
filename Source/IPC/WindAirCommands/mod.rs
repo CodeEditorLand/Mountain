@@ -1,4 +1,3 @@
-
 //! # Wind ↔ Air delegation commands
 //!
 //! Tauri commands the Wind frontend invokes to delegate

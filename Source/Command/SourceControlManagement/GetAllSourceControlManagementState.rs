@@ -1,4 +1,3 @@
-
 //! Tauri command - full snapshot of every registered SCM provider,
 //! its resource groups, and the resources within those groups.
 //! Drives the SCM viewlet's first paint.

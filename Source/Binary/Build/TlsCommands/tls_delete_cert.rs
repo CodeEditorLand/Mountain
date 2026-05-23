@@ -1,4 +1,3 @@
-
 //! `tls_delete_cert` Tauri command - currently aliased to
 //! `renew_certificate` (regenerates instead of removing). TODO:
 //! add a real `CertificateManager::delete_certificate` so the

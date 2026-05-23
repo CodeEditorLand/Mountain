@@ -1,4 +1,3 @@
-
 //! Serialise all active terminals to the `ISerializedTerminalState[]` shape
 //! that VS Code's `ILocalPtyService.serializeTerminalProcesses` contract
 //! requires.

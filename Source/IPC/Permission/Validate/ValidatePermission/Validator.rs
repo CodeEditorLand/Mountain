@@ -1,4 +1,3 @@
-
 //! `Validator::Struct` - role-based access control engine.
 //! Holds the role / permission tables and the operation →
 //! required-permission mapping; enforces the

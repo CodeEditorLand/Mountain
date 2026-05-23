@@ -1,4 +1,3 @@
-
 //! # AirClient
 //!
 //! gRPC client wrapper for the Air daemon service. Mountain reaches Air

@@ -1,4 +1,3 @@
-
 //! Module-private singleton holding the PostHog ingestion client.
 //! Populated once by `Initialize::Fn`; every `Capture*::Fn` reads
 //! through this static.

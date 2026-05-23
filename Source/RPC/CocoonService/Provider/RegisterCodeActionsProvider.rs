@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side code-actions provider.
 
 use tonic::{Response, Status};

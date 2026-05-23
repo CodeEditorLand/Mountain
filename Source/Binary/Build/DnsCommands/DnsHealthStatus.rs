@@ -1,4 +1,3 @@
-
 //! Aggregated DNS health snapshot (server / zone / forward
 //! status + most recent error) returned by
 //! `dns_get_health_status`.

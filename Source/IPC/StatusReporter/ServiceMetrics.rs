@@ -1,4 +1,3 @@
-
 //! Per-service performance counters embedded inside
 //! `ServiceInfo::Struct`. Currently filled with mock values
 //! pending real metric plumbing.

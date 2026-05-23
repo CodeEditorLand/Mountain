@@ -1,4 +1,3 @@
-
 //! Lifecycle state of a test run: Queued → Running → terminal
 //! (Passed / Failed / Skipped / Errored). Used both as the run-level
 //! aggregate and the per-test-result status.

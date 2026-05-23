@@ -1,4 +1,3 @@
-
 //! `tls_check_cert_status` Tauri command - parse a cached
 //! cert's `valid_until` (RFC3339), compare against now, and
 //! flag whether renewal is due (within

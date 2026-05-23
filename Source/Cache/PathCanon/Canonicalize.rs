@@ -1,4 +1,3 @@
-
 //! Canonicalise via the cache. Returns the cached entry on hit; runs
 //! `dunce::canonicalize` on miss and caches the result.
 //!

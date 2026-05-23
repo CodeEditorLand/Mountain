@@ -1,4 +1,3 @@
-
 //! Build the standard `Permission::Struct` set covering file,
 //! config, storage, system, and admin categories. Sensitive
 //! permissions (`config.update`, `system.*`, `admin.*`,

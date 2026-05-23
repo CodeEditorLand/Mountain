@@ -1,4 +1,3 @@
-
 //! Network endpoint metadata: protocol, host, port, optional Unix-domain
 //! socket path. `NewUnix` is the convenience constructor for the
 //! UDS-only path; everything else uses the four-arg `new`.

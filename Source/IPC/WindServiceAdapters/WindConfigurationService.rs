@@ -1,4 +1,3 @@
-
 //! Wind-shaped configuration service - read / write of
 //! configuration values via the injected
 //! `ConfigurationProvider` trait. Defaults to user-target

@@ -1,4 +1,3 @@
-
 //! Save every dirty editor (optionally including untitled) via
 //! `sky://editor/saveAll`.
 

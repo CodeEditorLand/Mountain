@@ -1,4 +1,3 @@
-
 //! IPC command request: command name + positional `Args` + named
 //! `Params` map + a priority. Built through `new` and the `WithArg` /
 //! `WithParam` / `WithPriority` builder shims.

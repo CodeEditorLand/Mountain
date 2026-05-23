@@ -1,4 +1,3 @@
-
 //! Fire-and-forget OTLP span exporter. Sends a single
 //! `resourceSpans` payload over plain HTTP to the collector at
 //! `OTLPEndpoint` (default `127.0.0.1:4318`, configurable via

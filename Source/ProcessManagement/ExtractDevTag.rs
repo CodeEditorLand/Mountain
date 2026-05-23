@@ -1,4 +1,3 @@
-
 //! Cocoon stdout-line inspector. Detects the `[DEV:<TAG>]` prefix written by
 //! `Cocoon/Source/Services/DevLog.ts::CocoonDevLog` and returns the lower-
 //! cased tag for dispatch into Mountain's per-tag `dev_log!` sinks. Returns

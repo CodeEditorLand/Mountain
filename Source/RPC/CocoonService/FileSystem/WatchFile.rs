@@ -1,4 +1,3 @@
-
 //! `watch_file` gRPC endpoint - Cocoon calls this when an extension uses
 //! `vscode.workspace.createFileSystemWatcher`. Routes to Mountain's
 //! `FileWatcherProvider::RegisterWatcher` so OS events (FSEvents on macOS,

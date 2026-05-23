@@ -1,4 +1,3 @@
-
 //! Close a PTY, kill its child, and drop the entry from the
 //! provider's terminal registry. Idempotent - disposing an
 //! already-disposed id surfaces as a logged warning, not an

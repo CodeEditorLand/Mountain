@@ -1,4 +1,3 @@
-
 //! `tls_generate_cert` Tauri command - issue a fresh server
 //! cert under the CA for `hostname` (or return the existing
 //! valid one).

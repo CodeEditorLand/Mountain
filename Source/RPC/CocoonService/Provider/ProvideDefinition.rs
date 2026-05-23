@@ -1,4 +1,3 @@
-
 //! Resolve "go to definition" via the registered provider, mapping each
 //! result location into the gRPC `Location` shape.
 

@@ -1,4 +1,3 @@
-
 //! # MementoLoader - Persistence layer
 //!
 //! Loads `ApplicationState` memento JSON from disk during boot.

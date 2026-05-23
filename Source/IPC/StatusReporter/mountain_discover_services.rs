@@ -1,4 +1,3 @@
-
 //! `mountain_discover_services` Tauri command - run a
 //! one-shot discovery pass and return the populated
 //! `ServiceInfo::Struct` list.

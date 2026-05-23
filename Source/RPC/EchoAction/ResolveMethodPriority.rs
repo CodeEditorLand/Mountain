@@ -1,4 +1,3 @@
-
 //! Map a Cocoon→Mountain wire method name to an Echo priority lane.
 //!
 //! | Wire method                             | Lane   | Reason                              |

@@ -1,4 +1,3 @@
-
 //! # Binary::Shutdown
 //!
 //! Graceful shutdown sequences for the Mountain binary.

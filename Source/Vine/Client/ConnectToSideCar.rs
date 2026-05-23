@@ -1,4 +1,3 @@
-
 //! Establish a gRPC connection to a Cocoon sidecar with exponential
 //! back-off retry. On success initialises the per-connection metadata
 //! tracked by `Shared::CONNECTION_METADATA`.

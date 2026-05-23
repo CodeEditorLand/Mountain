@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side document-symbol provider.
 
 use tonic::{Response, Status};

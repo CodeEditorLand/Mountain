@@ -1,4 +1,3 @@
-
 //! Singleton submission gate for every Cocoon→Mountain request. Wraps the
 //! Echo scheduler with a per-method priority lane.
 

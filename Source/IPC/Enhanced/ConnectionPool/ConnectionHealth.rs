@@ -1,4 +1,3 @@
-
 //! Health classification for `ConnectionHandle::Struct` -
 //! `Healthy` (default), `Unhealthy` (failed health check),
 //! `Degraded` (degraded but still usable).

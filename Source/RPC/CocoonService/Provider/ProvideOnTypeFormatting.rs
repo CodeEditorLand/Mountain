@@ -1,4 +1,3 @@
-
 //! Forward an on-type-formatting request to the registered provider.
 
 use serde_json::json;

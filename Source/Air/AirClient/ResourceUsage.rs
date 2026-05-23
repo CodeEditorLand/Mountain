@@ -1,4 +1,3 @@
-
 //! Resource usage information from the Air daemon.
 
 #[derive(Debug, Clone)]

@@ -1,4 +1,3 @@
-
 //! Snapshot of asset-cache occupancy. Returned by
 //! `Cache::AssetMemoryMap::Stats::Fn`.
 

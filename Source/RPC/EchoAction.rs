@@ -1,4 +1,3 @@
-
 //! Cocoon → Mountain submission gate. The `EchoActionServer` wraps every
 //! inbound `MountainService` gRPC call in an Echo work-stealing scheduler
 //! task tagged with a per-method priority lane (read/write file → High,

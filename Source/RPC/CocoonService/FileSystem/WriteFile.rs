@@ -1,4 +1,3 @@
-
 //! Write bytes to disk, creating any missing parent directories.
 
 use tonic::{Response, Status};

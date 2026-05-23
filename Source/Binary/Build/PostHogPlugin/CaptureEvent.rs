@@ -1,4 +1,3 @@
-
 //! Capture a named event with optional properties. Stamps the standard
 //! Mountain identity (`$app`, `$app_version`, `$build_mode`,
 //! `$component`) on every event before merging caller props.

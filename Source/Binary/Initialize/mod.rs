@@ -1,4 +1,3 @@
-
 //! # Binary::Initialize
 //!
 //! Pre-Tauri startup utilities invoked before the event loop begins.

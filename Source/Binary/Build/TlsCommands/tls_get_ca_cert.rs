@@ -1,4 +1,3 @@
-
 //! `tls_get_ca_cert` Tauri command - returns the CA certificate
 //! PEM so the webview can pin it or install it into the system
 //! trust store.

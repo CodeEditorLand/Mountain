@@ -1,4 +1,3 @@
-
 //! `GetMetrics` response DTO.
 
 use crate::Air::AirServiceTypesStub::AirMetricsProtoDTO;

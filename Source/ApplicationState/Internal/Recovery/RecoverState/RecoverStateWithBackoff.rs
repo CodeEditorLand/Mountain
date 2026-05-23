@@ -1,4 +1,3 @@
-
 //! Retry a recovery `Operation` up to `MaxAttempts` times with
 //! exponential backoff (100 ms, doubled per failure). The async
 //! sleep yields the runtime so other work can proceed during the

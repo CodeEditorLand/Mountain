@@ -1,4 +1,3 @@
-
 //! `file:open` - open a file and return an integer file descriptor.
 //!
 //! VS Code's `DiskFileSystemProvider.open(resource, opts)` uses fd-based

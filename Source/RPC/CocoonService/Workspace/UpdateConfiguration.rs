@@ -1,4 +1,3 @@
-
 //! Forward a Cocoon-side configuration change to Sky for workbench
 //! settings refresh.
 

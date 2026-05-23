@@ -1,4 +1,3 @@
-
 //! One observed notification frame fanned out from `SendNotification`
 //! (or, once the streaming-channel multiplexer is live, from
 //! `Multiplexer`). Subscribers consume frames from the broadcast channel

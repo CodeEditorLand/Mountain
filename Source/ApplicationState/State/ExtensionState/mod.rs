@@ -1,4 +1,3 @@
-
 //! Extension-related state. Three sub-stores (`ExtensionRegistry`,
 //! `ProviderRegistration`, `ScannedExtensions`) plus the composite `State`
 //! struct. Callers spell the full sub-path.

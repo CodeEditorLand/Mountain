@@ -1,4 +1,3 @@
-
 //! Normalise an `extensionLocation` (or any similar) field that arrives
 //! as either a URL string, a pre-built `UriComponents` object (possibly
 //! already tagged), or is missing / null. The output is always a

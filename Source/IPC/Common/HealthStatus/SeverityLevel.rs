@@ -1,4 +1,3 @@
-
 //! Health-issue severity ladder. Ordered Low → Medium → High →
 //! Critical so callers can compare with `<` / `>`. Drives the
 //! penalty applied to `HealthMonitor::Struct::HealthScore`.

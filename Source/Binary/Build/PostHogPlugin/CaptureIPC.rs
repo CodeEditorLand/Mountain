@@ -1,4 +1,3 @@
-
 //! Convenience wrapper for IPC dispatch instrumentation. Emits
 //! `land:mountain:ipc:invoke` with the wire `method` name. Pair with
 //! `CaptureHandler::Fn` to also stamp `land:mountain:handler:complete`

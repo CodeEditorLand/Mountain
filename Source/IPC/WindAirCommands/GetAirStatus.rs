@@ -1,4 +1,3 @@
-
 //! `GetAirStatus` Tauri command - call Air's status RPC and
 //! its health probe, fold both into an
 //! `AirServiceStatusDTO::Struct`.

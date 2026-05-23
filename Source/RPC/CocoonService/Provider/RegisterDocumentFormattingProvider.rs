@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side document-formatting provider.
 
 use tonic::{Response, Status};

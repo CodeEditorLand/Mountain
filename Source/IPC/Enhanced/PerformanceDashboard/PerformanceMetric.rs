@@ -1,4 +1,3 @@
-
 //! One sample point: typed metric, value, timestamp,
 //! optional channel, free-form tag bag.
 

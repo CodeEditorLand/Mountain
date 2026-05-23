@@ -1,4 +1,3 @@
-
 //! Connection-pool tunables: max / min connection counts plus
 //! the four millisecond budgets (acquire timeout, max
 //! lifetime, idle timeout, health-check interval).

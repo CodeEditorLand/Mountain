@@ -1,4 +1,3 @@
-
 //! Resolve the Tauri app-data prefix for THIS profile so logs
 //! and aliasing pick the right `~/Library/Application Support/
 //! land.editor.*.mountain` directory. The detection walks the

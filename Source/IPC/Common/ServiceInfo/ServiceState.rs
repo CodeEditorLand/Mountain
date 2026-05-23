@@ -1,4 +1,3 @@
-
 //! Lifecycle state of a service. `IsOperational` covers the three
 //! states a caller can still send work to (Running / Degraded /
 //! Starting); the rest are terminal or transitional.

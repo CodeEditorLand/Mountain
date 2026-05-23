@@ -1,4 +1,3 @@
-
 //! Send a request and await a response. Validates method-name length
 //! and message size, prefers the streaming multiplexer when
 //! `LAND_VINE_STREAMING=1` is on (falls through to unary on any failure

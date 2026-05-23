@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side workspace-symbol provider.
 
 use tonic::{Response, Status};

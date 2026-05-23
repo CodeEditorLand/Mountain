@@ -1,4 +1,3 @@
-
 //! Shared helper for notification atoms that are pure sky-event relays.
 //!
 //! Many Cocoon → Mountain notification atoms do exactly two things:

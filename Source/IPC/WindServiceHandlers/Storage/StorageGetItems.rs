@@ -1,4 +1,3 @@
-
 //! Bulk-read every key/value pair as `[key, value]` tuples.
 //! VS Code's `NativeWorkbenchStorageService` calls this exactly
 //! once at boot to hydrate its in-memory cache. Stringifies

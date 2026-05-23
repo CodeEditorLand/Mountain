@@ -1,4 +1,3 @@
-
 //! Converts a JSON array value to `Vec<String>`.
 
 use serde_json::Value;

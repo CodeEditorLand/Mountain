@@ -1,4 +1,3 @@
-
 //! Spawn a tokio task that logs cache stats every 30 s under the `path-canon`
 //! trace tag. Optional; call from `RunTime::Setup` when the user has
 //! `Trace=path-canon` enabled.

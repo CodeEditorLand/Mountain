@@ -1,4 +1,3 @@
-
 //! Per-channel coalescing buffer for `outputChannel.append` notifications.
 //!
 //! Cocoon's Git extension emits 30+ `append` notifications per `git status`

@@ -1,4 +1,3 @@
-
 //! `nativeHost:reload` - reload the webview without restarting the process.
 //! VS Code calls this from `ILifecycleMainService.reload()` for "Reload
 //! Window" (Developer menu / Cmd+Shift+P → Reload Window).

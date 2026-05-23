@@ -1,4 +1,3 @@
-
 //! Tauri command - fetch a single tree item's metadata (label, icon,
 //! description, command, contextValue) by its element handle.
 

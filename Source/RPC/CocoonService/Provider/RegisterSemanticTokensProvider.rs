@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side semantic-tokens provider. Uses the
 //! semantic-tokens-specific request shape (carries the legend).
 

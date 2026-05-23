@@ -1,4 +1,3 @@
-
 //! Initialization-domain handlers for `CocoonService`.
 //! `CancelOperation::Fn`, `InitialHandshake::Fn`, `InitExtensionHost::Fn`.
 

@@ -1,4 +1,3 @@
-
 //! Snapshot of asset-cache stats for diagnostics.
 
 use crate::Cache::AssetMemoryMap::{CacheStats, Map};

@@ -1,4 +1,3 @@
-
 //! Vine gRPC connection info DTO.
 
 use serde::{Deserialize, Serialize};

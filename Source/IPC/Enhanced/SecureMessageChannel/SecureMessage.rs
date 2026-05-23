@@ -1,4 +1,3 @@
-
 //! Generic encrypted-message wrapper carrying additional
 //! routing headers and a protocol version. The phantom `T`
 //! is the original plaintext type; the wrapper itself

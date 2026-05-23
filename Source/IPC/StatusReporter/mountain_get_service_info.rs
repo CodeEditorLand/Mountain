@@ -1,4 +1,3 @@
-
 //! `mountain_get_service_info` Tauri command - look up one
 //! service by name in the registry.
 

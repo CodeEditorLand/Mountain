@@ -1,4 +1,3 @@
-
 //! Tagged health issue. Each variant carries a free-form description
 //! string; `Severity` and `Description` accessors normalise the
 //! tag→severity mapping in one place so the recalculation logic in

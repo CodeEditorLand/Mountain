@@ -1,4 +1,3 @@
-
 //! Tree-view-domain handlers for `CocoonService`.
 //! `RegisterTreeViewProvider::Fn`, `GetTreeChildren::Fn`, plus private
 //! helpers `EnqueueTreeViewEmit` (16 ms emit batcher) and `ViewIdHandle`

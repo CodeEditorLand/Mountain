@@ -1,4 +1,3 @@
-
 //! Forward a code-actions request to the registered provider. Currently
 //! returns an empty list pending the action-DTO mapping.
 

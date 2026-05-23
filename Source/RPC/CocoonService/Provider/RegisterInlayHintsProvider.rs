@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side inlay-hints provider.
 
 use tonic::{Response, Status};

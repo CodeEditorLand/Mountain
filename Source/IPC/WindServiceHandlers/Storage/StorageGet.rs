@@ -1,4 +1,3 @@
-
 //! Read a single value from persistent storage by key. The
 //! `false` first arg to `GetStorageValue` selects the
 //! workspace-scoped store; `true` would target global storage.

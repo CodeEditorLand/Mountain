@@ -1,4 +1,3 @@
-
 //! Bundled Node lookup. Production: Tauri ships Node under
 //! `Resources/Node/bin/node` (`Resources/Node/node.exe` on Windows). Dev:
 //! same layout next to the executable so the dev build dogfoods the same

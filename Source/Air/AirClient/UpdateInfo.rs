@@ -1,4 +1,3 @@
-
 //! Information about an available update.
 
 #[derive(Debug, Clone)]

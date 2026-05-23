@@ -1,4 +1,3 @@
-
 //! Update a progress notification with a new message + increment.
 
 use serde_json::json;

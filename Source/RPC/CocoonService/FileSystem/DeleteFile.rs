@@ -1,4 +1,3 @@
-
 //! Remove a file or recursively remove a directory.
 
 use tonic::{Response, Status};

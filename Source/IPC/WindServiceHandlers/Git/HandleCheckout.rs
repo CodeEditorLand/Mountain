@@ -1,4 +1,3 @@
-
 //! `localGit:checkout(operationId, repoPath, treeish, detached?)`.
 //! `Detached=true` adds `--detach` so the caller can land on a
 //! commit hash without creating a tracking branch.

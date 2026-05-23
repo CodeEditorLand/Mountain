@@ -1,4 +1,3 @@
-
 //! Open a document in the workbench. Maps to `sky://editor/openDocument`
 //! (same channel as `Workspace::OpenDocument::Fn`; this is the
 //! window-namespace alias).

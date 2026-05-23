@@ -1,4 +1,3 @@
-
 //! Bootstrap helper - construct `Features::Struct`, stash a
 //! clone in Tauri state, spawn the monitor tasks. Called from
 //! `Binary/Register/AdvancedFeaturesRegister.rs`.

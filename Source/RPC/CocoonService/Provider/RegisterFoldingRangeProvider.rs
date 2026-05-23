@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side folding-range provider.
 
 use tonic::{Response, Status};

@@ -1,4 +1,3 @@
-
 //! Tauri command - notify the provider when a tree node is
 //! expanded / collapsed.
 //!

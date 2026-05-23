@@ -1,4 +1,3 @@
-
 //! Cross-cutting utilities shared by every `Environment` provider: error
 //! mapping, language detection, workspace-trust path validation, and URI
 //! parsing. Callers spell the full path

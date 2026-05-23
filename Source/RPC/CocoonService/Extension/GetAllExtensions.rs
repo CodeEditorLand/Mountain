@@ -1,4 +1,3 @@
-
 //! Return every scanned extension projected into the gRPC `ExtensionInfo`
 //! shape.
 

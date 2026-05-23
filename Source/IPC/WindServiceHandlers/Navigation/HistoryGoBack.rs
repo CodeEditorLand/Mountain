@@ -1,4 +1,3 @@
-
 //! Pop the previous URI off the back-stack and return it.
 //! `None` when the stack is empty (caller should disable the
 //! back button).

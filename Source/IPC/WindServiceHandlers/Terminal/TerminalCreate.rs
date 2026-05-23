@@ -1,4 +1,3 @@
-
 //! Spawn a new PTY through `TerminalProvider::CreateTerminal`.
 //! `Options` carries shell path, args, cwd, env, name. Returns a
 //! provider-assigned terminal id (`u64`) which Wind uses for

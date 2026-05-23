@@ -1,4 +1,3 @@
-
 //! `encryption:encrypt(value: string) -> string`
 //!
 //! Encrypts a plaintext string with AES-256-GCM and returns a base64-encoded

@@ -1,4 +1,3 @@
-
 //! Single registered logger - resource URI inside Wind's log
 //! registry payload.
 

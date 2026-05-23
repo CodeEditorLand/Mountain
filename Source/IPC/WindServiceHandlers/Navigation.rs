@@ -1,4 +1,3 @@
-
 //! # Navigation history + URI labels
 //!
 //! Two related responsibilities sharing the same dispatcher

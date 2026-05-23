@@ -1,4 +1,3 @@
-
 //! `DownloadUpdate` Tauri command - hand off update-package
 //! download to Air, returning a `DownloadResultDTO::Struct`.
 

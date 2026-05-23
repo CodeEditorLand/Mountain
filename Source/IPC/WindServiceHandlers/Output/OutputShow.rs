@@ -1,4 +1,3 @@
-
 //! Show an output channel panel. Emits `sky://output/show`; Sky
 //! brings the panel to the front and focuses it.
 

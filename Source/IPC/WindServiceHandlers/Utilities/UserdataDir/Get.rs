@@ -1,4 +1,3 @@
-
 //! Returns the userdata base directory, falling back to platform defaults.
 
 pub fn Fn() -> String {

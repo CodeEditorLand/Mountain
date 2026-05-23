@@ -1,4 +1,3 @@
-
 //! `nativeHost:exit` - exit with an explicit code.
 //! VS Code calls this from `NativeHostMainService.exit(code)` when an
 //! extension or the workbench requests a non-zero exit (crash reporter,

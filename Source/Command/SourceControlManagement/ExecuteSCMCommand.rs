@@ -1,4 +1,3 @@
-
 //! Tauri command - dispatch SCM operations (commit / push / pull).
 //!
 //! ## Stub

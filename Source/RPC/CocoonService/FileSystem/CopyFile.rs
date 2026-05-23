@@ -1,4 +1,3 @@
-
 //! Copy a file, creating any missing target parents first.
 
 use tonic::{Response, Status};

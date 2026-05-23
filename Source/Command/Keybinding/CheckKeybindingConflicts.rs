@@ -1,4 +1,3 @@
-
 //! Tauri command - detect chord-sequence overlaps in the current
 //! keybinding registry. Stub returns no conflicts; pending real
 //! implementation that scans the resolved set and reports source +

@@ -1,4 +1,3 @@
-
 //! Result of a file search.
 
 #[derive(Debug, Clone)]

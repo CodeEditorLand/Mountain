@@ -1,4 +1,3 @@
-
 //! Audit log entry written by `Manager::Struct::log_security_event`.
 //! Pairs a `SecurityEventType::Enum` with the user id,
 //! attempted operation, timestamp, and free-form details.

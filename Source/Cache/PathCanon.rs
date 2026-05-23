@@ -1,4 +1,3 @@
-
 //! Process-wide canonical-path cache.
 //!
 //! Keyed by lexical input path; value is the result of `dunce::canonicalize`.

@@ -1,4 +1,3 @@
-
 //! Drop a single cached entry. Useful for hot-reload during dev when the
 //! bundler rewrites a chunk.
 

@@ -1,4 +1,3 @@
-
 //! # IPC Message Types
 //!
 //! Core message structures used by every IPC channel between Wind and

@@ -1,4 +1,3 @@
-
 //! Coalesce 30+ Mountain → Sky `tree-view/create` emits at boot into a
 //! single batched payload per frame. Uses the channel-drain pattern: a
 //! long-lived flusher wakes on first item, drains immediately, sleeps one

@@ -1,4 +1,3 @@
-
 //! Reads, mutates, and writes back RecentlyOpened.json atomically.
 
 use serde_json::{Value, json};

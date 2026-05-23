@@ -1,4 +1,3 @@
-
 //! `ApplyUpdate` request DTO.
 
 #[derive(Debug, Clone)]

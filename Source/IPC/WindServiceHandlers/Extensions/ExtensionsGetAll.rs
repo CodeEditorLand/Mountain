@@ -1,4 +1,3 @@
-
 //! `extensions:getAll` - every scanned extension's raw
 //! manifest, no `ILocalExtension` reshape. Used by tooling /
 //! debug surfaces that want the full payload (extension

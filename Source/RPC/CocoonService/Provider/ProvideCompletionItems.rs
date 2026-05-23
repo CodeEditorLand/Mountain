@@ -1,4 +1,3 @@
-
 //! Forward a completion request to the registered provider and project
 //! the suggestions into the gRPC `CompletionItem` shape.
 

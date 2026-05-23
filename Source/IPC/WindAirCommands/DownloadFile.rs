@@ -1,4 +1,3 @@
-
 //! `DownloadFile` Tauri command - generic URL download routed
 //! through Air's download service.
 

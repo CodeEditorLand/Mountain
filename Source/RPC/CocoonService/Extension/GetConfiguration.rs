@@ -1,4 +1,3 @@
-
 //! Look up a workspace configuration value for the requesting extension.
 //! Composes `section.key` when both are present, otherwise falls back to
 //! whichever side is non-empty.

@@ -1,4 +1,3 @@
-
 //! # RecoverState - Internal Recovery Utilities
 //!
 //! Three composable primitives the recovery flow uses to clean up

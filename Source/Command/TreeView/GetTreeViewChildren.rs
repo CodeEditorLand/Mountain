@@ -1,4 +1,3 @@
-
 //! Tauri command - fetch children for a tree node. `ElementHandle =
 //! None` returns the root level. Dispatches through
 //! `MountainEnvironment::Require<dyn TreeViewProvider>`.

@@ -1,4 +1,3 @@
-
 //! Cocoon → Mountain `window.createTextEditorDecorationType` /
 //! `window.disposeTextEditorDecorationType` notifications. Forwards the
 //! payload on `sky://decoration/<suffix>` as a batch; Sky demultiplexes

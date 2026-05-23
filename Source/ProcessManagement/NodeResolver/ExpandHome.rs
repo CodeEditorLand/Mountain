@@ -1,4 +1,3 @@
-
 //! Expand a leading `~/` against `$HOME`. Returns the input unchanged if
 //! `HOME` is unset or the path doesn't start with `~/`.
 

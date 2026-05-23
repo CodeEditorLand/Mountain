@@ -1,4 +1,3 @@
-
 //! Single workspace folder DTO.
 
 use serde::{Deserialize, Serialize};

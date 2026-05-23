@@ -1,4 +1,3 @@
-
 //! One file URI scheduled for open / create. Carried inside
 //! `WindDesktopConfiguration::Struct::files_to_open_or_create`.
 

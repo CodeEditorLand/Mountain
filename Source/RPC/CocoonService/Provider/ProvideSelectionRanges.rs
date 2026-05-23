@@ -1,4 +1,3 @@
-
 //! Forward a selection-ranges request (multiple positions per call) to
 //! the registered provider.
 

@@ -1,4 +1,3 @@
-
 //! Forward a task-execution request to Sky over the
 //! `sky://task/execute` channel.
 

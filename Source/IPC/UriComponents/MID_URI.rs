@@ -1,4 +1,3 @@
-
 //! `MarshalledId.Uri` constant from VS Code's
 //! `src/vs/base/common/marshallingIds.ts`. The renderer's URI reviver
 //! (`_transformIncomingURIs` in `uriIpc.ts`) keys off this exact value

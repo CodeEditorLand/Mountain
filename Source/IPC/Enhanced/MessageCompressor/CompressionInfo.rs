@@ -1,4 +1,3 @@
-
 //! Per-batch compression metadata - algorithm name, level,
 //! and the achieved ratio. `none()` produces the
 //! uncompressed sentinel (`algorithm:"none"`, `ratio:1.0`).

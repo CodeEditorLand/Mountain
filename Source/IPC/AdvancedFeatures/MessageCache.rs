@@ -1,4 +1,3 @@
-
 //! Message cache state - id → `CachedMessage::Struct` table
 //! plus hit / miss counters and a derived size accessor.
 

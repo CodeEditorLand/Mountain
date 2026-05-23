@@ -1,4 +1,3 @@
-
 //! Removes a completed PID from the registry.
 
 pub fn Fn(OperationId:&str) {

@@ -1,4 +1,3 @@
-
 //! Service-discovery registry - the map of known services
 //! and the schedule on which discovery refreshes it.
 

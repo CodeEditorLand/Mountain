@@ -1,4 +1,3 @@
-
 //! Forward an inlay-hints request to the registered provider.
 
 use serde_json::json;

@@ -1,4 +1,3 @@
-
 //! Convenience wrapper that emits an error event under the
 //! `land:mountain:error` name with `error_tag` + `error_message`. The
 //! Errors & Reliability dashboard rolls these up alongside Cocoon /

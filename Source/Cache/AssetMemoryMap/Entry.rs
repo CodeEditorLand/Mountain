@@ -1,4 +1,3 @@
-
 //! Single MemoryMap-backed asset cache entry. Holds the file-backed mapping
 //! plus metadata computed once at load time.
 

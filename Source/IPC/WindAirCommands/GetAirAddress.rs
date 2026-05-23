@@ -1,4 +1,3 @@
-
 //! Resolve the Air daemon's gRPC address. Currently hard-coded
 //! to `DEFAULT_AIR_SERVER_ADDRESS`; future revisions will read
 //! a runtime config slot.

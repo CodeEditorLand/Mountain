@@ -1,4 +1,3 @@
-
 //! Standard IPC message: identifier, command name, JSON payload,
 //! creation timestamp, optional correlation ID, and a priority. Built
 //! through `new` and the `WithPayload` / `WithCorrelationId` /

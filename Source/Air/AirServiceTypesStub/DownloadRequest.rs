@@ -1,4 +1,3 @@
-
 //! `DownloadFile` request DTO.
 
 use std::collections::HashMap;

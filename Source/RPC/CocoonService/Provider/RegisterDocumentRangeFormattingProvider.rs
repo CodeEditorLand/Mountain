@@ -1,4 +1,3 @@
-
 //! Register a Cocoon-side document-range-formatting provider.
 
 use tonic::{Response, Status};

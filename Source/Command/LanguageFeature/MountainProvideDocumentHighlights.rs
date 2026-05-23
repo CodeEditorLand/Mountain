@@ -1,4 +1,3 @@
-
 //! Tauri command - symbol occurrences in a document. Delegates to
 //! `LanguageFeature::Highlights::provide_document_highlights_impl`.
 

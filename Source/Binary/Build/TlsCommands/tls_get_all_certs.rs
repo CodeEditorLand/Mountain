@@ -1,4 +1,3 @@
-
 //! `tls_get_all_certs` Tauri command - hostname → cert info
 //! map for the diagnostic panel.
 

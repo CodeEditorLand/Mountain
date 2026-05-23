@@ -1,4 +1,3 @@
-
 //! `localGit:cancel(operationId)` - SIGTERM (Unix) or
 //! `taskkill /T /F` (Windows) the pid stashed for
 //! `OperationId`. Silent no-op when the id is unknown so

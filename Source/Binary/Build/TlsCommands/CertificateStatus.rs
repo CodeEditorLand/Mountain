@@ -1,4 +1,3 @@
-
 //! TLS certificate status snapshot returned by
 //! `tls_check_cert_status`.
 

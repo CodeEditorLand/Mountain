@@ -1,4 +1,3 @@
-
 //! Diagnostic snapshot of the canonical-path cache.
 
 #[derive(Debug, Clone, Copy)]

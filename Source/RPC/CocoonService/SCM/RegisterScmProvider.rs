@@ -1,4 +1,3 @@
-
 //! Register a Cocoon SCM provider in `ApplicationState` AND route through
 //! the `SourceControlManagementProvider` trait so SCM state is materialised
 //! in `ApplicationState::SourceControl` (the surface Sky's SCM view binds

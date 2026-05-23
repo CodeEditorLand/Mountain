@@ -1,4 +1,3 @@
-
 //! Inspect a path: type, size, mtime in ms-since-epoch.
 
 use std::time::UNIX_EPOCH;

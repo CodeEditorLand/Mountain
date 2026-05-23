@@ -1,4 +1,3 @@
-
 //! Remove a previously-registered Cocoon command from the executor.
 
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;

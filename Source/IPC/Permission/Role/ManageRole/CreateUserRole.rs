@@ -1,4 +1,3 @@
-
 //! Standard `user` role - read-only access to file, config,
 //! and storage subsystems. The default role assigned when no
 //! roles are supplied in a `SecurityContext`.

@@ -1,4 +1,3 @@
-
 //! Side-channel: write the corrupted memento payload to a `.backup`
 //! sibling so a human can inspect the original. Failure to write the
 //! backup is logged but doesn't propagate - the load path stays

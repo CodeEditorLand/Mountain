@@ -1,4 +1,3 @@
-
 //! # Extension management handlers
 //!
 //! Wind queries the scanner's registry through these. Each

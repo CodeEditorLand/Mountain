@@ -1,4 +1,3 @@
-
 //! Per-service descriptor: name, version, lifecycle state, performance
 //! counters, dependency list, optional endpoint. Health is the
 //! conjunction of operational state, recent heartbeat (≤ 30s), and

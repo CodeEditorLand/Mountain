@@ -1,4 +1,3 @@
-
 //! Resolve the Node binary used to spawn Cocoon and cache for the life of
 //! the process. If everything fails returns `node` so `Command::new` still
 //! tries a bare PATH lookup at spawn time, matching legacy behaviour while

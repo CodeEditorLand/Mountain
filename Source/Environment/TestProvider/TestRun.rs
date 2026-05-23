@@ -1,4 +1,3 @@
-
 //! Active test run record: run identifier, owning controller, current
 //! status, start instant, and per-test results keyed by test
 //! identifier. Stored in `TestProviderState::Struct::ActiveRuns` for

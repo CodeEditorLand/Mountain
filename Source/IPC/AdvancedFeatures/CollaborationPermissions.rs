@@ -1,4 +1,3 @@
-
 //! Per-session capability flags for the realtime collaboration
 //! surface. The four bits gate edit / view / comment / share
 //! actions on a `CollaborationSession::Struct`.

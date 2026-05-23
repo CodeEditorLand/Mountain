@@ -1,4 +1,3 @@
-
 //! Read a file from disk and return its bytes (always tagged `utf-8` -
 //! the encoding negotiation lives in Cocoon).
 

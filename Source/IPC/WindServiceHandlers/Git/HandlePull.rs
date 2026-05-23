@@ -1,4 +1,3 @@
-
 //! `localGit:pull(operationId, repoPath) -> bool`. Three-call
 //! sequence: read HEAD, `pull --ff-only`, read HEAD again.
 //! Returns `true` when the second HEAD differs from the first

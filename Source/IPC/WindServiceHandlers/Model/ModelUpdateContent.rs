@@ -1,4 +1,3 @@
-
 //! Replace an open model's content. Increments `Version`,
 //! recomputes `Lines`, marks `IsDirty=true`. Mirrors VS Code's
 //! `TextDocument.update(...)` semantics - the Monaco model

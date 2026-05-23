@@ -1,4 +1,3 @@
-
 //! Pop the next URI off the forward-stack and return it.
 //! Mirrors `HistoryGoBack`.
 

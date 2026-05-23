@@ -1,4 +1,3 @@
-
 //! `nativeHost:quit` - save state and gracefully exit the process.
 //! VS Code calls this from `ILifecycleMainService.quit()` on Cmd+Q,
 //! File → Quit, and the "Quit" tray item.

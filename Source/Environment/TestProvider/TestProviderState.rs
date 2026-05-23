@@ -1,4 +1,3 @@
-
 //! Aggregate state for the TestProvider: registered controllers and
 //! currently active test runs. Held inside `ApplicationState` behind a
 //! `tokio::sync::RwLock` for concurrent reads during test runs.

@@ -1,4 +1,3 @@
-
 //! OTEL integration handle. Currently a placeholder.
 
 pub struct Struct;

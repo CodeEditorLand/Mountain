@@ -1,4 +1,3 @@
-
 //! Wire a Cocoon-contributed command into Mountain's `CommandExecutor` as
 //! a Proxied handler that forwards back to the sidecar.
 

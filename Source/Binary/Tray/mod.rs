@@ -1,4 +1,3 @@
-
 //! # Binary::Tray
 //!
 //! System tray integration for the Mountain application.

@@ -1,4 +1,3 @@
-
 //! `StatusReporter` aggregator - holds the IPC server handle,
 //! status history ring (last 100), error counter, performance
 //! / health / service-registry shared state, and emits

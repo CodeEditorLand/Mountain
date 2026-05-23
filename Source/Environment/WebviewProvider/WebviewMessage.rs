@@ -1,4 +1,3 @@
-
 //! Webview message envelope: identifier, type tag, payload, and an
 //! optional source identifier. Used for host ↔ webview message
 //! passing routed through the Tauri event bus.

@@ -1,4 +1,3 @@
-
 //! # Binary::Build
 //!
 //! Tauri builder and plugin configuration functions.

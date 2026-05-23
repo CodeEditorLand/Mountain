@@ -1,4 +1,3 @@
-
 //! # Persistent Storage handlers
 //!
 //! Wind invokes these via the WindServiceHandlers dispatcher; each

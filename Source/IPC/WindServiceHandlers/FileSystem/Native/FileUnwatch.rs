@@ -1,4 +1,3 @@
-
 //! `file:unwatch` - unregister a native filesystem watcher by its token.
 //!
 //! VS Code's `DiskFileSystemProvider` calls this when an extension disposes

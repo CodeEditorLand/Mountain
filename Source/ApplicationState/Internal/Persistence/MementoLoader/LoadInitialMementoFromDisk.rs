@@ -1,4 +1,3 @@
-
 //! Best-effort synchronous memento loader for `ApplicationState`'s
 //! `default()` path. Failures don't propagate - corrupted files are
 //! backed up, missing directories are created, and an empty map is

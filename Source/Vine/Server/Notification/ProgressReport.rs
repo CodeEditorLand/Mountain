@@ -1,4 +1,3 @@
-
 //! Cocoon → Mountain `progress.report` notification.
 //!
 //! The git extension alone fires 6000+ of these per session. We push into

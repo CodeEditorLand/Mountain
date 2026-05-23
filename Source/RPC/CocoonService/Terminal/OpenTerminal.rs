@@ -1,4 +1,3 @@
-
 //! Spawn a new PTY via `TerminalProvider::CreateTerminal`. Builds the
 //! options JSON `TerminalStateDTO::Create` expects (name + shellPath +
 //! shellArgs + cwd) and forwards through.

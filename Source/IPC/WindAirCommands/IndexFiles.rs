@@ -1,4 +1,3 @@
-
 //! `IndexFiles` Tauri command - kick off a directory index
 //! pass on the Air daemon, with include / exclude globs and
 //! a depth cap.

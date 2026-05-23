@@ -1,4 +1,3 @@
-
 //! Bring up the global PostHog client and emit
 //! `land:mountain:session:start`. Must be called once during boot;
 //! re-entrancy is safe because the underlying `OnceLock::set` returns

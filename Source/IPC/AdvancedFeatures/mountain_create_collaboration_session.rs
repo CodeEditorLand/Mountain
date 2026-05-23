@@ -1,4 +1,3 @@
-
 //! `mountain_create_collaboration_session` Tauri command -
 //! create a fresh `CollaborationSession::Struct` with the
 //! requested permissions.

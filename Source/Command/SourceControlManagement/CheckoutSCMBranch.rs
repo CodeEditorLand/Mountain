@@ -1,4 +1,3 @@
-
 //! Tauri command - switch the working tree to a different branch.
 //!
 //! ## Stub

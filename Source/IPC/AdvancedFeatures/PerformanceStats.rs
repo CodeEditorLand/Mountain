@@ -1,4 +1,3 @@
-
 //! Cumulative IPC counters - sent / received message totals,
 //! rolled-up average processing time, peak rate, error count,
 //! and uptime tick. Returned by

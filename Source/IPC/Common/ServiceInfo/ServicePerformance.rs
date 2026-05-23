@@ -1,4 +1,3 @@
-
 //! Per-service request/error counters and a rolling-mean response
 //! latency. `RecordRequest` updates the running average using
 //! `(prev * (n-1) + new) / n` so the value stays bounded under high

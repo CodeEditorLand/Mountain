@@ -1,4 +1,3 @@
-
 //! # Secure Message Channel
 //!
 //! AES-256-GCM + HMAC-SHA256 encrypted IPC channel with

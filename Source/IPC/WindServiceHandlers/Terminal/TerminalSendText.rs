@@ -1,4 +1,3 @@
-
 //! Pipe text into a terminal's PTY stdin. Used both for direct
 //! key forwarding (xterm.js → Mountain → PTY) and for
 //! programmatic input (`vscode.window.terminals[…].sendText`).

@@ -1,4 +1,3 @@
-
 //! Mountain caching primitives.
 //!
 //! - [`self::AssetMemoryMap`] - file-backed mmap cache for the bundled

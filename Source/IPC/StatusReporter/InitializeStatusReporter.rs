@@ -1,4 +1,3 @@
-
 //! Bootstrap helper - construct the `StatusReporter::Reporter`
 //! and stash a clone in the app's Tauri state so the
 //! `mountain_*` Tauri commands can `try_state::<Reporter>()`.

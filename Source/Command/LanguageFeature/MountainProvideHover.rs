@@ -1,4 +1,3 @@
-
 //! Tauri command - show hover information at the cursor position.
 //! Delegates to `LanguageFeature::Hover::provide_hover_impl`.
 
