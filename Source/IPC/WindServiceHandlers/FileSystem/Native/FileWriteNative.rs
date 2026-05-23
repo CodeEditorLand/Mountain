@@ -68,7 +68,15 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 		)
 		.await
 		{
-			dev_log!("vfs", "warn: [FileWriteNative] $acceptModelSaved notify failed: {:?}", Error);
+			let ErrStr = format!("{:?}", Error);
+			if ErrStr.contains("ClientNotConnected") {
+				dev_log!(
+					"vfs-verbose",
+					"[FileWriteNative] $acceptModelSaved skipped (Cocoon not yet connected)"
+				);
+			} else {
+				dev_log!("vfs", "warn: [FileWriteNative] $acceptModelSaved notify failed: {:?}", Error);
+			}
 		}
 	});
 

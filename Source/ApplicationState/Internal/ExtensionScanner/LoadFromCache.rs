@@ -59,7 +59,9 @@ struct CacheBlob {
 }
 
 /// Maximum cache age for dev/repo runs (binary sits next to the cache file).
-const MAX_CACHE_AGE:Duration = Duration::from_secs(600); // 10 minutes
+/// 24 hours: extensions don't change between builds; the build always
+/// regenerates the cache, so 10 min was too tight for normal dev workflows.
+const MAX_CACHE_AGE:Duration = Duration::from_secs(86_400);
 
 /// Try to load extension descriptors from the pre-baked manifest cache.
 ///

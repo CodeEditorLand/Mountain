@@ -960,6 +960,9 @@ fn BuildCocoonEnvironment() -> HashMap<String, String> {
 		"Defer",
 		"Boot",
 		"Pack",
+		"DebugServer",
+		"DebugServerPortMountain",
+		"DebugServerPortCocoon",
 	];
 
 	let mut Env = HashMap::new();
