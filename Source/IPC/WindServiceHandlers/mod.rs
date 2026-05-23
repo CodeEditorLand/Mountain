@@ -812,10 +812,7 @@ pub async fn mountain_ipc_invoke(
 				// are `executeCommand` and `getCommands`; Mountain's
 				// Effect-TS rail uses `execute` / `getAll`. Alias both.
 				"commands:execute" | "commands:executeCommand" => CommandsExecute(RunTime.clone(), Arguments).await,
-				"commands:getAll" | "commands:getCommands" => {
-					dev_log!("commands", "{}", command);
-					CommandsGetAll(RunTime.clone()).await
-				},
+				"commands:getAll" | "commands:getCommands" => call!(rt, "commands", CommandsGetAll),
 				// Register/unregister from a side-car channel perspective
 				// is a no-op: Cocoon sends `$registerCommand` via gRPC
 				// (handled elsewhere). Ack Null so the workbench side
