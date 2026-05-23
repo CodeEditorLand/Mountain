@@ -342,9 +342,9 @@ fn forward_http_request(
 				}
 			}
 
-			// Parse response
-			let response_str = String::from_utf8_lossy(&buffer);
-			parse_http_response(&response_str)
+			// Parse response - pass raw bytes so binary bodies (PNG, etc.)
+			// are never corrupted by UTF-8 lossy conversion.
+			parse_http_response(&buffer)
 		})
 	})
 	.join()
@@ -353,16 +353,20 @@ fn forward_http_request(
 	result
 }
 
-/// Parse an HTTP response string into status, body, and headers
-fn parse_http_response(response:&str) -> Result<(u16, Vec<u8>, HashMap<String, String>), String> {
-	// Split headers and body
+/// Parse a raw HTTP response into (status, body, headers).
+/// Operates on raw bytes so binary bodies (PNG, JPEG, WASM, etc.) are never
+/// corrupted by UTF-8 lossy conversion. Only the headers portion (which is
+/// always ASCII) is decoded as UTF-8.
+fn parse_http_response(response:&[u8]) -> Result<(u16, Vec<u8>, HashMap<String, String>), String> {
 	let headers_end = response
-		.find("\r\n\r\n")
+		.windows(4)
+		.position(|w| w == b"\r\n\r\n")
 		.ok_or("Invalid HTTP response: no headers/body separator")?;
 
-	let headers_str = &response[..headers_end];
+	let headers_str =
+		std::str::from_utf8(&response[..headers_end]).map_err(|e| format!("Invalid UTF-8 in HTTP headers: {}", e))?;
 
-	let body = response[headers_end + 4..].as_bytes().to_vec();
+	let body = response[headers_end + 4..].to_vec();
 
 	// Parse status line
 	let mut lines = headers_str.lines();
