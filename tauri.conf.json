@@ -54,7 +54,7 @@
 	},
 	"build": {
 		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky --force",
-		"beforeBundleCommand": "node Maintain/Build/Brotli/PreBake.ts || true && node Maintain/Build/Manifest/PreBake.ts || true",
+		"beforeBundleCommand": "",
 		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky --force",
 		"devUrl": null,
 		"features": [],

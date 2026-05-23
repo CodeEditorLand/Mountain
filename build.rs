@@ -169,6 +169,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	PropagatePostHogSentinel();
 
+	// Ensure extensions.manifest.json exists before tauri_build::build()
+	// validates resource paths. Sky's BakeExtensionManifest integration writes
+	// the real file during astro:build:done (part of beforeBuildCommand), so it
+	// will be present for normal tauri builds. This stub covers the edge case of
+	// a direct `cargo build -p Mountain` run without a prior Sky build. At
+	// runtime LoadFromCache.rs falls back to a live scan when the array is empty.
+	let ExtensionsManifest = std::path::Path::new("../Sky/Target/extensions.manifest.json");
+	if !ExtensionsManifest.exists() {
+		if let Some(Parent) = ExtensionsManifest.parent() {
+			let _ = std::fs::create_dir_all(Parent);
+		}
+		let _ = std::fs::write(ExtensionsManifest, "[]");
+	}
+
 	// Skip resource-path validation when generating docs. tauri_build::build()
 	// checks that every [[bundle.resources]] path exists, but Sky assets
 	// (bootstrap-meta.js etc.) are only present after a full Astro build.
