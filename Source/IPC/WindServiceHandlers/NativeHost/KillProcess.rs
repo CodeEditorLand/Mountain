@@ -5,10 +5,10 @@
 
 use serde_json::Value;
 
-use crate::{IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_u64, dev_log};
+use crate::{IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgU64, dev_log};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Pid = arg_u64(&Arguments, 0) as u32;
+	let Pid = ArgU64(&Arguments, 0) as u32;
 
 	if Pid == 0 {
 		return Ok(Value::Null);
@@ -20,14 +20,14 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	{
 		use std::process::Command;
 
-		let _ = Command::new("kill").args(["-9", &Pid.to_string()]).status();
+		let _ = Command::new("kill").args(["-9", &Pid.to_string()]).Status();
 	}
 
 	#[cfg(windows)]
 	{
 		use std::process::Command;
 
-		let _ = Command::new("taskkill").args(["/F", "/PID", &Pid.to_string()]).status();
+		let _ = Command::new("taskkill").args(["/F", "/PID", &Pid.to_string()]).Status();
 	}
 
 	Ok(Value::Null)

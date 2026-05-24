@@ -18,7 +18,7 @@ use serde_json::{Value, json};
 static DARK_MODE_CACHE:OnceLock<bool> = OnceLock::new();
 
 pub async fn Fn() -> Result<Value, String> {
-	let Dark = *DARK_MODE_CACHE.get_or_init(detect_dark_mode);
+	let Dark = *DARK_MODE_CACHE.get_or_init(DetectDarkMode);
 
 	let HighContrast = {
 		#[cfg(target_os = "windows")]
@@ -56,7 +56,7 @@ pub async fn Fn() -> Result<Value, String> {
 	Ok(json!({ "dark": Dark, "highContrast": HighContrast }))
 }
 
-fn detect_dark_mode() -> bool {
+fn DetectDarkMode() -> bool {
 	// runs once then cached via OnceLock
 	#[cfg(target_os = "macos")]
 	{

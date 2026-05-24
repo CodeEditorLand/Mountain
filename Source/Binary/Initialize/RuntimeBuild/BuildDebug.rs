@@ -10,7 +10,7 @@ use Echo::Scheduler::Scheduler::Scheduler;
 
 #[cfg(feature = "Debug")]
 use crate::{
-	Binary::Initialize::RuntimeBuild::{BuildWithConfig, SchedulerConfig},
+	Binary::Fn::RuntimeBuild::{BuildWithConfig, SchedulerConfig},
 	dev_log,
 };
 

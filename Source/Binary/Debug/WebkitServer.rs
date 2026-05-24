@@ -68,7 +68,7 @@ enum LayerMode {
 	Both,
 }
 
-fn parse_mode() -> LayerMode {
+fn ParseMode() -> LayerMode {
 	match std::env::var("DebugServer").ok().as_deref().map(str::trim) {
 		None | Some("") | Some("0") | Some("false") | Some("off") | Some("no") => LayerMode::Off,
 
@@ -91,11 +91,11 @@ fn parse_mode() -> LayerMode {
 	}
 }
 
-fn mountain_enabled(m:LayerMode) -> bool { matches!(m, LayerMode::Mountain | LayerMode::Both) }
+fn MountainEnabled(m:LayerMode) -> bool { matches!(m, LayerMode::Mountain | LayerMode::Both) }
 
-fn cocoon_enabled(m:LayerMode) -> bool { matches!(m, LayerMode::Cocoon | LayerMode::Both) }
+fn CocoonEnabled(m:LayerMode) -> bool { matches!(m, LayerMode::Cocoon | LayerMode::Both) }
 
-fn mountain_port() -> u16 {
+fn MountainPort() -> u16 {
 	std::env::var("DebugServerPortMountain")
 		.or_else(|_| std::env::var("DebugServerPort"))
 		.ok()
@@ -103,7 +103,7 @@ fn mountain_port() -> u16 {
 		.unwrap_or(9933)
 }
 
-fn cocoon_port() -> u16 {
+fn CocoonPort() -> u16 {
 	std::env::var("DebugServerPortCocoon")
 		.ok()
 		.and_then(|p| p.parse().ok())
@@ -117,7 +117,7 @@ fn cocoon_port() -> u16 {
 /// docs). When `cocoon`/`both` is selected, this function still installs
 /// the window handle (so `/eval` keeps working for proxy requests) but
 /// skips starting the Mountain HTTP listener.
-pub fn install(window:&WebviewWindow<Wry>) {
+pub fn Fn(window:&WebviewWindow<Wry>) {
 	// Always store the window: even in cocoon-only mode the eval pipeline
 	// stays useful for tests that imported this module directly.
 	let mut guard = WINDOW.lock().unwrap();
@@ -125,23 +125,23 @@ pub fn install(window:&WebviewWindow<Wry>) {
 	*guard = Some(Arc::new(window.clone()));
 	drop(guard);
 
-	let mode = parse_mode();
+	let mode = ParseMode();
 
-	if mountain_enabled(mode) {
-		std::thread::spawn(|| start_server());
+	if MountainEnabled(mode) {
+		std::thread::spawn(|| StartServer());
 	}
 
-	if cocoon_enabled(mode) {
+	if CocoonEnabled(mode) {
 		eprintln!(
 			"[WebkitDebug] Cocoon layer requested (port {}). Cocoon must start its own listener.",
-			cocoon_port()
+			CocoonPort()
 		);
 	}
 }
 
 /// Main server loop listening for TCP connections.
-fn start_server() {
-	let port = mountain_port();
+fn StartServer() {
+	let Port = MountainPort();
 
 	let listener = match TcpListener::bind(("127.0.0.1", port)) {
 		Ok(l) => l,
@@ -156,7 +156,7 @@ fn start_server() {
 	eprintln!(
 		"[WebkitDebug] Mountain layer listening on http://127.0.0.1:{} (mode={:?})",
 		port,
-		parse_mode()
+		ParseMode()
 	);
 
 	for stream in listener.incoming() {
@@ -165,7 +165,7 @@ fn start_server() {
 				let window_opt = WINDOW.lock().unwrap().clone();
 
 				std::thread::spawn(move || {
-					if let Err(e) = handle_connection(&window_opt, &mut stream) {
+					if let Err(e) = HandleConnection(&window_opt, &mut stream) {
 						eprintln!("[WebkitDebug] Connection error: {}", e);
 					}
 				});
@@ -177,10 +177,10 @@ fn start_server() {
 }
 
 /// Handles a single HTTP connection, dispatches based on method and path.
-fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut std::net::TcpStream) -> io::Result<()> {
+fn HandleConnection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut std::net::TcpStream) -> io::Result<()> {
 	// Early check for window initialization
 	if window_opt.is_none() {
-		send_json(stream, 503, &json!({"error": "debug server not initialized"}))?;
+		SendJson(stream, 503, &json!({"error": "debug server not initialized"}))?;
 
 		return Ok(());
 	}
@@ -228,7 +228,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 
 		// Read body if Content-Length present
 		let body = if let Some(len_str) = headers.get("CONTENT-LENGTH") {
-			let len:usize = len_str.parse().unwrap_or(0);
+			let Len:usize = len_str.parse().unwrap_or(0);
 
 			let mut body_bytes = vec![0; len];
 
@@ -245,9 +245,9 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 	// Parse URL to get path and query
 	let full_url = format!("http://localhost{}", path_and_query);
 
-	let parsed = Url::parse(&full_url).map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "invalid URL"))?;
+	let Parsed = Url::parse(&full_url).map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "invalid URL"))?;
 
-	let path = parsed.path();
+	let Path = parsed.Path();
 
 	let mut query_pairs = parsed.query_pairs();
 
@@ -261,7 +261,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 					"layer": "mountain",
 					"version": env!("CARGO_PKG_VERSION"),
 					"pid": std::process::id(),
-					"mode": format!("{:?}", parse_mode()),
+					"mode": format!("{:?}", ParseMode()),
 					"capabilities": [
 						"eval","execute","iframes","console","commands",
 						"command","vscode/diff","extensions(proxy)","layers"
@@ -274,9 +274,9 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 			(
 				200,
 				json!({
-					"mountain": { "enabled": mountain_enabled(parse_mode()), "port": mountain_port() },
-					"cocoon":   { "enabled": cocoon_enabled(parse_mode()),   "port": cocoon_port()   },
-					"mode": format!("{:?}", parse_mode()),
+					"mountain": { "enabled": MountainEnabled(ParseMode()), "port": MountainPort() },
+					"cocoon":   { "enabled": CocoonEnabled(ParseMode()),   "port": CocoonPort()   },
+					"mode": format!("{:?}", ParseMode()),
 				}),
 			)
 		},
@@ -290,7 +290,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 
                 return JSON.stringify(logs);
             })()"#;
-			match eval_js(window_opt, js) {
+			match EvalJs(window_opt, js) {
 				Ok(value) => (200, json!({"logs": value})),
 
 				Err(e) => (500, json!({"error": e})),
@@ -303,7 +303,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 				.map(|(_, v)| v.into_owned())
 				.ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "missing js parameter"))?;
 
-			match eval_js(window_opt, &js) {
+			match EvalJs(window_opt, &js) {
 				Ok(value) => (200, json!({"result": value})),
 
 				Err(e) => (500, json!({"error": e})),
@@ -312,16 +312,16 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 
 		("POST", "/execute") => {
 			let parsed_body:Value =
-				serde_json::from_str(&body).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
+				serde_json::from_str(&body).map_err(|E| io::Error::new(io::ErrorKind::InvalidInput, e))?;
 
 			let js = parsed_body["js"]
 				.as_str()
 				.ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "missing js field"))?;
 
-			let target = parsed_body["target"].as_str().unwrap_or("renderer");
+			let Target = parsed_body["target"].as_str().unwrap_or("renderer");
 
 			match target {
-				"extension-host" | "eh" | "cocoon" => proxy_to_cocoon("POST", "/execute", &body),
+				"extension-host" | "eh" | "cocoon" => ProxyToCocoon("POST", "/execute", &body),
 
 				"iframe" => {
 					let iframe_id = parsed_body["iframeId"].as_str().unwrap_or("");
@@ -338,7 +338,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 						json!(js)
 					);
 
-					match eval_js(window_opt, &wrapped) {
+					match EvalJs(window_opt, &wrapped) {
 						Ok(v) => (200, json!({"result": v})),
 
 						Err(e) => (500, json!({"error": e})),
@@ -349,7 +349,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 					if js.is_empty() {
 						(400, json!({"error": "empty js"}))
 					} else {
-						match eval_js(window_opt, js) {
+						match EvalJs(window_opt, js) {
 							Ok(val) => (200, json!({"result": val})),
 
 							Err(e) => (500, json!({"error": e})),
@@ -374,7 +374,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 
                 return JSON.stringify(arr);
             })()"#;
-			match eval_js(window_opt, js) {
+			match EvalJs(window_opt, js) {
 				Ok(value) => (200, json!({"iframes": value})),
 
 				Err(e) => (500, json!({"error": e})),
@@ -393,7 +393,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
                   return JSON.stringify(Array.from(all.keys()).slice(0, 5000));
                 } catch (e) { return JSON.stringify({error:String(e)}); }
             })()"#;
-			match eval_js(window_opt, js) {
+			match EvalJs(window_opt, js) {
 				Ok(v) => (200, json!({"commands": v})),
 
 				Err(e) => (500, json!({"error": e})),
@@ -402,13 +402,13 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 
 		("POST", "/command") => {
 			let parsed_body:Value =
-				serde_json::from_str(&body).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
+				serde_json::from_str(&body).map_err(|E| io::Error::new(io::ErrorKind::InvalidInput, e))?;
 
-			let id = parsed_body["id"]
+			let Id = parsed_body["id"]
 				.as_str()
 				.ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "missing id"))?;
 
-			let args = parsed_body.get("args").cloned().unwrap_or_else(|| json!([]));
+			let Args = parsed_body.get("args").cloned().unwrap_or_else(|| json!([]));
 
 			let js = format!(
 				r#"(async function(){{
@@ -418,18 +418,18 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
                       const ws = (globalThis.MonacoEnvironment || globalThis).__workbench__;
                       // Resolve through the workbench command service if available.
                       const cmdSvc = ws?.commandService
-                        || ws?.services?.get?.(require(vs/platform/commands/common/commands).ICommandService);
+                        || ws?.services?.Get?.(require(vs/platform/commands/common/commands).ICommandService);
                       if (!cmdSvc) return JSON.stringify({{error:"command service unavailable"}});
                       const args = {0};
                       const result = await cmdSvc.executeCommand({1}, ...args);
                       return JSON.stringify({{ ok: true, result: result ?? null }});
-                    }} catch (e) {{ return JSON.stringify({{ ok:false, error: String(e?.stack||e) }}); }}
+                    }} catch (e) {{ return JSON.stringify({{ ok:false, error: String(e?.stack||E) }}); }}
                 }})()"#,
 				args,
 				json!(id)
 			);
 
-			match eval_js(window_opt, &js) {
+			match EvalJs(window_opt, &js) {
 				Ok(v) => (200, v),
 
 				Err(e) => (500, json!({"error": e})),
@@ -438,7 +438,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 
 		("POST", "/vscode/diff") => {
 			let parsed_body:Value =
-				serde_json::from_str(&body).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
+				serde_json::from_str(&body).map_err(|E| io::Error::new(io::ErrorKind::InvalidInput, e))?;
 
 			let left = parsed_body["left"].as_str().unwrap_or("");
 
@@ -457,14 +457,14 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
                           if (!cmdSvc) return JSON.stringify({{error:"command service unavailable"}});
                           await cmdSvc.executeCommand(vscode.diff, URI.parse({0}), URI.parse({1}), {2});
                           return JSON.stringify({{ok:true}});
-                        }} catch (e) {{ return JSON.stringify({{ok:false,error:String(e?.stack||e)}}); }}
+                        }} catch (e) {{ return JSON.stringify({{ok:false,error:String(e?.stack||E)}}); }}
                     }})()"#,
 					json!(left),
 					json!(right),
 					json!(title)
 				);
 
-				match eval_js(window_opt, &js) {
+				match EvalJs(window_opt, &js) {
 					Ok(v) => (200, v),
 
 					Err(e) => (500, json!({"error": e})),
@@ -473,17 +473,17 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 		},
 
 		// ---------- Cocoon proxy ---------------------------------------
-		("GET", "/extensions") => proxy_to_cocoon("GET", "/extensions", ""),
+		("GET", "/extensions") => ProxyToCocoon("GET", "/extensions", ""),
 
 		_ => (404, json!({"error": "not found", "method": method, "path": path})),
 	};
 
-	send_json(stream, status, &response_json)
+	SendJson(stream, status, &response_json)
 }
 
 /// Evaluates JavaScript in the webview and returns the result as a
 /// serde_json::Value.
-fn eval_js(window_opt:&Option<Arc<WebviewWindow<Wry>>>, js:&str) -> Result<Value, String> {
+fn EvalJs(window_opt:&Option<Arc<WebviewWindow<Wry>>>, js:&str) -> Result<Value, String> {
 	let window = window_opt.as_ref().ok_or("debug server not initialized")?;
 
 	let (tx, rx) = std::sync::mpsc::sync_channel(1);
@@ -492,21 +492,21 @@ fn eval_js(window_opt:&Option<Arc<WebviewWindow<Wry>>>, js:&str) -> Result<Value
 		.eval_with_callback(js.to_string(), move |result| {
 			let _ = tx.send(result);
 		})
-		.map_err(|e| e.to_string())?;
+		.map_err(|E| e.to_string())?;
 
 	let result_str = rx
 		.recv_timeout(Duration::from_secs(5))
 		.map_err(|_| "timeout waiting for eval result".to_string())?;
 
-	serde_json::from_str(&result_str).map_err(|e| e.to_string())
+	serde_json::from_str(&result_str).map_err(|E| e.to_string())
 }
 
 /// Best-effort forward to the Cocoon DebugServer over loopback.
 /// Returns (status, json). If Cocoon is unreachable, returns 502.
-fn proxy_to_cocoon(method:&str, path:&str, body:&str) -> (u16, Value) {
+fn ProxyToCocoon(method:&str, path:&str, body:&str) -> (u16, Value) {
 	use std::net::TcpStream;
 
-	let port = cocoon_port();
+	let Port = CocoonPort();
 
 	let addr = format!("127.0.0.1:{}", port);
 
@@ -547,13 +547,13 @@ fn proxy_to_cocoon(method:&str, path:&str, body:&str) -> (u16, Value) {
 
 	let body_str = &buf[body_idx..];
 
-	let parsed:Value = serde_json::from_str(body_str).unwrap_or_else(|_| json!({"raw": body_str}));
+	let Parsed:Value = serde_json::from_str(body_str).unwrap_or_else(|_| json!({"raw": body_str}));
 
 	(200, parsed)
 }
 
 /// Sends a JSON response with the given status code.
-fn send_json(stream:&mut std::net::TcpStream, status:u16, value:&Value) -> io::Result<()> {
+fn SendJson(stream:&mut std::net::TcpStream, status:u16, value:&Value) -> io::Result<()> {
 	let body =
 		serde_json::to_string(value).map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "serialization error"))?;
 

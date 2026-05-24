@@ -8,9 +8,8 @@
 pub mod Common;
 
 /// Main Tauri IPC server orchestrator.
-// Legacy TauriIPCServer.rs for backward compatibility
-#[path = "TauriIPCServer.rs"]
-pub mod TauriIPCServer_Old;
+#[path = "TauriIPCServer/mod.rs"]
+pub mod TauriIPCServer;
 
 /// Message types and routing.
 pub mod Message;
@@ -32,16 +31,14 @@ pub mod Security;
 pub mod AdvancedFeatures;
 
 /// Configuration synchronization bridge.
-// Legacy ConfigurationBridge.rs for backward compatibility
-#[path = "ConfigurationBridge.rs"]
+#[path = "ConfigurationBridge/mod.rs"]
 pub mod ConfigurationBridge;
 
 /// Status and metrics reporting (atomized; siblings live in `StatusReporter/`).
 pub mod StatusReporter;
 
 /// Wind UI framework synchronization.
-// Legacy WindAdvancedSync.rs for backward compatibility
-#[path = "WindAdvancedSync.rs"]
+#[path = "WindAdvancedSync/mod.rs"]
 pub mod WindAdvancedSync;
 
 // --- Legacy Sub-modules ---
@@ -81,10 +78,9 @@ pub mod UriComponents;
 /// that routes wire strings to per-domain atoms or handler files. Atoms
 /// live under `WindServiceHandlers/<Domain>/<Atom>.rs` following the
 /// one-export-per-file convention.
-///
 /// The previous `WindServiceHandler` (singular) sibling was merged here
 /// on 2026-04-23: of its 24 files, only 3 functions were live
-/// (extensions install/uninstall, nativeHost showOpenDialog) and those
+/// (extensions Install/uninstall, nativeHost showOpenDialog) and those
 /// now live as atoms under `WindServiceHandlers/Extension/` and
 /// `WindServiceHandlers/NativeDialog/`. The remaining 21 files were
 /// dead-code duplicates of plural-side implementations.

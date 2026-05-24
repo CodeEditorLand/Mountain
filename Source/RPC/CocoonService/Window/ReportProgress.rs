@@ -17,7 +17,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:ReportProgressRequest) -> Re
 		"sky://progress/update",
 		json!({
 			"handle": Request.handle,
-			"message": Request.message,
+			"message": Request.Message,
 			"increment": Request.increment,
 		}),
 	);

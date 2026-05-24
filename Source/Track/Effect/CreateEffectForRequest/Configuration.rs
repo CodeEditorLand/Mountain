@@ -15,14 +15,14 @@ use tauri::Runtime;
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::Effect::{
-		CreateEffectForRequest::Utilities::Params::{str_obj_or_pos, string_at, u64_at, val_at},
+		CreateEffectForRequest::Utilities::Params::{StrObjOrPos, StringAt, U64At, ValAt},
 		MappedEffectType::MappedEffect,
 	},
 	dev_log,
 };
 
 async fn UpdateConfigurationValueAndNotify(
-	run_time:Arc<ApplicationRunTime>,
+	RunTime:Arc<ApplicationRunTime>,
 
 	key:String,
 
@@ -34,7 +34,7 @@ async fn UpdateConfigurationValueAndNotify(
 ) -> Result<Value, String> {
 	use tauri::Emitter;
 
-	let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
+	let Provider:Arc<dyn ConfigurationProvider> = RunTime.Environment.Require();
 
 	let KeyForEvents = key.clone();
 
@@ -48,7 +48,7 @@ async fn UpdateConfigurationValueAndNotify(
 			"affected": [KeyForEvents.clone()],
 		});
 
-		let AppHandle = run_time.Environment.ApplicationHandle.clone();
+		let AppHandle = RunTime.Environment.ApplicationHandle.clone();
 
 		if let Err(Error) = AppHandle.emit("sky://configuration/changed", Payload.clone()) {
 			dev_log!(
@@ -59,7 +59,7 @@ async fn UpdateConfigurationValueAndNotify(
 			);
 		}
 
-		let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
+		let IPCProvider:Arc<dyn IPCProviderTrait> = RunTime.Environment.Require();
 
 		if let Err(Error) = IPCProvider
 			.SendNotificationToSideCar("cocoon-main".to_string(), "configuration.change".to_string(), Payload)
@@ -74,24 +74,24 @@ async fn UpdateConfigurationValueAndNotify(
 		}
 	}
 
-	result.map(|_| json!(null)).map_err(|e| e.to_string())
+	result.map(|_| json!(null)).map_err(|E| e.to_string())
 }
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
-		"config.get" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
-				let Key = str_obj_or_pos(&Parameters, "key", 0).to_string();
+		"config.Get" => {
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn ConfigurationInspector> = RunTime.Environment.Require();
+				let Key = StrObjOrPos(&Parameters, "key", 0).to_string();
 				let result = provider.InspectConfigurationValue(Key, Default::default()).await;
 				result
 					.map(|Inspection| serde_json::to_value(Inspection).unwrap_or(Value::Null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"config.update" => {
-			crate::effect!(run_time, {
+			crate::effect!(RunTime, {
 				let (Key, Value_, Target) = if let Some(Object) = Parameters.as_object() {
 					let K = Object.get("key").and_then(Value::as_str).unwrap_or("").to_string();
 					let V = Object.get("value").cloned().unwrap_or_default();
@@ -102,40 +102,40 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					};
 					(K, V, T)
 				} else {
-					let K = string_at(&Parameters, 0);
-					let V = val_at(&Parameters, 1);
-					let T = match u64_at(&Parameters, 2) {
+					let K = StringAt(&Parameters, 0);
+					let V = ValAt(&Parameters, 1);
+					let T = match U64At(&Parameters, 2) {
 						0 => ConfigurationTarget::User,
 						1 => ConfigurationTarget::Workspace,
 						_ => ConfigurationTarget::User,
 					};
 					(K, V, T)
 				};
-				UpdateConfigurationValueAndNotify(run_time, Key, Value_, Target, "config.update").await
+				UpdateConfigurationValueAndNotify(RunTime, Key, Value_, Target, "config.update").await
 			})
 		},
 
 		"Configuration.Inspect" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
-				let section = string_at(&Parameters, 0);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn ConfigurationInspector> = RunTime.Environment.Require();
+				let section = StringAt(&Parameters, 0);
 				let result = provider.InspectConfigurationValue(section, Default::default()).await;
 				result
 					.map(|Inspection| serde_json::to_value(Inspection).unwrap_or(Value::Null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"Configuration.Update" => {
-			crate::effect!(run_time, {
-				let key = string_at(&Parameters, 0);
-				let value = val_at(&Parameters, 1);
-				let target = match u64_at(&Parameters, 2) {
+			crate::effect!(RunTime, {
+				let Key = StringAt(&Parameters, 0);
+				let value = ValAt(&Parameters, 1);
+				let Target = match U64At(&Parameters, 2) {
 					0 => ConfigurationTarget::User,
 					1 => ConfigurationTarget::Workspace,
 					_ => ConfigurationTarget::User,
 				};
-				UpdateConfigurationValueAndNotify(run_time, key, value, target, "Configuration.Update").await
+				UpdateConfigurationValueAndNotify(RunTime, key, value, target, "Configuration.Update").await
 			})
 		},
 

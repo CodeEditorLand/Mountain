@@ -1,7 +1,7 @@
 //! Standard `developer` role - read + write across files and
 //! storage; read-only on config.
 
-use crate::IPC::Permission::Role::ManageRole::Role;
+use crate::IPC::Permission::Role::ManageRole::Struct;
 
 pub fn Fn() -> Role::Struct {
 	Role::Struct::New(

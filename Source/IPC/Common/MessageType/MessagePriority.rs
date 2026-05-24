@@ -15,5 +15,5 @@ pub enum Enum {
 }
 
 impl Default for Enum {
-	fn default() -> Self { Self::Normal }
+	fn default() -> Struct { Struct::Normal }
 }

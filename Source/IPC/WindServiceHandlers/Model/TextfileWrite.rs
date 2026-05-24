@@ -8,7 +8,7 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 
 use crate::{
-	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string,
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgString,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
@@ -20,7 +20,7 @@ pub async fn Fn(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Resul
 		.ok_or_else(|| "textFile:write requires path as first argument".to_string())?
 		.to_string();
 
-	let Content = arg_string(&Arguments, 1);
+	let Content = ArgString(&Arguments, 1);
 
 	tokio::fs::write(&Path, Content.as_bytes())
 		.await

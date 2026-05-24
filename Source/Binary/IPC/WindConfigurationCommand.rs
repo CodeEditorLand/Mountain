@@ -57,8 +57,8 @@ use tauri::AppHandle;
 /// - Configuration cannot be loaded
 /// - Serialization fails
 #[tauri::command]
-pub async fn MountainGetWindDesktopConfiguration(app_handle:AppHandle) -> Result<Value, String> {
-	let config = crate::IPC::ConfigurationBridge::mountain_get_wind_desktop_configuration(app_handle).await?;
+pub async fn Fn(app_handle:AppHandle) -> Result<Value, String> {
+	let config = crate::IPC::ConfigurationBridge::Fn(app_handle).await?;
 
-	to_value(&config).map_err(|e| format!("Failed to serialize configuration: {}", e))
+	to_value(&config).map_err(|E| format!("Failed to serialize configuration: {}", e))
 }

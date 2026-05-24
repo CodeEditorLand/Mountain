@@ -2,7 +2,7 @@
 //!
 //! Role + permission types for the RBAC engine. Each `Role`
 //! holds a deduplicated permission list; each `Permission`
-//! lives in a `category.action` namespace and carries an
+//! lives in a `category.Action` namespace and carries an
 //! `IsSensitive` flag for elevated audit logging. The
 //! `Create*` factories build the standard `user` /
 //! `developer` / `admin` triple.

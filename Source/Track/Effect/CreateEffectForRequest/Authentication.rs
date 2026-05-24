@@ -4,28 +4,31 @@ use tauri::Runtime;
 
 use crate::{
 	Track::Effect::{
-		CreateEffectForRequest::Utilities::{Params::string_at, Proxy::proxy_cocoon},
+		CreateEffectForRequest::Utilities::{
+			Params::StringAt,
+			Proxy::crate::Track::Effect::CreateEffectForRequest::Utilities::Proxy::Fn,
+		},
 		MappedEffectType::MappedEffect,
 	},
 	dev_log,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Authentication.GetSession" => {
-			crate::effect!(run_time, {
-				let provider_id = string_at(&Parameters, 0);
-				let scopes = Parameters.get(1).cloned().unwrap_or(json!([]));
-				let options = Parameters.get(2).cloned().unwrap_or(json!({}));
-				proxy_cocoon(
-					&run_time,
+			crate::effect!(RunTime, {
+				let ProviderId = StringAt(&Parameters, 0);
+				let Scopes = Parameters.get(1).cloned().unwrap_or(json!([]));
+				let Options = Parameters.get(2).cloned().unwrap_or(json!({}));
+				crate::Track::Effect::CreateEffectForRequest::Utilities::Proxy::Fn(
+					&RunTime,
 					ProxyTarget::ExtHostAuthentication,
 					"getSession",
-					json!([provider_id, scopes, options]),
+					json!([ProviderId, scopes, options]),
 					5000,
 				)
 				.await
-				.or_else(|error| {
+				.or_else(|Error| {
 					dev_log!(
 						"ipc",
 						"warn: [Authentication.GetSession] extension did not answer ({:?}); returning null",
@@ -37,17 +40,17 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"Authentication.GetAccounts" => {
-			crate::effect!(run_time, {
-				let provider_id = string_at(&Parameters, 0);
-				proxy_cocoon(
-					&run_time,
+			crate::effect!(RunTime, {
+				let ProviderId = StringAt(&Parameters, 0);
+				crate::Track::Effect::CreateEffectForRequest::Utilities::Proxy::Fn(
+					&RunTime,
 					ProxyTarget::ExtHostAuthentication,
 					"getAccounts",
-					json!([provider_id]),
+					json!([ProviderId]),
 					5000,
 				)
 				.await
-				.or_else(|error| {
+				.or_else(|Error| {
 					dev_log!(
 						"ipc",
 						"warn: [Authentication.GetAccounts] extension did not answer ({:?}); returning []",

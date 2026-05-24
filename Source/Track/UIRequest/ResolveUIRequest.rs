@@ -52,20 +52,14 @@
 use std::sync::Arc;
 
 use serde_json::Value;
-use tauri::{State, command};
+use tauri::{Struct, command};
 
-use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
+use crate::{ApplicationState::Struct::ApplicationState::ApplicationState, dev_log};
 
 /// A specific Tauri command handler for the UI to send back the result of a
 /// request-response interaction (like a dialog or message box).
 #[command]
-pub async fn ResolveUIRequest(
-	State:State<'_, Arc<ApplicationState>>,
-
-	RequestID:String,
-
-	Result:Value,
-) -> Result<(), String> {
+pub async fn Fn(State:State<'_, Arc<ApplicationState>>, RequestID:String, Result:Value) -> Result<(), String> {
 	dev_log!("ipc", "[Track/UIRequest] Resolving UI request ID: {}", RequestID);
 
 	let Sender = {

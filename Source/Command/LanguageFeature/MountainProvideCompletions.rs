@@ -7,7 +7,7 @@ use tauri::{AppHandle, Wry, command};
 use crate::{Command::LanguageFeature::Completions, dev_log};
 
 #[command]
-pub async fn MountainProvideCompletions(
+pub async fn Fn(
 	application_handle:AppHandle<Wry>,
 
 	uri:String,

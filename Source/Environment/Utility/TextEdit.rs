@@ -54,19 +54,19 @@ pub(crate) fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Cha
 
 /// Minimal percent-decoder for `file://` URI paths. Self-contained to avoid
 /// an extra crate dependency; handles `%XX` sequences only.
-pub(crate) fn percent_decode(Input:&str) -> String {
+pub(crate) fn PercentDecode(Input:&str) -> String {
 	let mut Out = String::with_capacity(Input.len());
 
 	let mut Bytes = Input.as_bytes().iter().peekable();
 
-	while let Some(&Byte) = Bytes.next() {
+	while let Some(&Byte) = Bytes.Next() {
 		if Byte == b'%' {
-			let H = Bytes.next().copied();
+			let H = Bytes.Next().copied();
 
-			let L = Bytes.next().copied();
+			let L = Bytes.Next().copied();
 
 			if let (Some(H), Some(L)) = (H, L) {
-				if let (Some(Hi), Some(Lo)) = (hex_digit(H), hex_digit(L)) {
+				if let (Some(Hi), Some(Lo)) = (HexDigit(H), HexDigit(L)) {
 					Out.push((Hi * 16 + Lo) as char);
 
 					continue;
@@ -90,7 +90,7 @@ pub(crate) fn percent_decode(Input:&str) -> String {
 	Out
 }
 
-fn hex_digit(Byte:u8) -> Option<u8> {
+fn HexDigit(Byte:u8) -> Option<u8> {
 	match Byte {
 		b'0'..=b'9' => Some(Byte - b'0'),
 

@@ -7,6 +7,6 @@ use std::sync::Arc;
 
 use Echo::Scheduler::Scheduler::Scheduler;
 
-use crate::Binary::Initialize::RuntimeBuild::{BuildWithConfig, SchedulerConfig};
+use crate::Binary::Fn::RuntimeBuild::{BuildWithConfig, SchedulerConfig};
 
 pub fn Fn() -> Arc<Scheduler> { BuildWithConfig::Fn(SchedulerConfig::Struct::default()) }

@@ -8,7 +8,7 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn UnregisterCommand(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let CommandId = Parameter.get("commandId").and_then(Value::as_str).unwrap_or("");
 
 	if CommandId.is_empty() {

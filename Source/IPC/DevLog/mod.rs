@@ -39,7 +39,6 @@ pub mod SessionTimestamp;
 pub mod WriteToFile;
 
 /// Tag-gated dev log. Compiled out in release builds.
-///
 /// Under `Trace=short` aliases the long Tauri app-data prefix
 /// to `$APP` and collapses consecutive duplicates with a
 /// `(xN)` tail. The body is fully gated on
@@ -89,14 +88,13 @@ macro_rules! dev_log {
 								eprintln!("{}", Tail);
 
 								$crate::IPC::DevLog::WriteToFile::Fn(&Tail);
-							}
 
 							true
-						}
+
 					} else {
 
 						true
-					}
+
 				};
 
 				if ShouldPrint {
@@ -106,7 +104,7 @@ macro_rules! dev_log {
 					eprintln!("{}", Formatted);
 
 					$crate::IPC::DevLog::WriteToFile::Fn(&Formatted);
-				}
+
 			} else {
 
 				let Formatted = format!("[DEV:{}] {}", TagUpper, RawMessage);
@@ -114,10 +112,8 @@ macro_rules! dev_log {
 				eprintln!("{}", Formatted);
 
 				$crate::IPC::DevLog::WriteToFile::Fn(&Formatted);
-			}
-		}
+
 	};
-}
 
 /// Convenience macro: emit an OTLP span for an IPC handler.
 /// Usage: `otel_span!("file:readFile", StartNano, &[("path", &Path)]);`
@@ -130,4 +126,11 @@ macro_rules! otel_span {
 	($Name:expr, $Start:expr) => {
 		$crate::IPC::DevLog::EmitOTLPSpan::Fn($Name, $Start, $crate::IPC::DevLog::NowNano::Fn(), &[])
 	};
+}
+}
+}
+}
+}
+}
+}
 }

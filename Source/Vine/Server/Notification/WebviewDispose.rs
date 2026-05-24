@@ -1,4 +1,4 @@
-//! Cocoon → Mountain `webview.dispose` notification.
+//! Cocoon → Mountain `webview.Dispose` notification.
 //! Emitted by `Cocoon/.../Services/Window/WebviewPanel.ts:155` when the
 //! extension disposes a webview panel or the user closes the tab. Sky's
 //! webview shim listens on `sky://webview/dispose` and tears down the
@@ -9,7 +9,7 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn WebviewDispose(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let _ = Service.ApplicationHandle().emit("sky://webview/dispose", Parameter);
 
 	dev_log!(

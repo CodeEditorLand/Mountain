@@ -28,7 +28,7 @@ use crate::dev_log;
 /// # Errors
 ///
 /// Returns an error if the scheduler is not exclusively owned or stop fails.
-pub async fn SchedulerShutdown(SchedulerForShutdown:Arc<Scheduler>) -> Result<(), String> {
+pub async fn Fn(SchedulerForShutdown:Arc<Scheduler>) -> Result<(), String> {
 	dev_log!("lifecycle", "[Shutdown] [Scheduler] Stopping Echo scheduler...");
 
 	// Try to get exclusive ownership for shutdown

@@ -5,59 +5,59 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::Track::Effect::{
-	CreateEffectForRequest::Utilities::Params::{string_at, val_at},
+	CreateEffectForRequest::Utilities::Params::{StringAt, ValAt},
 	MappedEffectType::MappedEffect,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"executeCommand" => {
-			crate::effect!(run_time, {
-				let command_executor:Arc<dyn CommandExecutor> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let command_executor:Arc<dyn CommandExecutor> = RunTime.Environment.Require();
 				let (command_id, args) = if let Some(Object) = Parameters.as_object() {
 					let Id = Object
-						.get("command")
+						.Get("command")
 						.or_else(|| Object.get("commandId"))
 						.and_then(Value::as_str)
 						.unwrap_or("")
 						.to_string();
 					let A = Object
-						.get("args")
+						.Get("args")
 						.cloned()
 						.unwrap_or_else(|| Object.get("arguments").cloned().unwrap_or_default());
 					(Id, A)
 				} else {
-					let Id = string_at(&Parameters, 0);
-					let A = val_at(&Parameters, 1);
+					let Id = StringAt(&Parameters, 0);
+					let A = ValAt(&Parameters, 1);
 					(Id, A)
 				};
 				command_executor
 					.ExecuteCommand(command_id, args)
 					.await
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"Command.Execute" => {
-			crate::effect!(run_time, {
-				let command_executor:Arc<dyn CommandExecutor> = run_time.Environment.Require();
-				let command_id = string_at(&Parameters, 0);
-				let args = val_at(&Parameters, 1);
+			crate::effect!(RunTime, {
+				let command_executor:Arc<dyn CommandExecutor> = RunTime.Environment.Require();
+				let command_id = StringAt(&Parameters, 0);
+				let Args = ValAt(&Parameters, 1);
 				command_executor
 					.ExecuteCommand(command_id, args)
 					.await
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"Command.GetAll" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn CommandExecutor> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn CommandExecutor> = RunTime.Environment.Require();
 				provider
 					.GetAllCommands()
 					.await
 					.map(|cmds| json!(cmds))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 

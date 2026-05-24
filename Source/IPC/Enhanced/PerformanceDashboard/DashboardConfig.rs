@@ -18,7 +18,7 @@ pub struct Struct {
 }
 
 impl Default for Struct {
-	fn default() -> Self {
+	fn default() -> Struct {
 		Self {
 			update_interval_ms:5000,
 

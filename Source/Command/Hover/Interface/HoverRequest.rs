@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::Command::Hover::Interface::Position;
+use crate::Command::Fn::Interface::Position;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {

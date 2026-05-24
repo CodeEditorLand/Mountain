@@ -15,7 +15,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, _Arguments:Vec<Value>) -> Resul
 		Environment::Requires::Requires,
 	};
 
-	let provider:Arc<dyn ConfigurationProvider> = RunTime.Environment.Require();
+	let Provider:Arc<dyn ConfigurationProvider> = RunTime.Environment.Require();
 
 	let config = provider
 		.GetConfigurationValue(None, ConfigurationOverridesDTO::default())

@@ -1,4 +1,4 @@
-//! `extensions:install` IPC handler - local VSIX only. Gallery installs are
+//! `extensions:Install` IPC handler - local VSIX only. Gallery installs are
 //! declined (Land has no marketplace backend) and return `null`.
 //!
 //! Sequence:
@@ -7,7 +7,7 @@
 //!   3. Unpack into the user-scope extension directory via
 //!      `VsixInstaller::InstallVsix`.
 //!   4. Register with `ScannedExtensions` so `GetExtensions()` reflects the
-//!      install on the next read.
+//!      Install on the next read.
 //!   5. Fire-and-forget `$deltaExtensions` + `$activateByEvent` to Cocoon so
 //!      the extension activates without a workbench reload.
 //!   6. Emit `sky://extensions/installed` so Wind refreshes the sidebar.
@@ -46,18 +46,18 @@ pub async fn Fn(
 		Some(Path) => Path,
 
 		None => {
-			dev_log!("extensions", "extensions:install no-op: Arguments[0] missing or non-file URI");
+			dev_log!("extensions", "extensions:Install no-op: Arguments[0] missing or non-file URI");
 
-			crate::otel_span!("extensions:install:noop-missing-arg", OTELStart);
+			crate::otel_span!("extensions:Install:noop-missing-arg", OTELStart);
 
 			return Ok(Value::Null);
 		},
 	};
 
 	if VsixPath.extension().and_then(|Value| Value.to_str()) != Some("vsix") {
-		dev_log!("extensions", "extensions:install no-op: {} is not a .vsix", VsixPath.display());
+		dev_log!("extensions", "extensions:Install no-op: {} is not a .vsix", VsixPath.display());
 
-		crate::otel_span!("extensions:install:noop-not-vsix", OTELStart);
+		crate::otel_span!("extensions:Install:noop-not-vsix", OTELStart);
 
 		return Ok(Value::Null);
 	}
@@ -66,8 +66,8 @@ pub async fn Fn(
 
 	let Outcome = tokio::task::spawn_blocking(move || VsixInstaller::InstallVsix(&VsixPath, &InstallRoot))
 		.await
-		.map_err(|Error| format!("extensions:install join error: {}", Error))?
-		.map_err(|Error| format!("extensions:install failed: {}", Error))?;
+		.map_err(|Error| format!("extensions:Install join error: {}", Error))?
+		.map_err(|Error| format!("extensions:Install failed: {}", Error))?;
 
 	Runtime
 		.Environment
@@ -93,14 +93,14 @@ pub async fn Fn(
 
 	dev_log!(
 		"extensions",
-		"extensions:install succeeded: {} v{} at {}",
+		"extensions:Install succeeded: {} v{} at {}",
 		Outcome.Identifier,
 		Outcome.Version,
 		Outcome.InstalledAt.display()
 	);
 
 	crate::otel_span!(
-		"extensions:install:ok",
+		"extensions:Install:ok",
 		OTELStart,
 		&[
 			("extension.identifier", Outcome.Identifier.as_str()),

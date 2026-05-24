@@ -40,7 +40,7 @@ pub(super) async fn inspect_configuration_value(
 
 	let user_settings_path = environment
 		.ApplicationHandle
-		.path()
+		.Path()
 		.app_config_dir()
 		.map(|p| p.join("settings.json"))
 		.ok();
@@ -62,7 +62,7 @@ pub(super) async fn inspect_configuration_value(
 		super::Loading::read_and_parse_configuration_file(environment, &workspace_settings_path).await?;
 
 	let get_value_from_dot_path =
-		|node:&Value, path:&str| -> Option<Value> { path.split('.').try_fold(node, |n, k| n.get(k)).cloned() };
+		|node:&Value, path:&str| -> Option<Value> { path.split('.').try_fold(node, |N, k| n.get(k)).cloned() };
 
 	let mut result_dto = InspectResultDataDTO::default();
 

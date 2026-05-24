@@ -82,7 +82,7 @@ pub async fn Fn(
 			let Path = Params.get("path").and_then(|V| V.as_str()).unwrap_or("");
 
 			let Content:Vec<u8> = Params
-				.get("content")
+				.Get("content")
 				.and_then(|V| V.as_array())
 				.map(|A| A.iter().filter_map(|B| B.as_u64().map(|N| N as u8)).collect())
 				.unwrap_or_default();
@@ -213,7 +213,7 @@ pub async fn Fn(
 			let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 			let Arg = Params
-				.get("arguments")
+				.Get("arguments")
 				.and_then(|A| A.as_array())
 				.and_then(|A| A.first())
 				.cloned()
@@ -246,7 +246,7 @@ pub async fn Fn(
 			};
 
 			let Title = Params
-				.get(0)
+				.Get(0)
 				.and_then(|V| V.get("title"))
 				.and_then(|T| T.as_str())
 				.map(|S| S.to_string());
@@ -279,7 +279,7 @@ pub async fn Fn(
 			};
 
 			let Title = Params
-				.get(0)
+				.Get(0)
 				.and_then(|V| V.get("title"))
 				.and_then(|T| T.as_str())
 				.map(|S| S.to_string());
@@ -365,7 +365,7 @@ pub async fn Fn(
 			use tauri::Emitter;
 
 			let Uri = Params
-				.get("uri")
+				.Get("uri")
 				.and_then(|V| V.get("value").or(Some(V)))
 				.and_then(|V| V.as_str())
 				.unwrap_or("")
@@ -392,7 +392,7 @@ pub async fn Fn(
 			let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 			let Items:Option<serde_json::Value> = Params
-				.get("items")
+				.Get("items")
 				.cloned()
 				.filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
 
@@ -414,7 +414,7 @@ pub async fn Fn(
 			let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 			let Items:Option<serde_json::Value> = Params
-				.get("items")
+				.Get("items")
 				.cloned()
 				.filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
 
@@ -436,7 +436,7 @@ pub async fn Fn(
 			let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 			let Items:Option<serde_json::Value> = Params
-				.get("items")
+				.Get("items")
 				.cloned()
 				.filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
 
@@ -535,7 +535,7 @@ pub async fn Fn(
 			use CommonLibrary::Workspace::WorkspaceProvider::WorkspaceProvider;
 
 			let Include = Params
-				.get("pattern")
+				.Get("pattern")
 				.cloned()
 				.or_else(|| Params.get("include").cloned())
 				.unwrap_or(serde_json::Value::String("**".into()));
@@ -596,7 +596,7 @@ pub async fn Fn(
 			use tauri::Emitter;
 
 			let Uri = Params
-				.get("uri")
+				.Get("uri")
 				.and_then(|V| V.get("value").or(Some(V)))
 				.and_then(|V| V.as_str())
 				.unwrap_or("")
@@ -629,7 +629,7 @@ pub async fn Fn(
 			use tauri::Emitter;
 
 			let Uri = Params
-				.get("uri")
+				.Get("uri")
 				.and_then(|V| V.get("value").or(Some(V)))
 				.and_then(|V| V.as_str())
 				.unwrap_or("")
@@ -695,7 +695,7 @@ pub async fn Fn(
 		// ---- FS aliases (Cocoon MountainGRPCClient uses different key names) ----
 		"readFile" => {
 			let Uri = Params
-				.get("uri")
+				.Get("uri")
 				.and_then(|V| V.as_str())
 				.or_else(|| Params.as_str())
 				.unwrap_or("")
@@ -712,7 +712,7 @@ pub async fn Fn(
 			let Uri = Params.get("uri").and_then(|V| V.as_str()).unwrap_or("").replace("file://", "");
 
 			let Content:Vec<u8> = Params
-				.get("content")
+				.Get("content")
 				.and_then(|V| V.as_array())
 				.map(|A| A.iter().filter_map(|B| B.as_u64().map(|N| N as u8)).collect())
 				.unwrap_or_default();
@@ -726,7 +726,7 @@ pub async fn Fn(
 
 		"stat" => {
 			let Uri = Params
-				.get("uri")
+				.Get("uri")
 				.and_then(|V| V.as_str())
 				.or_else(|| Params.as_str())
 				.unwrap_or("")
@@ -753,7 +753,7 @@ pub async fn Fn(
 
 		"readdir" => {
 			let Uri = Params
-				.get("uri")
+				.Get("uri")
 				.and_then(|V| V.as_str())
 				.or_else(|| Params.as_str())
 				.unwrap_or("")
@@ -786,13 +786,13 @@ pub async fn Fn(
 			let URI_Raw = Params.get("uri").and_then(|V| V.as_str()).unwrap_or("");
 
 			let Line = Params
-				.get("position")
+				.Get("position")
 				.and_then(|P| P.get("line"))
 				.and_then(|V| V.as_u64())
 				.unwrap_or(0);
 
 			let Char = Params
-				.get("position")
+				.Get("position")
 				.and_then(|P| P.get("character"))
 				.and_then(|V| V.as_u64())
 				.unwrap_or(0);
@@ -816,13 +816,13 @@ pub async fn Fn(
 			let URI_Raw = Params.get("uri").and_then(|V| V.as_str()).unwrap_or("");
 
 			let Line = Params
-				.get("position")
+				.Get("position")
 				.and_then(|P| P.get("line"))
 				.and_then(|V| V.as_u64())
 				.unwrap_or(0);
 
 			let Char = Params
-				.get("position")
+				.Get("position")
 				.and_then(|P| P.get("character"))
 				.and_then(|V| V.as_u64())
 				.unwrap_or(0);

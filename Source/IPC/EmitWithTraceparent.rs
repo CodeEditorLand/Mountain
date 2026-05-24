@@ -42,7 +42,7 @@ pub fn Fn<R:tauri::Runtime>(ApplicationHandle:&AppHandle<R>, EventName:&str, Pay
 }
 
 /// Variant for callers that already serialise into a `serde_json::Map`.
-pub fn FnMap<R:tauri::Runtime>(
+pub fn Fn<R:tauri::Runtime>(
 	ApplicationHandle:&AppHandle<R>,
 
 	EventName:&str,

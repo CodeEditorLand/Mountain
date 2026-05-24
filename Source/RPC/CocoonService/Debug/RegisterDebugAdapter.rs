@@ -14,10 +14,10 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterDebugAdapterRequest) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon", "[CocoonService] Registering debug adapter: {}", Request.debug_type);
+	dev_log!("cocoon", "[CocoonService] Registering debug adapter: {}", Request.DebugType);
 
 	let Handle = Request
-		.debug_type
+		.DebugType
 		.as_bytes()
 		.iter()
 		.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
@@ -27,13 +27,13 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterDebugAdapterRequest)
 
 		ProviderType:ProviderType::DebugAdapter,
 
-		Selector:json!([{ "debugType": Request.debug_type }]),
+		Selector:json!([{ "debugType": Request.DebugType }]),
 
 		SideCarIdentifier:"cocoon-main".to_string(),
 
-		ExtensionIdentifier:json!(Request.extension_id),
+		ExtensionIdentifier:json!(Request.ExtensionId),
 
-		Options:Some(json!({ "debugType": Request.debug_type })),
+		Options:Some(json!({ "debugType": Request.DebugType })),
 	};
 
 	Service
@@ -45,7 +45,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterDebugAdapterRequest)
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://debug/register",
-		json!({ "debugType": Request.debug_type, "extensionId": Request.extension_id }),
+		json!({ "debugType": Request.DebugType, "extensionId": Request.ExtensionId }),
 	);
 
 	Ok(Response::new(Empty {}))

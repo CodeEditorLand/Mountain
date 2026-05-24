@@ -50,7 +50,7 @@ use CommonLibrary::{
 };
 use async_trait::async_trait;
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::MountainEnvironment::Struct;
 
 // Private submodules containing the actual implementation
 #[path = "FileSystemProvider/ReadOperations.rs"]

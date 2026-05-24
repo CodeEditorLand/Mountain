@@ -55,10 +55,9 @@ use tauri::AppHandle;
 ///
 /// Returns an error if stats cannot be collected.
 #[tauri::command]
-pub async fn MountainGetPerformanceStats(app_handle:AppHandle) -> Result<Value, String> {
+pub async fn Fn(app_handle:AppHandle) -> Result<Value, String> {
 	let stats =
-		crate::IPC::AdvancedFeatures::mountain_get_performance_stats::mountain_get_performance_stats(app_handle)
-			.await?;
+		crate::IPC::AdvancedFeatures::Fn::Fn(app_handle).await?;
 
-	to_value(&stats).map_err(|e| format!("Failed to serialize performance stats: {}", e))
+	to_value(&stats).map_err(|E| format!("Failed to serialize performance stats: {}", e))
 }

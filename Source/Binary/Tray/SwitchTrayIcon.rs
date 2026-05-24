@@ -72,7 +72,7 @@ use crate::dev_log;
 ///   - If icon bytes fail to load
 ///   - If setting the new icon fails
 #[tauri::command]
-pub fn SwitchTrayIcon(App:AppHandle, IsDarkMode:bool) {
+pub fn Fn(App:AppHandle, IsDarkMode:bool) {
 	dev_log!("window", "[UI] [Tray] Switching icon. IsDarkMode: {}", IsDarkMode);
 
 	const DARK_ICON_BYTES:&[u8] = include_bytes!("../../../icons/32x32.png");

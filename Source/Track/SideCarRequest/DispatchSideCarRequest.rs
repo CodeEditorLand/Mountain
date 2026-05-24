@@ -64,7 +64,7 @@ use crate::{
 
 /// The primary dispatcher for requests originating from a `Cocoon` sidecar via
 /// gRPC. This routes RPC calls to the correct effect-based implementation.
-pub async fn DispatchSideCarRequest<R:Runtime>(
+pub async fn Fn<R:Runtime>(
 	ApplicationHandle:AppHandle<R>,
 
 	RunTime:Arc<ApplicationRunTime>,

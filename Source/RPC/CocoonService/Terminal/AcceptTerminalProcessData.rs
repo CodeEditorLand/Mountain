@@ -15,7 +15,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalDataNotification) ->
 	dev_log!(
 		"cocoon",
 		"[CocoonService] Terminal data for {}: {} bytes",
-		Request.terminal_id,
+		Request.TerminalId,
 		Request.data.len()
 	);
 
@@ -24,7 +24,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalDataNotification) ->
 	let _ = Service
 		.environment
 		.ApplicationHandle
-		.emit("sky://terminal/data", json!({ "id": Request.terminal_id, "data": DataString }));
+		.emit("sky://terminal/data", json!({ "id": Request.TerminalId, "data": DataString }));
 
 	Ok(Response::new(Empty {}))
 }

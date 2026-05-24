@@ -9,12 +9,12 @@ use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 use serde_json::Value;
 
 use crate::{
-	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_val,
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgVal,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-	let Options = arg_val(&Arguments, 0);
+	let Options = ArgVal(&Arguments, 0);
 
 	RunTime
 		.Environment

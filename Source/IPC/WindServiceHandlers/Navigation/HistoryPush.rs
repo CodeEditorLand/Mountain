@@ -15,7 +15,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.ok_or("history:push requires uri".to_string())?
 		.to_owned();
 
-	RunTime.Environment.ApplicationState.Feature.NavigationHistory.Push(Uri);
+	RunTime.Environment.ApplicationState.Feature.NavigationHistory.push(Uri);
 
 	Ok(Value::Null)
 }

@@ -34,7 +34,7 @@ pub async fn Fn(
 
 		SideCarIdentifier:"cocoon-main".to_string(),
 
-		ExtensionIdentifier:json!(Request.extension_id),
+		ExtensionIdentifier:json!(Request.ExtensionId),
 
 		Options:Some(json!({ "viewId": Request.view_id })),
 	};
@@ -48,7 +48,7 @@ pub async fn Fn(
 
 	EnqueueTreeViewEmit::Fn(
 		&Service.environment.ApplicationHandle,
-		json!({ "viewId": Request.view_id, "extensionId": Request.extension_id }),
+		json!({ "viewId": Request.view_id, "extensionId": Request.ExtensionId }),
 	);
 
 	Ok(Response::new(Empty {}))

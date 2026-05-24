@@ -44,7 +44,7 @@ pub async fn Fn(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Result<(i
 
 	super::ClearPid::Fn(OperationId);
 
-	let ExitCode = Output.status.code().unwrap_or(-1);
+	let ExitCode = Output.Status.code().unwrap_or(-1);
 
 	let Stdout = String::from_utf8_lossy(&Output.stdout).into_owned();
 

@@ -172,22 +172,22 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 	for Entry in Blob.extensions {
 		let Manifest = &Entry.manifest;
 
-		let Path = &Entry.path;
+		let Path = &Entry.Path;
 
 		// Helpers scoped to each manifest to eliminate repeated extraction chains.
 		let str = |k:&str| Manifest.get(k).and_then(Value::as_str).map(str::to_string);
 
 		let str_or = |k:&str, d:&str| Manifest.get(k).and_then(Value::as_str).unwrap_or(d).to_string();
 
-		let arr =
+		let Arr =
 			|k:&str| -> Option<Vec<String>> { Manifest.get(k).and_then(|V| serde_json::from_value(V.clone()).ok()) };
 
 		let ExtId = Entry.id.clone();
 
 		let Publisher = Manifest
-			.get("publisher")
+			.Get("publisher")
 			.and_then(Value::as_str)
-			.unwrap_or_else(|| Entry.id.split('.').next().unwrap_or("unknown"))
+			.unwrap_or_else(|| Entry.id.split('.').Next().unwrap_or("unknown"))
 			.to_string();
 
 		// Built-in when the parent directory is named "extensions".

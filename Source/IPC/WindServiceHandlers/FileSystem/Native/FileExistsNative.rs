@@ -2,10 +2,10 @@
 
 use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as extract_path_from_arg;
+use crate::IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as ExtractPathFromArg;
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing file path")?)?;
+	let Path = ExtractPathFromArg(Arguments.get(0).ok_or("Missing file path")?)?;
 
 	// Propagate I/O errors (permission denied, broken symlink) rather than
 	// returning false. unwrap_or(false) would make errors look like "not found",

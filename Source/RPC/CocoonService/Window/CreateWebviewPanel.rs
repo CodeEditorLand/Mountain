@@ -24,8 +24,8 @@ pub async fn Fn(
 ) -> Result<Response<CreateWebviewPanelResponse>, Status> {
 	dev_log!(
 		"cocoon",
-		"[CocoonService] create_webview_panel: view_type={} title={}",
-		Request.view_type,
+		"[CocoonService] create_webview_panel: ViewType={} title={}",
+		Request.ViewType,
 		Request.title
 	);
 
@@ -33,7 +33,7 @@ pub async fn Fn(
 		.environment
 		.CreateWebviewPanel(
 			json!({}),
-			Request.view_type.clone(),
+			Request.ViewType.clone(),
 			Request.title.clone(),
 			json!({ "viewColumn": Request.view_column, "preserveFocus": Request.preserve_focus }),
 			json!({}),
@@ -55,7 +55,7 @@ pub async fn Fn(
 				"sky://webview/create",
 				json!({
 					"handle": Fallback,
-					"viewType": Request.view_type,
+					"viewType": Request.ViewType,
 					"title": Request.title,
 					"viewColumn": Request.view_column,
 					"preserveFocus": Request.preserve_focus,

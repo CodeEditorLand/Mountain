@@ -34,15 +34,15 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::Track::Effect::{
-	CreateEffectForRequest::Utilities::Params::{bool_at, str_at, strip_file_uri},
+	CreateEffectForRequest::Utilities::Params::{BoolAt, StrAt, StripFileUri},
 	MappedEffectType::MappedEffect,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"FileSystem.ReadFile" => {
-			crate::effect!(run_time, {
-				let path_str = str_at(&Parameters, 0);
+			crate::effect!(RunTime, {
+				let PathStr = StrAt(&Parameters, 0);
 				// Empty-path guard: extensions occasionally
 				// pass `""` to `vscode.workspace.fs.readFile`
 				// when probing optional config files. Stock VS
@@ -53,49 +53,49 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				// path-security guard into emitting a "path
 				// outside workspace" rejection that trips the
 				// breaker cascade).
-				if path_str.is_empty() {
+				if PathStr.is_empty() {
 					return Err("FileSystem.ReadFile: empty path (resource not found)".to_string());
 				}
-				if path_str.starts_with("vscode://schemas-associations/") {
-					let payload =
+				if PathStr.starts_with("vscode://schemas-associations/") {
+					let Payload =
 						serde_json::to_vec(&json!({ "schemas": [] })).unwrap_or_else(|_| b"{\"schemas\":[]}".to_vec());
 					return Ok(json!(payload));
 				}
-				let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
-				let path = std::path::PathBuf::from(strip_file_uri(path_str));
-				fs_reader
+				let FsReader:Arc<dyn FileSystemReader> = RunTime.Environment.Require();
+				let Path = std::path::PathBuf::from(StripFileUri(PathStr));
+				FsReader
 					.ReadFile(&path)
 					.await
 					.map(|bytes| json!(bytes))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"FileSystem.WriteFile" => {
-			crate::effect!(run_time, {
-				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
-				let path_str = str_at(&Parameters, 0);
-				if path_str.is_empty() {
+			crate::effect!(RunTime, {
+				let FsWriter:Arc<dyn FileSystemWriter> = RunTime.Environment.Require();
+				let PathStr = StrAt(&Parameters, 0);
+				if PathStr.is_empty() {
 					return Err("FileSystem.WriteFile: empty path (resource not found)".to_string());
 				}
-				let path = std::path::PathBuf::from(strip_file_uri(path_str));
-				let content = Parameters.get(1).cloned();
-				let content_bytes = match content {
-					Some(Value::Array(arr)) => arr.into_iter().filter_map(|v| v.as_u64().map(|n| n as u8)).collect(),
+				let Path = std::path::PathBuf::from(StripFileUri(PathStr));
+				let Content = Parameters.get(1).cloned();
+				let ContentBytes = match content {
+					Some(Value::Array(arr)) => arr.into_iter().filter_map(|V| v.as_u64().map(|N| n as u8)).collect(),
 					Some(Value::String(s)) => STANDARD.decode(&s).unwrap_or_default(),
 					_ => vec![],
 				};
-				fs_writer
-					.WriteFile(&path, content_bytes, true, true)
+				FsWriter
+					.WriteFile(&path, ContentBytes, true, true)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"FileSystem.ReadDirectory" => {
-			crate::effect!(run_time, {
-				let path_str = str_at(&Parameters, 0);
+			crate::effect!(RunTime, {
+				let PathStr = StrAt(&Parameters, 0);
 				// Empty-path guard: same contract as ReadFile and
 				// Stat. An empty string from an extension probe
 				// must return "resource not found" so the
@@ -103,99 +103,99 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				// MountainVinegRPCService downgrades the log level
 				// and uses error code -32004 instead of tripping
 				// the circuit breaker with a -32000.
-				if path_str.is_empty() {
+				if PathStr.is_empty() {
 					return Err("FileSystem.ReadDirectory: empty path (resource not found)".to_string());
 				}
-				let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
-				let path = std::path::PathBuf::from(strip_file_uri(path_str));
-				fs_reader
+				let FsReader:Arc<dyn FileSystemReader> = RunTime.Environment.Require();
+				let Path = std::path::PathBuf::from(StripFileUri(PathStr));
+				FsReader
 					.ReadDirectory(&path)
 					.await
 					.map(|entries| json!(entries))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"FileSystem.Stat" => {
-			crate::effect!(run_time, {
-				let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
-				let path_str = str_at(&Parameters, 0);
+			crate::effect!(RunTime, {
+				let FsReader:Arc<dyn FileSystemReader> = RunTime.Environment.Require();
+				let PathStr = StrAt(&Parameters, 0);
 				// Empty-path guard: same rationale as
 				// `FileSystem.ReadFile` above. Returning
 				// `not found` matches VS Code's
 				// `FileSystemProvider.stat()` contract for
 				// probes of paths the extension hasn't
 				// validated upstream.
-				if path_str.is_empty() {
+				if PathStr.is_empty() {
 					return Err("FileSystem.Stat: empty path (resource not found)".to_string());
 				}
-				let path = std::path::PathBuf::from(strip_file_uri(path_str));
-				fs_reader
+				let Path = std::path::PathBuf::from(StripFileUri(PathStr));
+				FsReader
 					.StatFile(&path)
 					.await
 					.map(|stat| json!(stat))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"FileSystem.CreateDirectory" => {
-			crate::effect!(run_time, {
-				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
-				let path_str = str_at(&Parameters, 0);
-				let path = std::path::PathBuf::from(strip_file_uri(path_str));
-				fs_writer
+			crate::effect!(RunTime, {
+				let FsWriter:Arc<dyn FileSystemWriter> = RunTime.Environment.Require();
+				let PathStr = StrAt(&Parameters, 0);
+				let Path = std::path::PathBuf::from(StripFileUri(PathStr));
+				FsWriter
 					.CreateDirectory(&path, true)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"FileSystem.Delete" => {
-			crate::effect!(run_time, {
-				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
-				let path_str = str_at(&Parameters, 0);
-				let path = std::path::PathBuf::from(strip_file_uri(path_str));
-				let recursive = bool_at(&Parameters, 1);
-				fs_writer
+			crate::effect!(RunTime, {
+				let FsWriter:Arc<dyn FileSystemWriter> = RunTime.Environment.Require();
+				let PathStr = StrAt(&Parameters, 0);
+				let Path = std::path::PathBuf::from(StripFileUri(PathStr));
+				let Recursive = BoolAt(&Parameters, 1);
+				FsWriter
 					.Delete(&path, recursive, false)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"FileSystem.Rename" => {
-			crate::effect!(run_time, {
-				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
-				let source = str_at(&Parameters, 0);
-				let target = str_at(&Parameters, 1);
-				fs_writer
+			crate::effect!(RunTime, {
+				let FsWriter:Arc<dyn FileSystemWriter> = RunTime.Environment.Require();
+				let Source = StrAt(&Parameters, 0);
+				let Target = StrAt(&Parameters, 1);
+				FsWriter
 					.Rename(
-						&std::path::PathBuf::from(strip_file_uri(source)),
-						&std::path::PathBuf::from(strip_file_uri(target)),
+						&std::path::PathBuf::from(StripFileUri(source)),
+						&std::path::PathBuf::from(StripFileUri(target)),
 						true,
 					)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"FileSystem.Copy" => {
-			crate::effect!(run_time, {
-				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
-				let source = str_at(&Parameters, 0);
-				let target = str_at(&Parameters, 1);
-				fs_writer
+			crate::effect!(RunTime, {
+				let FsWriter:Arc<dyn FileSystemWriter> = RunTime.Environment.Require();
+				let Source = StrAt(&Parameters, 0);
+				let Target = StrAt(&Parameters, 1);
+				FsWriter
 					.Copy(
-						&std::path::PathBuf::from(strip_file_uri(source)),
-						&std::path::PathBuf::from(strip_file_uri(target)),
+						&std::path::PathBuf::from(StripFileUri(source)),
+						&std::path::PathBuf::from(StripFileUri(target)),
 						true,
 					)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 

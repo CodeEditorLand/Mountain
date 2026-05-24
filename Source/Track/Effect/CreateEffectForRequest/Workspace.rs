@@ -18,28 +18,24 @@ use tauri::Runtime;
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::Effect::{
-		CreateEffectForRequest::Utilities::Params::{array_unwrap, uri_from_params},
+		CreateEffectForRequest::Utilities::Params::{ArrayUnwrap, UriFromParams},
 		MappedEffectType::MappedEffect,
 	},
 	dev_log,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"applyEdit" => {
-			crate::effect!(run_time, {
+			crate::effect!(RunTime, {
 				// Atom T1: round-trip via Mountain's request/reply plumbing so the
 				// extension's `await workspace.applyEdit(…)` resolves when Sky has
 				// actually applied the edit (or refused). Previously a synthetic
 				// `true` returned before the edit ran, racing listeners that
 				// expected post-apply state.
-				let Payload = if Parameters.is_array() {
-					Parameters.get(0).cloned().unwrap_or_default()
-				} else {
-					Parameters
-				};
+				let Payload = ArrayUnwrap(Parameters);
 				crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
-					&run_time.Environment,
+					&RunTime.Environment,
 					"sky://workspace/applyEdit",
 					Payload,
 				)
@@ -52,14 +48,14 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"showTextDocument" => {
-			crate::effect!(run_time, {
+			crate::effect!(RunTime, {
 				// Atom T1: same round-trip as applyEdit. The canonical vscode
 				// return shape is a `TextEditor` - today Sky resolves with a
 				// thin `{ uri, viewColumn }` stub. Extensions that chain
 				// editor ops may still see undefined properties; that's a
 				// Sky-side enrichment task (T2 follow-up).
 				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
-					&run_time.Environment,
+					&RunTime.Environment,
 					"sky://window/showTextDocument",
 					Parameters,
 				)
@@ -83,9 +79,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// "reveal cursor", reference highlights, error navigation, etc.
 		// Routes to Sky's ICodeEditorService so Monaco scrolls its viewport.
 		"window.revealRange" => {
-			crate::effect!(run_time, {
+			crate::effect!(RunTime, {
 				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
-					&run_time.Environment,
+					&RunTime.Environment,
 					"sky://editor/revealRange",
 					Parameters,
 				)
@@ -111,21 +107,21 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// per-OS trust query (Gatekeeper / SmartScreen / xattrs); single-
 		// window dev runtime stays trust-by-default.
 		"Workspace.RequestResourceTrust" | "Workspace.IsResourceTrusted" => {
-			crate::effect!(_run_time, { Ok(json!({ "trusted": true })) })
+			crate::effect!(_RunTime, { Ok(json!({ "trusted": true })) })
 		},
 
 		"$updateWorkspaceFolders" => {
-			crate::effect!(run_time, {
-				let Payload = array_unwrap(Parameters);
+			crate::effect!(RunTime, {
+				let Payload = ArrayUnwrap(Parameters);
 				let Additions:Vec<(String, String)> = Payload
-					.get("additions")
+					.Get("additions")
 					.and_then(Value::as_array)
 					.map(|Array| {
 						Array
 							.iter()
 							.filter_map(|Entry| {
 								let Uri = Entry
-									.get("uri")
+									.Get("uri")
 									.and_then(|U| U.get("value").and_then(Value::as_str).or_else(|| U.as_str()))
 									.map(str::to_string)?;
 								let Name = Entry.get("name").and_then(Value::as_str).unwrap_or("").to_string();
@@ -135,14 +131,14 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					})
 					.unwrap_or_default();
 				let Removals:Vec<String> = Payload
-					.get("removals")
+					.Get("removals")
 					.and_then(Value::as_array)
 					.map(|Array| {
 						Array
 							.iter()
 							.filter_map(|Entry| {
 								Entry
-									.get("uri")
+									.Get("uri")
 									.and_then(|U| U.get("value").and_then(Value::as_str).or_else(|| U.as_str()))
 									.map(str::to_string)
 							})
@@ -150,7 +146,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					})
 					.unwrap_or_default();
 
-				let Workspace = &run_time.Environment.ApplicationState.Workspace;
+				let Workspace = &RunTime.Environment.ApplicationState.Workspace;
 				let mut Folders = Workspace.GetWorkspaceFolders();
 				Folders.retain(|F| !Removals.contains(&F.URI.to_string()));
 				let Base = Folders.len();
@@ -166,7 +162,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						}
 					}
 				}
-				crate::ApplicationState::State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify(
+				crate::ApplicationState::Struct::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify(
 					Workspace, Folders,
 				);
 				Ok(json!(null))
@@ -178,8 +174,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// `ITextFileService.save(uri)` can flush the dirty working copy to disk.
 		// Returns the URI on success so the caller can confirm the file was saved.
 		"Workspace.Save" => {
-			crate::effect!(run_time, {
-				let UriVal = uri_from_params(Parameters);
+			crate::effect!(RunTime, {
+				let UriVal = UriFromParams(Parameters);
 
 				// Fire `document.willSave` to Cocoon BEFORE writing to disk.
 				// This gives `onWillSaveTextDocument` listeners a chance to
@@ -202,7 +198,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				.await;
 
 				let SaveResult = match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
-					&run_time.Environment,
+					&RunTime.Environment,
 					"sky://workspace/save",
 					UriVal.clone(),
 				)
@@ -238,10 +234,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// Currently delegates to the same Save path; a future Sky-side handler
 		// can drive the dialog independently.
 		"Workspace.SaveAs" => {
-			crate::effect!(run_time, {
-				let UriVal = uri_from_params(Parameters);
+			crate::effect!(RunTime, {
+				let UriVal = UriFromParams(Parameters);
 				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
-					&run_time.Environment,
+					&RunTime.Environment,
 					"sky://workspace/saveAs",
 					UriVal.clone(),
 				)
@@ -258,9 +254,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// Sky's `sky://workspace/saveAll` handler which delegates to VS Code's
 		// `ITextFileService.save({ saveReason: AutoSave })` for all dirty models.
 		"saveAll" | "Workspace.SaveAll" => {
-			crate::effect!(run_time, {
+			crate::effect!(RunTime, {
 				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
-					&run_time.Environment,
+					&RunTime.Environment,
 					"sky://workspace/saveAll",
 					serde_json::json!({}),
 				)

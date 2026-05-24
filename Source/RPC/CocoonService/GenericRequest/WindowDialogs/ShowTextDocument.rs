@@ -6,7 +6,7 @@ use crate::{Environment::MountainEnvironment::MountainEnvironment, Vine::Generat
 
 pub fn Fn(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	let Uri = Params
-		.get("uri")
+		.Get("uri")
 		.and_then(|V| V.get("value").or(Some(V)))
 		.and_then(|V| V.as_str())
 		.unwrap_or("")

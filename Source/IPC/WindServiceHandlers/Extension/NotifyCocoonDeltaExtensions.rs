@@ -1,4 +1,4 @@
-//! Post-install/uninstall Cocoon notification.
+//! Post-Install/uninstall Cocoon notification.
 //!
 //! `$deltaExtensions` adds or removes the supplied descriptors from
 //! Cocoon's extension registry and indexes `activationEvents`, but it
@@ -20,7 +20,7 @@ use crate::{Vine, dev_log};
 const COCOON_SIDE_CAR_IDENTIFIER:&str = "cocoon-main";
 
 /// Timeout for fire-and-forget `$deltaExtensions` notifications; long
-/// enough to survive a busy Cocoon but short enough that install
+/// enough to survive a busy Cocoon but short enough that Install
 /// feedback isn't blocked on a stalled extension host.
 const COCOON_DELTA_TIMEOUT_MS:u64 = 10_000;
 
@@ -51,7 +51,7 @@ pub fn Fn(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 
 		// Only `onStartupFinished` is fired post-delta - the one event
 		// guaranteed to be already satisfied by the time user
-		// interaction could reach the install handler (lifecycle phase
+		// interaction could reach the Install handler (lifecycle phase
 		// Ready). Firing `"*"` would over-activate lazy extensions.
 		for Event in ["onStartupFinished"] {
 			let ActivationParameters = json!({ "activationEvent": Event });

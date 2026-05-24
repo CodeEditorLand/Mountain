@@ -8,7 +8,7 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn ExtensionHostMessage(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	if let Err(Error) = Service.ApplicationHandle().emit("cocoon:extensionHostReply", Parameter) {
 		dev_log!(
 			"grpc",

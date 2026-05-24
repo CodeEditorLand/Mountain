@@ -19,9 +19,9 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterProviderRequest) -> 
 
 	Service.RegisterProvider(
 		Request.handle,
-		ProviderType::Hover,
+		ProviderType::Fn,
 		&Request.language_selector,
-		&Request.extension_id,
+		&Request.ExtensionId,
 	);
 
 	Ok(Response::new(Empty {}))

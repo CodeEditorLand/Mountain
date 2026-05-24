@@ -15,7 +15,7 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub fn RelayToSky(Service:&MountainVinegRPCService, SkyEvent:&str, Parameter:&Value, LogTag:&str, LogLine:&str) {
+pub fn Fn(Service:&MountainVinegRPCService, SkyEvent:&str, Parameter:&Value, LogTag:&str, LogLine:&str) {
 	let _ = Service.ApplicationHandle().emit(SkyEvent, Parameter);
 
 	if !LogLine.is_empty() {

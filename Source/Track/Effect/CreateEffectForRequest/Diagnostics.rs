@@ -5,34 +5,34 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::Track::Effect::{
-	CreateEffectForRequest::Utilities::Params::{string_at, val_at},
+	CreateEffectForRequest::Utilities::Params::{StringAt, ValAt},
 	MappedEffectType::MappedEffect,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Diagnostic.Set" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn DiagnosticManager> = run_time.Environment.Require();
-				let owner = string_at(&Parameters, 0);
-				let entries = val_at(&Parameters, 1);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn DiagnosticManager> = RunTime.Environment.Require();
+				let owner = StringAt(&Parameters, 0);
+				let entries = ValAt(&Parameters, 1);
 				provider
 					.SetDiagnostics(owner, entries)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"Diagnostic.Clear" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn DiagnosticManager> = run_time.Environment.Require();
-				let owner = string_at(&Parameters, 0);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn DiagnosticManager> = RunTime.Environment.Require();
+				let owner = StringAt(&Parameters, 0);
 				provider
 					.ClearDiagnostics(owner)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 

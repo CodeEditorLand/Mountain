@@ -36,7 +36,7 @@ pub(super) async fn read_file_impl(env:&MountainEnvironment, path:&PathBuf) -> R
 	// Validate that the path exists and is a file, not a directory
 	let metadata = fs::metadata(path)
 		.await
-		.map_err(|error| CommonError::FromStandardIOError(error, path.clone(), "ReadFile.Stat"))?;
+		.map_err(|Error| CommonError::FromStandardIOError(error, path.clone(), "ReadFile.Stat"))?;
 
 	if metadata.is_dir() {
 		return Err(CommonError::InvalidArgument {
@@ -47,7 +47,7 @@ pub(super) async fn read_file_impl(env:&MountainEnvironment, path:&PathBuf) -> R
 
 	fs::read(path)
 		.await
-		.map_err(|error| CommonError::FromStandardIOError(error, path.clone(), "ReadFile"))
+		.map_err(|Error| CommonError::FromStandardIOError(error, path.clone(), "ReadFile"))
 }
 
 /// Stat operations implementation for MountainEnvironment
@@ -56,7 +56,7 @@ pub(super) async fn stat_file_impl(env:&MountainEnvironment, path:&PathBuf) -> R
 
 	let metadata = fs::metadata(path)
 		.await
-		.map_err(|error| CommonError::FromStandardIOError(error, path.clone(), "StatFile"))?;
+		.map_err(|Error| CommonError::FromStandardIOError(error, path.clone(), "StatFile"))?;
 
 	let mut file_type = 0_u8;
 
@@ -71,7 +71,7 @@ pub(super) async fn stat_file_impl(env:&MountainEnvironment, path:&PathBuf) -> R
 	// Check for symbolic link separately using symlink_metadata()
 	let file_type_raw = fs::symlink_metadata(path)
 		.await
-		.map_err(|error| CommonError::FromStandardIOError(error, path.clone(), "StatFile.FileType"))?;
+		.map_err(|Error| CommonError::FromStandardIOError(error, path.clone(), "StatFile.FileType"))?;
 
 	if file_type_raw.is_symlink() {
 		file_type |= FileTypeDTO::SymbolicLink as u8;
@@ -115,7 +115,7 @@ pub(super) async fn read_directory_impl(
 	// Validate that the path exists and is a directory
 	let metadata = fs::metadata(path)
 		.await
-		.map_err(|error| CommonError::FromStandardIOError(error, path.clone(), "ReadDirectory.Stat"))?;
+		.map_err(|Error| CommonError::FromStandardIOError(error, path.clone(), "ReadDirectory.Stat"))?;
 
 	if !metadata.is_dir() {
 		return Err(CommonError::InvalidArgument {
@@ -128,12 +128,12 @@ pub(super) async fn read_directory_impl(
 
 	let mut read_dir = fs::read_dir(path)
 		.await
-		.map_err(|error| CommonError::FromStandardIOError(error, path.clone(), "ReadDirectory"))?;
+		.map_err(|Error| CommonError::FromStandardIOError(error, path.clone(), "ReadDirectory"))?;
 
 	while let Some(entry_result) = read_dir
 		.next_entry()
 		.await
-		.map_err(|error| CommonError::FromStandardIOError(error, path.clone(), "ReadDirectory.NextEntry"))?
+		.map_err(|Error| CommonError::FromStandardIOError(error, path.clone(), "ReadDirectory.NextEntry"))?
 	{
 		let file_name = entry_result.file_name().to_string_lossy().into_owned();
 

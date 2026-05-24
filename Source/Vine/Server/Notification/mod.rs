@@ -10,34 +10,7 @@
 //! ## Naming
 //!
 //! - Wire string `outputChannel.create` → atom file `OutputChannelCreate.rs`
-//!   with `pub async fn OutputChannelCreate(...)`.
-//! - Wire string `unregister_scm_provider` → atom file
-//!   `UnregisterScmProvider.rs`.
-//! - Wire string `progress.update` → atom file `ProgressUpdate.rs`.
-//!
-//! Snake_case / dotted wire strings collapse to PascalCase file names.
-//! The function name mirrors the file name verbatim so a grep for
-//! `fn <Name>` lands in exactly one place.
-//!
-//! ## Signature contract
-//!
-//! Every atom takes the same two parameters:
-//!
-//! ```ignore
-//! pub async fn <Atom>(
-//!     Service: &MountainVinegRPCService,
-//!     Parameter: &serde_json::Value,
-//! );
-//! ```
-//!
-//! - `Service` gives access to `ApplicationHandle` (for Tauri `emit` / webview
-//!   lookup) and `RunTime` (for `Environment`, `ApplicationState`, provider
-//!   registry, scheduler).
-//! - `Parameter` is the raw JSON payload Cocoon sent; each atom extracts the
-//!   fields it needs and validates locally.
-//! - Return `()` - atoms that need to fail just log via `dev_log!` on the
-//!   `notif-drop` / `grpc` tag; the caller always returns `Empty` to Cocoon
-//!   because notifications are fire-and-forget.
+//!   with `
 
 // --- Shared support utilities ---
 pub mod Support;

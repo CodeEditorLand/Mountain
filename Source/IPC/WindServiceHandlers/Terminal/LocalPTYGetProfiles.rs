@@ -1,6 +1,6 @@
 //! Discover available terminal profiles. Probes every well-
 //! known shell location plus `/etc/shells` (Unix) or known
-//! Windows install paths. The first existing match flags
+//! Windows Install paths. The first existing match flags
 //! `isDefault=true`; on Unix the user's `$SHELL` wins.
 //!
 //! The wire shape matches VS Code's

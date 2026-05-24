@@ -38,7 +38,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterScmProviderRequest) 
 
 		SideCarIdentifier:"cocoon-main".to_string(),
 
-		ExtensionIdentifier:json!(Request.extension_id),
+		ExtensionIdentifier:json!(Request.ExtensionId),
 
 		Options:Some(json!({ "scmId": Request.scm_id })),
 	};
@@ -55,7 +55,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterScmProviderRequest) 
 		"id": Request.scm_id,
 		"label": Request.scm_id,
 		"rootUri": null,
-		"extensionId": Request.extension_id,
+		"extensionId": Request.ExtensionId,
 	});
 
 	if let Err(Error) = Service.environment.CreateSourceControl(CreateData).await {
@@ -67,7 +67,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterScmProviderRequest) 
 
 		let _ = Service.environment.ApplicationHandle.emit(
 			"sky://scm/register",
-			json!({ "scmId": Request.scm_id, "extensionId": Request.extension_id }),
+			json!({ "scmId": Request.scm_id, "extensionId": Request.ExtensionId }),
 		);
 	}
 

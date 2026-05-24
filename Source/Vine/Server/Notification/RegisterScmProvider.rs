@@ -11,7 +11,7 @@
 //! Cocoon emits this from `ScmNamespace.ts:14` with payload shape:
 //!
 //! ```ignore
-//! { handle: u32, id, label, root_uri, extension_id }
+//! { handle: u32, id, label, root_uri, ExtensionId }
 //! ```
 //!
 //! Three side effects happen here:
@@ -43,13 +43,13 @@ use crate::{
 	dev_log,
 };
 
-pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	// Wire-shape contract: producer (`Cocoon/.../ScmNamespace.ts`) emits
 	// camelCase keys (`rootUri`, `extensionId`) post 2026-04-27 wire audit.
 	// Probe camelCase first; keep snake_case as a transitional fallback so
 	// a partial rebuild (Mountain ahead of Cocoon) doesn't silently drop.
 	let ScmId = Parameter
-		.get("id")
+		.Get("id")
 		.or_else(|| Parameter.get("scmId"))
 		.or_else(|| Parameter.get("scm_id"))
 		.and_then(Value::as_str)
@@ -59,14 +59,14 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	let Label = Parameter.get("label").and_then(Value::as_str).unwrap_or(&ScmId).to_string();
 
 	let ExtensionId = Parameter
-		.get("extensionId")
-		.or_else(|| Parameter.get("extension_id"))
+		.Get("extensionId")
+		.or_else(|| Parameter.get("ExtensionId"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
 
 	let RootUri = Parameter
-		.get("rootUri")
+		.Get("rootUri")
 		.or_else(|| Parameter.get("root_uri"))
 		.cloned()
 		.unwrap_or(Value::Null);
@@ -91,7 +91,7 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	// caller) omits the field, so this keeps working with the legacy
 	// shape without forcing a Cocoon upgrade.
 	let Handle = Parameter
-		.get("handle")
+		.Get("handle")
 		.or_else(|| Parameter.get("scmHandle"))
 		.or_else(|| Parameter.get("scm_handle"))
 		.and_then(Value::as_u64)
@@ -228,7 +228,7 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	// fire-and-forget path was previously invisible, making it
 	// impossible to tell whether Sky's `Register("sky://scm/register")`
 	// listener was hit when the SCM panel stayed empty.
-	if let Err(Error) = crate::IPC::SkyEmit::LogSkyEmit(
+	if let Err(Error) = crate::IPC::SkyEmit::Fn(
 		Service.ApplicationHandle(),
 		"sky://scm/register",
 		json!({

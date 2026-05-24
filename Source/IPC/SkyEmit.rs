@@ -40,7 +40,7 @@ use crate::dev_log;
 /// Emit a tagged log line around any `ApplicationHandle::emit`. Returns
 /// the same `Result` as the underlying emit so callers using
 /// `let _ = …` / `?` / `if let Err(e) = …` keep their existing shape.
-pub fn LogSkyEmit<R:tauri::Runtime, P:Serialize + Clone>(
+pub fn Fn<R:tauri::Runtime, P:Serialize + Clone>(
 	Handle:&impl Emitter<R>,
 
 	Channel:&str,

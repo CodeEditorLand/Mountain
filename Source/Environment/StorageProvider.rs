@@ -64,9 +64,9 @@ struct StorageWriteDebouncer {
 }
 
 impl StorageWriteDebouncer {
-	fn new() -> Arc<Self> { Arc::new(Self { Pending:Mutex::new(None), FlushScheduled:AtomicBool::new(false) }) }
+	fn new() -> Arc<Struct> { Arc::new(Struct { Pending:Mutex::new(None), FlushScheduled:AtomicBool::new(false) }) }
 
-	fn Queue(&self, Path:PathBuf, Data:HashMap<String, Value>, Debouncer:Arc<Self>) {
+	fn Queue(&self, Path:PathBuf, Data:HashMap<String, Value>, Debouncer:Arc<Struct>) {
 		if let Ok(mut Guard) = self.Pending.lock() {
 			*Guard = Some((Path, Data));
 		}

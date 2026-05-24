@@ -21,7 +21,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, _Request:Empty) -> Result<Response<G
 				version:Value.get("Version").and_then(|V| V.as_str()).unwrap_or("").to_string(),
 				is_active:true,
 				extension_path:Value
-					.get("ExtensionLocation")
+					.Get("ExtensionLocation")
 					.and_then(|V| V.as_str())
 					.unwrap_or("")
 					.to_string(),

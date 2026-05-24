@@ -22,7 +22,7 @@ pub(super) async fn register_provider(
 
 	options_dto:Option<Value>,
 ) -> Result<u32, CommonError> {
-	let handle = environment.ApplicationState.GetNextProviderHandle();
+	let Handle = environment.ApplicationState.GetNextProviderHandle();
 
 	let new_registration = ProviderRegistrationDTO {
 		Handle:handle,

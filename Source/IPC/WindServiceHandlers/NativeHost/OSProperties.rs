@@ -14,14 +14,14 @@ pub async fn Fn() -> Result<Value, String> {
 		return Ok(Cached.clone());
 	}
 
-	let Result = compute_os_properties();
+	let Result = ComputeOsProperties();
 
 	let _ = OS_PROPERTIES_CACHE.set(Result.clone());
 
 	Ok(Result)
 }
 
-fn compute_os_properties() -> Value {
+fn ComputeOsProperties() -> Value {
 	use sysinfo::System;
 
 	let OsType = match std::env::consts::OS {
@@ -56,7 +56,7 @@ fn compute_os_properties() -> Value {
 					Output
 						.split('[')
 						.nth(1)
-						.and_then(|S| S.split(']').next())
+						.and_then(|S| S.split(']').Next())
 						.and_then(|S| S.strip_prefix("Version "))
 						.unwrap_or("10.0.0")
 						.to_string()

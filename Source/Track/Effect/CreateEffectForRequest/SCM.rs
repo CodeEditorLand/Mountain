@@ -9,62 +9,62 @@ use tauri::Runtime;
 
 use crate::{
 	Track::Effect::{
-		CreateEffectForRequest::Utilities::Params::{i64_at, val_at},
+		CreateEffectForRequest::Utilities::Params::{I64At, ValAt},
 		MappedEffectType::MappedEffect,
 	},
 	dev_log,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$scm:createSourceControl" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-				let resource = val_at(&Parameters, 0);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn SourceControlManagementProvider> = RunTime.Environment.Require();
+				let resource = ValAt(&Parameters, 0);
 				provider
 					.CreateSourceControl(resource)
 					.await
 					.map(|handle| json!(handle))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"$scm:updateSourceControl" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-				let handle = i64_at(&Parameters, 0) as u32;
-				let update = val_at(&Parameters, 1);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn SourceControlManagementProvider> = RunTime.Environment.Require();
+				let Handle = I64At(&Parameters, 0) as u32;
+				let update = ValAt(&Parameters, 1);
 				provider
 					.UpdateSourceControl(handle, update)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"$scm:updateGroup" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-				let handle = i64_at(&Parameters, 0) as u32;
-				let group_data = val_at(&Parameters, 1);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn SourceControlManagementProvider> = RunTime.Environment.Require();
+				let Handle = I64At(&Parameters, 0) as u32;
+				let group_data = ValAt(&Parameters, 1);
 				provider
 					.UpdateSourceControlGroup(handle, group_data)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"$scm:registerInputBox" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-				let handle = i64_at(&Parameters, 0) as u32;
-				let options = val_at(&Parameters, 1);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn SourceControlManagementProvider> = RunTime.Environment.Require();
+				let Handle = I64At(&Parameters, 0) as u32;
+				let Options = ValAt(&Parameters, 1);
 				provider
 					.RegisterInputBox(handle, options)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
@@ -87,7 +87,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// `$scm:openDiff` is an older alias emitted by some extension
 		// versions; we handle it identically.
 		"vscode.diff" | "$scm:openDiff" => {
-			crate::effect!(run_time, {
+			crate::effect!(RunTime, {
 				dev_log!(
 					"scm",
 					"[SCM] vscode.diff forwarding to sky://editor/diff params={:?}",
@@ -95,7 +95,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				);
 
 				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
-					&run_time.Environment,
+					&RunTime.Environment,
 					"sky://editor/diff",
 					Parameters,
 				)

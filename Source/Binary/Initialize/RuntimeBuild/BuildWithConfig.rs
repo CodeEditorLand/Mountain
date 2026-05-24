@@ -7,7 +7,7 @@ use std::sync::Arc;
 use Echo::Scheduler::Scheduler::Scheduler;
 
 use crate::{
-	Binary::Initialize::RuntimeBuild::{CreateBuilder, SchedulerConfig},
+	Binary::Fn::RuntimeBuild::{CreateBuilder, SchedulerConfig},
 	dev_log,
 };
 

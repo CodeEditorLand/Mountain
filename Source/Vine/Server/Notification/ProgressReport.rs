@@ -94,7 +94,7 @@ fn GetOrInitChannel(Handle:&AppHandle) -> &'static ProgressChannel {
 	})
 }
 
-pub async fn ProgressReport(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let ProgressHandle = Parameter.get("handle").and_then(Value::as_str).unwrap_or("").to_string();
 
 	let Message = Parameter.get("message").and_then(Value::as_str).unwrap_or("").to_string();
@@ -105,5 +105,5 @@ pub async fn ProgressReport(Service:&MountainVinegRPCService, Parameter:&Value) 
 
 	let _ =
 		Ch.Sender
-			.send(ProgressItem { Handle:Service.ApplicationHandle().clone(), ProgressHandle, Message, Increment });
+			.Send(ProgressItem { Handle:Service.ApplicationHandle().clone(), ProgressHandle, Message, Increment });
 }

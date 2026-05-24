@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[tauri::command]
-pub async fn DownloadUpdate(
+pub async fn Fn(
 	url:String,
 
 	destination:String,
@@ -20,10 +20,10 @@ pub async fn DownloadUpdate(
 
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
-	let request_id = uuid::Uuid::new_v4().to_string();
+	let RequestId = uuid::Uuid::new_v4().to_string();
 
 	let file_info = client
-		.download_update(
+		.DownloadUpdate(
 			request_id,
 			url,
 			destination,
@@ -31,7 +31,7 @@ pub async fn DownloadUpdate(
 			std::collections::HashMap::new(),
 		)
 		.await
-		.map_err(|e| format!("Update download failed: {:?}", e))?;
+		.map_err(|E| format!("Update download failed: {:?}", e))?;
 
 	let result = DownloadResultDTO::Struct {
 		success:true,

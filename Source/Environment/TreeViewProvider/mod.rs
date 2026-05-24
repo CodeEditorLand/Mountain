@@ -49,7 +49,7 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 		options:serde_json::Value,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
-		Registration::register_tree_data_provider(self, view_identifier, options).await
+		Struct::register_tree_data_provider(self, view_identifier, options).await
 	}
 
 	async fn UnregisterTreeDataProvider(
@@ -57,7 +57,7 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 		view_identifier:String,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
-		Registration::unregister_tree_data_provider(self, view_identifier).await
+		Struct::unregister_tree_data_provider(self, view_identifier).await
 	}
 
 	async fn GetChildren(
@@ -174,3 +174,16 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 		Visibility::refresh_tree_view(self, view_identifier, items_to_refresh).await
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

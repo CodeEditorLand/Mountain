@@ -16,7 +16,7 @@ use crate::{
 };
 
 pub fn Fn(Path:&Path) -> std::io::Result<Arc<Entry::Struct>> {
-	if let Some(Existing) = Map::Fn().get(Path) {
+	if let Some(Existing) = Map::Fn().Get(Path) {
 		return Ok(Existing.clone());
 	}
 

@@ -10,13 +10,13 @@ use serde_json::Value;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-	let key = Arguments
+	let Key = Arguments
 		.first()
 		.ok_or("Missing storage key".to_string())?
 		.as_str()
 		.ok_or("Storage key must be a string".to_string())?;
 
-	let provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
+	let Provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
 
 	let value = provider
 		.GetStorageValue(false, key)

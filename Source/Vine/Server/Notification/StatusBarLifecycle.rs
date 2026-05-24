@@ -1,6 +1,6 @@
-//! Cocoon → Mountain `statusBar.update` / `statusBar.dispose` notifications.
+//! Cocoon → Mountain `statusBar.update` / `statusBar.Dispose` notifications.
 //! Each `vscode.window.createStatusBarItem(...)` instance fires
-//! `statusBar.update` with text / tooltip / alignment; `statusBar.dispose`
+//! `statusBar.update` with text / tooltip / alignment; `statusBar.Dispose`
 //! removes the item. Sky's workbench status-bar renderer subscribes to
 //! the downstream `sky://statusbar/*` family.
 //!
@@ -13,7 +13,7 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn StatusBarLifecycle(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
 	let EventName = format!("sky://statusbar/{}", &MethodName["statusBar.".len()..]);
 
 	if let Err(Error) = Service.ApplicationHandle().emit(&EventName, Parameter) {

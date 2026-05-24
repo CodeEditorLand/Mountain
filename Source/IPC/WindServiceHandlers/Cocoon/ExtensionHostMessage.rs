@@ -6,7 +6,7 @@
 use serde_json::Value;
 use tauri::AppHandle;
 
-use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_val;
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgVal;
 
 pub async fn Fn(_ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	let ByteCount = Arguments
@@ -16,7 +16,7 @@ pub async fn Fn(_ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Va
 
 	crate::dev_log!("exthost", "cocoon:extensionHostMessage bytes={}", ByteCount);
 
-	let Payload = arg_val(&Arguments, 0);
+	let Payload = ArgVal(&Arguments, 0);
 
 	tokio::spawn(async move {
 		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(

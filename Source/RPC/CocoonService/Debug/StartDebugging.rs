@@ -18,7 +18,7 @@ pub async fn Fn(
 
 	Request:StartDebuggingRequest,
 ) -> Result<Response<StartDebuggingResponse>, Status> {
-	dev_log!("cocoon", "[CocoonService] start_debugging: type={}", Request.debug_type);
+	dev_log!("cocoon", "[CocoonService] start_debugging: type={}", Request.DebugType);
 
 	let SessionIdentifier = format!(
 		"debug-{}",
@@ -29,7 +29,7 @@ pub async fn Fn(
 		"sky://debug/start",
 		json!({
 			"sessionId": SessionIdentifier,
-			"debugType": Request.debug_type,
+			"debugType": Request.DebugType,
 			"configuration": Request.configuration.as_ref().map(|C| json!({
 				"name": C.name,
 				"type": C.r#type,

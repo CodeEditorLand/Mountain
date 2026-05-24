@@ -76,10 +76,10 @@ fn GetOrInitChannel(Handle:&AppHandle) -> &'static DecoSetChannel {
 	})
 }
 
-pub async fn SetTextEditorDecorations(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Ch = GetOrInitChannel(Service.ApplicationHandle());
 
 	let _ = Ch
 		.Sender
-		.send(DecoSetItem { Handle:Service.ApplicationHandle().clone(), Payload:Parameter.clone() });
+		.Send(DecoSetItem { Handle:Service.ApplicationHandle().clone(), Payload:Parameter.clone() });
 }

@@ -15,7 +15,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateScmGroupRequest) -> Re
 	dev_log!(
 		"cocoon",
 		"[CocoonService] update_scm_group: provider={} group={}",
-		Request.provider_id,
+		Request.ProviderId,
 		Request.group_id
 	);
 
@@ -36,8 +36,8 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateScmGroupRequest) -> Re
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://scm/updateGroup",
 		json!({
-			"scmId": Request.provider_id,
-			"providerId": Request.provider_id,
+			"scmId": Request.ProviderId,
+			"providerId": Request.ProviderId,
 			"groupId": Request.group_id,
 			"resourceStates": ResourceStates,
 		}),

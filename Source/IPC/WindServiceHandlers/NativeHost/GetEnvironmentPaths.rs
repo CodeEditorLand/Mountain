@@ -7,7 +7,7 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Manager};
 
 pub async fn Fn(ApplicationHandle:AppHandle) -> Result<Value, String> {
-	let PathResolver = ApplicationHandle.path();
+	let PathResolver = ApplicationHandle.Path();
 
 	// Propagate path resolver failures rather than returning empty PathBuf.
 	// An empty AppDataDir produces paths like URI.joinPath("", "extensions")

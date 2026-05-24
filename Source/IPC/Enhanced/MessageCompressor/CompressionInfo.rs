@@ -14,5 +14,5 @@ pub struct Struct {
 }
 
 impl Struct {
-	pub(super) fn none() -> Self { Self { algorithm:"none".to_string(), level:0, ratio:1.0 } }
+	pub(super) fn none() -> Struct { Self { algorithm:"none".to_string(), level:0, ratio:1.0 } }
 }

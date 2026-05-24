@@ -8,7 +8,7 @@ use crate::{
 };
 
 #[tauri::command]
-pub async fn CheckForUpdates(
+pub async fn Fn(
 	current_version:Option<String>,
 
 	channel:Option<String>,
@@ -24,16 +24,16 @@ pub async fn CheckForUpdates(
 
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
-	let request_id = uuid::Uuid::new_v4().to_string();
+	let RequestId = uuid::Uuid::new_v4().to_string();
 
 	let current_version = current_version.unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string());
 
-	let channel = channel.unwrap_or_else(|| "stable".to_string());
+	let Channel = channel.unwrap_or_else(|| "stable".to_string());
 
 	let update_info = client
-		.check_for_updates(request_id, current_version, channel)
+		.CheckForUpdates(request_id, current_version, channel)
 		.await
-		.map_err(|e| format!("Update check failed: {:?}", e))?;
+		.map_err(|E| format!("Update check failed: {:?}", e))?;
 
 	let result = UpdateInfoDTO::Struct {
 		update_available:update_info.update_available,

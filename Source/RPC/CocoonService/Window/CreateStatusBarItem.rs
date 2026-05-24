@@ -60,5 +60,5 @@ pub async fn Fn(
 		);
 	}
 
-	Ok(Response::new(CreateStatusBarItemResponse { item_id:Request.id.clone() }))
+	Ok(Response::new(CreateStatusBarItemResponse { ItemId:Request.id.clone() }))
 }

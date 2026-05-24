@@ -46,7 +46,7 @@ const DEFAULT_IGNORE_SEGMENTS:&[&str] = &[
 	// output adds no signal the source watcher doesn't already
 	// give us.
 	"dist",
-	".next",
+	".Next",
 	".turbo",
 	".astro",
 	".parcel-cache",

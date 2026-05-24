@@ -4,14 +4,14 @@
 
 use serde_json::Value;
 
-use crate::IPC::WindServiceHandlers::{Git::Shared::RunGit::Fn as RunGit, Utilities::JsonValueHelpers::arg_string};
+use crate::IPC::WindServiceHandlers::{Git::Shared::RunGit::Fn as RunGit, Utilities::JsonValueHelpers::ArgString};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let OperationId = arg_string(&Arguments, 0);
+	let OperationId = ArgString(&Arguments, 0);
 
-	let CloneURL = arg_string(&Arguments, 1);
+	let CloneURL = ArgString(&Arguments, 1);
 
-	let TargetPath = arg_string(&Arguments, 2);
+	let TargetPath = ArgString(&Arguments, 2);
 
 	let Reference = Arguments.get(3).and_then(Value::as_str).map(str::to_string);
 

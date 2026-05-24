@@ -8,21 +8,21 @@ use crate::{
 };
 
 #[tauri::command]
-pub async fn GetAirStatus() -> Result<AirServiceStatusDTO::Struct, String> {
+pub async fn Fn() -> Result<AirServiceStatusDTO::Struct, String> {
 	dev_log!("grpc", "[WindAirCommands] GetAirStatus called");
 
 	let air_address = GetAirAddress::Fn()?;
 
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
-	let request_id = uuid::Uuid::new_v4().to_string();
+	let RequestId = uuid::Uuid::new_v4().to_string();
 
 	let status = client
-		.get_status(request_id)
+		.GetStatus(request_id)
 		.await
-		.map_err(|e| format!("Failed to get Air status: {:?}", e))?;
+		.map_err(|E| format!("Failed to get Air status: {:?}", e))?;
 
-	let healthy = client.health_check().await.unwrap_or(false);
+	let healthy = client.HealthCheck().await.unwrap_or(false);
 
 	let result = AirServiceStatusDTO::Struct {
 		version:status.version,

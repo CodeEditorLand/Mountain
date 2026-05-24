@@ -8,7 +8,7 @@ pub async fn Fn(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Respon
 	use CommonLibrary::UserInterface::DTO::OpenDialogOptionsDTO::OpenDialogOptionsDTO;
 
 	let Title = Params
-		.get(0)
+		.Get(0)
 		.and_then(|V| V.get("title"))
 		.and_then(|T| T.as_str())
 		.map(|S| S.to_string());

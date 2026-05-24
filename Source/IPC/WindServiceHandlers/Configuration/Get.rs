@@ -15,13 +15,13 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		Environment::Requires::Requires,
 	};
 
-	let key = Arguments
-		.get(0)
+	let Key = Arguments
+		.Get(0)
 		.ok_or("Missing configuration key".to_string())?
 		.as_str()
 		.ok_or("Configuration key must be a string".to_string())?;
 
-	let provider:Arc<dyn ConfigurationProvider> = RunTime.Environment.Require();
+	let Provider:Arc<dyn ConfigurationProvider> = RunTime.Environment.Require();
 
 	let value = provider
 		.GetConfigurationValue(Some(key.to_string()), ConfigurationOverridesDTO::default())

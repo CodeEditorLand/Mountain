@@ -51,7 +51,7 @@ pub fn Fn(ApplicationDataDirectory:&Path, IsGlobalScope:bool, WorkspaceIdentifie
 	let user_storage_base_path = ApplicationDataDirectory.join("User");
 
 	if IsGlobalScope {
-		let path = user_storage_base_path.join("globalStorage.json");
+		let Path = user_storage_base_path.join("globalStorage.json");
 
 		dev_log!(
 			"storage",
@@ -64,7 +64,7 @@ pub fn Fn(ApplicationDataDirectory:&Path, IsGlobalScope:bool, WorkspaceIdentifie
 		// Sanitize the workspace identifier to be a safe directory name
 		let segment = WorkspaceIdentifier.replace(|c:char| !c.is_alphanumeric() && c != '-' && c != '_', "_");
 
-		let path = user_storage_base_path
+		let Path = user_storage_base_path
 			.join("workspaceStorage")
 			.join(&segment)
 			.join("storage.json");

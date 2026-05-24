@@ -1,5 +1,5 @@
-//! Extract a filesystem path from the first arg of `extensions:install`.
-//! Wind's install dialog hands us either a raw string ("file:///..." or
+//! Extract a filesystem path from the first arg of `extensions:Install`.
+//! Wind's Install dialog hands us either a raw string ("file:///..." or
 //! absolute path) or a Tauri-serialised `UriComponents` object; both forms
 //! collapse to a single `PathBuf` here. `None` when the arg is missing,
 //! malformed, or carries a non-file scheme.
@@ -28,7 +28,7 @@ pub fn Fn(Args:&[Value]) -> Option<PathBuf> {
 
 	if let Ok(Parsed) = url::Url::parse(&RawString) {
 		if Parsed.scheme() == "file" {
-			return Some(Parsed.to_file_path().unwrap_or_else(|_| PathBuf::from(Parsed.path())));
+			return Some(Parsed.to_file_path().unwrap_or_else(|_| PathBuf::from(Parsed.Path())));
 		}
 	}
 

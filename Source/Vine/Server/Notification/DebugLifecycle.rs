@@ -8,7 +8,7 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn DebugLifecycle(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
 	let EventName = format!("sky://debug/{}", &MethodName["debug.".len()..]);
 
 	if let Err(Error) = Service.ApplicationHandle().emit(&EventName, Parameter) {

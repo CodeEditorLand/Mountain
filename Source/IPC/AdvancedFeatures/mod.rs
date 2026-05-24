@@ -20,10 +20,10 @@ pub mod MessageCache;
 
 pub mod PerformanceStats;
 
-pub mod mountain_create_collaboration_session;
+pub mod MountainCreateCollaborationSession;
 
-pub mod mountain_get_cache_stats;
+pub mod MountainGetCacheStats;
 
-pub mod mountain_get_collaboration_sessions;
+pub mod MountainGetCollaborationSessions;
 
-pub mod mountain_get_performance_stats;
+pub mod MountainGetPerformanceStats;

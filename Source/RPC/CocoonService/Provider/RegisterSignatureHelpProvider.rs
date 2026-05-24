@@ -21,7 +21,7 @@ pub async fn Fn(
 		Request.handle,
 		ProviderType::SignatureHelp,
 		&Request.language_selector,
-		&Request.extension_id,
+		&Request.ExtensionId,
 	);
 
 	Ok(Response::new(Empty {}))

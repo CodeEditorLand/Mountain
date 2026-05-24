@@ -68,11 +68,11 @@ pub(super) async fn restore_tree_view_state(
 		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 	if let Some(view_state) = tree_views.get_mut(&view_identifier) {
-		if let Some(title) = state_value.get("Title").and_then(|v| v.as_str()) {
+		if let Some(title) = state_value.get("Title").and_then(|V| v.as_str()) {
 			view_state.Title = Some(title.to_string());
 		}
 
-		if let Some(description) = state_value.get("Description").and_then(|v| v.as_str()) {
+		if let Some(description) = state_value.get("Description").and_then(|V| v.as_str()) {
 			view_state.Description = Some(description.to_string());
 		}
 

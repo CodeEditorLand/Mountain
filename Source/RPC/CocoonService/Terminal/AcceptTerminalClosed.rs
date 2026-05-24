@@ -12,12 +12,12 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalClosedNotification) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon", "[CocoonService] Terminal closed: {}", Request.terminal_id);
+	dev_log!("cocoon", "[CocoonService] Terminal closed: {}", Request.TerminalId);
 
 	let _ = Service
 		.environment
 		.ApplicationHandle
-		.emit("sky://terminal/exit", json!({ "id": Request.terminal_id }));
+		.emit("sky://terminal/exit", json!({ "id": Request.TerminalId }));
 
 	Ok(Response::new(Empty {}))
 }

@@ -7,7 +7,7 @@
 //! the same struct without pulling the full handler module.
 
 #[derive(Debug, Clone)]
-pub struct DialogFilter {
+pub struct Struct {
 	pub Name:String,
 
 	pub Extensions:Vec<String>,

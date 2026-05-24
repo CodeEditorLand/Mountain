@@ -13,7 +13,7 @@ use tauri::{AppHandle, Manager};
 use crate::{
 	ApplicationState::{
 		DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
-		State::{
+		Struct::{
 			ApplicationState::ApplicationState,
 			WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndBroadcast,
 		},

@@ -14,7 +14,7 @@
 //! | `webview.setOptions` | `sky://webview/set-options` |
 //! | `webview.postMessage` | `sky://webview/post-message` |
 //! | `webview.reveal` | `sky://webview/reveal` |
-//! | `webview.dispose` | `sky://webview/dispose` |
+//! | `webview.Dispose` | `sky://webview/dispose` |
 //! | `webview.registerView` | `sky://webview/register-view` |
 //! | `webview.unregisterView` | `sky://webview/unregister-view` |
 //! | `webview.registerCustomEditor` | `sky://webview/register-custom-editor` |
@@ -29,16 +29,16 @@ use tauri::Runtime;
 use url::Url;
 
 use crate::{
-	IPC::SkyEmit::LogSkyEmit,
+	IPC::SkyEmit::Fn,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::Effect::{
-		CreateEffectForRequest::Utilities::Params::{str_at, string_at},
+		CreateEffectForRequest::Utilities::Params::{StrAt, StringAt},
 		MappedEffectType::MappedEffect,
 	},
 	dev_log,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$webview:create"
 		| "webview.create"
@@ -46,7 +46,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		| "webview.setOptions"
 		| "webview.postMessage"
 		| "webview.reveal"
-		| "webview.dispose"
+		| "webview.Dispose"
 		| "webview.registerView"
 		| "webview.unregisterView"
 		| "webview.registerCustomEditor"
@@ -55,7 +55,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 			let Method = MethodName.to_string();
 
-			crate::effect!(run_time, {
+			crate::effect!(RunTime, {
 				let Method = Method.clone();
 
 				let RawSuffix = Method.trim_start_matches("$webview:").trim_start_matches("webview.");
@@ -100,7 +100,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					})
 				};
 				let EventName = format!("sky://webview/{}", Suffix);
-				if let Err(Error) = LogSkyEmit(&run_time.Environment.ApplicationHandle, &EventName, &Payload) {
+				if let Err(Error) = LogSkyEmit(&RunTime.Environment.ApplicationHandle, &EventName, &Payload) {
 					dev_log!("ipc", "warn: [WebviewEffect] emit {} failed: {}", EventName, Error);
 				}
 				Ok(json!(null))
@@ -108,10 +108,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"$resolveCustomEditor" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn CustomEditorProvider> = run_time.Environment.Require();
-				let view_type = string_at(&Parameters, 0);
-				let resource_uri_str = str_at(&Parameters, 1);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn CustomEditorProvider> = RunTime.Environment.Require();
+				let ViewType = StringAt(&Parameters, 0);
+				let ResourceUriStr = StrAt(&Parameters, 1);
 				// Do not substitute a fallback path for a missing
 				// or malformed URI. A silent swap to
 				// `file:///tmp/test.txt` would:
@@ -120,48 +120,44 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				//   - make the log undiagnosable (every failure shows the same sentinel path).
 				// Return Err instead so the grpc layer logs the
 				// real caller input.
-				if resource_uri_str.is_empty() {
-					dev_log!(
-						"grpc",
-						"warn: [$resolveCustomEditor] empty resource URI view_type={}",
-						view_type
-					);
-					return Err(format!("$resolveCustomEditor: empty resource URI for view_type={}", view_type));
+				if ResourceUriStr.is_empty() {
+					dev_log!("grpc", "warn: [$resolveCustomEditor] empty resource URI ViewType={}", ViewType);
+					return Err(format!("$resolveCustomEditor: empty resource URI for ViewType={}", ViewType));
 				}
-				let resource_uri = match Url::parse(resource_uri_str) {
+				let ResourceUri = match Url::parse(ResourceUriStr) {
 					Ok(u) => u,
 					Err(parse_err) => {
 						dev_log!(
 							"grpc",
-							"warn: [$resolveCustomEditor] invalid URI uri={} err={} view_type={}",
-							resource_uri_str,
+							"warn: [$resolveCustomEditor] invalid URI uri={} err={} ViewType={}",
+							ResourceUriStr,
 							parse_err,
-							view_type
+							ViewType
 						);
 						return Err(format!(
 							"$resolveCustomEditor: invalid resource URI '{}': {}",
-							resource_uri_str, parse_err
+							ResourceUriStr, parse_err
 						));
 					},
 				};
-				let webview_handle = string_at(&Parameters, 2);
-				if webview_handle.is_empty() {
+				let WebviewHandle = StringAt(&Parameters, 2);
+				if WebviewHandle.is_empty() {
 					dev_log!(
 						"grpc",
-						"warn: [$resolveCustomEditor] empty webview handle uri={} view_type={}",
-						resource_uri_str,
-						view_type
+						"warn: [$resolveCustomEditor] empty webview handle uri={} ViewType={}",
+						ResourceUriStr,
+						ViewType
 					);
 					return Err(format!(
-						"$resolveCustomEditor: empty webview handle for view_type={} uri={}",
-						view_type, resource_uri_str
+						"$resolveCustomEditor: empty webview handle for ViewType={} uri={}",
+						ViewType, ResourceUriStr
 					));
 				}
 				provider
-					.ResolveCustomEditor(view_type, resource_uri, webview_handle)
+					.ResolveCustomEditor(ViewType, ResourceUri, WebviewHandle)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 

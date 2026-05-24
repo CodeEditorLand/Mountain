@@ -48,21 +48,21 @@ pub type MappedEffect =
 	Box<dyn FnOnce(Arc<ApplicationRunTime>) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> + Send>;
 
 /// Wraps an async body into the full `MappedEffect` closure boilerplate.
-/// `$run_time` names the `Arc<ApplicationRunTime>` parameter inside the body.
+/// `$RunTime` names the `Arc<ApplicationRunTime>` parameter inside the body.
 ///
 /// Before:
 /// ```rust
-/// let effect = move |run_time: Arc<ApplicationRunTime>|
+/// let Effect = move |RunTime: Arc<ApplicationRunTime>|
 ///     -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 ///     Box::pin(async move { ... })
 /// };
-/// Some(Ok(Box::new(effect)))
+/// Some(Ok(Box::new(Effect)))
 /// ```
-/// After: `effect!(run_time, { ... })`
+/// After: `effect!(RunTime, { ... })`
 #[macro_export]
 macro_rules! effect {
-	($run_time:ident, $body:block) => {{
-		let effect = move |$run_time: std::sync::Arc<
+	($RunTime:ident, $body:block) => {{
+		let Effect = move |$RunTime: std::sync::Arc<
 			$crate::RunTime::ApplicationRunTime::ApplicationRunTime,
 		>|
 			-> std::pin::Pin<
@@ -72,7 +72,7 @@ macro_rules! effect {
 			>,
 		> { Box::pin(async move $body) };
 		Some(Ok(
-			Box::new(effect) as $crate::Track::Effect::MappedEffectType::MappedEffect,
+			Box::new(Effect) as $crate::Track::Effect::MappedEffectType::MappedEffect,
 		))
 	}};
 }

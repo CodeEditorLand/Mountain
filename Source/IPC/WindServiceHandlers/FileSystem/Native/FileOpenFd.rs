@@ -23,7 +23,7 @@ use std::{
 use serde_json::{Value, json};
 use tokio::fs::File;
 
-use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as extract_path_from_arg, dev_log};
+use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as ExtractPathFromArg, dev_log};
 
 static NEXT_FD:AtomicU32 = AtomicU32::new(1);
 
@@ -38,7 +38,7 @@ pub(crate) fn GetFdTable() -> &'static FdTable { FD_TABLE.get_or_init(|| FdTable
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let ResourceArg = Arguments.first().ok_or("file:open: missing resource")?;
 
-	let Path = extract_path_from_arg(ResourceArg)?;
+	let Path = ExtractPathFromArg(ResourceArg)?;
 
 	let Opts = Arguments.get(1).and_then(Value::as_object);
 

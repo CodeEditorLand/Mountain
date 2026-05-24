@@ -43,7 +43,7 @@ use keyring_core::{Entry, Error as KeyringError};
 #[cfg(feature = "AirIntegration")]
 use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::MountainEnvironment::Struct;
 use crate::dev_log;
 
 /// Constructs the service name for the keyring entry.

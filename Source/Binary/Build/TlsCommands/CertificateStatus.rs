@@ -1,10 +1,10 @@
 //! TLS certificate status snapshot returned by
-//! `tls_check_cert_status`.
+//! `TlsCheckCertStatus`.
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CertificateStatus {
+pub struct Struct {
 	pub exists:bool,
 
 	pub is_valid:bool,

@@ -34,7 +34,7 @@ pub(super) async fn set_status_bar_entry_impl(
 
 	drop(items_guard);
 
-	let payload = json!({
+	let Payload = json!({
 		"id": entry.EntryIdentifier,
 		"itemId": entry.ItemIdentifier,
 		"extensionId": entry.ExtensionIdentifier,
@@ -51,16 +51,16 @@ pub(super) async fn set_status_bar_entry_impl(
 
 	env.ApplicationHandle
 		.emit(SkyEvent::StatusBarSetEntry.AsStr(), payload)
-		.map_err(|error| CommonError::UserInterfaceInteraction { Reason:error.to_string() })
+		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:error.to_string() })
 }
 
 /// Removes a status bar item from the UI.
 pub(super) async fn dispose_status_bar_entry_impl(
 	env:&MountainEnvironment,
 
-	entry_identifier:String,
+	EntryIdentifier:String,
 ) -> Result<(), CommonError> {
-	dev_log!("lifecycle", "[StatusBarProvider] Disposing entry: {}", entry_identifier);
+	dev_log!("lifecycle", "[StatusBarProvider] Disposing entry: {}", EntryIdentifier);
 
 	env.ApplicationState
 		.Feature
@@ -68,9 +68,9 @@ pub(super) async fn dispose_status_bar_entry_impl(
 		.ActiveStatusBarItems
 		.lock()
 		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-		.remove(&entry_identifier);
+		.remove(&EntryIdentifier);
 
 	env.ApplicationHandle
-		.emit(SkyEvent::StatusBarDisposeEntry.AsStr(), json!({ "id": entry_identifier }))
-		.map_err(|error| CommonError::UserInterfaceInteraction { Reason:error.to_string() })
+		.emit(SkyEvent::StatusBarDisposeEntry.AsStr(), json!({ "id": EntryIdentifier }))
+		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:error.to_string() })
 }

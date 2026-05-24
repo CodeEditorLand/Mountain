@@ -37,13 +37,11 @@
 //! - Performance metrics collection
 
 /// Main application entry point.
-///
 /// Exports `Fn()` which creates the Tokio runtime, initializes application
 /// state, constructs the Tauri builder, and runs the event loop.
 pub mod Entry;
 
 /// IPC command handlers.
-///
 /// All `#[tauri::command]` functions providing the frontend-to-backend
 /// invoke bridge: workbench configuration, IPC messaging, Wind desktop
 /// integration, configuration management, status reporting, performance
@@ -51,14 +49,12 @@ pub mod Entry;
 pub mod IPCCommands;
 
 /// Application lifecycle management.
-///
 /// Exports `AppLifecycleSetup()` which runs inside the Tauri setup hook:
 /// tray initialization, command registration, IPC server setup, window
 /// creation, environment configuration, and async service startup.
 pub mod AppLifecycle;
 
 /// System tray commands.
-///
 /// Exports the `SwitchTrayIcon()` Tauri command for switching the system
 /// tray icon based on the active theme (light or dark mode).
 pub mod Tray;

@@ -10,7 +10,7 @@ use crate::ProcessManagement::NodeResolver::{NodeSource, ResolvedNode};
 pub fn Fn<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> Option<ResolvedNode::Struct> {
 	let RelativeToResource = if cfg!(target_os = "windows") { "Node/node.exe" } else { "Node/bin/node" };
 
-	if let Ok(Resolved) = ApplicationHandle.path().resolve(RelativeToResource, BaseDirectory::Resource) {
+	if let Ok(Resolved) = ApplicationHandle.Path().resolve(RelativeToResource, BaseDirectory::Resource) {
 		if Resolved.exists() {
 			return Some(ResolvedNode::Struct { Path:Resolved, Source:NodeSource::Enum::Shipped });
 		}

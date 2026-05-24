@@ -11,7 +11,7 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn WebviewPostMessage(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let _ = Service.ApplicationHandle().emit("sky://webview/postMessage", Parameter);
 
 	dev_log!(

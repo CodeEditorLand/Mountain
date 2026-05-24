@@ -4,13 +4,13 @@
 
 use serde_json::{Value, json};
 
-use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as extract_path_from_arg, dev_log};
+use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as ExtractPathFromArg, dev_log};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing file path")?)?;
+	let Path = ExtractPathFromArg(Arguments.get(0).ok_or("Missing file path")?)?;
 
 	let Recursive = Arguments
-		.get(1)
+		.Get(1)
 		.and_then(|V| V.as_object())
 		.and_then(|O| O.get("recursive"))
 		.and_then(|V| V.as_bool())

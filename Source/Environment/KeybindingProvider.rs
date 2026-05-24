@@ -94,7 +94,7 @@ impl KeybindingProvider for MountainEnvironment {
 		// 2. Load and apply user-defined keybindings from keybindings.json
 		let UserKeybindingsPath = self
 			.ApplicationHandle
-			.path()
+			.Path()
 			.app_config_dir()
 			.map_err(|Error| {
 				CommonError::ConfigurationLoad { Description:format!("Cannot find app config dir: {}", Error) }

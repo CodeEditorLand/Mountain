@@ -1,5 +1,5 @@
 //! Check for updates using Tauri's bundled updater. Notifies the user, asks
-//! for install consent, and runs `download_and_install` on accept.
+//! for Install consent, and runs `download_and_install` on accept.
 //!
 //! ## Status
 //!
@@ -43,7 +43,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<Runtime>, NotifyNoUpdat
 				.await?;
 
 			if Response == Some("Install".to_string()) {
-				dev_log!("update", "[UpdateService] User chose to install. Downloading...");
+				dev_log!("update", "[UpdateService] User chose to Install. Downloading...");
 
 				let OnChunk = |Bytes, Total| {
 					dev_log!("update", "[Update] progress {} / {:?}", Bytes, Total);
@@ -54,18 +54,18 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<Runtime>, NotifyNoUpdat
 				};
 
 				if let Err(Error) = Update.download_and_install(OnChunk, OnFinish).await {
-					dev_log!("update", "error: [UpdateService] install failed: {}", Error);
+					dev_log!("update", "error: [UpdateService] Install failed: {}", Error);
 
 					RunTime
 						.Run(ShowMessage(
 							MessageSeverity::Error,
-							format!("Failed to install update: {}", Error),
+							format!("Failed to Install update: {}", Error),
 							json!(null),
 						))
 						.await?;
 				}
 			} else {
-				dev_log!("update", "[UpdateService] User declined install.");
+				dev_log!("update", "[UpdateService] User declined Install.");
 			}
 		},
 

@@ -14,7 +14,7 @@
 //! architecture:
 //!
 //! ```text
-//! Tauri Builder Setup ──► AppLifecycle::AppLifecycleSetup()
+//! Tauri Builder Setup ──► AppLifecycle::Fn()
 //!                              │
 //!                              ├─► Tray Initialization
 //!                              ├─► Command Registration
@@ -92,22 +92,22 @@ fn IsLandDisabled() -> bool {
 
 use crate::{
 	// Crate root imports
-	ApplicationState::State::ApplicationState::ApplicationState,
+	ApplicationState::Struct::ApplicationState::ApplicationState,
 	// Binary submodule imports
 	Binary::Build::AppMenu::SetAppMenu,
-	Binary::Build::WindowBuild::WindowBuild as WindowBuildFn,
+	Binary::Build::Fn::Fn as WindowBuildFn,
 	Binary::Extension::ExtensionPopulate::Fn as ExtensionPopulateFn,
-	Binary::Extension::ScanPathConfigure::ScanPathConfigure as ScanPathConfigureFn,
-	Binary::Register::AdvancedFeaturesRegister::AdvancedFeaturesRegister as AdvancedFeaturesRegisterFn,
-	Binary::Register::CommandRegister::CommandRegister as CommandRegisterFn,
-	Binary::Register::IPCServerRegister::IPCServerRegister as IPCServerRegisterFn,
-	Binary::Register::StatusReporterRegister::StatusReporterRegister as StatusReporterRegisterFn,
-	Binary::Register::WindSyncRegister::WindSyncRegister as WindSyncRegisterFn,
+	Binary::Extension::Fn::Fn as ScanPathConfigureFn,
+	Binary::Register::Fn::Fn as AdvancedFeaturesRegisterFn,
+	Binary::Register::Fn::Fn as CommandRegisterFn,
+	Binary::Register::Fn::Fn as IPCServerRegisterFn,
+	Binary::Register::Fn::Fn as StatusReporterRegisterFn,
+	Binary::Register::Fn::Fn as WindSyncRegisterFn,
 	Binary::Service::AirStart::Fn as AirStartFn,
 	Binary::Service::CocoonStart::Fn as CocoonStartFn,
 	Binary::Service::ConfigurationInitialize::Fn as ConfigurationInitializeFn,
 	Binary::Service::VineStart::Fn as VineStartFn,
-	Binary::Tray::EnableTray as EnableTrayFn,
+	Binary::Tray::Fn as EnableTrayFn,
 	Environment::MountainEnvironment::MountainEnvironment,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
@@ -147,7 +147,7 @@ macro_rules! TraceStep {
 ///
 /// `Result<(), Box<dyn std::error::Error>>` - Ok on success, Err on critical
 /// failure
-pub fn AppLifecycleSetup(
+pub fn Fn(
 	app:&mut tauri::App,
 
 	app_handle:tauri::AppHandle,
@@ -173,7 +173,7 @@ pub fn AppLifecycleSetup(
 	// -------------------------------------------------------------------------
 	dev_log!("lifecycle", "[UI] [Tray] Initializing system tray...");
 
-	if let Err(Error) = EnableTrayFn::enable_tray(app) {
+	if let Err(Error) = EnableTrayFn::Fn(app) {
 		dev_log!("lifecycle", "error: [UI] [Tray] Failed to enable tray: {}", Error);
 	}
 
@@ -244,7 +244,7 @@ pub fn AppLifecycleSetup(
 
 	#[cfg(debug_assertions)]
 	{
-		let enable_debug_server = std::env::var("DebugServer").map(|v| v != "0" && !v.is_empty()).unwrap_or(false);
+		let enable_debug_server = std::env::var("DebugServer").map(|V| v != "0" && !v.is_empty()).unwrap_or(false);
 
 		if enable_debug_server {
 			// DebugServer values: mountain | cocoon | both | 1 (= mountain, legacy).
@@ -261,7 +261,7 @@ pub fn AppLifecycleSetup(
 				std::env::var("DebugServerPortCocoon").unwrap_or_else(|_| "9934".into())
 			);
 
-			WebkitServer::install(&MainWindow);
+			WebkitServer::Fn(&MainWindow);
 		}
 	}
 
@@ -305,7 +305,7 @@ pub fn AppLifecycleSetup(
 	// [Backend] [Dirs] Ensure userdata directories exist
 	// -------------------------------------------------------------------------
 	{
-		let PathResolver = app.path();
+		let PathResolver = app.Path();
 
 		let AppDataDir = PathResolver.app_data_dir().unwrap_or_default();
 
@@ -541,9 +541,9 @@ pub fn AppLifecycleSetup(
 		// First-pass merge runs against the empty `ScannedExtensions`
 		// map (the scan happens later in this lifecycle). User /
 		// workspace `settings.json` overrides land here, but extension
-		// `contributes.configuration.properties[*].default` keys cannot
+		// `contributes.configuration.properties[*].Default` keys cannot
 		// be collected yet. Without a second pass after the scan,
-		// `getConfiguration('git').get('enabled')` returns undefined,
+		// `getConfiguration('git').Get('enabled')` returns undefined,
 		// vscode.git's `_activate` takes the `if (!enabled) return;`
 		// short-circuit, and the SCM viewlet stays empty even though
 		// Cocoon successfully activated the extension. The second pass
@@ -567,8 +567,8 @@ pub fn AppLifecycleSetup(
 		// [Config] [Re-merge] - now that ScannedExtensions is populated,
 		// run the merge a second time so `collect_default_configurations`
 		// can walk extension manifests and seed `git.enabled = true`,
-		// `git.path = null`, `git.autoRepositoryDetection = true`, plus
-		// every other `contributes.configuration.properties[*].default`
+		// `git.Path = null`, `git.autoRepositoryDetection = true`, plus
+		// every other `contributes.configuration.properties[*].Default`
 		// the 113 scanned extensions declare. The first-pass merge logged
 		// "0 top-level keys"; this pass should log a much larger count.
 		// User / workspace overrides applied during the first pass are

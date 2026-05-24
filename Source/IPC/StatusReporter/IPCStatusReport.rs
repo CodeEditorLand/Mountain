@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::IPC::StatusReporter::{ConnectionStatus, MessageStats};
+use crate::IPC::StatusReporter::{Struct, MessageStats};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {

@@ -5,10 +5,10 @@
 use serde_json::{Value, json};
 use tauri::AppHandle;
 
-use crate::{IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string_or, dev_log};
+use crate::{IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgStringOr, dev_log};
 
 pub async fn Fn(_ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-	let ChannelName = arg_string_or(&Arguments, 0, "Output");
+	let ChannelName = ArgStringOr(&Arguments, 0, "Output");
 
 	dev_log!("ipc", "output:create channel='{}'", ChannelName);
 

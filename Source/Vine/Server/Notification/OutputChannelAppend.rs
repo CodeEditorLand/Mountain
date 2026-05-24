@@ -7,9 +7,9 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let ChannelName = Parameter
-		.get("channel")
+		.Get("channel")
 		.or_else(|| Parameter.get("name"))
 		.and_then(Value::as_str)
 		.unwrap_or("?");
@@ -27,11 +27,7 @@ pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Va
 
 	let CoalesceEnqueued = match TextValue {
 		Some(Text) => {
-			super::OutputChannelCoalesce::TryEnqueue(
-				Service.ApplicationHandle(),
-				ChannelName.to_string(),
-				Text.to_string(),
-			)
+			super::OutputChannelCoalesce::Fn(Service.ApplicationHandle(), ChannelName.to_string(), Text.to_string())
 		},
 
 		None => false,
@@ -56,7 +52,7 @@ pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Va
 	// crashes the tokio worker - observed live during SCM viewlet open).
 	// Walk char boundaries instead so the cut always lands between codepoints.
 	let TruncatedValue = Parameter
-		.get("value")
+		.Get("value")
 		.and_then(Value::as_str)
 		.map(|S| {
 			if S.len() > 200 {

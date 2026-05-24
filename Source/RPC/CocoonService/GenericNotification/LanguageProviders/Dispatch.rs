@@ -8,7 +8,7 @@ use crate::RPC::CocoonService::CocoonServiceImpl;
 
 pub fn Fn(Method:&str, Params:Value, Service:&CocoonServiceImpl) -> bool {
 	let ProvType = match Method {
-		"register_hover_provider" => ProviderType::Hover,
+		"register_hover_provider" => ProviderType::Fn,
 
 		"register_completion_item_provider" => ProviderType::Completion,
 

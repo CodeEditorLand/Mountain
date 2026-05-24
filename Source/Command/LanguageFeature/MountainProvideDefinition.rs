@@ -7,7 +7,7 @@ use tauri::{AppHandle, Wry, command};
 use crate::{Command::LanguageFeature::Definition, dev_log};
 
 #[command]
-pub async fn MountainProvideDefinition(
+pub async fn Fn(
 	application_handle:AppHandle<Wry>,
 
 	uri:String,

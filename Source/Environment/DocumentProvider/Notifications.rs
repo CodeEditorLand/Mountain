@@ -29,13 +29,13 @@ pub(super) async fn notify_model_added(
 	document_state_dto:&serde_json::Value,
 ) {
 	let uri_string = document_state_dto
-		.get("URI")
+		.Get("URI")
 		.and_then(serde_json::Value::as_str)
 		.unwrap_or("unknown");
 
 	dev_log!("model", "[DocumentProvider] Notifying ModelAdded for: {}", uri_string);
 
-	let payload = json!([document_state_dto]);
+	let Payload = json!([document_state_dto]);
 
 	let ipc_provider:Arc<dyn IPCProvider> = environment.Require();
 
@@ -68,7 +68,7 @@ pub(super) async fn notify_model_changed(
 
 	let event_data = json!({ "versionId": new_version, "changes": changes, "isDirty": true });
 
-	let payload = json!([uri_components, event_data]);
+	let Payload = json!([uri_components, event_data]);
 
 	let ipc_provider:Arc<dyn IPCProvider> = environment.Require();
 
@@ -95,7 +95,7 @@ pub(super) async fn notify_model_saved(
 
 	let uri_components = json!({ "external": uri.to_string(), "$mid": 1 });
 
-	let payload = json!([uri_components]);
+	let Payload = json!([uri_components]);
 
 	let ipc_provider:Arc<dyn IPCProvider> = environment.Require();
 
@@ -122,7 +122,7 @@ pub(super) async fn notify_model_removed(
 
 	let uri_components = json!({ "external": uri.to_string(), "$mid": 1 });
 
-	let payload = json!([uri_components]);
+	let Payload = json!([uri_components]);
 
 	let ipc_provider:Arc<dyn IPCProvider> = environment.Require();
 

@@ -16,7 +16,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 		.Workspace
 		.GetWorkspaceFolders()
 		.into_iter()
-		.next()
+		.Next()
 		.map(|F| {
 			if !F.Name.is_empty() {
 				F.Name

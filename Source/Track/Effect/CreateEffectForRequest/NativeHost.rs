@@ -2,15 +2,15 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::{
-	Track::Effect::{CreateEffectForRequest::Utilities::Params::string_at, MappedEffectType::MappedEffect},
+	Track::Effect::{CreateEffectForRequest::Utilities::Params::StringAt, MappedEffectType::MappedEffect},
 	dev_log,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"NativeHost.OpenExternal" => {
-			crate::effect!(_run_time, {
-				let uri = string_at(&Parameters, 0);
+			crate::effect!(_RunTime, {
+				let Uri = StringAt(&Parameters, 0);
 				let lower = uri.to_ascii_lowercase();
 				const BlockedSchemes:&[&str] = &["javascript:", "data:", "vbscript:", "file:"];
 				for scheme in BlockedSchemes {
@@ -25,7 +25,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				let uri_owned = uri.clone();
 				let result = tokio::task::spawn_blocking(move || open::that_detached(uri_owned))
 					.await
-					.map_err(|e| format!("NativeHost.OpenExternal join error: {}", e))?;
+					.map_err(|E| format!("NativeHost.OpenExternal join error: {}", e))?;
 				match result {
 					Ok(()) => {
 						dev_log!("ipc", "[NativeHost.OpenExternal] opened {}", uri);

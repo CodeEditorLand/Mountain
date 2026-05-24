@@ -44,7 +44,7 @@ use CommonLibrary::{Error::CommonError::CommonError, Webview::WebviewProvider::W
 use async_trait::async_trait;
 use serde_json::Value;
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::MountainEnvironment::Struct;
 
 // Atomic public DTOs (one export per file).
 pub mod WebviewLifecycleState;
@@ -86,7 +86,7 @@ impl WebviewProvider for MountainEnvironment {
 
 		extension_data_value:Value,
 
-		view_type:String,
+		ViewType:String,
 
 		title:String,
 
@@ -99,7 +99,7 @@ impl WebviewProvider for MountainEnvironment {
 		Lifecycle::create_webview_panel_impl(
 			self,
 			extension_data_value,
-			view_type,
+			ViewType,
 			title,
 			_show_options_value,
 			panel_options_value,

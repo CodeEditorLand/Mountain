@@ -22,7 +22,7 @@ use CommonLibrary::FileSystem::FileWatcherProvider::FileWatcherProvider;
 use serde_json::{Value, json};
 
 use crate::{
-	IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as extract_path_from_arg,
+	IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as ExtractPathFromArg,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
@@ -32,7 +32,7 @@ static WATCH_HANDLE_SEQ:AtomicU64 = AtomicU64::new(1);
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let ResourceArg = Arguments.get(0).ok_or("file:watch: missing resource")?;
 
-	let Path = extract_path_from_arg(ResourceArg)?;
+	let Path = ExtractPathFromArg(ResourceArg)?;
 
 	let Opts = Arguments.get(1).and_then(Value::as_object);
 

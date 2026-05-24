@@ -97,7 +97,7 @@ fn GetOrInitChannel(Handle:&AppHandle) -> &'static CommandBatchChannel {
 	})
 }
 
-pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let CommandId = Parameter.get("commandId").and_then(Value::as_str).unwrap_or("");
 
 	dev_log!(

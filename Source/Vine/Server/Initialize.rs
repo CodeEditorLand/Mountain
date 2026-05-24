@@ -40,7 +40,7 @@ use std::{net::SocketAddr, sync::Arc};
 use tauri::{AppHandle, Manager};
 use tonic::transport::Server;
 
-use super::MountainVinegRPCService::MountainVinegRPCService;
+use super::MountainVinegRPCService::Struct;
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
@@ -144,7 +144,7 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 /// # Example
 ///
 /// ```rust,no_run
-/// # use Vine::Server::Initialize::Initialize;
+/// # use Vine::Server::Fn::Fn;
 /// # use tauri::AppHandle;
 /// # async fn example(handle: AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 /// Initialize(handle, "[::1]:50051".to_string(), "[::1]:50052".to_string())?;
@@ -158,7 +158,7 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 /// - Initialization is async-safe but function is synchronous
 /// - Servers log errors independently after startup
 /// - Use `Default` addresses for development (localhost with default ports)
-pub fn Initialize(
+pub fn Fn(
 	ApplicationHandle:AppHandle,
 
 	MountainAddressString:String,
@@ -188,7 +188,7 @@ pub fn Initialize(
 	let RunTime = ApplicationHandle
 		.try_state::<Arc<ApplicationRunTime>>()
 		.ok_or_else(|| {
-			let msg = "[VineServer] CRITICAL: ApplicationRunTime not found in Tauri state. Server cannot start.";
+			let Msg = "[VineServer] CRITICAL: ApplicationRunTime not found in Tauri state. Server cannot start.";
 
 			dev_log!("grpc", "error: {}", msg);
 

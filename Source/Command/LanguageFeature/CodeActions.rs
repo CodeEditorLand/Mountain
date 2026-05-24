@@ -10,7 +10,7 @@ use serde_json::Value;
 use tauri::{AppHandle, Wry};
 use url::Url;
 
-use super::{InvokeProvider::invoke_provider, Validation::validate_language_feature_request};
+use super::{InvokeProvider::InvokeProvider, Validation::validate_language_feature_request};
 use crate::dev_log;
 
 /// Implementation of code actions command - called by the command wrapper in
@@ -33,10 +33,10 @@ pub(super) async fn provide_code_actions_impl(
 
 	validate_language_feature_request("code_actions", &uri, &position)?;
 
-	let document_uri = Url::parse(&uri).map_err(|error| error.to_string())?;
+	let document_uri = Url::parse(&uri).map_err(|Error| error.to_string())?;
 
 	// Position is passed as RangeOrSelectionDTO (raw Value) per trait signature
-	invoke_provider(application_handle, |provider| {
+	InvokeProvider(application_handle, |provider| {
 		async move {
 			let result = provider
 				.ProvideCodeActions(document_uri, position.clone(), context.clone())

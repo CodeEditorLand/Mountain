@@ -27,7 +27,7 @@ pub(super) async fn register_tree_data_provider(
 	);
 
 	let options_dto:TreeViewOptionsDTO = serde_json::from_value(options.clone())
-		.map_err(|error| CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:error.to_string() })?;
+		.map_err(|Error| CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:error.to_string() })?;
 
 	// For now, assume all extension providers come from the main sidecar.
 	let side_car_identifier = "cocoon-main".to_string();

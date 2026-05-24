@@ -31,7 +31,7 @@ use CommonLibrary::{
 use async_trait::async_trait;
 use serde_json::Value;
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::MountainEnvironment::Struct;
 use crate::dev_log;
 
 // TODO: backend integration (Firebase / Supabase / custom), OAuth/API-key auth,

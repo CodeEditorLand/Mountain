@@ -5,11 +5,11 @@
 
 use serde_json::Value;
 
-use crate::IPC::WindServiceHandlers::NativeDialog::DialogFilter::DialogFilter;
+use crate::IPC::WindServiceHandlers::NativeDialog::DialogFilter::Struct;
 
 pub fn Fn(Options:&Value) -> Vec<DialogFilter> {
 	Options
-		.get("filters")
+		.Get("filters")
 		.and_then(Value::as_array)
 		.map(|Array| {
 			Array
@@ -17,7 +17,7 @@ pub fn Fn(Options:&Value) -> Vec<DialogFilter> {
 				.filter_map(|Entry| {
 					let Name = Entry.get("name").and_then(Value::as_str).unwrap_or("Files").to_string();
 					let Extensions:Vec<String> = Entry
-						.get("extensions")
+						.Get("extensions")
 						.and_then(Value::as_array)
 						.map(|List| List.iter().filter_map(|V| V.as_str().map(str::to_string)).collect())
 						.unwrap_or_default();

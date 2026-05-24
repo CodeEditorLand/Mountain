@@ -10,13 +10,13 @@ use serde_json::{Value, json};
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-	let path = Arguments
-		.get(0)
+	let Path = Arguments
+		.Get(0)
 		.ok_or("Missing directory path".to_string())?
 		.as_str()
 		.ok_or("Directory path must be a string".to_string())?;
 
-	let provider:Arc<dyn FileSystemReader> = RunTime.Environment.Require();
+	let Provider:Arc<dyn FileSystemReader> = RunTime.Environment.Require();
 
 	let entries = provider
 		.ReadDirectory(&PathBuf::from(path))

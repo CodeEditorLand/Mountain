@@ -12,7 +12,7 @@ use crate::{
 	dev_log,
 };
 
-pub fn initialize_status_reporter(app_handle:&tauri::AppHandle, runtime:Arc<ApplicationRunTime>) -> Result<(), String> {
+pub fn Fn(app_handle:&tauri::AppHandle, runtime:Arc<ApplicationRunTime>) -> Result<(), String> {
 	dev_log!("lifecycle", "Initializing status reporter");
 
 	let reporter = Reporter::new(runtime);

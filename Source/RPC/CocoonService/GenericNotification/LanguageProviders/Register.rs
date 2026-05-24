@@ -10,7 +10,7 @@ pub fn Fn(Params:Value, Service:&CocoonServiceImpl, ProvType:ProviderType) {
 
 	let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-	let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+	let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 	Service.RegisterProvider(Handle, ProvType, Selector, ExtId);
 }

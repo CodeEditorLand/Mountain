@@ -19,7 +19,7 @@ use CommonLibrary::{
 use serde_json::{Value, json};
 use url::Url;
 
-use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
+use crate::ApplicationState::DTO::ProviderRegistrationDTO::Struct;
 
 // All feature methods delegate to generic invoke pattern
 
@@ -37,7 +37,7 @@ pub(super) async fn provide_code_actions(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -66,7 +66,7 @@ pub(super) async fn provide_code_lenses(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -99,7 +99,7 @@ pub(super) async fn provide_completions(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -115,7 +115,7 @@ pub(super) async fn provide_completions(
 			if response.is_null() {
 				Ok(None)
 			} else {
-				serde_json::from_value(response).map_err(|error| {
+				serde_json::from_value(response).map_err(|Error| {
 					CommonError::SerializationError {
 						Description:format!("Failed to deserialize CompletionListDTO: {}", error),
 					}
@@ -139,7 +139,7 @@ pub(super) async fn provide_definition(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -153,7 +153,7 @@ pub(super) async fn provide_definition(
 			if response.is_null() {
 				Ok(None)
 			} else {
-				serde_json::from_value(response).map_err(|error| {
+				serde_json::from_value(response).map_err(|Error| {
 					CommonError::SerializationError {
 						Description:format!("Failed to deserialize Vec<LocationDTO>: {}", error),
 					}
@@ -178,7 +178,7 @@ pub(super) async fn provide_document_formatting_edits(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -192,7 +192,7 @@ pub(super) async fn provide_document_formatting_edits(
 			if response.is_null() {
 				Ok(None)
 			} else {
-				serde_json::from_value(response).map_err(|error| {
+				serde_json::from_value(response).map_err(|Error| {
 					CommonError::SerializationError {
 						Description:format!("Failed to deserialize Vec<TextEditDTO>: {}", error),
 					}
@@ -217,7 +217,7 @@ pub(super) async fn provide_document_highlights(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -245,7 +245,7 @@ pub(super) async fn provide_document_links(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -277,7 +277,7 @@ pub(super) async fn provide_document_range_formatting_edits(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -292,7 +292,7 @@ pub(super) async fn provide_document_range_formatting_edits(
 			if response.is_null() {
 				Ok(None)
 			} else {
-				serde_json::from_value(response).map_err(|error| {
+				serde_json::from_value(response).map_err(|Error| {
 					CommonError::SerializationError {
 						Description:format!("Failed to deserialize Vec<TextEditDTO>: {}", error),
 					}
@@ -312,11 +312,11 @@ pub(super) async fn provide_hover(
 	position_dto:PositionDTO,
 ) -> Result<Option<HoverResultDTO>, CommonError> {
 	let provider =
-		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::Hover).await?;
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::Fn).await?;
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -330,7 +330,7 @@ pub(super) async fn provide_hover(
 			if response.is_null() {
 				Ok(None)
 			} else {
-				serde_json::from_value(response).map_err(|error| {
+				serde_json::from_value(response).map_err(|Error| {
 					CommonError::SerializationError {
 						Description:format!("Failed to deserialize HoverResultDTO: {}", error),
 					}
@@ -356,7 +356,7 @@ pub(super) async fn provide_references(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -371,7 +371,7 @@ pub(super) async fn provide_references(
 			if response.is_null() {
 				Ok(None)
 			} else {
-				serde_json::from_value(response).map_err(|error| {
+				serde_json::from_value(response).map_err(|Error| {
 					CommonError::SerializationError {
 						Description:format!("Failed to deserialize Vec<LocationDTO>: {}", error),
 					}
@@ -395,7 +395,7 @@ pub(super) async fn prepare_rename(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -427,7 +427,7 @@ pub(super) async fn provide_rename_edits(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -456,7 +456,7 @@ pub(super) async fn provide_document_symbols(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -498,8 +498,8 @@ pub(super) async fn provide_workspace_symbols(
 
 	match MatchingRegistration {
 		Some(registration) => {
-			let response =
-				invoke_provider(environment, &registration, vec![json!(registration.Handle), json!(query)]).await?;
+			let Response =
+				InvokeProvider(environment, &registration, vec![json!(registration.Handle), json!(query)]).await?;
 
 			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
 		},
@@ -522,7 +522,7 @@ pub(super) async fn provide_signature_help(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -551,7 +551,7 @@ pub(super) async fn provide_folding_ranges(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -580,7 +580,7 @@ pub(super) async fn provide_selection_ranges(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -608,7 +608,7 @@ pub(super) async fn provide_semantic_tokens_full(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -637,7 +637,7 @@ pub(super) async fn provide_inlay_hints(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -670,8 +670,8 @@ pub(super) async fn provide_type_hierarchy_supertypes(
 
 	match provider {
 		Some(registration) => {
-			let response =
-				invoke_provider(environment, &registration, vec![json!(registration.Handle), item_dto]).await?;
+			let Response =
+				InvokeProvider(environment, &registration, vec![json!(registration.Handle), item_dto]).await?;
 
 			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
 		},
@@ -694,8 +694,8 @@ pub(super) async fn provide_type_hierarchy_subtypes(
 
 	match provider {
 		Some(registration) => {
-			let response =
-				invoke_provider(environment, &registration, vec![json!(registration.Handle), item_dto]).await?;
+			let Response =
+				InvokeProvider(environment, &registration, vec![json!(registration.Handle), item_dto]).await?;
 
 			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
 		},
@@ -724,7 +724,7 @@ pub(super) async fn prepare_call_hierarchy(
 
 			let pos_json = json!({ "Line": position_dto.LineNumber, "Character": position_dto.Column });
 
-			let response = invoke_provider_method(
+			let Response = InvokeProviderMethod(
 				environment,
 				&registration,
 				"$prepareCallHierarchyItems",
@@ -756,7 +756,7 @@ pub(super) async fn prepare_type_hierarchy(
 
 			let pos_json = json!({ "Line": position_dto.LineNumber, "Character": position_dto.Column });
 
-			let response = invoke_provider_method(
+			let Response = InvokeProviderMethod(
 				environment,
 				&registration,
 				"$prepareTypeHierarchyItems",
@@ -785,8 +785,8 @@ pub(super) async fn provide_call_hierarchy_incoming_calls(
 
 	match provider {
 		Some(registration) => {
-			let response =
-				invoke_provider(environment, &registration, vec![json!(registration.Handle), item_dto]).await?;
+			let Response =
+				InvokeProvider(environment, &registration, vec![json!(registration.Handle), item_dto]).await?;
 
 			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
 		},
@@ -809,8 +809,8 @@ pub(super) async fn provide_call_hierarchy_outgoing_calls(
 
 	match provider {
 		Some(registration) => {
-			let response =
-				invoke_provider(environment, &registration, vec![json!(registration.Handle), item_dto]).await?;
+			let Response =
+				InvokeProvider(environment, &registration, vec![json!(registration.Handle), item_dto]).await?;
 
 			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
 		},
@@ -832,7 +832,7 @@ pub(super) async fn provide_linked_editing_ranges(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -867,7 +867,7 @@ pub(super) async fn provide_on_type_formatting_edits(
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
+			let Response = InvokeProvider(
 				environment,
 				&registration,
 				vec![
@@ -883,7 +883,7 @@ pub(super) async fn provide_on_type_formatting_edits(
 			if response.is_null() {
 				Ok(None)
 			} else {
-				serde_json::from_value(response).map_err(|error| {
+				serde_json::from_value(response).map_err(|Error| {
 					CommonError::SerializationError {
 						Description:format!("Failed to deserialize Vec<TextEditDTO>: {}", error),
 					}
@@ -903,20 +903,20 @@ pub(super) async fn provide_on_type_formatting_edits(
 pub(super) async fn provide_file_decoration(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 
-	resource_uri:Url,
+	ResourceUri:Url,
 ) -> Result<Option<Value>, CommonError> {
 	let provider =
-		super::ProviderLookup::get_matching_provider(environment, &resource_uri, ProviderType::FileDecoration).await?;
+		super::ProviderLookup::get_matching_provider(environment, &ResourceUri, ProviderType::FileDecoration).await?;
 
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider_method(
+			let Response = InvokeProviderMethod(
 				environment,
 				&registration,
 				"$provideFileDecoration",
 				vec![
 					json!(registration.Handle),
-					json!({ "external": resource_uri.to_string(), "$mid": 1 }),
+					json!({ "external": ResourceUri.to_string(), "$mid": 1 }),
 				],
 			)
 			.await?;
@@ -948,7 +948,7 @@ pub(super) async fn provide_inline_completion_items(
 		Some(registration) => {
 			// `$provideInlineCompletionItems` method name follows the
 			// extHostTypes pattern used by Copilot / Roo Code.
-			let response = invoke_provider_method(
+			let Response = InvokeProviderMethod(
 				environment,
 				&registration,
 				"$provideInlineCompletionItems",
@@ -968,7 +968,7 @@ pub(super) async fn provide_inline_completion_items(
 	}
 }
 
-async fn invoke_provider(
+async fn InvokeProvider(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 
 	registration:&ProviderRegistrationDTO,
@@ -984,11 +984,11 @@ async fn invoke_provider(
 		.await
 }
 
-/// Like `invoke_provider` but uses an explicit method name instead of
+/// Like `InvokeProvider` but uses an explicit method name instead of
 /// the `$provide{ProviderType}` convention. Used for prepare steps
 /// (`$prepareCallHierarchyItems`, `$prepareTypeHierarchyItems`) where
 /// the method prefix differs from the provider type string.
-async fn invoke_provider_method(
+async fn InvokeProviderMethod(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 
 	registration:&ProviderRegistrationDTO,

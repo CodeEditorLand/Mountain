@@ -25,16 +25,16 @@ use CommonLibrary::{
 	Workspace::WorkspaceProvider::WorkspaceProvider,
 };
 
-use crate::Track::Effect::{CreateEffectForRequest::Utilities::Params::val_at, MappedEffectType::MappedEffect};
+use crate::Track::Effect::{CreateEffectForRequest::Utilities::Params::ValAt, MappedEffectType::MappedEffect};
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"findFiles" | "findTextInFiles" => {
 			let MethodNameOwned = MethodName.to_string();
 
-			crate::effect!(run_time, {
-				let _workspace:Arc<dyn WorkspaceProvider> = run_time.Environment.Require();
-				let provider:Arc<dyn SearchProvider> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let _workspace:Arc<dyn WorkspaceProvider> = RunTime.Environment.Require();
+				let Provider:Arc<dyn SearchProvider> = RunTime.Environment.Require();
 				// Accept three call shapes:
 				//   - `{pattern, options}` named form
 				//   - `[pattern, options]` positional from `TryMountainThenNode` Cocoon path
@@ -45,13 +45,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						Object.get("options").cloned().unwrap_or_default(),
 					)
 				} else if Parameters.is_array() {
-					(val_at(&Parameters, 0), val_at(&Parameters, 1))
+					(ValAt(&Parameters, 0), ValAt(&Parameters, 1))
 				} else {
 					(Parameters.clone(), Value::Null)
 				};
 				let (Pattern, Options) = Args;
 				if MethodNameOwned == "findTextInFiles" {
-					return provider.TextSearch(Pattern, Options).await.map_err(|e| e.to_string());
+					return provider.TextSearch(Pattern, Options).await.map_err(|E| e.to_string());
 				}
 				// `findFiles` - delegate to
 				// `WorkspaceProvider::FindFilesInWorkspace` so we
@@ -65,7 +65,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				let MaxResults = Options.get("maxResults").and_then(Value::as_u64).map(|N| N as usize);
 				let UseIgnoreFiles = Options.get("useIgnoreFiles").and_then(Value::as_bool).unwrap_or(true);
 				let FollowSymlinks = Options.get("followSymlinks").and_then(Value::as_bool).unwrap_or(false);
-				let Urls = run_time
+				let Urls = RunTime
 					.Environment
 					.FindFilesInWorkspace(Pattern, Exclude, MaxResults, UseIgnoreFiles, FollowSymlinks)
 					.await
@@ -75,11 +75,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"Search.TextSearch" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn SearchProvider> = run_time.Environment.Require();
-				let query = val_at(&Parameters, 0);
-				let options = val_at(&Parameters, 1);
-				provider.TextSearch(query, options).await.map_err(|e| e.to_string())
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn SearchProvider> = RunTime.Environment.Require();
+				let Query = ValAt(&Parameters, 0);
+				let Options = ValAt(&Parameters, 1);
+				provider.TextSearch(query, options).await.map_err(|E| e.to_string())
 			})
 		},
 

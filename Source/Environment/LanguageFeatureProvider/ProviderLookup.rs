@@ -38,7 +38,7 @@ pub(super) async fn get_matching_provider(
 	} else {
 		// Document not yet opened via model:open - infer from file extension.
 		document_uri
-			.path()
+			.Path()
 			.split('.')
 			.next_back()
 			.map(|Ext| {

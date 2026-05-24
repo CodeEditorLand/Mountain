@@ -1,11 +1,11 @@
 //! Result envelope from a manual DNS resolution test
-//! (`dns_resolve`). Carries the resolved address list and a
+//! (`DnsResolve`). Carries the resolved address list and a
 //! success flag so callers can branch without parsing strings.
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DnsResolutionResult {
+pub struct Struct {
 	pub domain:String,
 
 	pub record_type:String,

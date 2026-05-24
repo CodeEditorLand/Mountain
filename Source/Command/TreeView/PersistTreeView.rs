@@ -12,10 +12,10 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 use tauri::{AppHandle, State, Wry, command};
 
-use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
+use crate::{ApplicationState::Struct::ApplicationState::ApplicationState, dev_log};
 
 #[command]
-pub async fn PersistTreeView(
+pub async fn Fn(
 	_ApplicationHandle:AppHandle<Wry>,
 
 	_State:State<'_, Arc<ApplicationState>>,

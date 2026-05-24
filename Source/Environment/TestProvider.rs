@@ -45,7 +45,7 @@ use serde_json::{Value, json};
 use tauri::{Emitter, Manager};
 use uuid::Uuid;
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::MountainEnvironment::Struct;
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::Effect::CreateEffectForRequest::Utilities::Proxy::proxy_cocoon,
@@ -146,7 +146,7 @@ impl TestController for MountainEnvironment {
 			})?;
 
 		if let Some(SideCarIdentifier) = &ControllerState.SideCarIdentifier {
-			Self::RunProxiedTests(self, SideCarIdentifier, &RunIdentifier, TestRunRequest).await?;
+			Struct::RunProxiedTests(self, SideCarIdentifier, &RunIdentifier, TestRunRequest).await?;
 		} else {
 			dev_log!(
 				"extensions",
@@ -154,7 +154,7 @@ impl TestController for MountainEnvironment {
 				ControllerIdentifier
 			);
 
-			let _ = Self::UpdateRunStatus(self, &RunIdentifier, TestRunStatus::Enum::Skipped).await;
+			let _ = Struct::UpdateRunStatus(self, &RunIdentifier, TestRunStatus::Enum::Skipped).await;
 		}
 
 		Ok(())
@@ -178,21 +178,20 @@ impl MountainEnvironment {
 			SideCarIdentifier
 		);
 
-		let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Running).await;
+		let _ = Struct::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Running).await;
 
-		let run_time:Arc<ApplicationRunTime> =
-			self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
+		let RunTime:Arc<ApplicationRunTime> = self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
-		let RPCParams = json!({ "RunIdentifier": RunIdentifier, "TestRunRequest": TestRunRequest });
+		let RpcParams = json!({ "RunIdentifier": RunIdentifier, "TestRunRequest": TestRunRequest });
 
-		match proxy_cocoon(&run_time, ProxyTarget::ExtHostTesting, "runTests", RPCParams, 300000).await {
+		match ProxyCocoon(&RunTime, ProxyTarget::ExtHostTesting, "runTests", RpcParams, 300000).await {
 			Ok(Response) => {
 				if let Ok(Results) = serde_json::from_value::<Vec<TestResult::Struct>>(Response) {
-					let _ = Self::StoreTestResults(self, RunIdentifier, Results).await;
+					let _ = Struct::StoreTestResults(self, RunIdentifier, Results).await;
 
-					let FinalStatus = Self::CalculateRunStatus(self, RunIdentifier).await;
+					let FinalStatus = Struct::CalculateRunStatus(self, RunIdentifier).await;
 
-					let _ = Self::UpdateRunStatus(self, RunIdentifier, FinalStatus).await;
+					let _ = Struct::UpdateRunStatus(self, RunIdentifier, FinalStatus).await;
 
 					dev_log!(
 						"extensions",
@@ -207,7 +206,7 @@ impl MountainEnvironment {
 						RunIdentifier
 					);
 
-					let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Errored).await;
+					let _ = Struct::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Errored).await;
 				}
 
 				Ok(())
@@ -216,7 +215,7 @@ impl MountainEnvironment {
 			Err(Error) => {
 				dev_log!("extensions", "error: [TestProvider] Failed to run tests: {}", Error);
 
-				let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Errored).await;
+				let _ = Struct::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Errored).await;
 
 				Err(CommonError::IPCError { Description:Error })
 			},

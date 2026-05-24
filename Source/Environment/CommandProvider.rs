@@ -52,7 +52,7 @@ use async_trait::async_trait;
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::MountainEnvironment::Struct;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Vine::Client, dev_log};
 
 /// An enum representing the different ways a command can be handled.
@@ -78,12 +78,12 @@ pub enum CommandHandler<R:Runtime + 'static> {
 }
 
 impl<R:Runtime> Clone for CommandHandler<R> {
-	fn clone(&self) -> Self {
+	fn clone(&self) -> Struct {
 		match self {
-			Self::Native(Function) => Self::Native(*Function),
+			Struct::Native(Function) => Struct::Native(*Function),
 
-			Self::Proxied { SideCarIdentifier, CommandIdentifier } => {
-				Self::Proxied {
+			Struct::Proxied { SideCarIdentifier, CommandIdentifier } => {
+				Struct::Proxied {
 					SideCarIdentifier:SideCarIdentifier.clone(),
 
 					CommandIdentifier:CommandIdentifier.clone(),
@@ -105,7 +105,7 @@ impl CommandExecutor for MountainEnvironment {
 			.CommandRegistry
 			.lock()
 			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-			.get(&CommandIdentifier)
+			.Get(&CommandIdentifier)
 			.cloned();
 
 		match HandlerInfoOption {
@@ -307,7 +307,7 @@ impl CommandExecutor for MountainEnvironment {
 						.CommandRegistry
 						.lock()
 						.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-						.get(&CommandIdentifier)
+						.Get(&CommandIdentifier)
 						.cloned();
 
 					if let Some(Handler) = PostActivationHandler {

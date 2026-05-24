@@ -16,12 +16,12 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalProcessIdNotificatio
 		"cocoon",
 		"[CocoonService] Terminal PID: {} for terminal {}",
 		Request.process_id,
-		Request.terminal_id
+		Request.TerminalId
 	);
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://terminal/processId",
-		json!({ "id": Request.terminal_id, "pid": Request.process_id }),
+		json!({ "id": Request.TerminalId, "pid": Request.process_id }),
 	);
 
 	Ok(Response::new(Empty {}))

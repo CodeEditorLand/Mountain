@@ -51,7 +51,7 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, command};
 
 use crate::{
-	ApplicationState::State::ApplicationState::ApplicationState,
+	ApplicationState::Struct::ApplicationState::ApplicationState,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
@@ -59,13 +59,7 @@ use crate::{
 /// A specific Tauri command handler for a Webview guest to post a message back
 /// to the extension host.
 #[command]
-pub async fn MountainWebviewPostMessageFromGuest(
-	ApplicationHandle:AppHandle,
-
-	Handle:String,
-
-	Message:Value,
-) -> Result<(), String> {
+pub async fn Fn(ApplicationHandle:AppHandle, Handle:String, Message:Value) -> Result<(), String> {
 	let IPC:Arc<dyn IPCProvider> = {
 		let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 

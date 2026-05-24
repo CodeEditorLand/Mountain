@@ -11,7 +11,7 @@ use tauri::{AppHandle, Manager, Wry, command};
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 #[command]
-pub async fn GetResolvedKeybinding(ApplicationHandle:AppHandle<Wry>) -> Result<Value, String> {
+pub async fn Fn(ApplicationHandle:AppHandle<Wry>) -> Result<Value, String> {
 	dev_log!("keybinding", "getting resolved keybindings for UI");
 
 	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();

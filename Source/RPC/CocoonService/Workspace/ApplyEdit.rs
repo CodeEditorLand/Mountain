@@ -28,7 +28,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:ApplyEditRequest) -> Result<
 		.map(|E| {
 			json!({
 				"range": {
-					"start": E.range.as_ref().and_then(|R| R.start.as_ref()).map(|P| {
+					"start": E.range.as_ref().and_then(|R| R.Start.as_ref()).map(|P| {
 						json!({ "line": P.line, "character": P.character })
 					}),
 					"end": E.range.as_ref().and_then(|R| R.end.as_ref()).map(|P| {

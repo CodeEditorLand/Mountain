@@ -25,7 +25,7 @@ pub async fn Fn(
 	dev_log!(
 		"cocoon",
 		"[CocoonService] Providing completions for provider {}",
-		Request.provider_handle
+		Request.ProviderHandle
 	);
 
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");

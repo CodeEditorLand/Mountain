@@ -209,7 +209,7 @@ fn FlushOne(Handle:&AppHandle, Channel:&str, Payload:&str) {
 /// item was enqueued (the coalescer will flush within `COALESCE_WINDOW`),
 /// `false` when coalescing is disabled and the caller must flush
 /// inline.
-pub fn TryEnqueue(Handle:&AppHandle, Channel:String, Value:String) -> bool {
+pub fn Fn(Handle:&AppHandle, Channel:String, Value:String) -> bool {
 	if IsDisabled() {
 		return false;
 	}

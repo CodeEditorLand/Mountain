@@ -28,7 +28,7 @@ pub fn Fn() -> Option<ResolvedNode::Struct> {
 	let mut BestCandidate:Option<PathBuf> = None;
 
 	for Entry in Entries.flatten() {
-		let NodePath = Entry.path().join("bin").join(NodeExecutableName::Fn());
+		let NodePath = Entry.Path().join("bin").join(NodeExecutableName::Fn());
 
 		if !NodePath.exists() {
 			continue;

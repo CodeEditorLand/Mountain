@@ -7,7 +7,7 @@ use tauri::{AppHandle, Wry, command};
 use crate::{Command::LanguageFeature::CodeActions, dev_log};
 
 #[command]
-pub async fn MountainProvideCodeActions(
+pub async fn Fn(
 	application_handle:AppHandle<Wry>,
 
 	uri:String,

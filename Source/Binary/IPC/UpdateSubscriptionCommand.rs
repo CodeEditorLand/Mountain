@@ -62,7 +62,7 @@ use crate::dev_log;
 /// - Required fields missing
 /// - Subscription fails
 #[tauri::command]
-pub async fn MountainSubscribeToUpdates(app_handle:AppHandle, subscription_data:Value) -> Result<Value, String> {
+pub async fn Fn(app_handle:AppHandle, subscription_data:Value) -> Result<Value, String> {
 	let Target = subscription_data["target"]
 		.as_str()
 		.ok_or_else(|| {
@@ -79,7 +79,7 @@ pub async fn MountainSubscribeToUpdates(app_handle:AppHandle, subscription_data:
 		})?
 		.to_string();
 
-	crate::IPC::WindAdvancedSync::mountain_subscribe_to_updates(app_handle, Target, Subscriber)
+	crate::IPC::WindAdvancedSync::Fn(app_handle, Target, Subscriber)
 		.await
 		.map_err(|Error| {
 			dev_log!("ipc", "error: [IPC] [Sync] Failed to subscribe to updates: {}", Error);

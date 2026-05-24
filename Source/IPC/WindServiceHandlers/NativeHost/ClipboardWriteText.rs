@@ -2,10 +2,10 @@
 
 use serde_json::Value;
 
-use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string;
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgString;
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Text = arg_string(&Arguments, 0);
+	let Text = ArgString(&Arguments, 0);
 
 	if let Ok(mut Cb) = arboard::Clipboard::new() {
 		let _ = Cb.set_text(Text);

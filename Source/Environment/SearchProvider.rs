@@ -160,7 +160,7 @@ struct PerFileSink {
 impl Sink for PerFileSink {
 	type Error = io::Error;
 
-	fn matched(&mut self, _Searcher:&Searcher, Mat:&SinkMatch<'_>) -> Result<bool, Self::Error> {
+	fn matched(&mut self, _Searcher:&Searcher, Mat:&SinkMatch<'_>) -> Result<bool, Struct::Error> {
 		let RawLine = Mat.bytes();
 
 		// Trim trailing newline so the preview text the renderer shows
@@ -240,24 +240,24 @@ impl Sink for PerFileSink {
 		while StartByte <= SearchBytes.len() && Columns.len() < MAX_COLUMNS_PER_LINE {
 			match self.matcher.find_at(SearchBytes, StartByte) {
 				Ok(Some(M)) => {
-					if M.start() >= SearchBytes.len() {
+					if M.Start() >= SearchBytes.len() {
 						break;
 					}
 
-					Columns.push(ColumnRange { start:ByteToChar(M.start()), end:ByteToChar(M.end()) });
+					Columns.push(ColumnRange { start:ByteToChar(M.Start()), end:ByteToChar(M.end()) });
 
-					// `M.end() == M.start()` happens for zero-width
+					// `M.end() == M.Start()` happens for zero-width
 					// matches (e.g. `\b`); advance by one byte to
 					// avoid an infinite loop.
-					StartByte = if M.end() == M.start() { M.end() + 1 } else { M.end() };
+					StartByte = if M.end() == M.Start() { M.end() + 1 } else { M.end() };
 				},
 
 				_ => break,
 			}
 		}
 
-		// Since this sink is per-file, we know `self.path` is correct.
-		let FileURI = url::Url::from_file_path(&self.path)
+		// Since this sink is per-file, we know `self.Path` is correct.
+		let FileURI = url::Url::from_file_path(&self.Path)
 			.map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "Could not convert path to URL"))?
 			.to_string();
 
@@ -272,7 +272,7 @@ impl Sink for PerFileSink {
 			.map_err(|Error| io::Error::new(io::ErrorKind::Other, Error.to_string()))?;
 
 		// Find the entry for our file, or create it if it's the first match.
-		if let Some(FileMatch) = ResultsGuard.iter_mut().find(|fm| fm.resource == FileURI) {
+		if let Some(FileMatch) = ResultsGuard.iter_mut().find(|fm| fm.Resource == FileURI) {
 			FileMatch.matches.push(NewMatch);
 		} else {
 			ResultsGuard.push(FileMatch { resource:FileURI, matches:vec![NewMatch] });
@@ -354,16 +354,16 @@ impl SearchProvider for MountainEnvironment {
 							if Entry.file_type().map_or(false, |ft| ft.is_file()) {
 								// For each file, create a new sink that knows its path.
 								let Sink = PerFileSink {
-									path:Entry.path().to_path_buf(),
+									path:Entry.Path().to_path_buf(),
 									results:AllMatches.clone(),
 									matcher:Matcher.clone(),
 								};
 
-								if let Err(Error) = Searcher.search_path(&Matcher, Entry.path(), Sink) {
+								if let Err(Error) = Searcher.search_path(&Matcher, Entry.Path(), Sink) {
 									dev_log!(
 										"search",
 										"warn: [SearchProvider] Error searching path {}: {}",
-										Entry.path().display(),
+										Entry.Path().display(),
 										Error
 									);
 								}

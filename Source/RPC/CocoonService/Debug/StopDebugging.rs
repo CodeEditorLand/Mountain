@@ -13,12 +13,12 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:StopDebuggingRequest) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon", "[CocoonService] stop_debugging: session={}", Request.session_id);
+	dev_log!("cocoon", "[CocoonService] stop_debugging: session={}", Request.SessionId);
 
 	let _ = Service
 		.environment
 		.ApplicationHandle
-		.emit("sky://debug/sessionEnd", json!({ "sessionId": Request.session_id }));
+		.emit("sky://debug/sessionEnd", json!({ "sessionId": Request.SessionId }));
 
 	Ok(Response::new(Empty {}))
 }

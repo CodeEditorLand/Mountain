@@ -39,7 +39,7 @@ pub async fn Fn(
 	dev_log!(
 		"provider",
 		"ProvideInlineCompletionItems handle={} uri={} line={} char={}",
-		Request.provider_handle,
+		Request.ProviderHandle,
 		URI,
 		Line,
 		Character
@@ -50,8 +50,8 @@ pub async fn Fn(
 	let PositionDTO_ = PositionDTO { LineNumber:Line, Column:Character };
 
 	let Context = json!({
-		"triggerKind": Request.context.as_ref().map(|C| C.trigger_kind).unwrap_or(0),
-		"selectedCompletionInfo": Request.context.as_ref()
+		"triggerKind": Request.Context.as_ref().map(|C| C.trigger_kind).unwrap_or(0),
+		"selectedCompletionInfo": Request.Context.as_ref()
 			.map(|C| C.selected_completion_info.as_str())
 			.unwrap_or(""),
 	});
@@ -66,7 +66,7 @@ pub async fn Fn(
 			// Shape: { items: [{ insertText, range?, isSnippet?, command? }] }
 			// or an array directly.
 			let ItemsArr = Raw
-				.get("items")
+				.Get("items")
 				.and_then(|V| V.as_array())
 				.cloned()
 				.or_else(|| Raw.as_array().cloned())
@@ -76,7 +76,7 @@ pub async fn Fn(
 				.iter()
 				.filter_map(|Item| {
 					let InsertText = Item
-						.get("insertText")
+						.Get("insertText")
 						.and_then(|V| V.as_str())
 						.or_else(|| Item.get("text").and_then(|V| V.as_str()))
 						.unwrap_or("");
@@ -88,7 +88,7 @@ pub async fn Fn(
 					let IsSnippet = Item.get("isSnippet").and_then(|V| V.as_bool()).unwrap_or(false);
 
 					let Command = Item
-						.get("command")
+						.Get("command")
 						.and_then(|V| V.get("command"))
 						.and_then(|V| V.as_str())
 						.or_else(|| Item.get("command").and_then(|V| V.as_str()))

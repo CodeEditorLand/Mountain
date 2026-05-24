@@ -10,7 +10,7 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn OutputReplace(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Channel = Parameter.get("channel").and_then(Value::as_str).unwrap_or("");
 
 	let Text = Parameter.get("text").and_then(Value::as_str).unwrap_or("");

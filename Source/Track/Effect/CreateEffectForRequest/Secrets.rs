@@ -5,19 +5,19 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::Track::Effect::{
-	CreateEffectForRequest::Utilities::Params::{string_at, string_at_or},
+	CreateEffectForRequest::Utilities::Params::{StringAt, StringAtOr},
 	MappedEffectType::MappedEffect,
 };
 
 /// Helper: Accept either positional `[key, value?]` or an object
-/// `{ key, extension_id?, extensionId? }`, returning `(Key,
+/// `{ key, ExtensionId?, extensionId? }`, returning `(Key,
 /// ExtensionIdentifier)`.
 fn ExtractSecretKey(Parameters:&Value) -> (String, String) {
 	if let Some(Object) = Parameters.as_object() {
 		let Key = Object.get("key").and_then(Value::as_str).unwrap_or("").to_string();
 
 		let ExtensionId = Object
-			.get("extension_id")
+			.Get("ExtensionId")
 			.or_else(|| Object.get("extensionId"))
 			.and_then(Value::as_str)
 			.unwrap_or("unknown")
@@ -25,19 +25,19 @@ fn ExtractSecretKey(Parameters:&Value) -> (String, String) {
 
 		(Key, ExtensionId)
 	} else {
-		let Key = string_at(Parameters, 0);
+		let Key = StringAt(Parameters, 0);
 
-		let ExtensionId = string_at_or(Parameters, 2, "unknown");
+		let ExtensionId = StringAtOr(Parameters, 2, "unknown");
 
 		(Key, ExtensionId)
 	}
 }
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
-		"secrets.get" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
+		"secrets.Get" => {
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn SecretProvider> = RunTime.Environment.Require();
 				let (Key, ExtensionId) = ExtractSecretKey(&Parameters);
 				match provider.GetSecret(ExtensionId, Key).await {
 					Ok(Some(Value)) => Ok(json!(Value)),
@@ -48,31 +48,31 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"secrets.store" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn SecretProvider> = RunTime.Environment.Require();
 				let (Key, ExtensionId) = ExtractSecretKey(&Parameters);
 				let SecretValue = if let Some(Object) = Parameters.as_object() {
 					Object.get("value").and_then(Value::as_str).unwrap_or("").to_string()
 				} else {
-					string_at(&Parameters, 1)
+					StringAt(&Parameters, 1)
 				};
 				provider
 					.StoreSecret(ExtensionId, Key, SecretValue)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"secrets.delete" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn SecretProvider> = RunTime.Environment.Require();
 				let (Key, ExtensionId) = ExtractSecretKey(&Parameters);
 				provider
 					.DeleteSecret(ExtensionId, Key)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 

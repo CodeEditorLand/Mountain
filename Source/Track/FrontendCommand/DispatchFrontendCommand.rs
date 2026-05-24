@@ -64,7 +64,7 @@ use crate::{
 /// frontend. This is the general-purpose entry point for commands that are
 /// defined abstractly in the `Common` crate.
 #[command]
-pub async fn DispatchFrontendCommand<R:Runtime>(
+pub async fn Fn<R:Runtime>(
 	ApplicationHandle:AppHandle<R>,
 
 	RunTime:State<'_, Arc<ApplicationRunTime>>,

@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[tauri::command]
-pub async fn SearchFiles(
+pub async fn Fn(
 	query:String,
 
 	file_patterns:Vec<String>,
@@ -25,25 +25,25 @@ pub async fn SearchFiles(
 
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
-	let request_id = uuid::Uuid::new_v4().to_string();
+	let RequestId = uuid::Uuid::new_v4().to_string();
 
 	let max_results_count = max_results.unwrap_or(100);
 
 	let search_results = client
-		.search_files(
+		.SearchFiles(
 			request_id,
 			query,
-			file_patterns.first().map(|s| s.as_str()).unwrap_or("").to_string(),
+			file_patterns.first().map(|S| s.as_str()).unwrap_or("").to_string(),
 			max_results_count,
 		)
 		.await
-		.map_err(|e| format!("File search failed: {:?}", e))?;
+		.map_err(|E| format!("File search failed: {:?}", e))?;
 
 	let results:Vec<FileResultDTO::Struct> = search_results
 		.into_iter()
 		.map(|r| {
 			FileResultDTO::Struct {
-				path:r.path,
+				path:r.Path,
 				size:r.size,
 				line:Some(r.line_number),
 				content:Some(r.match_preview),

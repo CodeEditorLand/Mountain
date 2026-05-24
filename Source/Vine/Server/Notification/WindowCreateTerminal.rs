@@ -13,7 +13,7 @@ use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider:
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn WindowCreateTerminal(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Provider:Arc<dyn TerminalProvider> = Service.RunTime().Environment.Require();
 
 	let Name = Parameter.get("name").and_then(|V| V.as_str()).unwrap_or("terminal").to_string();
@@ -21,7 +21,7 @@ pub async fn WindowCreateTerminal(Service:&MountainVinegRPCService, Parameter:&V
 	let Options = Parameter.get("options").cloned().unwrap_or_default();
 
 	let Handle = Parameter
-		.get("handle")
+		.Get("handle")
 		.and_then(|V| V.as_str())
 		.map(str::to_string)
 		.unwrap_or_default();

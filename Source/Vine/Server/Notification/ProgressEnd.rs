@@ -8,7 +8,7 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn ProgressEnd(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Handle = Parameter.get("handle").and_then(Value::as_str).unwrap_or("");
 
 	if let Err(Error) = Service

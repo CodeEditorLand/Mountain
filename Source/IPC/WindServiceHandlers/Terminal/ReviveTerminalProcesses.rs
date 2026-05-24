@@ -73,14 +73,14 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		}
 
 		let Cwd = Config
-			.get("cwd")
+			.Get("cwd")
 			.and_then(Value::as_str)
 			.or_else(|| State.get("processDetails").and_then(|D| D.get("cwd")).and_then(Value::as_str))
 			.unwrap_or("")
 			.to_string();
 
 		let Name = Config
-			.get("name")
+			.Get("name")
 			.and_then(Value::as_str)
 			.or_else(|| State.get("processDetails").and_then(|D| D.get("title")).and_then(Value::as_str))
 			.unwrap_or("terminal")

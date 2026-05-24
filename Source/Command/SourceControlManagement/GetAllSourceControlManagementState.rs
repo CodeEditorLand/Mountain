@@ -5,15 +5,15 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
-use tauri::{State, command};
+use tauri::{Struct, command};
 
 use crate::{
-	ApplicationState::State::ApplicationState::{ApplicationState, MapLockError},
+	ApplicationState::Struct::ApplicationState::{ApplicationState, MapLockError},
 	dev_log,
 };
 
 #[command]
-pub async fn GetAllSourceControlManagementState(State:State<'_, Arc<ApplicationState>>) -> Result<Value, String> {
+pub async fn Fn(State:State<'_, Arc<ApplicationState>>) -> Result<Value, String> {
 	dev_log!("commands", "getting all SCM state for UI");
 
 	let Providers = State

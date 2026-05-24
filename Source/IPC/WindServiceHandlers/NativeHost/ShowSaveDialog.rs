@@ -5,10 +5,10 @@ use serde_json::{Value, json};
 use tauri::AppHandle;
 use tauri_plugin_dialog::DialogExt;
 
-use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_val;
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgVal;
 
 pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-	let Options = arg_val(&Arguments, 0);
+	let Options = ArgVal(&Arguments, 0);
 
 	let Title = Options.get("title").and_then(Value::as_str).unwrap_or("Save").to_string();
 

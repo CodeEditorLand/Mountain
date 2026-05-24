@@ -14,30 +14,30 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::{
-	IPC::SkyEmit::LogSkyEmit,
+	IPC::SkyEmit::Fn,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::Effect::{
-		CreateEffectForRequest::Utilities::Params::{str_at, string_at, val_at},
+		CreateEffectForRequest::Utilities::Params::{StrAt, StringAt, ValAt},
 		MappedEffectType::MappedEffect,
 	},
 	dev_log,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
-		"$tree:register" | "tree.register" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
+		"$tree:register" | "tree.Register" => {
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn TreeViewProvider> = RunTime.Environment.Require();
 
-				let first = str_at(&Parameters, 0);
+				let first = StrAt(&Parameters, 0);
 
 				let (ViewId, Options) = if Parameters.get(2).is_some() {
 					let vid = Parameters.get(1).and_then(Value::as_str).unwrap_or(first).to_string();
-					let opts = val_at(&Parameters, 2);
+					let opts = ValAt(&Parameters, 2);
 					(vid, opts)
 				} else {
 					let vid = first.to_string();
-					let opts = val_at(&Parameters, 1);
+					let opts = ValAt(&Parameters, 1);
 					(vid, opts)
 				};
 
@@ -54,7 +54,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				if Result.is_ok() {
 					if let Err(Error) = LogSkyEmit(
-						&run_time.Environment.ApplicationHandle,
+						&RunTime.Environment.ApplicationHandle,
 						SkyEvent::TreeViewCreate.AsStr(),
 						json!({ "viewId": ViewId, "options": Options }),
 					) {
@@ -66,9 +66,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			})
 		},
 
-		"tree.unregister" | "tree.dispose" => {
-			crate::effect!(run_time, {
-				let ViewId = string_at(&Parameters, 0);
+		"tree.Unregister" | "tree.Dispose" => {
+			crate::effect!(RunTime, {
+				let ViewId = StringAt(&Parameters, 0);
 
 				if ViewId.is_empty() {
 					return Ok(json!(null));
@@ -76,13 +76,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				dev_log!("tree-view", "[TreeView] unregister view={}", ViewId);
 
-				let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
+				let Provider:Arc<dyn TreeViewProvider> = RunTime.Environment.Require();
 
 				let Result = provider.UnregisterTreeDataProvider(ViewId.clone()).await;
 
 				if Result.is_ok() {
 					if let Err(Error) = LogSkyEmit(
-						&run_time.Environment.ApplicationHandle,
+						&RunTime.Environment.ApplicationHandle,
 						SkyEvent::TreeViewDispose.AsStr(),
 						json!({ "viewId": ViewId }),
 					) {
@@ -99,18 +99,18 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// existed in the Tauri IPC path (mod.rs), so Cocoon's gRPC
 		// sendRequest("tree.reveal", ...) fell through to "Unknown method".
 		"tree.reveal" => {
-			crate::effect!(run_time, {
+			crate::effect!(RunTime, {
 				let Payload = if Parameters.is_object() {
 					Parameters.clone()
 				} else {
 					json!({
-						"viewId": val_at(&Parameters, 0),
-						"element": val_at(&Parameters, 1),
-						"options": val_at(&Parameters, 2),
+						"viewId": ValAt(&Parameters, 0),
+						"element": ValAt(&Parameters, 1),
+						"options": ValAt(&Parameters, 2),
 					})
 				};
 				if let Err(Error) =
-					LogSkyEmit(&run_time.Environment.ApplicationHandle, "sky://tree-view/reveal", Payload)
+					LogSkyEmit(&RunTime.Environment.ApplicationHandle, "sky://tree-view/reveal", Payload)
 				{
 					dev_log!("tree-view", "warn: [TreeView] reveal emit failed: {}", Error);
 				}

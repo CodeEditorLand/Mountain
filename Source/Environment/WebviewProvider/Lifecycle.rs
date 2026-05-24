@@ -23,7 +23,7 @@ pub(super) async fn create_webview_panel_impl(
 
 	extension_data_value:Value,
 
-	view_type:String,
+	ViewType:String,
 
 	title:String,
 
@@ -33,25 +33,25 @@ pub(super) async fn create_webview_panel_impl(
 
 	content_options_value:Value,
 ) -> Result<String, CommonError> {
-	let handle = Uuid::new_v4().to_string();
+	let Handle = Uuid::new_v4().to_string();
 
 	dev_log!(
 		"extensions",
 		"[WebviewProvider] Creating WebviewPanel with handle: {}, viewType: {}",
 		handle,
-		view_type
+		ViewType
 	);
 
 	// Parse content options to ensure security settings
 	let content_options:WebviewContentOptionsDTO =
-		serde_json::from_value(content_options_value.clone()).map_err(|error| {
+		serde_json::from_value(content_options_value.clone()).map_err(|Error| {
 			CommonError::InvalidArgument { ArgumentName:"ContentOptions".into(), Reason:error.to_string() }
 		})?;
 
 	let state = WebviewStateDTO {
 		Handle:handle.clone(),
 
-		ViewType:view_type.clone(),
+		ViewType:ViewType.clone(),
 
 		Title:title.clone(),
 
@@ -62,8 +62,8 @@ pub(super) async fn create_webview_panel_impl(
 		SideCarIdentifier:"cocoon-main".to_string(),
 
 		ExtensionIdentifier:extension_data_value
-			.get("id")
-			.and_then(|v| v.as_str())
+			.Get("id")
+			.and_then(|V| v.as_str())
 			.unwrap_or_default()
 			.to_string(),
 
@@ -107,12 +107,12 @@ pub(super) async fn create_webview_panel_impl(
 			"window.__WEBVIEW_INITIAL_STATE__ = {};",
 			json!({
 				"Handle": handle,
-				"ViewType": view_type,
+				"ViewType": ViewType,
 				"Title": title_clone
 			})
 		))
 		.build()
-		.map_err(|error| {
+		.map_err(|Error| {
 			dev_log!(
 				"extensions",
 				"error: [WebviewProvider] Failed to create Webview window: {}",
@@ -128,9 +128,9 @@ pub(super) async fn create_webview_panel_impl(
 	env.ApplicationHandle
 		.emit::<Value>(
 			SkyEvent::WebviewCreated.AsStr(),
-			json!({ "Handle": handle.clone(), "ViewType": view_type.clone(), "Title": title_clone }),
+			json!({ "Handle": handle.clone(), "ViewType": ViewType.clone(), "Title": title_clone }),
 		)
-		.map_err(|error| {
+		.map_err(|Error| {
 			CommonError::IPCError { Description:format!("Failed to emit Webview creation event: {}", error) }
 		})?;
 
@@ -167,7 +167,7 @@ pub(super) async fn dispose_webview_panel_impl(env:&MountainEnvironment, handle:
 	// Notify frontend about Webview disposal
 	env.ApplicationHandle
 		.emit::<Value>(SkyEvent::WebviewDisposed.AsStr(), json!({ "Handle": handle }))
-		.map_err(|error| {
+		.map_err(|Error| {
 			CommonError::IPCError { Description:format!("Failed to emit Webview disposal event: {}", error) }
 		})?;
 
@@ -185,11 +185,11 @@ pub(super) async fn reveal_webview_panel_impl(
 	dev_log!("extensions", "[WebviewProvider] Revealing WebviewPanel: {}", handle);
 
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
-		webview_window.show().map_err(|error| {
+		webview_window.show().map_err(|Error| {
 			CommonError::UserInterfaceInteraction { Reason:format!("Failed to show Webview window: {}", error) }
 		})?;
 
-		webview_window.set_focus().map_err(|error| {
+		webview_window.set_focus().map_err(|Error| {
 			CommonError::UserInterfaceInteraction { Reason:format!("Failed to focus Webview window: {}", error) }
 		})?;
 
@@ -211,7 +211,7 @@ pub(super) async fn reveal_webview_panel_impl(
 		// Emit visibility event
 		env.ApplicationHandle
 			.emit::<Value>(SkyEvent::WebviewRevealed.AsStr(), json!({ "Handle": handle }))
-			.map_err(|error| {
+			.map_err(|Error| {
 				CommonError::IPCError { Description:format!("Failed to emit Webview revealed event: {}", error) }
 			})?;
 	}

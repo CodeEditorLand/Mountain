@@ -6,10 +6,10 @@
 use serde_json::Value;
 use tauri::AppHandle;
 
-use crate::{IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_i64, dev_log};
+use crate::{IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgI64, dev_log};
 
 pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-	let Code = arg_i64(&Arguments, 0) as i32;
+	let Code = ArgI64(&Arguments, 0) as i32;
 
 	dev_log!("lifecycle", "nativeHost:exit code={}", Code);
 

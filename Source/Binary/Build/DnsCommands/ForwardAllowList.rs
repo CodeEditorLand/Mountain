@@ -1,9 +1,9 @@
 //! Allowed external domains the DNS server may forward queries
-//! to. Returned by `dns_get_forward_allowlist`.
+//! to. Returned by `DnsGetForwardAllowlist`.
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ForwardAllowList {
+pub struct Struct {
 	pub domains:Vec<String>,
 }

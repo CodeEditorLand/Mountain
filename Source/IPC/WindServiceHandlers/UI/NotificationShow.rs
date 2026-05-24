@@ -4,7 +4,7 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Emitter};
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
-use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{arg_string, arg_string_or, arg_val};
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{ArgString, ArgStringOr, ArgVal};
 
 fn NewId() -> String {
 	use std::sync::atomic::{AtomicU64, Ordering};
@@ -15,12 +15,12 @@ fn NewId() -> String {
 }
 
 pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-	let Message = arg_string(&Arguments, 0);
+	let Message = ArgString(&Arguments, 0);
 
-	let Severity = arg_string_or(&Arguments, 1, "info");
+	let Severity = ArgStringOr(&Arguments, 1, "info");
 
 	let Actions = {
-		let V = arg_val(&Arguments, 2);
+		let V = ArgVal(&Arguments, 2);
 		if V.is_null() { json!([]) } else { V }
 	};
 

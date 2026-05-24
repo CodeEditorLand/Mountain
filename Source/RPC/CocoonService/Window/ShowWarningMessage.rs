@@ -17,11 +17,11 @@ pub async fn Fn(
 
 	Request:ShowMessageRequest,
 ) -> Result<Response<ShowMessageResponse>, Status> {
-	dev_log!("cocoon", "warn: [CocoonService] show_warning_message: {}", Request.message);
+	dev_log!("cocoon", "warn: [CocoonService] show_warning_message: {}", Request.Message);
 
 	let _ = Service
 		.environment
-		.ShowMessage(MessageSeverity::Warning, Request.message, None)
+		.ShowMessage(MessageSeverity::Warning, Request.Message, None)
 		.await;
 
 	Ok(Response::new(ShowMessageResponse { success:true }))

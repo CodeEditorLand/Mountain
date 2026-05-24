@@ -21,7 +21,7 @@ use tauri::{AppHandle, Emitter};
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn ApplyTextEdits(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Uri = Parameter.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
 
 	let EditCount = Parameter.get("edits").and_then(Value::as_array).map(|A| A.len()).unwrap_or(0);

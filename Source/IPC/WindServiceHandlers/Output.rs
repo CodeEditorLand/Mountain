@@ -7,11 +7,11 @@
 //! mutate / focus the channel panel.
 //!
 //! Layout (one export per file, file name = identity):
-//! - `OutputCreate::OutputCreate`
-//! - `OutputAppend::OutputAppend`
-//! - `OutputAppendLine::OutputAppendLine`
-//! - `OutputClear::OutputClear`
-//! - `OutputShow::OutputShow`
+//! - `OutputCreate::Fn`
+//! - `OutputAppend::Fn`
+//! - `OutputAppendLine::Fn`
+//! - `OutputClear::Fn`
+//! - `OutputShow::Fn`
 
 pub mod OutputAppend;
 

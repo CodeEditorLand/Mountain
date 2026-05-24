@@ -16,11 +16,11 @@ use tauri::Wry;
 ///
 /// - Windows/Linux: Enables any_thread configuration
 /// - macOS: Uses default threading (no special configuration)
-pub fn TauriBuild() -> tauri::Builder<Wry> {
+pub fn Fn() -> tauri::Builder<Wry> {
 	// Initialize the builder with default configuration
 	let Builder = tauri::Builder::default();
 
-	// Disable Tauri's default macOS main menu so it doesn't pre-install
+	// Disable Tauri's default macOS main menu so it doesn't pre-Install
 	// Edit > Undo/Redo entries that compete with Monaco's undo stack and
 	// cause the WKWebView NSUndoManager to intercept Cmd+Z before the
 	// workbench sees it. The app menu is set explicitly in AppMenu.rs

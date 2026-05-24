@@ -18,12 +18,12 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalOpenedNotification) 
 		"cocoon",
 		"[CocoonService] Terminal opened notification: {} (ID: {})",
 		Request.name,
-		Request.terminal_id
+		Request.TerminalId
 	);
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://terminal/create",
-		json!({ "id": Request.terminal_id, "name": Request.name, "pid": 0 }),
+		json!({ "id": Request.TerminalId, "name": Request.name, "pid": 0 }),
 	);
 
 	Ok(Response::new(Empty {}))

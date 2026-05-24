@@ -13,7 +13,7 @@ use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider:
 use serde_json::Value;
 
 use crate::{
-	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{arg_u64, arg_u64_or},
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{ArgU64, ArgU64Or},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
@@ -30,11 +30,11 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 			(Id, C, R)
 		} else {
-			let Id = arg_u64(&Arguments, 0);
+			let Id = ArgU64(&Arguments, 0);
 
-			let C = arg_u64_or(&Arguments, 1, 80) as u16;
+			let C = ArgU64Or(&Arguments, 1, 80) as u16;
 
-			let R = arg_u64_or(&Arguments, 2, 24) as u16;
+			let R = ArgU64Or(&Arguments, 2, 24) as u16;
 
 			(Id, C, R)
 		}

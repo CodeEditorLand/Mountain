@@ -47,7 +47,7 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<R
 			Status::internal(format!("git_exec: failed to spawn git: {}", Error))
 		})?;
 
-	let ExitCode = Output.status.code().unwrap_or(-1);
+	let ExitCode = Output.Status.code().unwrap_or(-1);
 
 	dev_log!(
 		"cocoon",

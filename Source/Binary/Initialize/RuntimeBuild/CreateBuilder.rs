@@ -4,7 +4,7 @@
 
 use Echo::Scheduler::SchedulerBuilder::SchedulerBuilder;
 
-use crate::{Binary::Initialize::RuntimeBuild::SchedulerConfig, dev_log};
+use crate::{Binary::Fn::RuntimeBuild::SchedulerConfig, dev_log};
 
 pub fn Fn(Config:SchedulerConfig::Struct) -> SchedulerBuilder {
 	let mut Builder = SchedulerBuilder::Create();

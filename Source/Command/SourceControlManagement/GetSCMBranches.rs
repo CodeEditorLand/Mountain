@@ -10,12 +10,12 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
-use tauri::{State, command};
+use tauri::{Struct, command};
 
-use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
+use crate::{ApplicationState::Struct::ApplicationState::ApplicationState, dev_log};
 
 #[command]
-pub async fn GetSCMBranches(
+pub async fn Fn(
 	_State:State<'_, Arc<ApplicationState>>,
 
 	ProviderIdentifier:String,

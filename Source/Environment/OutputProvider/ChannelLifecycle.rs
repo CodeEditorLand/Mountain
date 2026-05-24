@@ -56,7 +56,7 @@ pub(super) async fn register_channel(
 		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 	channels_guard.entry(channel_identifier.clone()).or_insert_with(|| {
-		OutputChannelStateDTO::Create(&name, language_identifier.clone()).unwrap_or_else(|e| {
+		OutputChannelStateDTO::Create(&name, language_identifier.clone()).unwrap_or_else(|E| {
 			dev_log!("output", "error: [OutputProvider] Failed to create output channel: {}", e);
 			OutputChannelStateDTO::default()
 		})
@@ -67,7 +67,7 @@ pub(super) async fn register_channel(
 	let event_payload = json!({ "id": channel_identifier, "name": name, "languageId": language_identifier });
 
 	env.ApplicationHandle
-		.emit(SkyEvent::OutputCreate.AsStr(), event_payload)
+		.emit(SkyEvent::Fn.AsStr(), event_payload)
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 
 	Ok(channel_identifier)
@@ -90,6 +90,6 @@ pub(super) async fn dispose_channel(
 		.remove(&channel_identifier);
 
 	env.ApplicationHandle
-		.emit(SkyEvent::OutputDispose.AsStr(), json!({ "channel": channel_identifier }))
+		.emit(SkyEvent::Fn.AsStr(), json!({ "channel": channel_identifier }))
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 }

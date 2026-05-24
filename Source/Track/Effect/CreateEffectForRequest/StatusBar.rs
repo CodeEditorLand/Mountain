@@ -22,28 +22,28 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::Track::Effect::{
-	CreateEffectForRequest::Utilities::Params::{obj_bool, obj_f64, obj_str, string_at},
+	CreateEffectForRequest::Utilities::Params::{ObjBool, ObjF64, ObjStr, StringAt},
 	MappedEffectType::MappedEffect,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$statusBar:set" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn StatusBarProvider> = RunTime.Environment.Require();
 
 				// The extension host serialises this as an object with named fields,
 				// matching the shape used by the RPC layer (EntryIdentifier = id).
-				let entry_id = Parameters
-					.get("id")
+				let EntryId = Parameters
+					.Get("id")
 					.and_then(Value::as_str)
 					.ok_or_else(|| "$statusBar:set: missing 'id' field".to_string())?;
 
-				let item_id = Parameters.get("itemId").and_then(Value::as_str).unwrap_or(entry_id);
+				let ItemId = Parameters.get("itemId").and_then(Value::as_str).unwrap_or(EntryId);
 
-				let ext_id = obj_str(&Parameters, "extensionId");
+				let ext_id = ObjStr(&Parameters, "extensionId");
 
-				let text = obj_str(&Parameters, "text").to_string();
+				let Text = ObjStr(&Parameters, "text").to_string();
 
 				let tooltip = Parameters.get("tooltip").cloned();
 
@@ -53,15 +53,15 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				let background_color = Parameters.get("backgroundColor").cloned();
 
-				let is_aligned_left = obj_bool(&Parameters, "alignLeft");
+				let is_aligned_left = ObjBool(&Parameters, "alignLeft");
 
-				let priority = obj_f64(&Parameters, "priority");
+				let priority = ObjF64(&Parameters, "priority");
 
 				let accessibility = Parameters.get("accessibilityInformation").cloned();
 
 				let entry = StatusBarEntryDTO {
-					EntryIdentifier:entry_id.to_string(),
-					ItemIdentifier:item_id.to_string(),
+					EntryIdentifier:EntryId.to_string(),
+					ItemIdentifier:ItemId.to_string(),
 					ExtensionIdentifier:ext_id.to_string(),
 					Name:None,
 					Text:text,
@@ -79,65 +79,65 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					.SetStatusBarEntry(entry)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"$statusBar:dispose" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn StatusBarProvider> = RunTime.Environment.Require();
 
 				// Require a non-empty id - a missing id would silently target the
 				// wrong entry (previously fell back to the literal string "id").
-				let id = Parameters
-					.get(0)
+				let Id = Parameters
+					.Get(0)
 					.and_then(Value::as_str)
-					.filter(|s| !s.is_empty())
+					.filter(|S| !s.is_empty())
 					.ok_or_else(|| "$statusBar:dispose: missing or empty entry id".to_string())?;
 
 				provider
 					.DisposeStatusBarEntry(id.to_string())
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"$setStatusBarMessage" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn StatusBarProvider> = RunTime.Environment.Require();
 
 				let message_id = Parameters
-					.get(0)
+					.Get(0)
 					.and_then(Value::as_str)
-					.filter(|s| !s.is_empty())
+					.filter(|S| !s.is_empty())
 					.ok_or_else(|| "$setStatusBarMessage: missing or empty message id".to_string())?;
 
-				let text = string_at(&Parameters, 1);
+				let Text = StringAt(&Parameters, 1);
 
 				provider
 					.SetStatusBarMessage(message_id.to_string(), text)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"$disposeStatusBarMessage" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn StatusBarProvider> = RunTime.Environment.Require();
 
 				let message_id = Parameters
-					.get(0)
+					.Get(0)
 					.and_then(Value::as_str)
-					.filter(|s| !s.is_empty())
+					.filter(|S| !s.is_empty())
 					.ok_or_else(|| "$disposeStatusBarMessage: missing or empty message id".to_string())?;
 
 				provider
 					.DisposeStatusBarMessage(message_id.to_string())
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 

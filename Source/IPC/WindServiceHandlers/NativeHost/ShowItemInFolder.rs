@@ -8,18 +8,18 @@ use serde_json::Value;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-	let path_str = Arguments
-		.get(0)
+	let PathStr = Arguments
+		.Get(0)
 		.ok_or("Missing file path".to_string())?
 		.as_str()
 		.ok_or("File path must be a string".to_string())?;
 
-	dev_log!("vfs", "showInFolder: {}", path_str);
+	dev_log!("vfs", "showInFolder: {}", PathStr);
 
-	let path = std::path::PathBuf::from(path_str);
+	let Path = std::path::PathBuf::from(PathStr);
 
 	if !path.exists() {
-		return Err(format!("Path does not exist: {}", path_str));
+		return Err(format!("Path does not exist: {}", PathStr));
 	}
 
 	#[cfg(target_os = "macos")]
@@ -32,7 +32,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 			.output()
 			.map_err(|Error| format!("Failed to execute open command: {}", Error))?;
 
-		if !result.status.success() {
+		if !result.Status.success() {
 			return Err(format!(
 				"Failed to show item in folder: {}",
 				String::from_utf8_lossy(&result.stderr)
@@ -50,7 +50,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 			.output()
 			.map_err(|Error| format!("Failed to execute explorer command: {}", Error))?;
 
-		if !result.status.success() {
+		if !result.Status.success() {
 			return Err(format!(
 				"Failed to show item in folder: {}",
 				String::from_utf8_lossy(&result.stderr)
@@ -70,7 +70,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 			let result = Command::new(manager).arg(&path).output();
 
 			match result {
-				Ok(output) if output.status.success() => {
+				Ok(output) if output.Status.success() => {
 					dev_log!("lifecycle", "opened with {}", manager);
 
 					break;
@@ -91,7 +91,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		}
 	}
 
-	dev_log!("vfs", "showed in folder: {}", path_str);
+	dev_log!("vfs", "showed in folder: {}", PathStr);
 
 	Ok(Value::Bool(true))
 }

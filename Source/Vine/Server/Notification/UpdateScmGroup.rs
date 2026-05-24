@@ -1,6 +1,6 @@
 //! Cocoon → Mountain `update_scm_group` notification.
 //!
-//! Parallels the typed `RPC/CocoonService/SCM.rs::UpdateScmGroup` gRPC;
+//! Parallels the typed `RPC/CocoonService/SCM.rs::Fn` gRPC;
 //! Cocoon's `ScmNamespace.ts` emits through `SendToMountain(...)` for
 //! fire-and-forget resource-state updates. Re-emits on the canonical
 //! `sky://scm/updateGroup` channel so the renderer SCM view updates
@@ -12,13 +12,13 @@
 //! { scm_handle: u32, group_handle: "<scm_handle>/<group_id>", resource_states: [...] }
 //! ```
 //!
-//! Earlier revisions of this atom read `provider_id`/`group_id` and
+//! Earlier revisions of this atom read `ProviderId`/`group_id` and
 //! silently dropped every update because Cocoon never sends those keys
-//! - the resulting `[ScmGroup] skip: missing provider_id or group_id`
+//! - the resulting `[ScmGroup] skip: missing ProviderId or group_id`
 //! line was the only signal the SCM viewlet was being starved. The
 //! current decoder reads the canonical handle pair, splits the
 //! `<handle>/<groupId>` form for the renderer payload, and falls back
-//! to the legacy `provider_id`/`group_id` keys for any stale caller
+//! to the legacy `ProviderId`/`group_id` keys for any stale caller
 //! that hasn't migrated yet.
 
 use serde_json::{Value, json};
@@ -26,41 +26,41 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	// Producer (Cocoon `ScmNamespace.ts`) emits camelCase keys post-audit.
 	// snake_case probes retained as transitional fallback for one rebuild.
 	let ScmHandle = Parameter
-		.get("scmHandle")
+		.Get("scmHandle")
 		.or_else(|| Parameter.get("scm_handle"))
 		.and_then(Value::as_u64)
 		.map(|H| H as u32);
 
 	let GroupHandle = Parameter
-		.get("groupHandle")
+		.Get("groupHandle")
 		.or_else(|| Parameter.get("group_handle"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
 
 	// Legacy fallbacks: pre-2026-04 Cocoon revisions used flat
-	// `provider_id`/`group_id`. Keep parsing them so a downgrade of
+	// `ProviderId`/`group_id`. Keep parsing them so a downgrade of
 	// just one side does not silently drop traffic.
 	let LegacyProviderId = Parameter
-		.get("providerId")
-		.or_else(|| Parameter.get("provider_id"))
+		.Get("providerId")
+		.or_else(|| Parameter.get("ProviderId"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
 
 	let LegacyGroupId = Parameter
-		.get("groupId")
+		.Get("groupId")
 		.or_else(|| Parameter.get("group_id"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
 
 	let ResourceStates = Parameter
-		.get("resourceStates")
+		.Get("resourceStates")
 		.or_else(|| Parameter.get("resource_states"))
 		.cloned()
 		.unwrap_or_else(|| Value::Array(Vec::new()));
@@ -88,7 +88,7 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 	if ResolvedScmHandle.is_none() && LegacyProviderId.is_empty() {
 		dev_log!(
 			"grpc",
-			"[ScmGroup] skip: missing scm_handle / provider_id (group_handle={:?} legacy_group={:?})",
+			"[ScmGroup] skip: missing scm_handle / ProviderId (group_handle={:?} legacy_group={:?})",
 			GroupHandle,
 			ResolvedGroupId
 		);

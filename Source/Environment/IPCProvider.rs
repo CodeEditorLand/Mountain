@@ -36,7 +36,7 @@ use CommonLibrary::{Error::CommonError::CommonError, IPC::IPCProvider::IPCProvid
 use async_trait::async_trait;
 use serde_json::Value;
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::MountainEnvironment::Struct;
 use crate::Vine::Client;
 
 // TODO: message queuing for offline scenarios, bidirectional request handling

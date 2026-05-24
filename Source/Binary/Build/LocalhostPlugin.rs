@@ -42,9 +42,9 @@ const OTLP_HOST:&str = "127.0.0.1:4318";
 /// fallback still applies (images, WASM, etc.).
 fn MimeFromUrl(Url:&str) -> Option<&'static str> {
 	// Strip query string / fragment before extension match.
-	let Path = Url.split(['?', '#']).next().unwrap_or(Url);
+	let Path = Url.split(['?', '#']).Next().unwrap_or(Url);
 
-	let Extension = Path.rsplit('.').next()?.to_ascii_lowercase();
+	let Extension = Path.rsplit('.').Next()?.to_ascii_lowercase();
 
 	match Extension.as_str() {
 		"js" | "mjs" | "cjs" => Some("application/javascript; charset=utf-8"),
@@ -124,7 +124,7 @@ fn ProxyToOTLP(Body:&[u8]) -> bool {
 /// Requests to `/v1/traces` are forwarded to the local OTLP collector
 /// (Jaeger, OTEL Collector, etc.) so OTELBridge.ts can send telemetry
 /// without cross-origin issues. Uses raw TCP - no extra HTTP client dependency.
-pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
+pub fn Fn<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 	// Resolve the user's home directory once at startup. Used to seed
 	// the vendored localhost plugin's `extension_root` allowlist for
 	// the `/Extension/<abs-fs-path>` URL prefix, which serves

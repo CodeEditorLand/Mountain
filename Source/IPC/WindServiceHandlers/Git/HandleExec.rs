@@ -8,7 +8,7 @@ use serde_json::{Value, json};
 
 use crate::IPC::WindServiceHandlers::{
 	Git::Shared::{AsStringArray::Fn as AsStringArray, Generated::Fn as Generated, RunGit::Fn as RunGit},
-	Utilities::JsonValueHelpers::arg_string,
+	Utilities::JsonValueHelpers::ArgString,
 };
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
@@ -28,7 +28,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 		Some(First) if First.is_array() => {
 			let Argv = AsStringArray(First);
 
-			let Cwd = arg_string(&Arguments, 1);
+			let Cwd = ArgString(&Arguments, 1);
 
 			(Argv, Cwd, String::new())
 		},

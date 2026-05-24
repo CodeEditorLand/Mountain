@@ -13,7 +13,7 @@ use crate::{
 pub async fn Fn(
 	ApplicationHandle:AppHandle,
 
-	_State:&crate::ApplicationState::State::ExtensionState::State::State,
+	_State:&crate::ApplicationState::Struct::ExtensionState::Struct::Struct,
 ) -> Result<(), CommonError> {
 	dev_log!("extensions", "[ExtensionScanner] Starting extension scan...");
 
@@ -125,7 +125,7 @@ pub async fn Fn(
 				for Extension in Found {
 					let Identifier = Extension
 						.Identifier
-						.get("value")
+						.Get("value")
 						.and_then(Value::as_str)
 						.unwrap_or_default()
 						.to_string();
@@ -179,7 +179,7 @@ pub async fn Fn(
 pub(crate) async fn ScanExtensionsWithRecovery(
 	ApplicationHandle:AppHandle,
 
-	State:&crate::ApplicationState::State::ExtensionState::State::State,
+	State:&crate::ApplicationState::Struct::ExtensionState::Struct::Struct,
 ) -> Result<(), CommonError> {
 	dev_log!("extensions", "[ExtensionScanner] Starting robust extension scan...");
 

@@ -5,7 +5,7 @@
 //! non-feature path falls through with no overhead.
 //!
 //! Layout (one export per file, file name = identity):
-//! - `InitializeTracing::Fn` - install the global subscriber.
+//! - `InitializeTracing::Fn` - Install the global subscriber.
 //! - `CreateSpan::Fn` - span factory with structured attributes.
 //! - `InstrumentRPC::Fn` - gRPC-call wrapper with start/finish logs.
 //! - `InstrumentCommand::Fn` - Mountain-command wrapper, errors as
@@ -37,5 +37,5 @@ mod tests {
 	fn tracing_initialization() {
 		// Should not panic. Returns Ok regardless of feature gate.
 		let _ = InitializeTracing::Fn();
-	}
+}
 }

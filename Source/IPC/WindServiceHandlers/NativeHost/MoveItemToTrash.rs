@@ -5,10 +5,10 @@
 
 use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string;
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgString;
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Path = arg_string(&Arguments, 0);
+	let Path = ArgString(&Arguments, 0);
 
 	if Path.is_empty() {
 		return Ok(json!(false));
@@ -26,7 +26,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 					"-e",
 					"tell application \"Finder\" to delete POSIX file (system attribute \"MOVE_TARGET\")",
 				])
-				.status()
+				.Status()
 				.await
 				.map(|S| S.success())
 				.unwrap_or(false)
@@ -36,7 +36,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 		{
 			let Gio = tokio::process::Command::new("gio")
 				.args(["trash", &Path])
-				.status()
+				.Status()
 				.await
 				.map(|S| S.success())
 				.unwrap_or(false);
@@ -46,7 +46,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 			} else {
 				tokio::process::Command::new("trash")
 					.arg(&Path)
-					.status()
+					.Status()
 					.await
 					.map(|S| S.success())
 					.unwrap_or(false)
@@ -63,7 +63,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 					"-Command",
 					"(new-object -comobject Shell.Application).NameSpace(0xA).MoveHere($env:MOVE_TARGET)",
 				])
-				.status()
+				.Status()
 				.await
 				.map(|S| S.success())
 				.unwrap_or(false)

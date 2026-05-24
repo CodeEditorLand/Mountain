@@ -6,7 +6,7 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 
 use crate::{
-	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{arg_bool, arg_bool_true},
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{ArgBool, ArgBoolTrue},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
@@ -23,9 +23,9 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 	let MaxResults = Arguments.get(2).and_then(|V| V.as_u64()).map(|N| N as usize);
 
-	let UseIgnoreFiles = arg_bool_true(&Arguments, 3);
+	let UseIgnoreFiles = ArgBoolTrue(&Arguments, 3);
 
-	let FollowSymlinks = arg_bool(&Arguments, 4);
+	let FollowSymlinks = ArgBool(&Arguments, 4);
 
 	dev_log!(
 		"search",

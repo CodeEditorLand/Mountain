@@ -21,7 +21,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterProviderRequest) -> 
 		Request.handle,
 		ProviderType::FoldingRange,
 		&Request.language_selector,
-		&Request.extension_id,
+		&Request.ExtensionId,
 	);
 
 	Ok(Response::new(Empty {}))

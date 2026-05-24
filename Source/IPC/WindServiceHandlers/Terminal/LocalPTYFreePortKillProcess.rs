@@ -5,10 +5,10 @@
 
 use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_u64;
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgU64;
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Port = arg_u64(&Arguments, 0) as u16;
+	let Port = ArgU64(&Arguments, 0) as u16;
 
 	if Port > 0 {
 		#[cfg(unix)]
@@ -23,7 +23,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 
 				for Pid in Pids.split_whitespace() {
 					if let Ok(P) = Pid.parse::<u32>() {
-						let _ = tokio::process::Command::new("kill").args(["-9", &P.to_string()]).status().await;
+						let _ = tokio::process::Command::new("kill").args(["-9", &P.to_string()]).Status().await;
 					}
 				}
 			}

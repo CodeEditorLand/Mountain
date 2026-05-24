@@ -27,7 +27,7 @@ pub async fn Fn(
 		.map(|Item| {
 			QuickPickItemDTO {
 				Label:Item.label.clone(),
-				Description:if Item.description.is_empty() { None } else { Some(Item.description.clone()) },
+				Description:if Item.Description.is_empty() { None } else { Some(Item.Description.clone()) },
 				Detail:None,
 				Picked:Some(Item.picked),
 				AlwaysShow:None,

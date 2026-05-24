@@ -15,7 +15,7 @@ pub(super) struct Struct {
 
 	pub machine_id:String,
 
-	pub session_id:String,
+	pub SessionId:String,
 
 	pub log_level:i32,
 

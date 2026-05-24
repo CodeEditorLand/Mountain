@@ -17,14 +17,14 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:SetStatusBarTextRequest) -> 
 	dev_log!(
 		"cocoon",
 		"[CocoonService] set_status_bar_text: id={} text={}",
-		Request.item_id,
+		Request.ItemId,
 		Request.text
 	);
 
 	let Entry = StatusBarEntryDTO {
-		EntryIdentifier:Request.item_id.clone(),
+		EntryIdentifier:Request.ItemId.clone(),
 
-		ItemIdentifier:Request.item_id.clone(),
+		ItemIdentifier:Request.ItemId.clone(),
 
 		ExtensionIdentifier:String::new(),
 
@@ -55,7 +55,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:SetStatusBarTextRequest) -> 
 		let _ = Service
 			.environment
 			.ApplicationHandle
-			.emit("sky://statusbar/update", json!({ "id": Request.item_id, "text": Request.text }));
+			.emit("sky://statusbar/update", json!({ "id": Request.ItemId, "text": Request.text }));
 	}
 
 	Ok(Response::new(Empty {}))

@@ -7,12 +7,12 @@
 use serde_json::Value;
 
 use crate::{
-	IPC::WindServiceHandlers::{FileSystem::Native::FileOpenFd::GetFdTable, Utilities::JsonValueHelpers::arg_u64},
+	IPC::WindServiceHandlers::{FileSystem::Native::FileOpenFd::GetFdTable, Utilities::JsonValueHelpers::ArgU64},
 	dev_log,
 };
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Fd = arg_u64(&Arguments, 0) as u32;
+	let Fd = ArgU64(&Arguments, 0) as u32;
 
 	if Fd == 0 {
 		return Ok(Value::Null);

@@ -1,4 +1,4 @@
-//! No-op initialiser kept so `Telemetry::Initialize::Fn` can call into
+//! No-op initialiser kept so `Telemetry::Fn::Fn` can call into
 //! Metrics symmetrically with Tracing. Real bring-up will hydrate the
 //! registry from `MountainEnvironment`.
 

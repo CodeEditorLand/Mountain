@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use crate::{
-	IPC::StatusReporter::InitializeStatusReporter::initialize_status_reporter,
+	IPC::StatusReporter::Fn::Fn,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
@@ -32,12 +32,12 @@ use crate::{
 /// # Errors
 ///
 /// Returns an error if status reporter initialization fails.
-pub fn StatusReporterRegister(
+pub fn Fn(
 	ApplicationHandle:&tauri::AppHandle,
 
 	RunTime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
-	match initialize_status_reporter(ApplicationHandle, RunTime) {
+	match InitializeStatusReporter(ApplicationHandle, RunTime) {
 		Ok(()) => {
 			dev_log!("lifecycle", "[IPC] [StatusReporter] Status reporter initialized successfully.");
 

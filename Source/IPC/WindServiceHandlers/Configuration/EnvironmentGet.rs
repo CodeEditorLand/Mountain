@@ -7,8 +7,8 @@ use serde_json::{Value, json};
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-	let key = Arguments
-		.get(0)
+	let Key = Arguments
+		.Get(0)
 		.ok_or("Missing environment key".to_string())?
 		.as_str()
 		.ok_or("Environment key must be a string".to_string())?;

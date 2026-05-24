@@ -10,20 +10,20 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::Track::Effect::{
-	CreateEffectForRequest::Utilities::Params::{str_obj_or_pos, strip_file_uri},
+	CreateEffectForRequest::Utilities::Params::{StrObjOrPos, StripFileUri},
 	MappedEffectType::MappedEffect,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"openDocument" | "readFile" | "stat" => {
 			let MethodNameOwned = MethodName.to_string();
 
-			crate::effect!(run_time, {
-				let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let FsReader:Arc<dyn FileSystemReader> = RunTime.Environment.Require();
 				let Path = {
-					let s = str_obj_or_pos(&Parameters, "uri", 0);
-					if s.is_empty() { str_obj_or_pos(&Parameters, "path", 0) } else { s }
+					let s = StrObjOrPos(&Parameters, "uri", 0);
+					if s.is_empty() { StrObjOrPos(&Parameters, "path", 0) } else { s }
 				}
 				.to_string();
 				// Empty-path guard: matches the FileSystem.* contract so that
@@ -33,24 +33,24 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				if Path.is_empty() {
 					return Err(format!("{}: empty path (resource not found)", MethodNameOwned));
 				}
-				let PathBuf_ = std::path::PathBuf::from(strip_file_uri(&Path));
+				let PathBuf_ = std::path::PathBuf::from(StripFileUri(&Path));
 				match MethodNameOwned.as_str() {
 					"stat" => {
-						fs_reader
+						FsReader
 							.StatFile(&PathBuf_)
 							.await
 							.map(|S| serde_json::to_value(S).unwrap_or(Value::Null))
-							.map_err(|e| e.to_string())
+							.map_err(|E| e.to_string())
 					},
 					"readFile" | "openDocument" => {
-						fs_reader
+						FsReader
 							.ReadFile(&PathBuf_)
 							.await
 							.map(|Bytes| {
 								let Text = String::from_utf8(Bytes).unwrap_or_default();
 								json!({ "uri": Path, "text": Text })
 							})
-							.map_err(|e| e.to_string())
+							.map_err(|E| e.to_string())
 					},
 					_ => Ok(Value::Null),
 				}

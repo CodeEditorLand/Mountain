@@ -9,7 +9,7 @@ use CommonLibrary::{Error::CommonError::CommonError, IPC::DTO::ProxyTarget::Prox
 use tauri::Manager;
 use serde_json::{Value, json};
 
-use super::super::MountainEnvironment::MountainEnvironment;
+use super::super::MountainEnvironment::Struct;
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::Effect::CreateEffectForRequest::Utilities::Proxy::proxy_cocoon,
@@ -20,27 +20,27 @@ use crate::{
 pub(super) async fn provide_tooltip_impl(
 	env:&MountainEnvironment,
 
-	entry_identifier:String,
+	EntryIdentifier:String,
 ) -> Result<Option<Value>, CommonError> {
 	dev_log!(
 		"lifecycle",
 		"[StatusBarProvider] Providing dynamic tooltip for entry: {}",
-		entry_identifier
+		EntryIdentifier
 	);
 
-	let run_time:Arc<ApplicationRunTime> = env.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
+	let RunTime:Arc<ApplicationRunTime> = env.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 	// This is a "reverse" call, where the host needs data from the sidecar.
-	let rpc_response = proxy_cocoon(
-		&run_time,
+	let RpcResponse = ProxyCocoon(
+		&RunTime,
 		ProxyTarget::ExtHostStatusBar,
 		"ProvideStatusbarTooltip",
-		json!([entry_identifier]),
+		json!([EntryIdentifier]),
 		5000,
 	)
 	.await
-	.map_err(|e| CommonError::IPCError { Description:e })?;
+	.map_err(|E| CommonError::IPCError { Description:e })?;
 
 	// If the response is null or fails to parse, we gracefully return None.
-	Ok(serde_json::from_value(rpc_response).unwrap_or(None))
+	Ok(serde_json::from_value(RpcResponse).unwrap_or(None))
 }

@@ -1,5 +1,5 @@
 //! Cocoon → Mountain `terminal.sendText` / `terminal.show` / `terminal.hide` /
-//! `terminal.dispose` notifications. Shared atom because the four wire
+//! `terminal.Dispose` notifications. Shared atom because the four wire
 //! methods all fan through the same `sky://terminal/*` relay and the
 //! same provider-side PTY drive, differing only in which provider call
 //! fires (sendText vs dispose) and whether the payload carries text.
@@ -18,7 +18,7 @@ use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider:
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn TerminalLifecycle(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
 	let EventName = format!("sky://terminal/{}", &MethodName["terminal.".len()..]);
 
 	if let Err(Error) = Service.ApplicationHandle().emit(&EventName, Parameter) {
@@ -28,7 +28,7 @@ pub async fn TerminalLifecycle(Service:&MountainVinegRPCService, MethodName:&str
 	// Terminal handles from Cocoon arrive as `terminal:N`; strip the
 	// prefix to recover the numeric identifier the provider expects.
 	let HandleNumeric = Parameter
-		.get("handle")
+		.Get("handle")
 		.and_then(|H| H.as_str())
 		.and_then(|S| S.trim_start_matches("terminal:").parse::<u64>().ok());
 
@@ -46,7 +46,7 @@ pub async fn TerminalLifecycle(Service:&MountainVinegRPCService, MethodName:&str
 				});
 			},
 
-			"terminal.dispose" => {
+			"terminal.Dispose" => {
 				let ProviderForTask = Provider.clone();
 
 				tokio::spawn(async move {

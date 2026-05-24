@@ -34,7 +34,7 @@ pub fn Fn(WorkspaceFilePath:&Path, FileContent:&str) -> Result<Vec<WorkspaceFold
 		.into_iter()
 		.enumerate()
 		.map(|(Index, Entry)| {
-			let FolderPath = WorkspaceFileDirectory.join(Entry.path);
+			let FolderPath = WorkspaceFileDirectory.join(Entry.Path);
 
 			let CanonicalPath =
 				Canonicalize::Fn(&FolderPath).map_err(|_| CommonError::FileSystemNotFound(FolderPath.clone()))?;

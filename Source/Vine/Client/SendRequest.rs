@@ -131,7 +131,7 @@ pub async fn Fn(
 			if let Some(ErrorData) = InnerResponse.error {
 				return Err(VineError::RPCError(format!(
 					"RPC error from sidecar: code={}, message={}",
-					ErrorData.code, ErrorData.message
+					ErrorData.code, ErrorData.Message
 				)));
 			}
 

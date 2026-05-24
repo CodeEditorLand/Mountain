@@ -12,7 +12,7 @@ use CommonLibrary::{
 use async_trait::async_trait;
 use serde_json::Value;
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::MountainEnvironment::Struct;
 
 // Private submodules containing the actual implementation
 #[path = "StatusBarProvider/EntryManagement.rs"]
@@ -32,8 +32,8 @@ impl StatusBarProvider for MountainEnvironment {
 	}
 
 	/// Removes a status bar item from the UI.
-	async fn DisposeStatusBarEntry(&self, entry_identifier:String) -> Result<(), CommonError> {
-		EntryManagement::dispose_status_bar_entry_impl(self, entry_identifier).await
+	async fn DisposeStatusBarEntry(&self, EntryIdentifier:String) -> Result<(), CommonError> {
+		EntryManagement::dispose_status_bar_entry_impl(self, EntryIdentifier).await
 	}
 
 	/// Shows a temporary message in the status bar.
@@ -48,7 +48,7 @@ impl StatusBarProvider for MountainEnvironment {
 
 	/// Resolves a dynamic Tooltip by making a reverse call to the extension
 	/// host.
-	async fn ProvideTooltip(&self, entry_identifier:String) -> Result<Option<Value>, CommonError> {
-		Tooltip::provide_tooltip_impl(self, entry_identifier).await
+	async fn ProvideTooltip(&self, EntryIdentifier:String) -> Result<Option<Value>, CommonError> {
+		Tooltip::provide_tooltip_impl(self, EntryIdentifier).await
 	}
 }

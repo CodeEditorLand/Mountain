@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ZoneRecord {
+pub struct Struct {
 	pub name:String,
 
 	pub record_type:String,

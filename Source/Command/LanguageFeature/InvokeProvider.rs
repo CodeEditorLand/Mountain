@@ -15,18 +15,18 @@ use tauri::{AppHandle, Manager, Wry};
 use super::Validation::validate_language_feature_request;
 
 /// A generic helper to reduce boilerplate in language feature command handlers.
-pub(super) async fn invoke_provider<F, T>(application_handle:AppHandle<Wry>, handler:F) -> Result<Value, String>
+pub(super) async fn InvokeProvider<F, T>(application_handle:AppHandle<Wry>, handler:F) -> Result<Value, String>
 where
 	F: FnOnce(Arc<dyn LanguageFeatureProviderRegistry>) -> T,
 	T: std::future::Future<Output = Result<Value, CommonError>>, {
-	let run_time = application_handle
+	let RunTime = application_handle
 		.state::<Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>>()
 		.inner()
 		.clone();
 
-	let provider:Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
+	let Provider:Arc<dyn LanguageFeatureProviderRegistry> = RunTime.Environment.Require();
 
-	let result = handler(provider).await.map_err(|error| error.to_string())?;
+	let result = handler(provider).await.map_err(|Error| error.to_string())?;
 
-	serde_json::to_value(result).map_err(|error| error.to_string())
+	serde_json::to_value(result).map_err(|Error| error.to_string())
 }

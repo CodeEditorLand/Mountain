@@ -11,7 +11,7 @@
 //! 2. Insert a `tokio::sync::oneshot::Sender` in
 //!    `ApplicationState.UI.PendingUserInterfaceRequest`.
 //! 3. Emit a Tauri event to Sky with the ID and payload.
-//! 4. Await the oneshot (timeout: 300 s); `DispatchLogic::ResolveUIRequest`
+//! 4. Await the oneshot (timeout: 300 s); `DispatchLogic::Fn`
 //!    resolves it when the user responds.
 //!
 //! The shared helper `SendUserInterfaceRequest` (pub-crate) is also used by
@@ -103,7 +103,7 @@ impl UserInterfaceProvider for MountainEnvironment {
 	async fn ShowOpenDialog(&self, Options:Option<OpenDialogOptionsDTO>) -> Result<Option<Vec<PathBuf>>, CommonError> {
 		dev_log!("window", "[UserInterfaceProvider] Showing open dialog.");
 
-		let mut Builder = self.ApplicationHandle.dialog().file();
+		let mut Builder = This.ApplicationHandle.dialog().file();
 
 		let (CanSelectMany, CanSelectFolders, CanSelectFiles) = if let Some(ref opts) = Options {
 			if let Some(title) = &opts.Base.Title {
@@ -158,7 +158,7 @@ impl UserInterfaceProvider for MountainEnvironment {
 	async fn ShowSaveDialog(&self, Options:Option<SaveDialogOptionsDTO>) -> Result<Option<PathBuf>, CommonError> {
 		dev_log!("window", "[UserInterfaceProvider] Showing save dialog.");
 
-		let mut Builder = self.ApplicationHandle.dialog().file();
+		let mut Builder = This.ApplicationHandle.dialog().file();
 
 		if let Some(options) = Options {
 			if let Some(title) = options.Base.Title {
@@ -166,13 +166,13 @@ impl UserInterfaceProvider for MountainEnvironment {
 			}
 
 			if let Some(path_string) = options.Base.DefaultPath {
-				let path = PathBuf::from(path_string);
+				let Path = PathBuf::from(path_string);
 
 				if let Some(parent) = path.parent() {
 					Builder = Builder.set_directory(parent);
 				}
 
-				if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
+				if let Some(file_name) = path.file_name().and_then(|N| n.to_str()) {
 					Builder = Builder.set_file_name(file_name);
 				}
 			}

@@ -25,7 +25,7 @@
 //! ## Lifecycle Management
 //!
 //! 1. **Initialization**: Servers are spawned as background tasks via
-//!    `Initialize::Initialize`
+//!    `Initialize::Fn`
 //! 2. **Service Registration**: gRPC services are registered with tonic's
 //!    Server builder
 //! 3. **Request Handling**: Each RPC call is dispatched to appropriate handlers

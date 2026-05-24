@@ -40,7 +40,7 @@ use serde_json::{Value, json};
 use tauri::{Emitter, Manager};
 use url::Url;
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::MountainEnvironment::Struct;
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::Effect::CreateEffectForRequest::Utilities::Proxy::proxy_cocoon,
@@ -59,7 +59,7 @@ fn GetRegistry() -> &'static Mutex<HashMap<String, String>> {
 
 /// Return the sidecar identifier for a registered ViewType, or
 /// `"cocoon-main"` as the canonical fallback.
-pub fn LookupSidecarForViewType(ViewType:&str) -> String {
+pub fn Fn(ViewType:&str) -> String {
 	GetRegistry()
 		.lock()
 		.ok()
@@ -88,7 +88,7 @@ impl CustomEditorProvider for MountainEnvironment {
 		// today). When Grove multi-extension-host lands, the sidecar id will
 		// come from the Options payload.
 		let SidecarId = _Options
-			.get("sidecarId")
+			.Get("sidecarId")
 			.and_then(Value::as_str)
 			.unwrap_or("cocoon-main")
 			.to_string();
@@ -161,8 +161,7 @@ impl CustomEditorProvider for MountainEnvironment {
 		// stored the document under this key when it returned its
 		// `CustomDocument` from `openCustomDocument`); the cancellation
 		// token id is unused by our shim path and we send `0`.
-		let run_time:Arc<ApplicationRunTime> =
-			self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
+		let RunTime:Arc<ApplicationRunTime> = self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 		let DocumentIdentifier = json!({
 			"viewType": ViewType,
@@ -171,15 +170,15 @@ impl CustomEditorProvider for MountainEnvironment {
 
 		let RPCParameters = json!([DocumentIdentifier, 0]);
 
-		match proxy_cocoon(
-			&run_time,
+		match ProxyCocoon(
+			&RunTime,
 			ProxyTarget::ExtHostCustomEditors,
 			"onSaveCustomDocument",
 			RPCParameters,
 			30_000,
 		)
 		.await
-		.map_err(|e| CommonError::IPCError { Description:e })
+		.map_err(|E| CommonError::IPCError { Description:e })
 		{
 			Ok(_) => {
 				dev_log!(

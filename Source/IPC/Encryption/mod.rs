@@ -7,5 +7,5 @@ pub mod MessageCompressor;
 
 pub mod SecureChannel;
 
-// Note: Consumers should use Encryption::MessageCompressor::Compressor::Struct
+// Note: Consumers should use Encryption::MessageCompressor::Struct::Struct
 // This avoids naming conflicts between module name and type name

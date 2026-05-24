@@ -11,7 +11,7 @@ use tauri::{AppHandle, Manager, Wry, command};
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 #[command]
-pub async fn UnregisterExtensionKeybindings(
+pub async fn Fn(
 	ApplicationHandle:AppHandle<Wry>,
 
 	ExtensionIdentifier:String,

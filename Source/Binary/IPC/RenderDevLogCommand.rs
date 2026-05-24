@@ -37,7 +37,7 @@ use crate::dev_log;
 /// send `{ tag, message }` (snake_case) both work - the command
 /// coalesces whichever is populated. Empty → silent no-op.
 #[tauri::command]
-pub async fn RenderDevLog(
+pub async fn Fn(
 	Tag:Option<String>,
 
 	Message:Option<String>,

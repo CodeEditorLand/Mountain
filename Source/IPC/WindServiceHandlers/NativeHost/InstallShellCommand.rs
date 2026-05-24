@@ -31,7 +31,7 @@ pub async fn Fn(_Arguments:Vec<Value>) -> Result<Value, String> {
 			Ok(Value::Bool(true))
 		},
 
-		Err(E) if E.kind() == std::io::ErrorKind::PermissionDenied => {
+		Err(E) if E.Kind() == std::io::ErrorKind::PermissionDenied => {
 			// Retry with osascript-elevated write on macOS.
 			#[cfg(target_os = "macos")]
 			{
@@ -45,7 +45,7 @@ pub async fn Fn(_Arguments:Vec<Value>) -> Result<Value, String> {
 						"do shell script (\"ln -sf \" & quoted form of (system attribute \"SH_SRC\") & \" \" & quoted \
 						 form of (system attribute \"SH_DST\")) with administrator privileges",
 					])
-					.status()
+					.Status()
 					.await
 					.map_err(|E| format!("installShellCommand: osascript failed: {E}"))?;
 

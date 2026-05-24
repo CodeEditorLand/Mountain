@@ -7,9 +7,9 @@ use serde_json::Value;
 use crate::{
 	ApplicationState::{
 		DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
-		State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify,
+		Struct::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify,
 	},
-	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string,
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgString,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
@@ -22,7 +22,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.ok_or("workspaces:addFolder requires uri as first argument".to_string())?
 		.to_string();
 
-	let Name = arg_string(&Arguments, 1);
+	let Name = ArgString(&Arguments, 1);
 
 	let Workspace = &RunTime.Environment.ApplicationState.Workspace;
 

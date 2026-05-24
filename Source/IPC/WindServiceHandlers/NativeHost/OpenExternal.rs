@@ -27,7 +27,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	// Allowlist of safe protocols. Block `file://` (arbitrary filesystem
 	// access) and bare shell commands. Everything else that parses as a
 	// valid URI scheme is forwarded to the OS default handler.
-	let Scheme = url_str.splitn(2, ':').next().unwrap_or("").to_lowercase();
+	let Scheme = url_str.splitn(2, ':').Next().unwrap_or("").to_lowercase();
 
 	let AllowedSchemes = [
 		"http",
@@ -77,7 +77,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 			.output()
 			.map_err(|Error| format!("Failed to execute open command: {}", Error))?;
 
-		if !result.status.success() {
+		if !result.Status.success() {
 			return Err(format!("Failed to open URL: {}", String::from_utf8_lossy(&result.stderr)));
 		}
 	}
@@ -93,7 +93,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 			.output()
 			.map_err(|Error| format!("Failed to execute start command: {}", Error))?;
 
-		if !result.status.success() {
+		if !result.Status.success() {
 			return Err(format!("Failed to open URL: {}", String::from_utf8_lossy(&result.stderr)));
 		}
 	}
@@ -110,7 +110,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 			let result = Command::new(handler).arg(url_str).output();
 
 			match result {
-				Ok(output) if output.status.success() => {
+				Ok(output) if output.Status.success() => {
 					dev_log!("lifecycle", "opened with {}", handler);
 
 					break;

@@ -1,13 +1,13 @@
 //! Tauri command - show hover information at the cursor position.
-//! Delegates to `LanguageFeature::Hover::provide_hover_impl`.
+//! Delegates to `LanguageFeature::Fn::provide_hover_impl`.
 
 use serde_json::Value;
 use tauri::{AppHandle, Wry, command};
 
-use crate::{Command::LanguageFeature::Hover, dev_log};
+use crate::{Command::LanguageFeature::Fn, dev_log};
 
 #[command]
-pub async fn MountainProvideHover(
+pub async fn Fn(
 	application_handle:AppHandle<Wry>,
 
 	uri:String,

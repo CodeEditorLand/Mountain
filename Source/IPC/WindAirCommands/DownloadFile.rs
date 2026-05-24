@@ -7,19 +7,19 @@ use crate::{
 };
 
 #[tauri::command]
-pub async fn DownloadFile(url:String, destination:String) -> Result<DownloadResultDTO::Struct, String> {
+pub async fn Fn(url:String, destination:String) -> Result<DownloadResultDTO::Struct, String> {
 	dev_log!("grpc", "[WindAirCommands] DownloadFile called: {} -> {}", url, destination);
 
 	let air_address = GetAirAddress::Fn()?;
 
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
-	let request_id = uuid::Uuid::new_v4().to_string();
+	let RequestId = uuid::Uuid::new_v4().to_string();
 
 	let file_info = client
-		.download_file(request_id, url, destination, String::new(), std::collections::HashMap::new())
+		.DownloadFile(request_id, url, destination, String::new(), std::collections::HashMap::new())
 		.await
-		.map_err(|e| format!("File download failed: {:?}", e))?;
+		.map_err(|E| format!("File download failed: {:?}", e))?;
 
 	let result = DownloadResultDTO::Struct {
 		success:true,

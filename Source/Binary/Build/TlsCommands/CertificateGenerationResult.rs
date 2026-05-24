@@ -1,9 +1,9 @@
-//! Result envelope returned by `tls_generate_cert`.
+//! Result envelope returned by `TlsGenerateCert`.
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CertificateGenerationResult {
+pub struct Struct {
 	pub hostname:String,
 
 	pub success:bool,

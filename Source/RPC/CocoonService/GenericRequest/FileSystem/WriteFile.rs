@@ -7,7 +7,7 @@ pub async fn Fn(RequestId:u64, Params:Value) -> Response<GenericResponse> {
 	let Path = Params.get("path").and_then(|V| V.as_str()).unwrap_or("");
 
 	let Content:Vec<u8> = Params
-		.get("content")
+		.Get("content")
 		.and_then(|V| V.as_array())
 		.map(|A| A.iter().filter_map(|B| B.as_u64().map(|N| N as u8)).collect())
 		.unwrap_or_default();

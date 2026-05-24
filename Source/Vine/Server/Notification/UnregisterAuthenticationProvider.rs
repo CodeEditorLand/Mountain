@@ -2,9 +2,9 @@
 
 use serde_json::Value;
 
-use super::Support::UnregisterByHandle::UnregisterByHandle;
-use crate::Vine::Server::MountainVinegRPCService::MountainVinegRPCService;
+use super::Support::Fn::Fn;
+use crate::Vine::Server::MountainVinegRPCService::Struct;
 
-pub async fn UnregisterAuthenticationProvider(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	UnregisterByHandle(Service, Parameter, "authentication");
 }

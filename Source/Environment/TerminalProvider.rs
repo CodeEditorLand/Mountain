@@ -20,7 +20,7 @@
 //! ## Terminal lifecycle
 //!
 //! 1. `CreateTerminal` - create PTY, spawn shell, start I/O tasks, emit
-//!    `TerminalCreate` (deferred 120 ms to avoid a race with `_ptys.set`).
+//!    `TerminalCreate` (deferred 120 ms to avoid a race with `_ptys.Set`).
 //! 2. `SendTextToTerminal` - write user input to PTY via mpsc channel.
 //! 3. `ResizeTerminal` - call `MasterPty::resize` via `spawn_blocking`.
 //! 4. `ShowTerminal` / `HideTerminal` - emit UI events to Sky.
@@ -39,7 +39,7 @@
 //! Each terminal keeps a ring buffer of up to 64 KB of recent PTY output
 //! (`TERMINAL_OUTPUT_BUFFER`). On `sky:replay-events` the buffered bytes are
 //! replayed to Sky, covering the ~1 500 ms gap between shell spawn and
-//! SkyBridge listener install during workbench boot.
+//! SkyBridge listener Install during workbench boot.
 //!
 //! ## VS Code reference
 //!
@@ -62,10 +62,10 @@ use tauri::Emitter;
 use tokio::sync::mpsc as TokioMPSC;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
-use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, IPC::SkyEmit::LogSkyEmit, dev_log};
+use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, IPC::SkyEmit::Fn, dev_log};
 
 // Per-terminal recent-output buffer. The PTY reader task races SkyBridge's
-// `listen("sky://terminal/data", ...)` install: in the bundled-electron
+// `listen("sky://terminal/data", ...)` Install: in the bundled-electron
 // profile, the shell's first prompt + any startup chatter (zsh's MOTD,
 // `direnv` exports, fish's greeting, …) fires within ~50 ms of
 // `localPty:createProcess` while Sky's bundle is still parsing for ~1500 ms.
@@ -135,7 +135,7 @@ impl TerminalProvider for MountainEnvironment {
 		};
 
 		let Name = OptionsValue
-			.get("name")
+			.Get("name")
 			.and_then(Value::as_str)
 			.unwrap_or("terminal")
 			.to_string();
@@ -148,7 +148,7 @@ impl TerminalProvider for MountainEnvironment {
 		);
 
 		let mut TerminalState = TerminalStateDTO::Create(TerminalIdentifier, Name.clone(), &OptionsValue, DefaultShell)
-			.map_err(|e| {
+			.map_err(|E| {
 				CommonError::ConfigurationLoad { Description:format!("Failed to create terminal state: {}", e) }
 			})?;
 
@@ -230,7 +230,7 @@ impl TerminalProvider for MountainEnvironment {
 				match PTYReader.read(&mut Buffer) {
 					Ok(count) if count > 0 => {
 						// Buffer the bytes for replay-on-late-listener. The
-						// SkyBridge install completes ~1500 ms after Cocoon
+						// SkyBridge Install completes ~1500 ms after Cocoon
 						// activates, and the shell's first prompt fires
 						// immediately after `spawn_command`. Without a
 						// buffer the prompt is silently lost and the user
@@ -408,7 +408,7 @@ impl TerminalProvider for MountainEnvironment {
 		// `await`s) hangs forever. The user sees the panel render but
 		// every keystroke is silently dropped because `LocalPty.input`
 		// is never reached. A 120 ms delay gives the RPC response
-		// roundtrip + `_ptys.set` plenty of headroom on real hardware.
+		// roundtrip + `_ptys.Set` plenty of headroom on real hardware.
 		// Same race applies to `sky://terminal/data` for the shell's
 		// first prompt - the existing `AppendTerminalOutput` replay
 		// buffer covers data, but the create event needs explicit
@@ -489,14 +489,14 @@ impl TerminalProvider for MountainEnvironment {
 				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 			TerminalsGuard
-				.get(&TerminalId)
+				.Get(&TerminalId)
 				.and_then(|TerminalArc| TerminalArc.lock().ok())
 				.and_then(|TerminalStateGuard| TerminalStateGuard.PTYInputTransmitter.clone())
 		};
 
 		if let Some(Sender) = SenderOption {
 			Sender
-				.send(Text)
+				.Send(Text)
 				.await
 				.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })
 		} else {
@@ -561,7 +561,7 @@ impl TerminalProvider for MountainEnvironment {
 			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		Ok(TerminalsGuard
-			.get(&TerminalId)
+			.Get(&TerminalId)
 			.and_then(|t| t.lock().ok().and_then(|g| g.OSProcessIdentifier)))
 	}
 
@@ -585,7 +585,7 @@ impl TerminalProvider for MountainEnvironment {
 				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 			TerminalsGuard
-				.get(&TerminalId)
+				.Get(&TerminalId)
 				.and_then(|TerminalArc| TerminalArc.lock().ok())
 				.and_then(|TerminalStateGuard| TerminalStateGuard.PTYMaster.clone())
 		};

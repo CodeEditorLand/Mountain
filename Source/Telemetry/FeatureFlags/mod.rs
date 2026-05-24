@@ -49,7 +49,6 @@ mod tests {
 		let Registry = FeatureFlagRegistry::Struct::new();
 
 		assert!(Registry.IsEnabled("ipc-compression"));
-	}
 
 	#[test]
 	fn enable_disable() {
@@ -62,14 +61,12 @@ mod tests {
 		Registry.Disable("ipc-compression", "Test").unwrap();
 
 		assert!(!Registry.IsEnabled("ipc-compression"));
-	}
 
 	#[test]
 	fn not_found_error() {
 		let Registry = FeatureFlagRegistry::Struct::new();
 
 		assert!(Registry.Enable("nonexistent", "Test").is_err());
-	}
 
 	#[test]
 	fn add_flag() {
@@ -94,7 +91,6 @@ mod tests {
 		Registry.Enable("test-flag", "Test").unwrap();
 
 		assert!(Registry.IsEnabled("test-flag"));
-	}
 
 	#[test]
 	fn global_helpers() {
@@ -103,5 +99,9 @@ mod tests {
 		let _ = Enable::Fn("ipc-compression", "test");
 
 		let _ = Disable::Fn("ipc-compression", "test");
-	}
+}
+}
+}
+}
+}
 }

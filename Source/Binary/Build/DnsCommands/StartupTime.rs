@@ -1,10 +1,10 @@
 //! DNS server startup-time storage. The wall-clock instant the
 //! Hickory server bound its UDP socket is captured once and
-//! returned to the webview via `dns_get_server_info`.
+//! returned to the webview via `DnsGetServerInfo`.
 //!
-//! Two siblings live here for cohesion: `init_dns_startup_time`
+//! Two siblings live here for cohesion: `InitDnsStartupTime`
 //! (fire-and-forget setter called from the bind path) and
-//! private `Get` (read accessor used by `dns_get_server_info`).
+//! private `Get` (read accessor used by `DnsGetServerInfo`).
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -14,7 +14,7 @@ static DNS_STARTUP_TIME:OnceCell<String> = OnceCell::new();
 
 /// Records the moment the DNS server starts. Idempotent - the
 /// `OnceCell` swallows subsequent calls.
-pub fn init_dns_startup_time() {
+pub fn Fn() {
 	let now_iso = SystemTime::now()
 		.duration_since(UNIX_EPOCH)
 		.map(|d| {

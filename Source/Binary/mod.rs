@@ -10,7 +10,7 @@
 //! - [`self::Build`]: Tauri application builder configuration
 //! - [`self::Register`]: Command and service registration
 //! - [`self::Service`]: Service initialization (Vine, Cocoon, Configuration)
-//! - [`self::Initialize`]: Application state initialization
+//! - [`self::Fn`]: Application state initialization
 //! - [`self::IPC`]: IPC command handlers bridging the frontend invoke calls to
 //!   Rust
 //! - [`self::Tray`]: System tray integration
@@ -37,7 +37,7 @@
 //! 4. **Error Resilience**: Graceful degradation on startup failures.
 //!
 //! No `pub use` re-exports - callers spell the full reverse-hierarchical
-//! path (`Binary::Main::Entry::Fn`, `Binary::Build::LocalhostPlugin::Fn`,
+//! path (`Binary::Main::Entry::Fn`, `Binary::Build::Fn::Fn`,
 //! etc.).
 //!
 //! ## Planned Work

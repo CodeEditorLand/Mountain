@@ -4,12 +4,12 @@
 
 use serde_json::{Value, json};
 
-use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as extract_path_from_arg, dev_log};
+use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as ExtractPathFromArg, dev_log};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Source = extract_path_from_arg(Arguments.get(0).ok_or("Missing source path")?)?;
+	let Source = ExtractPathFromArg(Arguments.get(0).ok_or("Missing source path")?)?;
 
-	let Target = extract_path_from_arg(Arguments.get(1).ok_or("Missing target path")?)?;
+	let Target = ExtractPathFromArg(Arguments.get(1).ok_or("Missing target path")?)?;
 
 	// Ensure the target parent directory exists (VS Code local history creates
 	// per-file history dirs that may not exist yet).

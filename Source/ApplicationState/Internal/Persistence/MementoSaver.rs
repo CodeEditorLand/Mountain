@@ -55,7 +55,7 @@ pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> R
 	// Ensure parent directory exists
 	if let Some(parent) = StorageFilePath.parent() {
 		if !parent.exists() {
-			fs::create_dir_all(parent).map_err(|e| {
+			fs::create_dir_all(parent).map_err(|E| {
 				dev_log!(
 					"storage",
 					"error: [MementoSaver] Failed to create directory '{}': {}",
@@ -73,7 +73,7 @@ pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> R
 	}
 
 	// Serialize memento data to JSON
-	let json_content = serde_json::to_string_pretty(MementoData).map_err(|e| {
+	let json_content = serde_json::to_string_pretty(MementoData).map_err(|E| {
 		dev_log!("storage", "error: [MementoSaver] Failed to serialize memento data: {}", e);
 		CommonError::SerializationError { Description:format!("Failed to serialize memento data: {}", e) }
 	})?;
@@ -81,7 +81,7 @@ pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> R
 	// Write to temporary file first, then rename for atomic write
 	let temp_path = StorageFilePath.with_extension("json.tmp");
 
-	fs::write(&temp_path, json_content).map_err(|e| {
+	fs::write(&temp_path, json_content).map_err(|E| {
 		dev_log!(
 			"storage",
 			"error: [MementoSaver] Failed to write memento to temp file '{}': {}",
@@ -92,7 +92,7 @@ pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> R
 	})?;
 
 	// Atomic rename from temp to actual file
-	fs::rename(&temp_path, StorageFilePath).map_err(|e| {
+	fs::rename(&temp_path, StorageFilePath).map_err(|E| {
 		dev_log!(
 			"storage",
 			"error: [MementoSaver] Failed to rename temp file to '{}': {}",

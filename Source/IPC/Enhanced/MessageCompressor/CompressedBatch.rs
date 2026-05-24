@@ -1,4 +1,4 @@
-//! Result envelope returned by `Compressor::Struct::flush_batch`.
+//! Result envelope returned by `Struct::Struct::flush_batch`.
 //! Carries the message count, original / compressed byte
 //! totals, the compressed bytes (`None` when below threshold),
 //! the `CompressionInfo::Struct`, and the flush timestamp.

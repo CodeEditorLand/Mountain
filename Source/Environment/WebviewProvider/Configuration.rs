@@ -25,13 +25,13 @@ pub(super) async fn set_webview_options_impl(
 	dev_log!("extensions", "[WebviewProvider] Setting options for Webview: {}", handle);
 
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
-		let options_map:HashMap<String, Value> = serde_json::from_value(options_value.clone()).map_err(|error| {
+		let options_map:HashMap<String, Value> = serde_json::from_value(options_value.clone()).map_err(|Error| {
 			CommonError::SerializationError { Description:format!("Failed to parse Webview options: {}", error) }
 		})?;
 
 		// Update title
-		if let Some(title) = options_map.get("title").and_then(|v| v.as_str()) {
-			webview_window.set_title(title).map_err(|error| {
+		if let Some(title) = options_map.get("title").and_then(|V| v.as_str()) {
+			webview_window.set_title(title).map_err(|Error| {
 				CommonError::UserInterfaceInteraction { Reason:format!("Failed to set Webview title: {}", error) }
 			})?;
 
@@ -66,7 +66,7 @@ pub(super) async fn set_webview_options_impl(
 			SkyEvent::WebviewOptionsChanged.AsStr(),
 			json!({ "Handle": handle, "Options": options_value }),
 		)
-		.map_err(|error| {
+		.map_err(|Error| {
 			CommonError::IPCError { Description:format!("Failed to emit Webview options changed event: {}", error) }
 		})?;
 
@@ -91,7 +91,7 @@ pub(super) async fn set_webview_html_impl(
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
 		webview_window
 			.emit::<String>(SkyEvent::WebviewSetHTML.AsStr(), html)
-			.map_err(|error| CommonError::IPCError { Description:format!("Failed to set Webview HTML: {}", error) })?;
+			.map_err(|Error| CommonError::IPCError { Description:format!("Failed to set Webview HTML: {}", error) })?;
 
 		Ok(())
 	} else {

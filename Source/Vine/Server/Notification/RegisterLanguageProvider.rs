@@ -23,24 +23,24 @@ use crate::{
 
 /// Dispatch a `register_*` notification. Returns `true` if the method was
 /// recognised and a `ProviderRegistrationDTO` was inserted.
-pub async fn RegisterLanguageProvider(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) -> bool {
+pub async fn Fn(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) -> bool {
 	let Handle = Parameter.get("handle").and_then(|h| h.as_u64()).unwrap_or(0) as u32;
 
 	// Accept camelCase (current Cocoon shape) with snake_case fallback for
 	// partial rebuild compatibility.
 	let Selector = Parameter
-		.get("languageSelector")
+		.Get("languageSelector")
 		.or_else(|| Parameter.get("language_selector"))
-		.and_then(|s| s.as_str())
+		.and_then(|S| s.as_str())
 		.unwrap_or("*");
 
 	let ExtId = Parameter
-		.get("extensionId")
-		.or_else(|| Parameter.get("extension_id"))
-		.and_then(|e| e.as_str())
+		.Get("extensionId")
+		.or_else(|| Parameter.get("ExtensionId"))
+		.and_then(|E| e.as_str())
 		.unwrap_or("");
 
-	let Scheme = Parameter.get("scheme").and_then(|s| s.as_str()).unwrap_or("");
+	let Scheme = Parameter.get("scheme").and_then(|S| s.as_str()).unwrap_or("");
 
 	let ProviderTypeName = MethodName
 		.strip_prefix("register_")
@@ -111,7 +111,7 @@ pub async fn RegisterLanguageProvider(Service:&MountainVinegRPCService, MethodNa
 
 		"folding_range" => Some(PT::FoldingRange),
 
-		"hover" => Some(PT::Hover),
+		"hover" => Some(PT::Fn),
 
 		"implementation" => Some(PT::Implementation),
 

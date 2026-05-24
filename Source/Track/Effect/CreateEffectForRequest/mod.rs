@@ -12,7 +12,7 @@
 //! | Authentication    | `Authentication.GetSession`, `Authentication.GetAccounts`|
 //! | Clipboard         | `Clipboard.Read`, `Clipboard.Write`                      |
 //! | Commands          | `executeCommand`, `Command.Execute`, `Command.GetAll`    |
-//! | Configuration     | `config.get`, `config.update`, `Configuration.*`        |
+//! | Configuration     | `config.Get`, `config.update`, `Configuration.*`        |
 //! | Debug             | `Debug.Start`, `Debug.RegisterConfigurationProvider`, `Debug.Stop` |
 //! | Diagnostics       | `Diagnostic.Set`, `Diagnostic.Clear`                    |
 //! | Documents         | `Document.Save`, `Document.SaveAs`                      |
@@ -24,7 +24,7 @@
 //! | NativeHost        | `NativeHost.OpenExternal`                                |
 //! | SCM               | `$scm:*`, `vscode.diff`, `$scm:openDiff`                 |
 //! | Search            | `findFiles`, `findTextInFiles`, `Search.TextSearch`      |
-//! | Secrets           | `secrets.get`, `secrets.store`, `secrets.delete`        |
+//! | Secrets           | `secrets.Get`, `secrets.store`, `secrets.delete`        |
 //! | StatusBar         | `$statusBar:*`, `$setStatusBarMessage`, `$disposeStatusBarMessage` |
 //! | Storage           | `Storage.Get`, `Storage.Set`                             |
 //! | Task              | `Task.Fetch`, `Task.Execute`                             |
@@ -98,7 +98,6 @@ use crate::Track::Effect::MappedEffectType::MappedEffect;
 /// Maps a string-based method name (command or RPC) to its corresponding effect
 /// constructor, returning a boxed closure ([`MappedEffect`]) that can be
 /// executed by the ApplicationRunTime.
-///
 /// Delegates to domain modules in priority order. The first module that returns
 /// `Some(result)` wins; unknown methods fall through to an error.
 pub fn Fn<R:Runtime>(
@@ -110,67 +109,67 @@ pub fn Fn<R:Runtime>(
 ) -> Result<MappedEffect, String> {
 	macro_rules! Try {
 		($Module:ident) => {
-			if let Some(Result) = $Module::CreateEffect::<R>(MethodName, Parameters.clone()) {
+			if let Some(Result) = $Module::Fn::<R>(MethodName, Parameters.clone()) {
 				return Result;
-			}
+			};
+
+			Try!(Commands);
+
+			Try!(Configuration);
+
+			Try!(Diagnostics);
+
+			Try!(Documents);
+
+			Try!(FileReadAlias);
+
+			Try!(FileSystem);
+
+			Try!(FileWatcher);
+
+			Try!(Keybinding);
+
+			Try!(LanguageFeatures);
+
+			Try!(Languages);
+
+			Try!(Search);
+
+			Try!(Storage);
+
+			Try!(StatusBar);
+
+			Try!(Terminal);
+
+			Try!(TreeView);
+
+			Try!(UserInterface);
+
+			Try!(WindowUI);
+
+			Try!(Webview);
+
+			Try!(Debug);
+
+			Try!(SCM);
+
+			Try!(Workspace);
+
+			Try!(Secrets);
+
+			Try!(Clipboard);
+
+			Try!(NativeHost);
+
+			Try!(Git);
+
+			Try!(Task);
+
+			Try!(Authentication);
+
+			crate::dev_log!("ipc", "warn: [EffectCreation] Unknown method: {}", MethodName);
+
+			Err(format!("Unknown method: {}", MethodName))
 		};
 	}
-
-	Try!(Commands);
-
-	Try!(Configuration);
-
-	Try!(Diagnostics);
-
-	Try!(Documents);
-
-	Try!(FileReadAlias);
-
-	Try!(FileSystem);
-
-	Try!(FileWatcher);
-
-	Try!(Keybinding);
-
-	Try!(LanguageFeatures);
-
-	Try!(Languages);
-
-	Try!(Search);
-
-	Try!(Storage);
-
-	Try!(StatusBar);
-
-	Try!(Terminal);
-
-	Try!(TreeView);
-
-	Try!(UserInterface);
-
-	Try!(WindowUI);
-
-	Try!(Webview);
-
-	Try!(Debug);
-
-	Try!(SCM);
-
-	Try!(Workspace);
-
-	Try!(Secrets);
-
-	Try!(Clipboard);
-
-	Try!(NativeHost);
-
-	Try!(Git);
-
-	Try!(Task);
-
-	Try!(Authentication);
-
-	crate::dev_log!("ipc", "warn: [EffectCreation] Unknown method: {}", MethodName);
-
-	Err(format!("Unknown method: {}", MethodName))
 }

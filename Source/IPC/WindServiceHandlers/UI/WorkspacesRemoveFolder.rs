@@ -5,7 +5,7 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::{
-	ApplicationState::State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify,
+	ApplicationState::Struct::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 

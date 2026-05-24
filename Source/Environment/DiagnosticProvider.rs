@@ -50,7 +50,7 @@ use serde_json::{Value, json};
 // import was previously here for the direct `.emit()` calls now
 // replaced. Removed to keep the file warning-clean.
 use super::{MountainEnvironment::MountainEnvironment, Utility};
-use crate::{ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO, IPC::SkyEmit::LogSkyEmit, dev_log};
+use crate::{ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO, IPC::SkyEmit::Fn, dev_log};
 
 // TODO: severity filtering, code actions/quick-fix integration, diagnostic
 // inline messages, history/undo-redo, export, suppression comments,
@@ -93,7 +93,7 @@ impl DiagnosticManager for MountainEnvironment {
 
 		for (URIComponentsValue, MarkersOption) in DeserializedEntries {
 			// Per-entry tolerance: a single malformed URI (extension
-			// passed an empty `.path`, exotic scheme, or non-string
+			// passed an empty `.Path`, exotic scheme, or non-string
 			// authority) used to fail the entire batch via `?`-prop -
 			// dropping every well-formed diagnostic in the same call
 			// because of one bad sibling. Mirror VS Code's

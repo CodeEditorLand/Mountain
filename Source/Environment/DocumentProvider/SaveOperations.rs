@@ -54,7 +54,7 @@ pub(super) async fn save_document(
 ) -> Result<bool, CommonError> {
 	dev_log!("model", "[DocumentProvider] Saving document: {}", uri);
 
-	let (content_bytes, file_path) = {
+	let (ContentBytes, file_path) = {
 		let mut open_documents_guard = environment
 			.ApplicationState
 			.Feature
@@ -91,7 +91,7 @@ pub(super) async fn save_document(
 
 	let runtime = environment.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
-	runtime.Run(WriteFileBytes(file_path, content_bytes, true, true)).await?;
+	runtime.Run(WriteFileBytes(file_path, ContentBytes, true, true)).await?;
 
 	if let Err(error) = environment
 		.ApplicationHandle
@@ -146,9 +146,9 @@ pub(super) async fn save_document_as(
 			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		guard
-			.get(original_uri.as_str())
+			.Get(original_uri.as_str())
 			.map(|doc| doc.GetText())
-			.ok_or_else(|| CommonError::FileSystemNotFound(PathBuf::from(original_uri.path())))?
+			.ok_or_else(|| CommonError::FileSystemNotFound(PathBuf::from(original_uri.Path())))?
 	};
 
 	runtime

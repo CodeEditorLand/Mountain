@@ -4,32 +4,32 @@ use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::S
 use serde_json::{Value, json};
 use tauri::Runtime;
 
-use crate::Track::Effect::{CreateEffectForRequest::Utilities::Params::string_at, MappedEffectType::MappedEffect};
+use crate::Track::Effect::{CreateEffectForRequest::Utilities::Params::StringAt, MappedEffectType::MappedEffect};
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Storage.Get" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
-				let key = string_at(&Parameters, 0);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
+				let Key = StringAt(&Parameters, 0);
 				provider
 					.GetStorageValue(false, &key)
 					.await
 					.map(|opt_val| json!(opt_val))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"Storage.Set" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
-				let key = string_at(&Parameters, 0);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
+				let Key = StringAt(&Parameters, 0);
 				let value = Parameters.get(1).cloned();
 				provider
 					.UpdateStorageValue(false, key, value)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
@@ -38,8 +38,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// Without this arm the call fell through to "Unknown method" and
 		// every extension's persisted state was lost on each session.
 		"Storage.GetItems" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
 				match provider.GetAllStorage(true).await {
 					Ok(State) => {
 						if let Some(Obj) = State.as_object() {

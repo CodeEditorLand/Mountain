@@ -13,7 +13,7 @@ use serde_json::Value;
 use tauri::{AppHandle, Wry};
 use url::Url;
 
-use super::{InvokeProvider::invoke_provider, Validation::validate_language_feature_request};
+use super::{InvokeProvider::InvokeProvider, Validation::validate_language_feature_request};
 use crate::dev_log;
 
 /// Implementation of completions command - called by the command wrapper in the
@@ -36,15 +36,15 @@ pub(super) async fn provide_completions_impl(
 
 	validate_language_feature_request("completions", &uri, &position)?;
 
-	let document_uri = Url::parse(&uri).map_err(|error| error.to_string())?;
+	let document_uri = Url::parse(&uri).map_err(|Error| error.to_string())?;
 
 	let position_dto:PositionDTO =
-		serde_json::from_value(position.clone()).map_err(|error| format!("Failed to parse position: {}", error))?;
+		serde_json::from_value(position.clone()).map_err(|Error| format!("Failed to parse position: {}", error))?;
 
 	let context_dto:CompletionContextDTO =
-		serde_json::from_value(context.clone()).map_err(|error| format!("Failed to parse context: {}", error))?;
+		serde_json::from_value(context.clone()).map_err(|Error| format!("Failed to parse context: {}", error))?;
 
-	invoke_provider(application_handle, |provider| {
+	InvokeProvider(application_handle, |provider| {
 		async move {
 			// Cancellation token currently not used, pass None
 			let result = provider

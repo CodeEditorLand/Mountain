@@ -71,9 +71,9 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
-			Service.RegisterProvider(Handle, ProviderType::Hover, Selector, ExtId);
+			Service.RegisterProvider(Handle, ProviderType::Fn, Selector, ExtId);
 		},
 
 		"register_completion_item_provider" => {
@@ -81,7 +81,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::Completion, Selector, ExtId);
 		},
@@ -91,7 +91,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::Definition, Selector, ExtId);
 		},
@@ -101,7 +101,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::References, Selector, ExtId);
 		},
@@ -111,7 +111,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::CodeAction, Selector, ExtId);
 		},
@@ -121,7 +121,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::DocumentHighlight, Selector, ExtId);
 		},
@@ -131,7 +131,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::DocumentSymbol, Selector, ExtId);
 		},
@@ -141,7 +141,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::WorkspaceSymbol, Selector, ExtId);
 		},
@@ -151,7 +151,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::Rename, Selector, ExtId);
 		},
@@ -161,7 +161,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::DocumentFormatting, Selector, ExtId);
 		},
@@ -171,7 +171,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::DocumentRangeFormatting, Selector, ExtId);
 		},
@@ -181,7 +181,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::OnTypeFormatting, Selector, ExtId);
 		},
@@ -191,7 +191,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::SignatureHelp, Selector, ExtId);
 		},
@@ -201,7 +201,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::CodeLens, Selector, ExtId);
 		},
@@ -211,7 +211,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::FoldingRange, Selector, ExtId);
 		},
@@ -221,7 +221,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::SelectionRange, Selector, ExtId);
 		},
@@ -231,7 +231,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::SemanticTokens, Selector, ExtId);
 		},
@@ -241,7 +241,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::InlayHint, Selector, ExtId);
 		},
@@ -251,7 +251,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::TypeHierarchy, Selector, ExtId);
 		},
@@ -261,7 +261,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::CallHierarchy, Selector, ExtId);
 		},
@@ -271,7 +271,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::LinkedEditingRange, Selector, ExtId);
 		},
@@ -281,7 +281,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::DocumentLink, Selector, ExtId);
 		},
@@ -291,7 +291,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::Color, Selector, ExtId);
 		},
@@ -301,7 +301,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::Implementation, Selector, ExtId);
 		},
@@ -311,7 +311,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::TypeDefinition, Selector, ExtId);
 		},
@@ -321,7 +321,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::Declaration, Selector, ExtId);
 		},
@@ -331,7 +331,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::EvaluatableExpression, Selector, ExtId);
 		},
@@ -341,7 +341,7 @@ pub async fn Fn(
 
 			let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
 
-			let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+			let ExtId = Params.get("ExtensionId").and_then(|V| V.as_str()).unwrap_or("");
 
 			Service.RegisterProvider(Handle, ProviderType::InlineValues, Selector, ExtId);
 		},
@@ -353,7 +353,7 @@ pub async fn Fn(
 			let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0);
 
 			let Message = Params
-				.get("stringMessage")
+				.Get("stringMessage")
 				.and_then(|V| V.as_str())
 				.map(|S| S.to_string())
 				.or_else(|| Params.get("bytesMessage").map(|_| "[binary]".to_string()))
@@ -391,14 +391,14 @@ pub async fn Fn(
 		// ---- File system (fire-and-forget write) ----
 		"writeFile" => {
 			let Uri = Params
-				.get("uri")
+				.Get("uri")
 				.and_then(|V| V.get("value").or(Some(V)))
 				.and_then(|V| V.as_str())
 				.unwrap_or("")
 				.replace("file://", "");
 
 			let Content:Vec<u8> = Params
-				.get("content")
+				.Get("content")
 				.and_then(|V| V.as_array())
 				.map(|A| A.iter().filter_map(|B| B.as_u64().map(|N| N as u8)).collect())
 				.unwrap_or_default();
@@ -422,7 +422,7 @@ pub async fn Fn(
 			);
 		},
 
-		"webview.dispose" => {
+		"webview.Dispose" => {
 			use tauri::Emitter;
 
 			let PanelId = Params.get("panelId").and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -434,7 +434,7 @@ pub async fn Fn(
 		},
 
 		// ---- Progress indicator ----
-		"progress.start" => {
+		"progress.Start" => {
 			use tauri::Emitter;
 
 			let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -503,7 +503,7 @@ pub async fn Fn(
 				.emit("sky://statusbar/update", json!({ "id": ItemId, "text": Text }));
 		},
 
-		"disposeStatusBarItem" | "statusBar.dispose" => {
+		"disposeStatusBarItem" | "statusBar.Dispose" => {
 			use tauri::Emitter;
 
 			let ItemId = Params.get("itemId").and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -576,7 +576,7 @@ pub async fn Fn(
 				.emit("sky://output/show", json!({ "channel": Channel }));
 		},
 
-		"output.dispose" => {
+		"output.Dispose" => {
 			use tauri::Emitter;
 
 			let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();

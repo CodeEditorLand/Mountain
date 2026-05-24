@@ -13,7 +13,7 @@ use serde_json::Value;
 use tauri::{Emitter, Listener, Manager};
 use uuid::Uuid;
 
-use super::super::MountainEnvironment::MountainEnvironment;
+use super::super::MountainEnvironment::Struct;
 use crate::dev_log;
 
 /// Represents a Webview message
@@ -59,8 +59,8 @@ pub(super) async fn post_message_to_webview_impl(
 		};
 
 		webview_window
-			.emit::<WebviewMessage>(SkyEvent::WebviewPostMessage.AsStr(), webview_message)
-			.map_err(|error| {
+			.emit::<WebviewMessage>(SkyEvent::Fn.AsStr(), webview_message)
+			.map_err(|Error| {
 				CommonError::IPCError { Description:format!("Failed to post message to Webview: {}", error) }
 			})?;
 
@@ -87,7 +87,7 @@ pub(super) async fn post_message_to_webview_impl(
 /// When an extension iframe calls `acquireVsCodeApi().postMessage(data)`,
 /// the iframe's `pre/index.html` shim fires a `webview-message` Tauri event
 /// on the webview window. We forward it to Cocoon via
-/// `SendNotificationToSideCar("cocoon-main", "webview.message", {handle,
+/// `SendNotificationToSideCar("cocoon-main", "webview.Message", {handle,
 /// message})` so the extension host's `onDidReceiveMessage` subscriber fires.
 pub(super) async fn setup_webview_message_listener_impl(
 	env:&MountainEnvironment,
@@ -122,14 +122,14 @@ pub(super) async fn setup_webview_message_listener_impl(
 
 				if let Err(E) = crate::Vine::Client::SendNotification::Fn(
 					"cocoon-main".to_string(),
-					"webview.message".to_string(),
+					"webview.Message".to_string(),
 					Notification,
 				)
 				.await
 				{
 					dev_log!(
 						"extensions",
-						"warn: [WebviewProvider] webview.message notify failed handle={}: {}",
+						"warn: [WebviewProvider] webview.Message notify failed handle={}: {}",
 						H2,
 						E
 					);

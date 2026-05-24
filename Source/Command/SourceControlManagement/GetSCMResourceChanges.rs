@@ -5,15 +5,15 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
-use tauri::{State, command};
+use tauri::{Struct, command};
 
 use crate::{
-	ApplicationState::State::ApplicationState::{ApplicationState, MapLockError},
+	ApplicationState::Struct::ApplicationState::{ApplicationState, MapLockError},
 	dev_log,
 };
 
 #[command]
-pub async fn GetSCMResourceChanges(
+pub async fn Fn(
 	State:State<'_, Arc<ApplicationState>>,
 
 	ProviderIdentifier:String,

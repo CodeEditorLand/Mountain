@@ -9,25 +9,25 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::{
-	ApplicationState::State::ApplicationState::ApplicationState,
+	ApplicationState::Struct::ApplicationState::ApplicationState,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::Effect::{
-		CreateEffectForRequest::Utilities::Params::{array_unwrap, ensure_array},
+		CreateEffectForRequest::Utilities::Params::{ArrayUnwrap, EnsureArray},
 		MappedEffectType::MappedEffect,
 	},
 	dev_log,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Window.ShowMessage" => {
-			crate::effect!(run_time, {
+			crate::effect!(RunTime, {
 				use std::sync::atomic::{AtomicU64, Ordering as AO};
 
 				use tauri::Emitter;
 
-				let AppHandle = run_time.Environment.ApplicationHandle.clone();
-				let Payload = array_unwrap(Parameters);
+				let AppHandle = RunTime.Environment.ApplicationHandle.clone();
+				let Payload = ArrayUnwrap(Parameters);
 				let Message = Payload.get("message").and_then(Value::as_str).unwrap_or("").to_string();
 				let Level = Payload.get("level").and_then(Value::as_str).unwrap_or("info").to_string();
 				let Items = Payload.get("items").and_then(Value::as_array).cloned().unwrap_or_default();
@@ -54,7 +54,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				let Nonce = format!("msg-{}", UI_MSG_SEQ.fetch_add(1, AO::Relaxed));
 
 				let (tx, rx) = tokio::sync::oneshot::channel();
-				run_time.Environment.ApplicationState.UI.AddPendingRequest(Nonce.clone(), tx);
+				RunTime.Environment.ApplicationState.UI.AddPendingRequest(Nonce.clone(), tx);
 
 				let Actions:Vec<serde_json::Value> = Items
 					.iter()
@@ -72,7 +72,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						},
 					}),
 				) {
-					run_time.Environment.ApplicationState.UI.RemovePendingRequest(&Nonce);
+					RunTime.Environment.ApplicationState.UI.RemovePendingRequest(&Nonce);
 					dev_log!("notification", "warn: [Window.ShowMessage] emit failed: {}", Error);
 					return Ok(Value::Null);
 				}
@@ -87,10 +87,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Window.ShowQuickPick" | "Window.ShowInputBox" | "Window.ShowOpenDialog" | "Window.ShowSaveDialog" => {
 			let MethodNameOwned = MethodName.to_string();
 
-			crate::effect!(run_time, {
+			crate::effect!(RunTime, {
 				use tauri::Emitter;
 
-				let Args = ensure_array(Parameters);
+				let Args = EnsureArray(Parameters);
 
 				let Channel = match MethodNameOwned.as_str() {
 					"Window.ShowQuickPick" => "sky://quickpick/show",
@@ -109,13 +109,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				// Register the reply channel before emitting so the
 				// frontend can never race-resolve before we are waiting.
 				let (tx, rx) = tokio::sync::oneshot::channel();
-				run_time.Environment.ApplicationState.UI.AddPendingRequest(Nonce.clone(), tx);
+				RunTime.Environment.ApplicationState.UI.AddPendingRequest(Nonce.clone(), tx);
 
-				let AppHandle = run_time.Environment.ApplicationHandle.clone();
+				let AppHandle = RunTime.Environment.ApplicationHandle.clone();
 				if let Err(Error) = AppHandle.emit(Channel, json!({ "nonce": Nonce, "args": Args })) {
 					// Emit failed -- remove the dangling sender so the map
 					// does not grow unboundedly on repeated failures.
-					run_time.Environment.ApplicationState.UI.RemovePendingRequest(&Nonce.clone());
+					RunTime.Environment.ApplicationState.UI.RemovePendingRequest(&Nonce.clone());
 					dev_log!("ipc", "warn: [{}] {} emit failed: {}", MethodNameOwned, Channel, Error);
 					return Err(format!("[{}] emit failed: {}", MethodNameOwned, Error));
 				}

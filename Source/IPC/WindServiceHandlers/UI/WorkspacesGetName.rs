@@ -13,7 +13,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 		.Workspace
 		.GetWorkspaceFolders()
 		.into_iter()
-		.next()
+		.Next()
 		.map(|F| F.GetDisplayName());
 
 	Ok(Name.map(|N| json!(N)).unwrap_or(Value::Null))

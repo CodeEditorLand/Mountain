@@ -20,7 +20,7 @@
 //! - `rename_impl` - calls `tokio::fs::rename` (POSIX-atomic within a
 //!   filesystem). Both source and target are path-security checked.
 //! - `copy_impl` - copies a file or directory tree. Directories use the private
-//!   `copy_directory_recursive` helper, which walks an explicit stack to avoid
+//!   `CopyDirectoryRecursive` helper, which walks an explicit stack to avoid
 //!   deep async-recursion stack overflows.
 //! - `create_file_impl` - thin wrapper over `write_file_impl` with empty
 //!   content, `create=true`, `overwrite=false`.
@@ -68,7 +68,7 @@ pub(super) async fn write_file_impl(
 	// Create parent directories if they don't exist
 	if let Some(parent_directory) = path.parent() {
 		if !fs::try_exists(parent_directory).await.unwrap_or(false) {
-			fs::create_dir_all(parent_directory).await.map_err(|error| {
+			fs::create_dir_all(parent_directory).await.map_err(|Error| {
 				CommonError::FromStandardIOError(error, parent_directory.to_path_buf(), "WriteFile.CreateParent")
 			})?;
 		}
@@ -76,7 +76,7 @@ pub(super) async fn write_file_impl(
 
 	fs::write(path, &content)
 		.await
-		.map_err(|error| CommonError::FromStandardIOError(error, path.clone(), "WriteFile"))?;
+		.map_err(|Error| CommonError::FromStandardIOError(error, path.clone(), "WriteFile"))?;
 
 	// Implement atomic write pattern to prevent partial writes and data corruption
 	// on crashes or interrupts. The current implementation writes directly to the
@@ -104,7 +104,7 @@ pub(super) async fn create_directory_impl(
 	// Validate that parent path doesn't point to a file
 	if let Some(parent_path) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
 		if fs::try_exists(parent_path).await.unwrap_or(false) {
-			let parent_metadata = fs::metadata(parent_path).await.map_err(|error| {
+			let parent_metadata = fs::metadata(parent_path).await.map_err(|Error| {
 				CommonError::FromStandardIOError(error, parent_path.to_path_buf(), "CreateDirectory.ParentStat")
 			})?;
 
@@ -123,7 +123,7 @@ pub(super) async fn create_directory_impl(
 		fs::create_dir(path).await
 	};
 
-	operation.map_err(|error| CommonError::FromStandardIOError(error, path.clone(), "CreateDirectory"))
+	operation.map_err(|Error| CommonError::FromStandardIOError(error, path.clone(), "CreateDirectory"))
 }
 
 /// Delete operations implementation for MountainEnvironment
@@ -151,11 +151,11 @@ pub(super) async fn delete_impl(
 				fs::remove_file(path).await
 			};
 
-			operation.map_err(|error| CommonError::FromStandardIOError(error, path.clone(), "Delete"))
+			operation.map_err(|Error| CommonError::FromStandardIOError(error, path.clone(), "Delete"))
 		},
 
 		// Idempotent success
-		Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+		Err(error) if error.Kind() == std::io::ErrorKind::NotFound => Ok(()),
 
 		Err(error) => Err(CommonError::FromStandardIOError(error, path.clone(), "Delete.Stat")),
 	}
@@ -181,7 +181,7 @@ pub(super) async fn rename_impl(
 
 	fs::rename(source, target)
 		.await
-		.map_err(|error| CommonError::FromStandardIOError(error, source.clone(), "Rename"))
+		.map_err(|Error| CommonError::FromStandardIOError(error, source.clone(), "Rename"))
 }
 
 /// Copy operations implementation for MountainEnvironment
@@ -226,7 +226,7 @@ pub(super) async fn copy_impl(
 	// the target itself).
 	if let Some(target_parent) = target.parent() {
 		if !fs::try_exists(target_parent).await.unwrap_or(false) {
-			fs::create_dir_all(target_parent).await.map_err(|error| {
+			fs::create_dir_all(target_parent).await.map_err(|Error| {
 				CommonError::FromStandardIOError(error, target_parent.to_path_buf(), "Copy.CreateTargetParent")
 			})?;
 		}
@@ -240,13 +240,13 @@ pub(super) async fn copy_impl(
 		// with VS Code's `IFileService.copy` - if you want preserve-
 		// symlinks semantics, use `clone_native` instead which does a
 		// COW reflink on supported filesystems.
-		return copy_directory_recursive(source, target, overwrite).await;
+		return CopyDirectoryRecursive(source, target, overwrite).await;
 	}
 
 	fs::copy(source, target)
 		.await
 		.map(|_| ())
-		.map_err(|error| CommonError::FromStandardIOError(error, source.clone(), "Copy"))
+		.map_err(|Error| CommonError::FromStandardIOError(error, source.clone(), "Copy"))
 }
 
 /// Recursively copy a directory tree from `source` into `target`.
@@ -254,12 +254,12 @@ pub(super) async fn copy_impl(
 /// can't blow the Tokio task stack on very deep trees. Files inside
 /// re-use `tokio::fs::copy` for fast path; directories are created
 /// with `create_dir`. Symlinks are dereferenced.
-async fn copy_directory_recursive(source:&PathBuf, target:&PathBuf, overwrite:bool) -> Result<(), CommonError> {
+async fn CopyDirectoryRecursive(source:&PathBuf, target:&PathBuf, overwrite:bool) -> Result<(), CommonError> {
 	// Pre-create the top-level target dir.
 	if !fs::try_exists(target).await.unwrap_or(false) {
 		fs::create_dir(target)
 			.await
-			.map_err(|error| CommonError::FromStandardIOError(error, target.clone(), "Copy.CreateTargetRoot"))?;
+			.map_err(|Error| CommonError::FromStandardIOError(error, target.clone(), "Copy.CreateTargetRoot"))?;
 	}
 
 	let mut Stack:Vec<(PathBuf, PathBuf)> = vec![(source.clone(), target.clone())];
@@ -267,12 +267,12 @@ async fn copy_directory_recursive(source:&PathBuf, target:&PathBuf, overwrite:bo
 	while let Some((SrcDir, DstDir)) = Stack.pop() {
 		let mut Entries = fs::read_dir(&SrcDir)
 			.await
-			.map_err(|error| CommonError::FromStandardIOError(error, SrcDir.clone(), "Copy.ReadDir"))?;
+			.map_err(|Error| CommonError::FromStandardIOError(error, SrcDir.clone(), "Copy.ReadDir"))?;
 
 		while let Some(Entry) = Entries
 			.next_entry()
 			.await
-			.map_err(|error| CommonError::FromStandardIOError(error, SrcDir.clone(), "Copy.NextEntry"))?
+			.map_err(|Error| CommonError::FromStandardIOError(error, SrcDir.clone(), "Copy.NextEntry"))?
 		{
 			let Name = Entry.file_name();
 
@@ -283,11 +283,11 @@ async fn copy_directory_recursive(source:&PathBuf, target:&PathBuf, overwrite:bo
 			let FileType = Entry
 				.file_type()
 				.await
-				.map_err(|error| CommonError::FromStandardIOError(error, SrcPath.clone(), "Copy.FileType"))?;
+				.map_err(|Error| CommonError::FromStandardIOError(error, SrcPath.clone(), "Copy.FileType"))?;
 
 			if FileType.is_dir() {
 				if !fs::try_exists(&DstPath).await.unwrap_or(false) {
-					fs::create_dir(&DstPath).await.map_err(|error| {
+					fs::create_dir(&DstPath).await.map_err(|Error| {
 						CommonError::FromStandardIOError(error, DstPath.clone(), "Copy.CreateSubDir")
 					})?;
 				}
@@ -300,7 +300,7 @@ async fn copy_directory_recursive(source:&PathBuf, target:&PathBuf, overwrite:bo
 
 				fs::copy(&SrcPath, &DstPath)
 					.await
-					.map_err(|error| CommonError::FromStandardIOError(error, SrcPath.clone(), "Copy.CopyFile"))?;
+					.map_err(|Error| CommonError::FromStandardIOError(error, SrcPath.clone(), "Copy.CopyFile"))?;
 			}
 		}
 	}

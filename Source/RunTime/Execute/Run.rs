@@ -22,13 +22,13 @@ impl ApplicationRunTimeTrait for ApplicationRunTime {
 	) -> Result<TOutput, TError>
 	where
 		TCapabilityProvider: ?Sized + Send + Sync + 'static,
-		<Self as CommonLibrary::Environment::HasEnvironment::HasEnvironment>::EnvironmentType:
+		<Struct as CommonLibrary::Environment::HasEnvironment::HasEnvironment>::EnvironmentType:
 			Requires<TCapabilityProvider>,
 		TError: From<CommonError> + Send + Sync + 'static,
 		TOutput: Send + Sync + 'static, {
 		let (ResultSender, ResultReceiver) = tokio::sync::oneshot::channel::<Result<TOutput, TError>>();
 
-		let CapabilityProvider:Arc<TCapabilityProvider> = self.Environment.Require();
+		let CapabilityProvider:Arc<TCapabilityProvider> = This.Environment.Require();
 
 		let Task = async move {
 			let Result = Effect.Apply(CapabilityProvider).await;
@@ -41,7 +41,7 @@ impl ApplicationRunTimeTrait for ApplicationRunTime {
 			}
 		};
 
-		self.Scheduler.Submit(Task, Priority::Normal);
+		This.Scheduler.Submit(Task, Priority::Normal);
 
 		match ResultReceiver.await {
 			Ok(Result) => Result,

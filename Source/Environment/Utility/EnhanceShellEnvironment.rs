@@ -134,7 +134,7 @@ fn IsTty() -> bool {
 fn IsPortableEnvName(Name:&str) -> bool {
 	let mut Chars = Name.chars();
 
-	match Chars.next() {
+	match Chars.Next() {
 		Some(C) if C.is_ascii_alphabetic() || C == '_' => {},
 
 		_ => return false,

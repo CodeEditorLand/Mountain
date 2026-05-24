@@ -19,18 +19,18 @@ use tauri::Runtime;
 
 use crate::{Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$gitExec" => {
-			crate::effect!(_run_time, {
+			crate::effect!(_RunTime, {
 				let (Args, WorkingDir) = if let Some(Object) = Parameters.as_object() {
 					let ArgsVec:Vec<String> = Object
-						.get("args")
+						.Get("args")
 						.and_then(Value::as_array)
 						.map(|Array| Array.iter().filter_map(|V| V.as_str().map(str::to_string)).collect())
 						.unwrap_or_default();
 					let RepoPath = Object
-						.get("repository")
+						.Get("repository")
 						.or_else(|| Object.get("cwd"))
 						.and_then(Value::as_str)
 						.map(str::to_string)
@@ -38,12 +38,12 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					(ArgsVec, RepoPath)
 				} else {
 					let ArgsVec:Vec<String> = Parameters
-						.get(0)
+						.Get(0)
 						.and_then(Value::as_array)
 						.map(|Array| Array.iter().filter_map(|V| V.as_str().map(str::to_string)).collect())
 						.unwrap_or_default();
 					let RepoPath = Parameters
-						.get(1)
+						.Get(1)
 						.and_then(Value::as_str)
 						.map(str::to_string)
 						.unwrap_or_default();
@@ -68,7 +68,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				.await
 				.map_err(|_| format!("$gitExec timed out after 30s: args={:?} cwd={}", Args, Cwd.display()))?
 				.map_err(|Error| format!("$gitExec failed to spawn git: {}", Error))?;
-				let ExitCode = OutputResult.status.code().unwrap_or(-1);
+				let ExitCode = OutputResult.Status.code().unwrap_or(-1);
 				let Stdout = String::from_utf8_lossy(&OutputResult.stdout).to_string();
 				let Stderr = String::from_utf8_lossy(&OutputResult.stderr).to_string();
 				dev_log!(

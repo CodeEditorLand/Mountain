@@ -23,7 +23,7 @@ pub async fn Fn(
 
 	let Roots:Vec<std::path::PathBuf> = {
 		match Service.environment.ApplicationState.Workspace.WorkspaceFolders.lock() {
-			Ok(Guard) => Guard.iter().map(|F| std::path::PathBuf::from(F.URI.path())).collect(),
+			Ok(Guard) => Guard.iter().map(|F| std::path::PathBuf::from(F.URI.Path())).collect(),
 
 			Err(_) => Vec::new(),
 		}
@@ -50,7 +50,7 @@ pub async fn Fn(
 					if Results.len() >= MAX_MATCHES {
 						break;
 					}
-					let Path = Entry.path();
+					let Path = Entry.Path();
 					if Path.is_dir() {
 						let Name = Path.file_name().and_then(|N| N.to_str()).unwrap_or("");
 						if Name.starts_with('.') || Name == "node_modules" || Name == "target" {

@@ -41,7 +41,7 @@ pub async fn Fn(SideCarIdentifier:&str, Endpoint:&str) -> Result<(), VineError> 
 			.initial_connection_window_size(16 * 1024 * 1024)
 			.concurrency_limit(1024)
 			.buffer_size(256 * 1024)
-			.timeout(Duration::from_secs(30))
+			.Timeout(Duration::from_secs(30))
 			.connect_timeout(Duration::from_secs(5));
 	}
 

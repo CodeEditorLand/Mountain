@@ -1,0 +1,18 @@
+//! `FileExplorerViewProvider::New`
+
+use super::Struct;
+use std::sync::Arc;
+use CommonLibrary::{
+	Effect::ApplicationRunTime::ApplicationRunTime as _,
+	Environment::Environment::Environment,
+	Error::CommonError::CommonError,
+	FileSystem::{DTO::FileTypeDTO::FileTypeDTO, ReadDirectory::ReadDirectory},
+	TreeView::TreeViewProvider::TreeViewProvider,
+};
+use async_trait::async_trait;
+use serde_json::{Value, json};
+use tauri::{AppHandle, Manager};
+use url::Url;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
+
+pub fn Fn(AppicationHandle:AppHandle) -> Struct { Self { AppicationHandle } }

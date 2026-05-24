@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use CommonLibrary::Error::CommonError::CommonError;
 
-use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
+use crate::{ApplicationState::Struct::ApplicationState::ApplicationState, dev_log};
 
 /// A critical security helper that checks if a given filesystem path is
 /// allowed for access.
@@ -147,8 +147,8 @@ pub fn Fn(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), C
 ///   state that lives outside the VS Code-style profile tree. Resolved through
 ///   the `Utilities::FiddeeRoot` atom.
 /// - `$HOME/.land/**` - legacy alias kept for forward-compat reads of
-///   pre-rename install trees so existing user data stays reachable until the
-///   next install migrates it.
+///   pre-rename Install trees so existing user data stays reachable until the
+///   next Install migrates it.
 /// - The Mountain executable's own `extensions/`, `../Resources/extensions/`,
 ///   `../Resources/app/extensions/`, and
 ///   `../Resources/Static/Application/extensions/` neighbours - built-in

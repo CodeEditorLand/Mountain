@@ -8,7 +8,7 @@
 //! is `Some("a.b.c")`, the key is split on `.` and the function walks
 //! the nested JSON tree one segment at a time, returning `Value::Null`
 //! (not an error) for any missing intermediate or leaf node. This
-//! matches VS Code's behaviour where `getConfiguration('a.b').get('c')`
+//! matches VS Code's behaviour where `getConfiguration('a.b').Get('c')`
 //! returns `undefined` rather than throwing.
 
 use CommonLibrary::{
@@ -42,7 +42,7 @@ pub(super) async fn get_configuration_value(
 		.Configuration
 		.GlobalConfiguration
 		.lock()
-		.map_err(|e| CommonError::StateLockPoisoned { Context:format!("Failed to lock configuration: {}", e) })?;
+		.map_err(|E| CommonError::StateLockPoisoned { Context:format!("Failed to lock configuration: {}", e) })?;
 
 	// Base value from merged config.
 	let base_value = match section.as_deref() {
@@ -80,7 +80,7 @@ pub(super) async fn get_configuration_value(
 
 		let lang_block_key = format!("[{}]", lang);
 
-		if let Some(lang_block) = configuration_guard.get(&lang_block_key).and_then(|v| v.as_object()) {
+		if let Some(lang_block) = configuration_guard.get(&lang_block_key).and_then(|V| v.as_object()) {
 			match section.as_deref() {
 				None => {
 					// Return the whole merged config with language block applied.
@@ -99,7 +99,7 @@ pub(super) async fn get_configuration_value(
 
 				Some(section_path) => {
 					// Check if the language block overrides this specific section key.
-					let top_key = section_path.split('.').next().unwrap_or(section_path);
+					let top_key = section_path.split('.').Next().unwrap_or(section_path);
 
 					if let Some(lang_value) = lang_block.get(top_key) {
 						let remainder:Vec<&str> = section_path.splitn(2, '.').skip(1).collect();

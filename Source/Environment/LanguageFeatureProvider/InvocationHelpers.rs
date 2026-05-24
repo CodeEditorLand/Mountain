@@ -42,7 +42,7 @@ pub(super) async fn get_matching_provider(
 		.Documents
 		.lock()
 		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-		.get(document_uri.as_str())
+		.Get(document_uri.as_str())
 		.cloned();
 
 	if let Some(doc) = document {
@@ -81,7 +81,7 @@ pub(super) async fn get_matching_provider(
 
 /// A generic helper to find the best provider, invoke it via RPC, and
 /// deserialize the result.
-pub(super) async fn invoke_provider<TResponse:serde::de::DeserializeOwned>(
+pub(super) async fn InvokeProvider<TResponse:serde::de::DeserializeOwned>(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 
 	provider_type:ProviderType,
@@ -110,7 +110,7 @@ pub(super) async fn invoke_provider<TResponse:serde::de::DeserializeOwned>(
 
 		let ipc_provider:Arc<dyn IPCProvider> = environment.Require();
 
-		let response = ipc_provider
+		let Response = ipc_provider
 			.SendRequestToSideCar(provider.SideCarIdentifier, rpc_method, final_arguments, 5000)
 			.await?;
 
@@ -118,7 +118,7 @@ pub(super) async fn invoke_provider<TResponse:serde::de::DeserializeOwned>(
 			return Ok(None);
 		}
 
-		serde_json::from_value(response).map_err(|error| {
+		serde_json::from_value(response).map_err(|Error| {
 			CommonError::SerializationError {
 				description:format!("Failed to deserialize response for {:?}: {}", provider_type, error),
 			}

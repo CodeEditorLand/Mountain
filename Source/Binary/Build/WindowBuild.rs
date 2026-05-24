@@ -30,7 +30,7 @@ use crate::IPC::WindServiceHandlers::Utilities::RecentlyOpened::Read::Fn as Read
 ///   the workbench draws its own. We still start `resizable(true)` so the
 ///   window can be moved by the drag region.
 /// - **Debug builds**: DevTools auto-open.
-pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewWindow<Wry> {
+pub fn Fn(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewWindow<Wry> {
 	// Restore the most-recently-opened folder so the webview boots
 	// directly into the workspace. Without this, every launch lands
 	// on the Welcome tab, the user clicks "Open Folder", and the
@@ -165,7 +165,7 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 	// external inspectors (Safari/Web Inspector) can attach.
 	#[cfg(debug_assertions)]
 	{
-		let enable_debugtools = std::env::var("Inspect").map(|v| v != "0" && !v.is_empty()).unwrap_or(false);
+		let enable_debugtools = std::env::var("Inspect").map(|V| v != "0" && !v.is_empty()).unwrap_or(false);
 
 		if enable_debugtools {
 			WindowBuilder = WindowBuilder.devtools(true);
@@ -174,7 +174,7 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 
 	#[cfg(debug_assertions)]
 	{
-		let enable_debug_server = std::env::var("DebugServer").map(|v| v != "0" && !v.is_empty()).unwrap_or(false);
+		let enable_debug_server = std::env::var("DebugServer").map(|V| v != "0" && !v.is_empty()).unwrap_or(false);
 
 		if enable_debug_server {
 			WindowBuilder = WindowBuilder.on_page_load(|window, _payload| {
@@ -271,7 +271,7 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 		}
 
 		if let Some(Path) = Entry
-			.get("workspace")
+			.Get("workspace")
 			.and_then(|V| V.get("configPath"))
 			.and_then(|V| V.get("path"))
 			.and_then(|V| V.as_str())

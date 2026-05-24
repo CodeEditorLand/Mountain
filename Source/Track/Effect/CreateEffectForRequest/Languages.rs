@@ -21,11 +21,11 @@ use tauri::Runtime;
 
 use crate::{Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Languages.GetAll" => {
-			crate::effect!(run_time, {
-				let scanned = run_time
+			crate::effect!(RunTime, {
+				let scanned = RunTime
 					.Environment
 					.ApplicationState
 					.Extension
@@ -74,7 +74,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							let bucket = target.entry(key.to_string()).or_insert_with(|| json!([]));
 							if let Some(bucket_arr) = bucket.as_array_mut() {
 								for v in incoming_arr {
-									if !bucket_arr.iter().any(|e| e == v) {
+									if !bucket_arr.iter().any(|E| e == v) {
 										bucket_arr.push(v.clone());
 									}
 								}

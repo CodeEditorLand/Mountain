@@ -2,6 +2,7 @@
 //! Method-per-file impls live as siblings under `RunTime/Execute/` and
 //! `RunTime/Shutdown/`. The struct stays here (no `pub use` indirection)
 //! so callers spell `RunTime::ApplicationRunTime::ApplicationRunTime`.
+pub mod Create;
 
 use std::sync::Arc;
 
@@ -19,18 +20,5 @@ pub struct ApplicationRunTime {
 	pub Environment:Arc<MountainEnvironment>,
 }
 
-impl ApplicationRunTime {
-	pub fn Create(Scheduler:Arc<Scheduler>, Environment:Arc<MountainEnvironment>) -> Self {
-		dev_log!("lifecycle", "new Echo-based instance created");
-
-		Self { Scheduler, Environment }
-	}
-}
-
-impl HasEnvironment for ApplicationRunTime {
-	type EnvironmentType = MountainEnvironment;
-
-	fn GetEnvironment(&self) -> Arc<Self::EnvironmentType> { self.Environment.clone() }
-}
-
-impl Environment for ApplicationRunTime {}
+#[derive(Debug, Clone)]
+pub struct Struct;

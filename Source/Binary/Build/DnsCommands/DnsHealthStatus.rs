@@ -1,11 +1,11 @@
 //! Aggregated DNS health snapshot (server / zone / forward
 //! status + most recent error) returned by
-//! `dns_get_health_status`.
+//! `DnsGetHealthStatus`.
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DnsHealthStatus {
+pub struct Struct {
 	pub server_status:String,
 
 	pub zone_status:String,

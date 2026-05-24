@@ -42,7 +42,7 @@ pub async fn Fn(
 		channel:"stable".to_string(),
 	});
 
-	match AirClient.check_for_updates(GrpcRequest).await {
+	match AirClient.CheckForUpdates(GrpcRequest).await {
 		Ok(Response) => {
 			let Reply = Response.into_inner();
 
@@ -63,7 +63,7 @@ pub async fn Fn(
 					.await?;
 
 				if UserResponse == Some("Install".to_string()) {
-					// TODO: call Air's download_update endpoint, track progress, install.
+					// TODO: call Air's download_update endpoint, track progress, Install.
 					RunTime
 						.Run(ShowMessage(
 							MessageSeverity::Info,

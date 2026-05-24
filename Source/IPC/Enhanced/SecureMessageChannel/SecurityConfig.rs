@@ -21,7 +21,7 @@ pub struct Struct {
 }
 
 impl Default for Struct {
-	fn default() -> Self {
+	fn default() -> Struct {
 		Self {
 			encryption_algorithm:"AES-256-GCM".to_string(),
 

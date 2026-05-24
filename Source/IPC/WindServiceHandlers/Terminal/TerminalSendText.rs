@@ -8,7 +8,7 @@ use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 use serde_json::Value;
 
 use crate::{
-	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string,
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgString,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
@@ -16,9 +16,9 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	let TerminalId = Arguments
 		.first()
 		.and_then(|V| V.as_u64())
-		.ok_or_else(|| "terminal:sendText requires terminal_id as first argument".to_string())?;
+		.ok_or_else(|| "terminal:sendText requires TerminalId as first argument".to_string())?;
 
-	let Text = arg_string(&Arguments, 1);
+	let Text = ArgString(&Arguments, 1);
 
 	RunTime
 		.Environment

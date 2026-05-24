@@ -10,7 +10,7 @@
 pub fn Fn() -> Result<(), Box<dyn std::error::Error>> {
 	crate::Telemetry::Tracing::InitializeTracing::Fn()?;
 
-	crate::Telemetry::Metrics::Initialize::Fn()?;
+	crate::Telemetry::Metrics::Fn::Fn()?;
 
 	Ok(())
 }

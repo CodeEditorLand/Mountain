@@ -8,7 +8,7 @@ use crate::{
 };
 
 #[tauri::command]
-pub async fn IndexFiles(
+pub async fn Fn(
 	path:String,
 
 	patterns:Vec<String>,
@@ -28,10 +28,10 @@ pub async fn IndexFiles(
 
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
-	let request_id = uuid::Uuid::new_v4().to_string();
+	let RequestId = uuid::Uuid::new_v4().to_string();
 
 	let index_info = client
-		.index_files(
+		.IndexFiles(
 			request_id,
 			path,
 			patterns,
@@ -39,7 +39,7 @@ pub async fn IndexFiles(
 			max_depth.unwrap_or(100),
 		)
 		.await
-		.map_err(|e| format!("File indexing failed: {:?}", e))?;
+		.map_err(|E| format!("File indexing failed: {:?}", e))?;
 
 	let result = IndexResultDTO::Struct {
 		success:true,

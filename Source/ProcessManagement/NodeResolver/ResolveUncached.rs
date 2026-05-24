@@ -51,7 +51,7 @@ pub fn Fn<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode::Struct {
 
 	dev_log!(
 		"cocoon",
-		"[NodeResolver] No specific install found; falling back to `node` on PATH"
+		"[NodeResolver] No specific Install found; falling back to `node` on PATH"
 	);
 
 	ResolvedNode::Struct { Path:PathBuf::from("node"), Source:NodeSource::Enum::Path }

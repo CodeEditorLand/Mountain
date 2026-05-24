@@ -2,7 +2,7 @@
 //!
 //! Scans and populates extensions from configured scan paths.
 
-use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
+use crate::{ApplicationState::Struct::ApplicationState::ApplicationState, dev_log};
 
 /// Scans and populates extensions from the configured scan paths.
 ///

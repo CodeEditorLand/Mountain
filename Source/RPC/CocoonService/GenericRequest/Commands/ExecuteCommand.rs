@@ -8,7 +8,7 @@ pub async fn Fn(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Respon
 	let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Arg = Params
-		.get("arguments")
+		.Get("arguments")
 		.and_then(|A| A.as_array())
 		.and_then(|A| A.first())
 		.cloned()

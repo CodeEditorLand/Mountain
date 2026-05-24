@@ -14,7 +14,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	let TerminalId = Arguments
 		.first()
 		.and_then(|V| V.as_u64())
-		.ok_or_else(|| "terminal:dispose requires terminal_id as first argument".to_string())?;
+		.ok_or_else(|| "terminal:dispose requires TerminalId as first argument".to_string())?;
 
 	RunTime
 		.Environment

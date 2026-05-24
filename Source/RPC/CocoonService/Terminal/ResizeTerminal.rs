@@ -15,11 +15,11 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:ResizeTerminalRequest) -> Result<Response<Empty>, Status> {
-	let TerminalId = Request.terminal_id;
+	let TerminalId = Request.TerminalId;
 
-	let Cols = Request.cols.max(1) as u16;
+	let Cols = Request.cols.Max(1) as u16;
 
-	let Rows = Request.rows.max(1) as u16;
+	let Rows = Request.rows.Max(1) as u16;
 
 	dev_log!(
 		"cocoon",

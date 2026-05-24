@@ -5,7 +5,7 @@
 use std::path::PathBuf;
 
 use crate::{
-	ApplicationState::State::ApplicationState::{ApplicationState, MapLockError},
+	ApplicationState::Struct::ApplicationState::{ApplicationState, MapLockError},
 	dev_log,
 };
 
@@ -29,7 +29,7 @@ use crate::{
 /// # Errors
 ///
 /// Returns an error if ExtensionScanPaths mutex lock fails.
-pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<Vec<PathBuf>, String> {
+pub fn Fn(AppState:&std::sync::Arc<ApplicationState>) -> Result<Vec<PathBuf>, String> {
 	dev_log!("extensions", "[Extensions] [ScanPaths] Locking ExtensionScanPaths...");
 
 	let mut ScanPathsGuard = AppState
@@ -38,7 +38,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 		.ExtensionScanPaths
 		.lock()
 		.map_err(MapLockError)
-		.map_err(|e| format!("Failed to lock ExtensionScanPaths: {}", e))?;
+		.map_err(|E| format!("Failed to lock ExtensionScanPaths: {}", e))?;
 
 	// Skip all built-in extensions when either the legacy
 	// `Skip` or the `.env.Land.Extensions` flag

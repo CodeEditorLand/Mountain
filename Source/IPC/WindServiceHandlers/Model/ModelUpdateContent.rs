@@ -20,12 +20,12 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.to_owned();
 
 	let NewContent = Arguments
-		.get(1)
+		.Get(1)
 		.and_then(|V| V.as_str())
 		.ok_or("model:updateContent requires content".to_string())?
 		.to_owned();
 
-	let (NewVersion, LanguageId) = match RunTime.Environment.ApplicationState.Feature.Documents.Get(&Uri) {
+	let (NewVersion, LanguageId) = match RunTime.Environment.ApplicationState.Feature.Documents.get(&Uri) {
 		None => return Err(format!("model:updateContent - model not open: {}", Uri)),
 
 		Some(mut Document) => {

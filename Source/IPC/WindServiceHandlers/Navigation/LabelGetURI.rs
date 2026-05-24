@@ -10,7 +10,7 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::{
-	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_bool,
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgBool,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
@@ -21,7 +21,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.ok_or("label:getUri requires uri".to_string())?
 		.to_owned();
 
-	let Relative = arg_bool(&Arguments, 1);
+	let Relative = ArgBool(&Arguments, 1);
 
 	if !Relative {
 		let Label = if let Some(stripped) = Uri.strip_prefix("file://") {
@@ -39,7 +39,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.Workspace
 		.GetWorkspaceFolders()
 		.into_iter()
-		.next()
+		.Next()
 		.map(|F| F.URI.to_string())
 		.unwrap_or_default();
 

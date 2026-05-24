@@ -5,7 +5,7 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::{
-	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_bool_true,
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgBoolTrue,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
@@ -15,7 +15,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.and_then(|V| V.as_str())
 		.ok_or("workingCopy:setDirty requires uri".to_string())?;
 
-	let Dirty = arg_bool_true(&Arguments, 1);
+	let Dirty = ArgBoolTrue(&Arguments, 1);
 
 	RunTime.Environment.ApplicationState.Feature.WorkingCopy.SetDirty(Uri, Dirty);
 

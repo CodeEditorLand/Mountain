@@ -8,19 +8,19 @@ use crate::{
 };
 
 #[tauri::command]
-pub async fn GetAirMetrics(metric_type:Option<String>) -> Result<AirMetricsDTO::Struct, String> {
+pub async fn Fn(metric_type:Option<String>) -> Result<AirMetricsDTO::Struct, String> {
 	dev_log!("grpc", "[WindAirCommands] GetAirMetrics called with type: {:?}", metric_type);
 
 	let air_address = GetAirAddress::Fn()?;
 
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
-	let request_id = uuid::Uuid::new_v4().to_string();
+	let RequestId = uuid::Uuid::new_v4().to_string();
 
 	let metrics = client
-		.get_metrics(request_id, metric_type)
+		.GetMetrics(request_id, metric_type)
 		.await
-		.map_err(|e| format!("Failed to get Air metrics: {:?}", e))?;
+		.map_err(|E| format!("Failed to get Air metrics: {:?}", e))?;
 
 	let result = AirMetricsDTO::Struct {
 		memory_usage_mb:metrics.memory_usage_mb,

@@ -1,4 +1,4 @@
-//! `ApplyUpdate` Tauri command - tell Air to install a
+//! `ApplyUpdate` Tauri command - tell Air to Install a
 //! previously downloaded update package.
 
 use crate::{
@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[tauri::command]
-pub async fn ApplyUpdate(update_id:String, update_path:String) -> Result<bool, String> {
+pub async fn Fn(update_id:String, update_path:String) -> Result<bool, String> {
 	dev_log!(
 		"grpc",
 		"[WindAirCommands] ApplyUpdate called: id={}, path={}",
@@ -19,12 +19,12 @@ pub async fn ApplyUpdate(update_id:String, update_path:String) -> Result<bool, S
 
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
-	let request_id = uuid::Uuid::new_v4().to_string();
+	let RequestId = uuid::Uuid::new_v4().to_string();
 
 	client
-		.apply_update(request_id, update_id, update_path)
+		.ApplyUpdate(request_id, update_id, update_path)
 		.await
-		.map_err(|e| format!("Update application failed: {:?}", e))?;
+		.map_err(|E| format!("Update application failed: {:?}", e))?;
 
 	dev_log!("grpc", "[WindAirCommands] Update applied successfully");
 

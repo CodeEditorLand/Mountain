@@ -2,7 +2,7 @@
 //!
 //! Buffers IPC messages into batches, then compresses on
 //! flush using Brotli / Gzip / Zlib at the configured level.
-//! `Compressor::Struct` is the engine; the DTOs are split into
+//! `Struct::Struct` is the engine; the DTOs are split into
 //! their own siblings.
 
 pub mod BatchConfig;

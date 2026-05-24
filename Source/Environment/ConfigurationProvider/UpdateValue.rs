@@ -34,7 +34,7 @@ use CommonLibrary::{
 use serde_json::{Map, Value};
 use tauri::Manager;
 
-use crate::{Environment::Utility, IPC::SkyEmit::LogSkyEmit, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::{Environment::Utility, IPC::SkyEmit::Fn, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Updates a configuration value in the appropriate `settings.json` file.
 pub(super) async fn update_configuration_value(
@@ -67,10 +67,10 @@ pub(super) async fn update_configuration_value(
 		ConfigurationTarget::UserLocal | ConfigurationTarget::User => {
 			environment
 				.ApplicationHandle
-				.path()
+				.Path()
 				.app_config_dir()
 				.map(|p| p.join("settings.json"))
-				.map_err(|error| {
+				.map_err(|Error| {
 					CommonError::ConfigurationLoad {
 						Description:format!("Could not resolve user config path: {}", error),
 					}
@@ -93,7 +93,7 @@ pub(super) async fn update_configuration_value(
 		// `WorkspaceFolder` (multi-root) - write to
 		// `<folder>/.vscode/settings.json` of the first workspace
 		// folder. Multi-root extensions should pass the folder URI
-		// in `_overrides.resource`; until that's plumbed through the
+		// in `_overrides.Resource`; until that's plumbed through the
 		// trait the first folder is the closest stable approximation.
 		ConfigurationTarget::WorkspaceFolder => {
 			let FoldersGuard = environment
@@ -145,7 +145,7 @@ pub(super) async fn update_configuration_value(
 	};
 
 	// Read the file, modify it, and write it back.
-	let bytes = runtime.Run(ReadFile(config_path.clone())).await.unwrap_or_default();
+	let Bytes = runtime.Run(ReadFile(config_path.clone())).await.unwrap_or_default();
 
 	let mut current_config:Value = serde_json::from_slice(&bytes).unwrap_or_else(|_| Value::Object(Map::new()));
 
@@ -189,10 +189,10 @@ pub(super) async fn update_configuration_value(
 		}
 	}
 
-	let content_bytes = serde_json::to_vec_pretty(&current_config)?;
+	let ContentBytes = serde_json::to_vec_pretty(&current_config)?;
 
 	runtime
-		.Run(WriteFileBytes(config_path.clone(), content_bytes, true, true))
+		.Run(WriteFileBytes(config_path.clone(), ContentBytes, true, true))
 		.await?;
 
 	// Invalidate the parsed-settings.json cache so the very next
@@ -223,7 +223,7 @@ pub(super) async fn update_configuration_value(
 
 	// Also notify Cocoon's extension host so its ConfigCache invalidates the
 	// affected key and re-primes. Without this, extensions calling
-	// `workspace.getConfiguration().get(key)` after an update continue reading
+	// `workspace.getConfiguration().Get(key)` after an update continue reading
 	// the stale cached value until the next full re-merge notification.
 	// Using fire-and-forget: the write is already durable; a Vine failure here
 	// must not roll back the successful disk write.

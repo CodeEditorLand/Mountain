@@ -6,71 +6,71 @@ use tauri::Runtime;
 
 use crate::{
 	Track::Effect::{
-		CreateEffectForRequest::Utilities::Params::{bool_at, i64_at, string_at, u64_at, u64_at_or, val_at},
+		CreateEffectForRequest::Utilities::Params::{BoolAt, I64At, StringAt, U64At, U64AtOr, ValAt},
 		MappedEffectType::MappedEffect,
 	},
 	dev_log,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$terminal:create" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-				let options = val_at(&Parameters, 0);
-				provider.CreateTerminal(options).await.map_err(|e| e.to_string())
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
+				let Options = ValAt(&Parameters, 0);
+				provider.CreateTerminal(options).await.map_err(|E| e.to_string())
 			})
 		},
 
 		"$terminal:sendText" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-				let terminal_id = i64_at(&Parameters, 0) as u64;
-				let text = string_at(&Parameters, 1);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
+				let TerminalId = I64At(&Parameters, 0) as u64;
+				let Text = StringAt(&Parameters, 1);
 				provider
-					.SendTextToTerminal(terminal_id, text)
+					.SendTextToTerminal(TerminalId, text)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"$terminal:dispose" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-				let terminal_id = i64_at(&Parameters, 0) as u64;
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
+				let TerminalId = I64At(&Parameters, 0) as u64;
 				provider
-					.DisposeTerminal(terminal_id)
+					.DisposeTerminal(TerminalId)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"Terminal.Resize" | "$terminal:resize" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-				let terminal_id = match Parameters.get(0) {
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
+				let TerminalId = match Parameters.get(0) {
 					Some(Value::Number(n)) => n.as_u64().unwrap_or(0),
 					Some(Value::String(s)) => {
-						s.rsplit(':').next().and_then(|token| token.parse::<u64>().ok()).unwrap_or(0)
+						s.rsplit(':').Next().and_then(|token| token.parse::<u64>().ok()).unwrap_or(0)
 					},
 					_ => 0,
 				};
-				let cols = u64_at_or(&Parameters, 1, 80) as u16;
-				let rows = u64_at_or(&Parameters, 2, 24) as u16;
+				let Cols = U64AtOr(&Parameters, 1, 80) as u16;
+				let Rows = U64AtOr(&Parameters, 2, 24) as u16;
 				provider
-					.ResizeTerminal(terminal_id, cols, rows)
+					.ResizeTerminal(TerminalId, cols, rows)
 					.await
 					.map(|()| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"Terminal.GetProcessId" => {
-			crate::effect!(run_time, {
-				let Provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-				let Handle = val_at(&Parameters, 0);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
+				let Handle = ValAt(&Parameters, 0);
 				let Id:u64 = if let Some(n) = Handle.as_u64() {
 					n
 				} else if let Some(s) = Handle.as_str() {
@@ -92,27 +92,27 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// provider path that the `terminal:show` / `terminal:hide` IPC handlers
 		// use so both call sites share one implementation.
 		"$terminal:show" | "Terminal.Show" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-				let terminal_id = u64_at(&Parameters, 0);
-				let preserve_focus = bool_at(&Parameters, 1);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
+				let TerminalId = U64At(&Parameters, 0);
+				let preserve_focus = BoolAt(&Parameters, 1);
 				provider
-					.ShowTerminal(terminal_id, preserve_focus)
+					.ShowTerminal(TerminalId, preserve_focus)
 					.await
 					.map(|()| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"$terminal:hide" | "Terminal.Hide" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-				let terminal_id = u64_at(&Parameters, 0);
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
+				let TerminalId = U64At(&Parameters, 0);
 				provider
-					.HideTerminal(terminal_id)
+					.HideTerminal(TerminalId)
 					.await
 					.map(|()| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 

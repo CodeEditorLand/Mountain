@@ -8,7 +8,7 @@ use crate::{
 };
 
 #[tauri::command]
-pub async fn AuthenticateUser(
+pub async fn Fn(
 	username:String,
 
 	password:String,
@@ -26,12 +26,12 @@ pub async fn AuthenticateUser(
 
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
-	let request_id = uuid::Uuid::new_v4().to_string();
+	let RequestId = uuid::Uuid::new_v4().to_string();
 
 	let token = client
-		.authenticate(request_id, username, password, provider)
+		.Authenticate(request_id, username, password, provider)
 		.await
-		.map_err(|e| format!("Authentication failed: {:?}", e))?;
+		.map_err(|E| format!("Authentication failed: {:?}", e))?;
 
 	let result = AuthResponseDTO::Struct { success:true, token, error:None };
 

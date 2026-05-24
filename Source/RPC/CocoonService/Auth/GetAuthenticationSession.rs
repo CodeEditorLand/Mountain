@@ -19,7 +19,7 @@ pub async fn Fn(
 	dev_log!(
 		"cocoon",
 		"[CocoonService] get_authentication_session: provider={}",
-		Request.provider_id
+		Request.ProviderId
 	);
 
 	Ok(Response::new(GetAuthenticationSessionResponse::default()))

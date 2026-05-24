@@ -14,7 +14,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.to_owned();
 
 	let KeyExpression = Arguments
-		.get(1)
+		.Get(1)
 		.and_then(|V| V.as_str())
 		.ok_or("keybinding:add requires keybinding".to_string())?
 		.to_owned();

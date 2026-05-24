@@ -55,19 +55,19 @@
 //! ## COMMAND REGISTRATION
 //!
 //! The following command modules are registered:
-//! - `Command::TreeView::GetTreeViewChildren`
-//! - `Command::LanguageFeature::MountainProvideHover`
-//! - `Command::LanguageFeature::MountainProvideCompletions`
-//! - `Command::LanguageFeature::MountainProvideDefinition`
-//! - `Command::LanguageFeature::MountainProvideReferences`
-//! - `Command::SourceControlManagement::GetAllSourceControlManagementState`
-//! - `Command::Keybinding::GetResolvedKeybinding`
-//! - `Track::DispatchLogic::DispatchFrontendCommand`
-//! - `Track::DispatchLogic::ResolveUIRequest`
-//! - `IPC::TauriIPCServer::mountain_ipc_receive_message`
-//! - `IPC::TauriIPCServer::mountain_ipc_get_status`
-//! - `Binary::Main::SwitchTrayIcon`
-//! - `Binary::Main::MountainGetWorkbenchConfiguration`
+//! - `Command::TreeView::Fn`
+//! - `Command::LanguageFeature::Fn`
+//! - `Command::LanguageFeature::Fn`
+//! - `Command::LanguageFeature::Fn`
+//! - `Command::LanguageFeature::Fn`
+//! - `Command::SourceControlManagement::Fn`
+//! - `Command::Keybinding::Fn`
+//! - `Track::DispatchLogic::Fn`
+//! - `Track::DispatchLogic::Fn`
+//! - `IPC::TauriIPCServer::MountainIpcReceiveMessage`
+//! - `IPC::TauriIPCServer::MountainIpcGetStatus`
+//! - `Binary::Main::Fn`
+//! - `Binary::Main::Fn`
 //! - (and more...)
 //!
 //! ## TREE VIEW PROVIDERS
@@ -131,7 +131,7 @@ use url::Url;
 use crate::{
 	ApplicationState::{
 		DTO::TreeViewStateDTO::TreeViewStateDTO,
-		State::ApplicationState::{ApplicationState, MapLockError},
+		Struct::ApplicationState::{ApplicationState, MapLockError},
 	},
 	Environment::CommandProvider::CommandHandler,
 	FileSystem::FileExplorerViewProvider::Struct as FileExplorerViewProvider,
@@ -359,7 +359,7 @@ fn CommandSetContext(
 	})
 }
 
-/// Native no-op for `workbench.action.openWalkthrough`. VS Code's
+/// Native no-op for `workbench.Action.openWalkthrough`. VS Code's
 /// walkthrough UI lives in `workbench/contrib/welcomeGettingStarted` and is
 /// not wired through Land yet. Extensions (notably `claude-code`) invoke this
 /// at activation - returning null avoids a user-visible "command not found"
@@ -429,7 +429,7 @@ fn CommandVscodeOpen(
 			Value::String(S) => S.clone(),
 			Value::Object(Object) => {
 				Object
-					.get("external")
+					.Get("external")
 					.and_then(Value::as_str)
 					.or_else(|| Object.get("path").and_then(Value::as_str))
 					.map(str::to_string)
@@ -471,12 +471,12 @@ fn CommandVscodeOpen(
 /// Validates command parameters before execution.
 fn ValidateCommandParameters(CommandName:&str, Arguments:&Value) -> Result<(), String> {
 	match CommandName {
-		"mountain.openFile" | "workbench.action.files.openFile" => {
+		"mountain.openFile" | "workbench.Action.files.openFile" => {
 			// No specific validation needed for open file
 			Ok(())
 		},
 
-		"editor.action.formatDocument" => {
+		"editor.Action.formatDocument" => {
 			// Ensure there's an active document
 			Ok(())
 		},
@@ -488,7 +488,7 @@ fn ValidateCommandParameters(CommandName:&str, Arguments:&Value) -> Result<(), S
 // --- Registration Function ---
 
 /// Registers all native commands and providers with the application state.
-pub fn RegisterNativeCommands(
+pub fn Fn(
 	AppHandle:&AppHandle<Wry>,
 
 	ApplicationState:&Arc<ApplicationState>,
@@ -509,27 +509,27 @@ pub fn RegisterNativeCommands(
 	CommandRegistry.insert("mountain.openFile".to_string(), CommandHandler::Native(CommandOpenFile));
 
 	CommandRegistry.insert(
-		"workbench.action.files.openFile".to_string(),
+		"workbench.Action.files.openFile".to_string(),
 		CommandHandler::Native(CommandOpenFile),
 	);
 
 	CommandRegistry.insert(
-		"editor.action.formatDocument".to_string(),
+		"editor.Action.formatDocument".to_string(),
 		CommandHandler::Native(CommandFormatDocument),
 	);
 
 	CommandRegistry.insert(
-		"workbench.action.files.save".to_string(),
+		"workbench.Action.files.save".to_string(),
 		CommandHandler::Native(CommandSaveDocument),
 	);
 
 	CommandRegistry.insert(
-		"workbench.action.closeActiveEditor".to_string(),
+		"workbench.Action.closeActiveEditor".to_string(),
 		CommandHandler::Native(CommandCloseDocument),
 	);
 
 	CommandRegistry.insert(
-		"workbench.action.reloadWindow".to_string(),
+		"workbench.Action.reloadWindow".to_string(),
 		CommandHandler::Native(CommandReloadWindow),
 	);
 
@@ -546,13 +546,13 @@ pub fn RegisterNativeCommands(
 
 	CommandRegistry.insert("vscode.openFolder".to_string(), CommandHandler::Native(CommandVscodeOpen));
 
-	// `workbench.action.openWalkthrough` is VS Code's welcome/getting-started
+	// `workbench.Action.openWalkthrough` is VS Code's welcome/getting-started
 	// walkthrough entry point; the `claude-code` extension wraps it with its
 	// own `claude-vscode.openWalkthrough` command and invokes both at
 	// activation. Land has no walkthrough UI yet - register both as no-ops so
 	// extension activation doesn't surface "command not found" errors.
 	CommandRegistry.insert(
-		"workbench.action.openWalkthrough".to_string(),
+		"workbench.Action.openWalkthrough".to_string(),
 		CommandHandler::Native(CommandOpenWalkthrough),
 	);
 

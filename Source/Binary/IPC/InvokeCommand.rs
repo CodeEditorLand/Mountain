@@ -64,11 +64,11 @@ use tauri::AppHandle;
 /// - Method execution fails
 /// - Parameters are invalid
 #[tauri::command]
-pub async fn MountainIPCInvoke(app_handle:AppHandle, method:String, params:Value) -> Result<Value, String> {
+pub async fn Fn(app_handle:AppHandle, method:String, params:Value) -> Result<Value, String> {
 	// Convert params to Vec<Value> - if params is an array use it, otherwise wrap
 	// in array
-	let args = if params.is_array() {
-		serde_json::from_value(params).map_err(|e| format!("Invalid params array: {}", e))?
+	let Args = if params.is_array() {
+		serde_json::from_value(params).map_err(|E| format!("Invalid params array: {}", e))?
 	} else {
 		vec![params]
 	};

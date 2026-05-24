@@ -1,9 +1,9 @@
 use serde_json::Value;
 
-use super::Support::RelayToSky::RelayToSky;
-use crate::Vine::Server::MountainVinegRPCService::MountainVinegRPCService;
+use super::Support::Fn::Fn;
+use crate::Vine::Server::MountainVinegRPCService::Struct;
 
-pub async fn ProgressUpdate(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	RelayToSky(
 		Service,
 		"sky://notification/progress-update",

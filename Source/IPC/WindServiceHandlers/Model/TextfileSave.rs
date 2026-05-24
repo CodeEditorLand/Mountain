@@ -9,8 +9,8 @@ use serde_json::Value;
 
 use crate::{
 	IPC::WindServiceHandlers::Utilities::{
-		MetadataEncoding::Fn as metadata_to_istat,
-		PathExtraction::Fn as extract_path_from_arg,
+		MetadataEncoding::Fn as MetadataToIStat,
+		PathExtraction::Fn as ExtractPathFromArg,
 	},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
@@ -19,7 +19,7 @@ use crate::{
 pub async fn Fn(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let ResourceArg = Arguments.first().ok_or("textFile:save requires a resource argument")?;
 
-	let Path = extract_path_from_arg(ResourceArg).map_err(|E| format!("textFile:save bad resource: {}", E))?;
+	let Path = ExtractPathFromArg(ResourceArg).map_err(|E| format!("textFile:save bad resource: {}", E))?;
 
 	dev_log!("vfs", "textFile:save path={:?}", Path);
 
@@ -28,7 +28,7 @@ pub async fn Fn(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Resul
 	}
 
 	match tokio::fs::metadata(&Path).await {
-		Ok(Meta) => Ok(metadata_to_istat(&Meta)),
+		Ok(Meta) => Ok(MetadataToIStat(&Meta)),
 
 		// Propagate stat failure - returning Ok(Null) causes TextFileEditorModel
 		// to call .mtime on null → TypeError, flipping the document to conflict

@@ -79,7 +79,7 @@ fn GetOrInitChannel(Handle:&AppHandle) -> &'static DecorationChannel {
 	})
 }
 
-pub async fn DecorationTypeLifecycle(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
 	let EventName = format!("sky://decoration/{}", &MethodName["window.".len()..]);
 
 	let Ch = GetOrInitChannel(Service.ApplicationHandle());

@@ -18,7 +18,7 @@ use CommonLibrary::Error::CommonError::CommonError;
 ///   - Some legacy paths send `{scheme, path}` with no `external`.
 ///
 /// All three are valid; Mountain accepts whichever arrives. Without this the
-/// Diagnostic.Set call from `vscode.languages.createDiagnosticCollection().set`
+/// Diagnostic.Set call from `vscode.languages.createDiagnosticCollection().Set`
 /// trips the breaker after 5 publishes and silences every linter / compiler
 /// across all language extensions.
 pub fn Fn(URIDTO:&serde_json::Value) -> Result<Url, CommonError> {

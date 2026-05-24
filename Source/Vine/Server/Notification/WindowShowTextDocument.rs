@@ -9,7 +9,7 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn WindowShowTextDocument(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	if let Err(Error) = Service.ApplicationHandle().emit("sky://window/showTextDocument", Parameter) {
 		dev_log!(
 			"grpc",

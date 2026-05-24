@@ -30,21 +30,21 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 	let Options = QuickPickOptionsDTO {
 		PlaceHolder:Arguments
-			.get(1)
+			.Get(1)
 			.and_then(|V| V.get("placeholder"))
 			.and_then(|P| P.as_str())
 			.map(|S| S.to_string()),
 
 		CanPickMany:Some(
 			Arguments
-				.get(1)
+				.Get(1)
 				.and_then(|V| V.get("canPickMany"))
 				.and_then(|B| B.as_bool())
 				.unwrap_or(false),
 		),
 
 		Title:Arguments
-			.get(1)
+			.Get(1)
 			.and_then(|V| V.get("title"))
 			.and_then(|T| T.as_str())
 			.map(|S| S.to_string()),
@@ -62,13 +62,13 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 	match Result {
 		// When canPickMany is true, VS Code expects an array; otherwise a
-		// single string. .next() was always returning only the first item
+		// single string. .Next() was always returning only the first item
 		// even for multi-select, silently discarding all other selections.
 		Some(Labels) => {
 			if CanPickMany {
 				Ok(json!(Labels))
 			} else {
-				Ok(Labels.into_iter().next().map(|S| json!(S)).unwrap_or(Value::Null))
+				Ok(Labels.into_iter().Next().map(|S| json!(S)).unwrap_or(Value::Null))
 			}
 		},
 

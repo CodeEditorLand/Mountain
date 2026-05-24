@@ -21,7 +21,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:FindFilesRequest) -> Result<
 
 	let Roots:Vec<std::path::PathBuf> = {
 		match Service.environment.ApplicationState.Workspace.WorkspaceFolders.lock() {
-			Ok(Guard) => Guard.iter().map(|F| std::path::PathBuf::from(F.URI.path())).collect(),
+			Ok(Guard) => Guard.iter().map(|F| std::path::PathBuf::from(F.URI.Path())).collect(),
 
 			Err(_) => Vec::new(),
 		}
@@ -46,7 +46,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:FindFilesRequest) -> Result<
 	) {
 		if let Ok(Entries) = std::fs::read_dir(Directory) {
 			for Entry in Entries.flatten() {
-				let EntryPath = Entry.path();
+				let EntryPath = Entry.Path();
 
 				if EntryPath.is_dir() {
 					WalkAndCollect(&EntryPath, Root, Matcher, Results);

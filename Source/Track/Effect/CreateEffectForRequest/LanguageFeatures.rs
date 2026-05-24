@@ -26,28 +26,28 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::Track::Effect::{
-	CreateEffectForRequest::Utilities::Params::{obj_str, obj_val},
+	CreateEffectForRequest::Utilities::Params::{ObjStr, ObjVal},
 	MappedEffectType::MappedEffect,
 };
 
 fn CreateProviderEffect(Parameters:Value, ProviderKind:ProviderType) -> Option<Result<MappedEffect, String>> {
-	crate::effect!(run_time, {
-		let provider:Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
-		let id = obj_str(&Parameters, "handle").to_string();
-		let selector = obj_val(&Parameters, "language_selector");
-		let extension_id = obj_val(&Parameters, "extension_id");
-		let options = Parameters.get("options").cloned();
+	crate::effect!(RunTime, {
+		let Provider:Arc<dyn LanguageFeatureProviderRegistry> = RunTime.Environment.Require();
+		let Id = ObjStr(&Parameters, "handle").to_string();
+		let Selector = ObjVal(&Parameters, "language_selector");
+		let ExtensionId = ObjVal(&Parameters, "ExtensionId");
+		let Options = Parameters.get("options").cloned();
 		provider
-			.RegisterProvider(id, ProviderKind, selector, extension_id, options)
+			.RegisterProvider(id, ProviderKind, selector, ExtensionId, options)
 			.await
 			.map(|handle| json!(handle))
-			.map_err(|e| e.to_string())
+			.map_err(|E| e.to_string())
 	})
 }
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
-		"register_hover_provider" => CreateProviderEffect(Parameters, ProviderType::Hover),
+		"register_hover_provider" => CreateProviderEffect(Parameters, ProviderType::Fn),
 
 		"register_completion_item_provider" => CreateProviderEffect(Parameters, ProviderType::Completion),
 

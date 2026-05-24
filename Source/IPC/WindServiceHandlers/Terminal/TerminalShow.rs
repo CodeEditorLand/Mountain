@@ -8,14 +8,14 @@ use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 use serde_json::Value;
 
 use crate::{
-	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{arg_bool, arg_u64},
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{ArgBool, ArgU64},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-	let TerminalId = arg_u64(&Arguments, 0);
+	let TerminalId = ArgU64(&Arguments, 0);
 
-	let PreserveFocus = arg_bool(&Arguments, 1);
+	let PreserveFocus = ArgBool(&Arguments, 1);
 
 	RunTime
 		.Environment

@@ -10,7 +10,6 @@ pub(super) fn OkResponse(RequestId:u64, Value:&impl serde::Serialize) -> Respons
 	let Bytes = serde_json::to_vec(Value).unwrap_or_default();
 
 	Response::new(GenericResponse { request_identifier:RequestId, result:Bytes, error:None })
-}
 
 pub(super) fn ErrResponse(RequestId:u64, Code:i32, Message:String) -> Response<GenericResponse> {
 	Response::new(GenericResponse {
@@ -18,7 +17,6 @@ pub(super) fn ErrResponse(RequestId:u64, Code:i32, Message:String) -> Response<G
 		result:Vec::new(),
 		error:Some(RpcError { code:Code, message:Message, data:Vec::new() }),
 	})
-}
 
 pub mod CreateDir;
 
@@ -41,3 +39,5 @@ pub mod StatUri;
 pub mod WriteFile;
 
 pub mod WriteFileUri;
+}
+}

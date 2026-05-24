@@ -8,12 +8,12 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::{
-	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_u64_or,
+	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgU64Or,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-	let RequestedPhase = arg_u64_or(&Arguments, 0, 1) as u8;
+	let RequestedPhase = ArgU64Or(&Arguments, 0, 1) as u8;
 
 	let Lifecycle = &RunTime.Environment.ApplicationState.Feature.Lifecycle;
 

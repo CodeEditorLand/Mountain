@@ -6,15 +6,15 @@
 //! Eight wire-bound commands, each in its own file (file name =
 //! Tauri command identifier per the Naming-Convention exception):
 //!
-//! - `GetTreeViewChildren::GetTreeViewChildren` - fetch children for a tree
+//! - `GetTreeViewChildren::Fn` - fetch children for a tree
 //!   node (or root).
-//! - `GetTreeViewItem::GetTreeViewItem` - fetch a single item's metadata.
-//! - `OnTreeViewExpansionChanged::OnTreeViewExpansionChanged` (stub).
-//! - `OnTreeViewSelectionChanged::OnTreeViewSelectionChanged` (stub).
-//! - `RefreshTreeView::RefreshTreeView` - request data refresh.
-//! - `RevealTreeViewItem::RevealTreeViewItem` - focus / scroll-into -view.
-//! - `PersistTreeView::PersistTreeView` (stub).
-//! - `RestoreTreeView::RestoreTreeView` (stub).
+//! - `GetTreeViewItem::Fn` - fetch a single item's metadata.
+//! - `OnTreeViewExpansionChanged::Fn` (stub).
+//! - `OnTreeViewSelectionChanged::Fn` (stub).
+//! - `RefreshTreeView::Fn` - request data refresh.
+//! - `RevealTreeViewItem::Fn` - focus / scroll-into -view.
+//! - `PersistTreeView::Fn` (stub).
+//! - `RestoreTreeView::Fn` (stub).
 //!
 //! Errors propagate as `Result<Value, String>` with the error
 //! string surfaced directly to the renderer.

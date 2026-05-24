@@ -61,8 +61,8 @@ use tauri::AppHandle;
 /// - Configuration structure is invalid
 /// - Update cannot be persisted
 #[tauri::command]
-pub async fn MountainUpdateConfigurationFromWind(app_handle:AppHandle, config:Value) -> Result<Value, String> {
-	crate::IPC::ConfigurationBridge::mountain_update_configuration_from_wind(app_handle, config).await?;
+pub async fn Fn(app_handle:AppHandle, config:Value) -> Result<Value, String> {
+	crate::IPC::ConfigurationBridge::Fn(app_handle, config).await?;
 
 	Ok(Value::Null)
 }

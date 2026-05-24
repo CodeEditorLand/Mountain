@@ -13,7 +13,7 @@ use serde_json::Value;
 use tauri::{AppHandle, Wry};
 use url::Url;
 
-use super::{InvokeProvider::invoke_provider, Validation::validate_language_feature_request};
+use super::{InvokeProvider::InvokeProvider, Validation::validate_language_feature_request};
 use crate::dev_log;
 
 /// Implementation of definition command - called by the command wrapper in the
@@ -34,12 +34,12 @@ pub(super) async fn provide_definition_impl(
 
 	validate_language_feature_request("definition", &uri, &position)?;
 
-	let document_uri = Url::parse(&uri).map_err(|error| error.to_string())?;
+	let document_uri = Url::parse(&uri).map_err(|Error| error.to_string())?;
 
 	let position_dto:PositionDTO =
-		serde_json::from_value(position.clone()).map_err(|error| format!("Failed to parse position: {}", error))?;
+		serde_json::from_value(position.clone()).map_err(|Error| format!("Failed to parse position: {}", error))?;
 
-	invoke_provider(application_handle, |provider| {
+	InvokeProvider(application_handle, |provider| {
 		async move {
 			let result = provider.ProvideDefinition(document_uri, position_dto).await?;
 			Ok(serde_json::to_value(result)?)

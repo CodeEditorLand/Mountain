@@ -39,7 +39,7 @@ pub async fn Fn(
 
 		SideCarIdentifier:"cocoon-main".to_string(),
 
-		ExtensionIdentifier:json!(Request.extension_id),
+		ExtensionIdentifier:json!(Request.ExtensionId),
 
 		Options:Some(json!({
 			"label": Request.label,

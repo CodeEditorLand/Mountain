@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use crate::{
-	IPC::AdvancedFeatures::InitializeAdvancedFeatures::initialize_advanced_features,
+	IPC::AdvancedFeatures::Fn::Fn,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
@@ -32,12 +32,12 @@ use crate::{
 /// # Errors
 ///
 /// Returns an error if advanced features initialization fails.
-pub fn AdvancedFeaturesRegister(
+pub fn Fn(
 	ApplicationHandle:&tauri::AppHandle,
 
 	RunTime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
-	match initialize_advanced_features(ApplicationHandle, RunTime) {
+	match InitializeAdvancedFeatures(ApplicationHandle, RunTime) {
 		Ok(()) => {
 			dev_log!(
 				"lifecycle",

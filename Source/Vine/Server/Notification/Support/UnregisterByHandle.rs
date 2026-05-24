@@ -13,7 +13,7 @@ use serde_json::Value;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub fn UnregisterByHandle(Service:&MountainVinegRPCService, Parameter:&Value, TypeName:&str) {
+pub fn Fn(Service:&MountainVinegRPCService, Parameter:&Value, TypeName:&str) {
 	let Handle = Parameter.get("handle").and_then(Value::as_u64).unwrap_or(0) as u32;
 
 	if Handle == 0 {

@@ -5,12 +5,12 @@
 //! own file (file name = Tauri command identifier per the
 //! Naming-Convention exception):
 //!
-//! - `GetResolvedKeybinding::GetResolvedKeybinding` - final resolved bindings
+//! - `GetResolvedKeybinding::Fn` - final resolved bindings
 //!   after merging defaults + extension contributions + user.
-//! - `GetUserKeybindings::GetUserKeybindings` - user overrides (stub).
-//! - `RegisterExtensionKeybindings::RegisterExtensionKeybindings` (stub).
-//! - `UnregisterExtensionKeybindings::UnregisterExtensionKeybindings` (stub).
-//! - `CheckKeybindingConflicts::CheckKeybindingConflicts` - chord overlap
+//! - `GetUserKeybindings::Fn` - user overrides (stub).
+//! - `RegisterExtensionKeybindings::Fn` (stub).
+//! - `UnregisterExtensionKeybindings::Fn` (stub).
+//! - `CheckKeybindingConflicts::Fn` - chord overlap
 //!   detection (stub).
 //!
 //! Errors propagate as `Result<Value, String>` for direct frontend

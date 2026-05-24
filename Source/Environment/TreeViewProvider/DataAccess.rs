@@ -36,7 +36,7 @@ pub(super) async fn get_children(
 		.ActiveTreeViews
 		.lock()
 		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-		.get(&view_identifier)
+		.Get(&view_identifier)
 		.cloned();
 
 	if let Some(info) = provider_info {
@@ -49,10 +49,10 @@ pub(super) async fn get_children(
 
 			let rpc_method = format!("{}$getChildren", ProxyTarget::ExtHostTreeView.GetTargetPrefix());
 
-			let rpc_params = serde_json::json!([view_identifier, element_handle]);
+			let RpcParams = serde_json::json!([view_identifier, element_handle]);
 
-			let response = ipc_provider
-				.SendRequestToSideCar(side_car_id, rpc_method, rpc_params, 10000)
+			let Response = ipc_provider
+				.SendRequestToSideCar(side_car_id, rpc_method, RpcParams, 10000)
 				.await?;
 
 			return serde_json::from_value::<Vec<Value>>(response).map_err(CommonError::from);
@@ -85,7 +85,7 @@ pub(super) async fn get_tree_item(
 		.ActiveTreeViews
 		.lock()
 		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-		.get(&view_identifier)
+		.Get(&view_identifier)
 		.cloned();
 
 	if let Some(info) = provider_info {
@@ -96,10 +96,10 @@ pub(super) async fn get_tree_item(
 
 			let rpc_method = format!("{}$getTreeItem", ProxyTarget::ExtHostTreeView.GetTargetPrefix());
 
-			let rpc_params = serde_json::json!([view_identifier, element_handle]);
+			let RpcParams = serde_json::json!([view_identifier, element_handle]);
 
 			return ipc_provider
-				.SendRequestToSideCar(side_car_id, rpc_method, rpc_params, 5000)
+				.SendRequestToSideCar(side_car_id, rpc_method, RpcParams, 5000)
 				.await;
 		}
 	}

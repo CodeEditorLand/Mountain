@@ -35,7 +35,7 @@ pub async fn Fn(
 	dev_log!(
 		"provider",
 		"PrepareCallHierarchy handle={} uri={} line={} char={}",
-		Request.provider_handle,
+		Request.ProviderHandle,
 		URI,
 		Line,
 		Character

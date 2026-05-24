@@ -15,12 +15,12 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterCommandRequest) -> R
 		"cocoon",
 		"[CocoonService] Registering command '{}' from extension '{}'",
 		Request.command_id,
-		Request.extension_id
+		Request.ExtensionId
 	);
 
 	if let Err(Error) = Service
 		.environment
-		.RegisterCommand(Request.extension_id.clone(), Request.command_id.clone())
+		.RegisterCommand(Request.ExtensionId.clone(), Request.command_id.clone())
 		.await
 	{
 		dev_log!(

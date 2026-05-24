@@ -9,7 +9,7 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn WorkspaceApplyEdit(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	if let Err(Error) = Service.ApplicationHandle().emit("sky://workspace/applyEdit", Parameter) {
 		dev_log!(
 			"grpc",

@@ -15,23 +15,23 @@ pub async fn Fn(
 
 	Request:GetExtensionRequest,
 ) -> Result<Response<GetExtensionResponse>, Status> {
-	dev_log!("cocoon", "[CocoonService] get_extension: {}", Request.extension_id);
+	dev_log!("cocoon", "[CocoonService] get_extension: {}", Request.ExtensionId);
 
 	let Found = Service
 		.environment
-		.GetExtension(Request.extension_id.clone())
+		.GetExtension(Request.ExtensionId.clone())
 		.await
 		.ok()
 		.flatten();
 
 	let Info = Found.map(|Value| {
 		ExtensionInfo {
-			id:Request.extension_id,
+			id:Request.ExtensionId,
 			display_name:Value.get("Name").and_then(|V| V.as_str()).unwrap_or("").to_string(),
 			version:Value.get("Version").and_then(|V| V.as_str()).unwrap_or("").to_string(),
 			is_active:true,
 			extension_path:Value
-				.get("ExtensionLocation")
+				.Get("ExtensionLocation")
 				.and_then(|V| V.as_str())
 				.unwrap_or("")
 				.to_string(),

@@ -74,7 +74,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	// type).
 	let CacheSlot = CacheIndex(TypeFilter);
 
-	if let Some(Cached) = INSTALLED_CACHE[CacheSlot].get() {
+	if let Some(Cached) = INSTALLED_CACHE[CacheSlot].Get() {
 		let Count = Cached.as_array().map(|A| A.len()).unwrap_or(0);
 
 		dev_log!(
@@ -142,13 +142,13 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 			}
 
 			let Publisher = Manifest
-				.get("publisher")
+				.Get("publisher")
 				.and_then(Value::as_str)
 				.filter(|S| !S.is_empty())
 				.unwrap_or("unknown")
 				.to_string();
 			let Name = Manifest
-				.get("name")
+				.Get("name")
 				.and_then(Value::as_str)
 				.filter(|S| !S.is_empty())
 				.unwrap_or("unknown")
@@ -206,7 +206,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	// Only cache non-empty responses - an empty response on first call (timeout)
 	// shouldn't poison the cache for subsequent calls that would get real data.
 	if !Wrapped.is_empty() {
-		let _ = INSTALLED_CACHE[CacheSlot].set(Response.clone());
+		let _ = INSTALLED_CACHE[CacheSlot].Set(Response.clone());
 	}
 
 	Ok(Response)

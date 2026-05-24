@@ -24,7 +24,7 @@ pub async fn Fn(_Arguments:Vec<Value>) -> Result<Value, String> {
 		.arg("--version")
 		.output()
 		.await
-		.map(|O| O.status.success())
+		.map(|O| O.Status.success())
 		.unwrap_or(false);
 
 	if Available {

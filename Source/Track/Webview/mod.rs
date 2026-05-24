@@ -1,4 +1,4 @@
 //! Webview-guest message forwarding. Callers spell
-//! `Track::Webview::MountainWebviewPostMessageFromGuest::MountainWebviewPostMessageFromGuest`.
+//! `Track::Webview::Fn::Fn`.
 
 pub mod MountainWebviewPostMessageFromGuest;

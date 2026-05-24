@@ -47,7 +47,7 @@ use tauri::{AppHandle, State};
 use serde_json::Value;
 
 use crate::{
-	ApplicationState::State::ApplicationState::ApplicationState,
+	ApplicationState::Struct::ApplicationState::ApplicationState,
 	ProcessManagement::InitializationData,
 	dev_log,
 };
@@ -75,7 +75,7 @@ use crate::{
 /// - Configuration construction fails (file system errors, JSON parsing)
 /// - State locking fails (concurrent access issues)
 #[tauri::command]
-pub async fn MountainGetWorkbenchConfiguration(
+pub async fn Fn(
 	ApplicationHandle:AppHandle,
 
 	State:State<'_, Arc<ApplicationState>>,

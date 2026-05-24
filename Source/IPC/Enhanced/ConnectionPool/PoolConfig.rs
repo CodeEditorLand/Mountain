@@ -20,7 +20,7 @@ pub struct Struct {
 }
 
 impl Default for Struct {
-	fn default() -> Self {
+	fn default() -> Struct {
 		Self {
 			max_connections:10,
 

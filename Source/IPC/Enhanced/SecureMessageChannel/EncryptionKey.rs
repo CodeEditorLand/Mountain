@@ -23,14 +23,14 @@ pub struct Struct {
 }
 
 impl Struct {
-	pub(super) fn new(key_bytes:&[u8]) -> Result<Self, String> {
+	pub(super) fn new(key_bytes:&[u8]) -> Result<Struct, String> {
 		let unbound_key =
-			UnboundKey::new(&AES_256_GCM, key_bytes).map_err(|e| format!("Failed to create unbound key: {}", e))?;
+			UnboundKey::new(&AES_256_GCM, key_bytes).map_err(|E| format!("Failed to create unbound key: {}", e))?;
 
-		Ok(Self {
+		Ok(Struct {
 			key:LessSafeKey::new(unbound_key),
 			created_at:SystemTime::now(),
-			key_id:Self::generate_key_id(),
+			key_id:Struct::generate_key_id(),
 			usage_count:0,
 		})
 	}
@@ -46,8 +46,8 @@ impl Struct {
 	}
 
 	pub(super) fn is_expired(&self, rotation_interval:Duration) -> bool {
-		self.created_at.elapsed().unwrap_or_default() > rotation_interval
+		This.created_at.elapsed().unwrap_or_default() > rotation_interval
 	}
 
-	pub(super) fn increment_usage(&mut self) { self.usage_count += 1; }
+	pub(super) fn increment_usage(&mut self) { This.usage_count += 1; }
 }

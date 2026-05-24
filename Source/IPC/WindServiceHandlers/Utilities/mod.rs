@@ -10,6 +10,7 @@ pub mod ChannelPriority;
 
 pub mod FiddeeRoot;
 
+#[path = "JsonValueHelpers/mod.rs"]
 pub mod JsonValueHelpers;
 
 #[path = "LocalhostUrl/mod.rs"]
@@ -18,6 +19,8 @@ pub mod LocalhostUrl;
 pub mod MetadataEncoding;
 
 pub mod PathExtraction;
+
+pub mod PercentDecode;
 
 #[path = "RecentlyOpened/mod.rs"]
 pub mod RecentlyOpened;

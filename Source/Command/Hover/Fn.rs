@@ -25,7 +25,7 @@ use tauri::{AppHandle, Wry};
 use url::Url;
 
 use crate::{
-	Command::Hover::Interface::{
+	Command::Fn::Interface::{
 		HoverRequest::Struct as HoverRequest,
 		HoverResponse::Struct as HoverResponse,
 		Position::Struct as Position,
@@ -36,11 +36,11 @@ use crate::{
 /// Validates a hover request
 fn ValidateRequest(uri:&str, position:&Value) -> Result<HoverRequest, String> {
 	// Parse URI
-	let document_uri = Url::parse(uri).map_err(|e| format!("Invalid URI: {}", e))?;
+	let document_uri = Url::parse(uri).map_err(|E| format!("Invalid URI: {}", e))?;
 
 	// Parse position from JSON value
 	let position_dto:Position =
-		serde_json::from_value(position.clone()).map_err(|e| format!("Invalid position: {}", e))?;
+		serde_json::from_value(position.clone()).map_err(|E| format!("Invalid position: {}", e))?;
 
 	Ok(HoverRequest { uri:document_uri.to_string(), position:position_dto })
 }
@@ -59,14 +59,14 @@ fn ValidateRequest(uri:&str, position:&Value) -> Result<HoverRequest, String> {
 /// # Returns
 ///
 /// Returns a `HoverResponse` containing the hover contents, or an error string.
-pub async fn Hover(application_handle:AppHandle<Wry>, uri:String, position:Value) -> Result<HoverResponse, String> {
+pub async fn Fn(application_handle:AppHandle<Wry>, uri:String, position:Value) -> Result<HoverResponse, String> {
 	dev_log!("commands", "[Hover] Providing hover for: {} at {:?}", uri, position);
 
 	// Validate request
 	let request = ValidateRequest(&uri, &position)?;
 
 	// Get the document URI
-	let document_uri = Url::parse(&request.uri).map_err(|e| format!("Failed to parse URI: {}", e))?;
+	let document_uri = Url::parse(&request.uri).map_err(|E| format!("Failed to parse URI: {}", e))?;
 
 	// Delegate to the provider implementation
 	// Note: This is a stub - actual implementation would call the provider
@@ -100,7 +100,7 @@ mod tests {
 
 	#[test]
 	fn test_validate_request_valid() {
-		let uri = "file:///test.rs";
+		let Uri = "file:///test.rs";
 
 		let position = serde_json::json!({
 			"line": 10,
@@ -122,7 +122,7 @@ mod tests {
 
 	#[test]
 	fn test_validate_request_invalid_uri() {
-		let uri = "not-a-valid-uri";
+		let Uri = "not-a-valid-uri";
 
 		let position = serde_json::json!({
 			"line": 10,
@@ -136,7 +136,7 @@ mod tests {
 
 	#[test]
 	fn test_validate_request_invalid_position() {
-		let uri = "file:///test.rs";
+		let Uri = "file:///test.rs";
 
 		let position = serde_json::json!({
 			"not_a_position": true
@@ -149,7 +149,7 @@ mod tests {
 
 	#[test]
 	fn test_hover_response_default() {
-		let response = HoverResponse::default();
+		let Response = HoverResponse::default();
 
 		assert!(response.contents.is_empty());
 
@@ -158,11 +158,11 @@ mod tests {
 
 	#[test]
 	fn test_hover_response_with_contents() {
-		use crate::Command::Hover::Interface::HoverContent::Enum as HoverContent;
+		use crate::Command::Fn::Interface::HoverContent::Enum as HoverContent;
 
 		let contents = vec![HoverContent::PlainText("Test hover".to_string())];
 
-		let response = HoverResponse::new(contents);
+		let Response = HoverResponse::new(contents);
 
 		assert_eq!(response.contents.len(), 1);
 

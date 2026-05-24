@@ -127,7 +127,7 @@ fn FindFilesCacheGet(Key:&FindFilesCacheKey) -> Option<Vec<Url>> {
 /// from Mountain's notifier, explicit refresh from the renderer.
 /// Cache holds for at most `FIND_FILES_CACHE_TTL` anyway, so missing
 /// an invalidation point here is bounded latency, not correctness.
-pub fn ClearFindFilesCache() {
+pub fn Fn() {
 	if let Ok(mut Guard) = FindFilesCache().lock() {
 		Guard.clear();
 	}
@@ -164,7 +164,7 @@ impl WorkspaceProvider for MountainEnvironment {
 			.lock()
 			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
-		Ok(FoldersGuard.iter().map(|f| (f.URI.clone(), f.Name.clone(), f.Index)).collect())
+		Ok(FoldersGuard.iter().map(|F| (f.URI.clone(), f.Name.clone(), f.Index)).collect())
 	}
 
 	/// Retrieves information for the specific workspace folder that contains a
@@ -302,7 +302,7 @@ impl WorkspaceProvider for MountainEnvironment {
 			.and_then(ExtractGlobPattern)
 			.filter(|P| !P.is_empty());
 
-		let Cap = MaxResults.unwrap_or(10_000).max(1);
+		let Cap = MaxResults.unwrap_or(10_000).Max(1);
 
 		let IncludeMatcher = GlobBuilder::new(&IncludePattern)
 			.literal_separator(false)
@@ -514,7 +514,7 @@ impl WorkspaceProvider for MountainEnvironment {
 					if !Entry.file_type().map(|T| T.is_file()).unwrap_or(false) {
 						return ignore::WalkState::Continue;
 					}
-					let Path = Entry.path();
+					let Path = Entry.Path();
 					let Relative = match Path.strip_prefix(&RootForRel) {
 						Ok(R) => R.to_string_lossy().replace('\\', "/"),
 						Err(_) => Path.to_string_lossy().to_string(),
@@ -674,7 +674,7 @@ impl WorkspaceEditApplier for MountainEnvironment {
 			// the dual emit is safe (event lands in renderer for the
 			// same-document case; on-disk writes happen for closed
 			// files only).
-			let IsOpen = DocumentMirror.Get(&UriString).is_some();
+			let IsOpen = DocumentMirror.get(&UriString).is_some();
 
 			if !IsOpen {
 				if let Err(Error) = ApplyEditsToDisk(&UriString, &TextEdits).await {
@@ -703,7 +703,7 @@ async fn ApplyEditsToDisk(UriString:&str, TextEdits:&[Value]) -> Result<(), Comm
 	use std::path::Path;
 
 	let RawPath = if let Some(Stripped) = UriString.strip_prefix("file://") {
-		percent_decode(Stripped)
+		PercentDecode(Stripped)
 	} else if UriString.starts_with('/') {
 		UriString.to_string()
 	} else {
@@ -758,7 +758,7 @@ async fn ApplyEditsToDisk(UriString:&str, TextEdits:&[Value]) -> Result<(), Comm
 	for (Start, End, NewText) in WithOffsets {
 		let SafeStart = Start.min(Mutated.len());
 
-		let SafeEnd = End.max(SafeStart).min(Mutated.len());
+		let SafeEnd = End.Max(SafeStart).min(Mutated.len());
 
 		Mutated.replace_range(SafeStart..SafeEnd, &NewText);
 	}
@@ -832,16 +832,16 @@ fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Character:usiz
 /// Minimal percent-decode for `file://` URI paths. Reuses the
 /// project's existing helpers when possible; this self-contained
 /// version avoids an extra crate import.
-fn percent_decode(Input:&str) -> String {
+fn PercentDecode(Input:&str) -> String {
 	let mut Out = String::with_capacity(Input.len());
 
 	let mut Bytes = Input.as_bytes().iter().peekable();
 
-	while let Some(&Byte) = Bytes.next() {
+	while let Some(&Byte) = Bytes.Next() {
 		if Byte == b'%' {
-			let H = Bytes.next().copied();
+			let H = Bytes.Next().copied();
 
-			let L = Bytes.next().copied();
+			let L = Bytes.Next().copied();
 
 			if let (Some(H), Some(L)) = (H, L) {
 				if let (Some(Hi), Some(Lo)) = (HexDigit(H), HexDigit(L)) {

@@ -25,8 +25,8 @@ pub async fn Fn(
 	let R = Request.range.as_ref();
 
 	let RangeDTO = json!({
-		"StartLineNumber": R.and_then(|R| R.start.as_ref()).map(|P| P.line).unwrap_or(0),
-		"StartColumn": R.and_then(|R| R.start.as_ref()).map(|P| P.character).unwrap_or(0),
+		"StartLineNumber": R.and_then(|R| R.Start.as_ref()).map(|P| P.line).unwrap_or(0),
+		"StartColumn": R.and_then(|R| R.Start.as_ref()).map(|P| P.character).unwrap_or(0),
 		"EndLineNumber": R.and_then(|R| R.end.as_ref()).map(|P| P.line).unwrap_or(0),
 		"EndColumn": R.and_then(|R| R.end.as_ref()).map(|P| P.character).unwrap_or(0),
 	});

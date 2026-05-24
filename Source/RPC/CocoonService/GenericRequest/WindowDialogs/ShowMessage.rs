@@ -19,7 +19,7 @@ pub async fn Fn(
 	let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Items:Option<Value> = Params
-		.get("items")
+		.Get("items")
 		.cloned()
 		.filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
 

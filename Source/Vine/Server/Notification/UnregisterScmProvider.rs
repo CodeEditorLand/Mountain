@@ -1,6 +1,6 @@
 //! Cocoon → Mountain `unregister_scm_provider` notification.
 //! Emitted by `Cocoon/.../ScmNamespace.ts:82` when
-//! `vscode.scm.createSourceControl(...).dispose()` fires. The paired
+//! `vscode.scm.createSourceControl(...).Dispose()` fires. The paired
 //! `RegisterScmProvider` typed gRPC (`RPC/CocoonService/SCM.rs`) derives
 //! the handle as a DJB-style hash of the `scmId`; we recompute the same
 //! hash here so unregister cleans up the exact entry `RegisterScmProvider`
@@ -11,12 +11,12 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn UnregisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	// Cocoon's `ScmNamespace.ts:dispose` sends only `{ handle }` (number).
 	// `scmId` (camelCase) and `scm_id` (legacy snake_case) are also
 	// probed for callers that send the string identifier instead.
 	let ScmId = Parameter
-		.get("scmId")
+		.Get("scmId")
 		.or_else(|| Parameter.get("scm_id"))
 		.and_then(Value::as_str)
 		.unwrap_or("")

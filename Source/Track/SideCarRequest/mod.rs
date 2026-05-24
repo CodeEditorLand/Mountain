@@ -1,4 +1,4 @@
 //! Sidecar request dispatch. Callers spell
-//! `Track::SideCarRequest::DispatchSideCarRequest::DispatchSideCarRequest`.
+//! `Track::SideCarRequest::Fn::Fn`.
 
 pub mod DispatchSideCarRequest;

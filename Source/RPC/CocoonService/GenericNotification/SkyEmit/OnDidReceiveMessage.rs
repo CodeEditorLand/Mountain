@@ -1,13 +1,13 @@
 use serde_json::{Value, json};
 use tauri::Emitter;
 
-use crate::Environment::MountainEnvironment::MountainEnvironment;
+use crate::Environment::MountainEnvironment::Struct;
 
 pub fn Fn(Params:Value, Env:&MountainEnvironment) {
 	let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0);
 
 	let Message = Params
-		.get("stringMessage")
+		.Get("stringMessage")
 		.and_then(|V| V.as_str())
 		.map(|S| S.to_string())
 		.or_else(|| Params.get("bytesMessage").map(|_| "[binary]".to_string()))

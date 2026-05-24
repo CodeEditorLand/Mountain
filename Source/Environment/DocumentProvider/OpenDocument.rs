@@ -36,7 +36,7 @@ use url::Url;
 use crate::{
 	ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO,
 	Environment::Utility,
-	IPC::SkyEmit::LogSkyEmit,
+	IPC::SkyEmit::Fn,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
@@ -53,7 +53,7 @@ pub(super) async fn open_document(
 
 	content:Option<String>,
 ) -> Result<Url, CommonError> {
-	let uri = Utility::UriParsing::Fn(&uri_components_dto)?;
+	let Uri = Utility::UriParsing::Fn(&uri_components_dto)?;
 
 	dev_log!("model", "[DocumentProvider] Opening document: {}", uri);
 
@@ -65,7 +65,7 @@ pub(super) async fn open_document(
 		.OpenDocuments
 		.lock()
 		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-		.get(uri.as_str())
+		.Get(uri.as_str())
 	{
 		dev_log!("model", "[DocumentProvider] Document {} is already open.", uri);
 
@@ -108,7 +108,7 @@ pub(super) async fn open_document(
 		let file_content_bytes = runtime.Run(ReadFile(file_path.clone())).await?;
 
 		String::from_utf8(file_content_bytes)
-			.map_err(|error| CommonError::FileSystemIO { Path:file_path, Description:error.to_string() })?
+			.map_err(|Error| CommonError::FileSystemIO { Path:file_path, Description:error.to_string() })?
 	} else {
 		// Custom scheme: attempt to resolve from a sidecar provider.
 		dev_log!(

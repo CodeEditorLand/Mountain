@@ -8,10 +8,10 @@
 
 use serde_json::{Value, json};
 
-use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as extract_path_from_arg, dev_log};
+use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as ExtractPathFromArg, dev_log};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing file path")?)?;
+	let Path = ExtractPathFromArg(Arguments.get(0).ok_or("Missing file path")?)?;
 
 	dev_log!("vfs-verbose", "readFile: {}", Path);
 

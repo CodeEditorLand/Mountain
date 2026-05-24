@@ -23,9 +23,9 @@ pub async fn Fn(_Arguments:Vec<Value>) -> Result<Value, String> {
 			Ok(Value::Bool(true))
 		},
 
-		Err(E) if E.kind() == std::io::ErrorKind::NotFound => Ok(Value::Bool(true)),
+		Err(E) if E.Kind() == std::io::ErrorKind::NotFound => Ok(Value::Bool(true)),
 
-		Err(E) if E.kind() == std::io::ErrorKind::PermissionDenied => {
+		Err(E) if E.Kind() == std::io::ErrorKind::PermissionDenied => {
 			#[cfg(target_os = "macos")]
 			{
 				// Pass path via env var; use AppleScript's `quoted form of` for
@@ -37,7 +37,7 @@ pub async fn Fn(_Arguments:Vec<Value>) -> Result<Value, String> {
 						"do shell script (\"rm -f \" & quoted form of (system attribute \"SH_TARGET\")) with \
 						 administrator privileges",
 					])
-					.status()
+					.Status()
 					.await
 					.map_err(|E| format!("uninstallShellCommand: osascript failed: {E}"))?;
 

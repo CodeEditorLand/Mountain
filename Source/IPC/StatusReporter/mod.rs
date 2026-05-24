@@ -13,7 +13,7 @@
 //!   constructor, periodic loops, health check, service discovery, recovery).
 //! - `mountain_*` Tauri commands - one wire-bound entry per file, all
 //!   delegating to the `Reporter::Struct` in Tauri state.
-//! - `InitializeStatusReporter::initialize_status_reporter` - bootstrap helper
+//! - `InitializeStatusReporter::Fn` - bootstrap helper
 //!   called from `Binary/Register/StatusReporterRegister.rs`.
 
 pub mod ComprehensiveStatusReport;
@@ -34,6 +34,7 @@ pub mod MessageStats;
 
 pub mod PerformanceMetrics;
 
+#[path = "Reporter/mod.rs"]
 pub mod Reporter;
 
 pub mod ServiceInfo;
@@ -46,26 +47,26 @@ pub mod ServiceStatus;
 
 pub mod SeverityLevel;
 
-pub mod mountain_attempt_recovery;
+pub mod MountainAttemptRecovery;
 
-pub mod mountain_discover_services;
+pub mod MountainDiscoverServices;
 
-pub mod mountain_get_comprehensive_status;
+pub mod MountainGetComprehensiveStatus;
 
-pub mod mountain_get_health_status;
+pub mod MountainGetHealthStatus;
 
-pub mod mountain_get_ipc_status;
+pub mod MountainGetIpcStatus;
 
-pub mod mountain_get_ipc_status_history;
+pub mod MountainGetIpcStatusHistory;
 
-pub mod mountain_get_performance_metrics;
+pub mod MountainGetPerformanceMetrics;
 
-pub mod mountain_get_service_info;
+pub mod MountainGetServiceInfo;
 
-pub mod mountain_get_service_registry;
+pub mod MountainGetServiceRegistry;
 
-pub mod mountain_perform_health_check;
+pub mod MountainPerformHealthCheck;
 
-pub mod mountain_start_ipc_status_reporting;
+pub mod MountainStartIpcStatusReporting;
 
-pub mod mountain_start_service_discovery;
+pub mod MountainStartServiceDiscovery;

@@ -31,7 +31,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterTaskProviderRequest)
 
 		SideCarIdentifier:"cocoon-main".to_string(),
 
-		ExtensionIdentifier:json!(Request.extension_id),
+		ExtensionIdentifier:json!(Request.ExtensionId),
 
 		Options:None,
 	};

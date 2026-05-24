@@ -2,7 +2,7 @@
 //! external / execute and `role.manage` for changing role
 //! definitions at runtime.
 
-use crate::IPC::Permission::Role::ManageRole::Role;
+use crate::IPC::Permission::Role::ManageRole::Struct;
 
 pub fn Fn() -> Role::Struct {
 	Role::Struct::New(

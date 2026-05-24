@@ -10,7 +10,7 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:CloseTerminalRequest) -> Result<Response<Empty>, Status> {
-	let TerminalIdentifier = Request.terminal_id as u64;
+	let TerminalIdentifier = Request.TerminalId as u64;
 
 	dev_log!("cocoon", "[CocoonService] close_terminal: id={}", TerminalIdentifier);
 

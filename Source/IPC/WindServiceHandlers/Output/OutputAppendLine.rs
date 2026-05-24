@@ -6,16 +6,16 @@ use CommonLibrary::IPC::SkyEvent::SkyEvent;
 use serde_json::{Value, json};
 use tauri::{AppHandle, Emitter};
 
-use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string;
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::ArgString;
 
 pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-	let ChannelName = arg_string(&Arguments, 0);
+	let ChannelName = ArgString(&Arguments, 0);
 
-	let Text = arg_string(&Arguments, 1);
+	let Text = ArgString(&Arguments, 1);
 
 	let Line = format!("{}\n", Text);
 
-	let _ = ApplicationHandle.emit(SkyEvent::OutputAppend.AsStr(), json!({ "channel": ChannelName, "text": Line }));
+	let _ = ApplicationHandle.emit(SkyEvent::Fn.AsStr(), json!({ "channel": ChannelName, "text": Line }));
 
 	Ok(Value::Null)
 }

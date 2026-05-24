@@ -6,15 +6,15 @@
 //!
 //! Layout (one Tauri command per file, snake_case wire-bound names per
 //! the Naming-Convention exception):
-//! - `cocoon_extension_host_health::cocoon_extension_host_health`
-//! - `cocoon_search_service_health::cocoon_search_service_health`
-//! - `cocoon_debug_service_health::cocoon_debug_service_health`
-//! - `shared_process_service_health::shared_process_service_health`
+//! - `CocoonExtensionHostHealth::Fn`
+//! - `CocoonSearchServiceHealth::Fn`
+//! - `CocoonDebugServiceHealth::Fn`
+//! - `SharedProcessServiceHealth::Fn`
 
-pub mod cocoon_debug_service_health;
+pub mod CocoonDebugServiceHealth;
 
-pub mod cocoon_extension_host_health;
+pub mod CocoonExtensionHostHealth;
 
-pub mod cocoon_search_service_health;
+pub mod CocoonSearchServiceHealth;
 
-pub mod shared_process_service_health;
+pub mod SharedProcessServiceHealth;

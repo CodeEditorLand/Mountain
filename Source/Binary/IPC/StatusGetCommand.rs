@@ -61,13 +61,13 @@ use crate::dev_log;
 /// Returns an error if:
 /// - Status cannot be retrieved from IPC server
 #[tauri::command]
-pub async fn MountainIPCGetStatus(app_handle:AppHandle) -> Result<Value, String> {
-	let Status = crate::IPC::TauriIPCServer_Old::mountain_ipc_get_status(app_handle)
+pub async fn Fn(app_handle:AppHandle) -> Result<Value, String> {
+	let Status = crate::IPC::TauriIPCServer_Old::MountainIpcGetStatus(app_handle)
 		.await
 		.map_err(|Error| {
 			dev_log!("ipc", "error: [IPC] [Command] Failed to get IPC status: {}", Error);
 			Error.to_string()
 		})?;
 
-	Ok(serde_json::to_value(Status).map_err(|e| e.to_string())?)
+	Ok(serde_json::to_value(Status).map_err(|E| e.to_string())?)
 }

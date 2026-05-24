@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn ExtensionDeactivated(_Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(_Service:&MountainVinegRPCService, Parameter:&Value) {
 	dev_log!(
 		"grpc",
 		"[MountainVinegRPCService] Extension deactivated: {}",

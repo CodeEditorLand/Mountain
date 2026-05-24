@@ -12,24 +12,24 @@ use serde_json::Value;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-	let source = Arguments
-		.get(0)
+	let Source = Arguments
+		.Get(0)
 		.ok_or("Missing source path".to_string())?
 		.as_str()
 		.ok_or("Source path must be a string".to_string())?;
 
 	let destination = Arguments
-		.get(1)
+		.Get(1)
 		.ok_or("Missing destination path".to_string())?
 		.as_str()
 		.ok_or("Destination path must be a string".to_string())?;
 
-	let provider:Arc<dyn FileSystemWriter> = RunTime.Environment.Require();
+	let Provider:Arc<dyn FileSystemWriter> = RunTime.Environment.Require();
 
 	provider
 		.Rename(&PathBuf::from(source), &PathBuf::from(destination), false)
 		.await
-		.map_err(|e:CommonError| format!("Failed to move file: {} -> {}", source, destination))?;
+		.map_err(|E:CommonError| format!("Failed to move file: {} -> {}", source, destination))?;
 
 	dev_log!("vfs-verbose", "moved: {} -> {}", source, destination);
 

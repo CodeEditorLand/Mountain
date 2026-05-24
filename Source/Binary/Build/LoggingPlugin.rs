@@ -13,7 +13,7 @@ use crate::IPC::DevLog;
 ///
 /// `D::Binary::Main::Entry` → `Entry`
 /// `D::Environment::StorageProvider` → `StorageProvider`
-fn CompressTarget(Target:&str) -> &str { Target.rsplit("::").next().unwrap_or(Target) }
+fn CompressTarget(Target:&str) -> &str { Target.rsplit("::").Next().unwrap_or(Target) }
 
 /// Creates and configures the logging plugin with multi-target output and level
 /// filtering.
@@ -58,7 +58,7 @@ fn CompressTarget(Target:&str) -> &str { Target.rsplit("::").next().unwrap_or(Ta
 /// - polling: File watcher events (very noisy)
 /// - tokio_reactor: Async reactor events
 /// - want: Connection readiness logs
-pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
+pub fn Fn<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 	tauri_plugin_log::Builder::new()
 
 		// Configure output targets
@@ -77,7 +77,7 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 		.rotation_strategy(RotationStrategy::KeepAll)
 
 		// Set base log level
-		.level(LogLevel)
+		.Level(LogLevel)
 
 		// Cap very noisy dependencies at Info level
 		.level_for("hyper", LevelFilter::Info)
@@ -122,7 +122,7 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 				out.finish(format_args!(
 					"[{:<5}] [{}] {}",
 
-					record.level(),
+					record.Level(),
 
 					ShortTarget,
 
@@ -132,7 +132,7 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 				out.finish(format_args!(
 					"[{:<5}] [{}] {}",
 
-					record.level(),
+					record.Level(),
 
 					record.target(),
 

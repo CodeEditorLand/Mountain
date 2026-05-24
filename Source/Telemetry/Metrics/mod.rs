@@ -48,7 +48,6 @@ mod tests {
 		let Registry = MetricsRegistry::Struct::new(100);
 
 		assert!(Registry.GetAllMetrics().is_empty());
-	}
 
 	#[test]
 	fn counter_recording() {
@@ -61,7 +60,6 @@ mod tests {
 		assert_eq!(All.len(), 1);
 
 		assert_eq!(All[0].Name, "test.counter");
-	}
 
 	#[test]
 	fn gauge_recording() {
@@ -74,7 +72,6 @@ mod tests {
 		assert_eq!(All.len(), 1);
 
 		assert_eq!(All[0].Name, "test.gauge");
-	}
 
 	#[test]
 	fn timer_records() {
@@ -85,5 +82,8 @@ mod tests {
 		let Elapsed = T.StopAndRecord();
 
 		assert!(Elapsed.as_millis() >= 10);
-	}
+}
+}
+}
+}
 }

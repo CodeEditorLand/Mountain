@@ -54,6 +54,6 @@ use tauri::AppHandle;
 ///
 /// Returns an error if status cannot be retrieved.
 #[tauri::command]
-pub async fn MountainGetIPCStatus(app_handle:AppHandle) -> Result<Value, String> {
-	crate::IPC::StatusReporter::mountain_get_ipc_status::mountain_get_ipc_status(app_handle).await
+pub async fn Fn(app_handle:AppHandle) -> Result<Value, String> {
+	crate::IPC::StatusReporter::Fn::Fn(app_handle).await
 }

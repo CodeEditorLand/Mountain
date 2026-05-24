@@ -6,7 +6,7 @@
 
 use serde_json::{Value, json};
 
-use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as extract_path_from_arg, dev_log};
+use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::Fn as ExtractPathFromArg, dev_log};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let ResourceArg = Arguments.get(0).ok_or("Missing file path")?;
@@ -19,7 +19,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 		.and_then(|V| V.as_str())
 		.map(|S| S.to_string());
 
-	let Path = extract_path_from_arg(ResourceArg)?;
+	let Path = ExtractPathFromArg(ResourceArg)?;
 
 	let Content = Arguments.get(1).ok_or("Missing file content")?;
 

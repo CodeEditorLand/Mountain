@@ -7,7 +7,7 @@ use tonic::{Response, Status};
 use crate::{
 	ApplicationState::{
 		DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
-		State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify,
+		Struct::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify,
 	},
 	RPC::CocoonService::CocoonServiceImpl,
 	Vine::Generated::{Empty, UpdateWorkspaceFoldersRequest},

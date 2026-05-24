@@ -1,10 +1,10 @@
 //! Basic DNS server information returned to the webview by
-//! `dns_get_server_info`.
+//! `DnsGetServerInfo`.
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DnsServerInfo {
+pub struct Struct {
 	pub port:u16,
 
 	pub is_running:bool,

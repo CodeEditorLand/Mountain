@@ -1,4 +1,4 @@
-//! # Binary::Initialize
+//! # Binary::Fn
 //!
 //! Pre-Tauri startup utilities invoked before the event loop begins.
 //! Covers Tokio runtime construction, CLI argument parsing, application

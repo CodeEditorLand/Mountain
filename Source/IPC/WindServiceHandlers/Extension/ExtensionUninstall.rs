@@ -1,4 +1,4 @@
-//! `extensions:uninstall` IPC handler - removes the install directory,
+//! `extensions:uninstall` IPC handler - removes the Install directory,
 //! clears the registry entry, and notifies Cocoon + Wind. Symmetric with
 //! `ExtensionInstall`.
 

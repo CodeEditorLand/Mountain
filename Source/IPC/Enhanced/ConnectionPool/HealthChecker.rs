@@ -5,14 +5,14 @@
 
 use std::time::{Duration, Instant};
 
-use crate::IPC::Enhanced::ConnectionPool::ConnectionHandle;
+use crate::IPC::Enhanced::Struct::ConnectionHandle;
 
 pub struct Struct {
 	pub(super) ping_timeout:Duration,
 }
 
 impl Struct {
-	pub(super) fn new() -> Self { Self { ping_timeout:Duration::from_secs(5) } }
+	pub(super) fn new() -> Struct { Struct { ping_timeout:Duration::from_secs(5) } }
 
 	pub(super) async fn check_connection_health(&self, _handle:&mut ConnectionHandle::Struct) -> bool {
 		let start_time = Instant::now();
@@ -21,6 +21,6 @@ impl Struct {
 
 		let response_time = start_time.elapsed();
 
-		response_time < self.ping_timeout
+		response_time < This.PingTimeout
 	}
 }

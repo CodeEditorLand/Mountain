@@ -14,26 +14,26 @@ pub mod CertificateGenerationResult;
 
 pub mod CertificateStatus;
 
-pub mod tls_check_cert_status;
+pub mod TlsCheckCertStatus;
 
-pub mod tls_delete_cert;
+pub mod TlsDeleteCert;
 
-pub mod tls_generate_cert;
+pub mod TlsGenerateCert;
 
-pub mod tls_get_all_certs;
+pub mod TlsGetAllCerts;
 
-pub mod tls_get_ca_cert;
+pub mod TlsGetCaCert;
 
-pub mod tls_get_server_cert_info;
+pub mod TlsGetServerCertInfo;
 
-pub mod tls_initialize;
+pub mod TlsInitialize;
 
-pub mod tls_renew_certificate;
+pub mod TlsRenewCertificate;
 
 #[cfg(test)]
 mod tests {
 
-	use super::CertificateStatus::CertificateStatus;
+	use super::CertificateStatus::Struct;
 
 	#[test]
 	fn CertificateStatusSerialization() {

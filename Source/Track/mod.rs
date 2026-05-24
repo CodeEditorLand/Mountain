@@ -19,6 +19,6 @@ pub mod Webview;
 pub mod Effect;
 
 // No `pub use` re-exports - callers spell the full path
-// (`Track::UIRequest::ResolveUIRequest::ResolveUIRequest`, etc.). The
+// (`Track::UIRequest::Fn::Fn`, etc.). The
 // double-segment shape is required by `tauri::generate_handler!` so the
 // macro can find the `__cmd__<Name>` companion in the same file.

@@ -5,12 +5,12 @@
 //! its own file (file name = Tauri command identifier per the
 //! Naming-Convention exception):
 //!
-//! - `MountainProvideHover::MountainProvideHover`
-//! - `MountainProvideCodeActions::MountainProvideCodeActions`
-//! - `MountainProvideDocumentHighlights::MountainProvideDocumentHighlights`
-//! - `MountainProvideCompletions::MountainProvideCompletions`
-//! - `MountainProvideDefinition::MountainProvideDefinition`
-//! - `MountainProvideReferences::MountainProvideReferences`
+//! - `MountainProvideHover::Fn`
+//! - `MountainProvideCodeActions::Fn`
+//! - `MountainProvideDocumentHighlights::Fn`
+//! - `MountainProvideCompletions::Fn`
+//! - `MountainProvideDefinition::Fn`
+//! - `MountainProvideReferences::Fn`
 //!
 //! Each command is a thin shell that validates input and delegates to
 //! the matching `provide_*_impl` in the sibling `Hover` / `CodeActions`

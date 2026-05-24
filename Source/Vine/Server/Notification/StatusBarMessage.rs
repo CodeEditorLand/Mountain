@@ -1,4 +1,4 @@
-//! Cocoon → Mountain `statusBar.message` notification.
+//! Cocoon → Mountain `statusBar.Message` notification.
 //! Emitted when an extension calls `vscode.window.setStatusBarMessage`
 //! (one-shot text, optional auto-hide). Canonical channel is
 //! `sky://statusbar/set-message`.
@@ -8,7 +8,7 @@ use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-pub async fn StatusBarMessage(Service:&MountainVinegRPCService, Parameter:&Value) {
+pub async fn Fn(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Text = Parameter.get("text").and_then(Value::as_str).unwrap_or("");
 
 	let HideAfter = Parameter.get("hideAfter").and_then(Value::as_u64);

@@ -14,7 +14,7 @@ use crate::dev_log;
 pub async fn Fn(AirClient:&AirServiceClient<tonic::transport::Channel>) -> bool {
 	use tonic::Request;
 
-	match AirClient.health_check(Request::new(HealthCheckRequest {})).await {
+	match AirClient.HealthCheck(Request::new(HealthCheckRequest {})).await {
 		Ok(Response) => {
 			let IsHealthy = Response.into_inner().healthy;
 

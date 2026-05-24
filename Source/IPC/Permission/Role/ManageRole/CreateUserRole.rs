@@ -2,7 +2,7 @@
 //! and storage subsystems. The default role assigned when no
 //! roles are supplied in a `SecurityContext`.
 
-use crate::IPC::Permission::Role::ManageRole::Role;
+use crate::IPC::Permission::Role::ManageRole::Struct;
 
 pub fn Fn() -> Role::Struct {
 	Role::Struct::New(

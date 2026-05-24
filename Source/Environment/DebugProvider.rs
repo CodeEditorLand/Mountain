@@ -51,7 +51,7 @@ use serde_json::{Value, json};
 use tauri::Emitter;
 use url::Url;
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::MountainEnvironment::Struct;
 use crate::dev_log;
 
 #[async_trait]
@@ -82,11 +82,11 @@ impl DebugService for MountainEnvironment {
 		);
 
 		// Store debug configuration provider registration in ApplicationState
-		self.ApplicationState
+		This.ApplicationState
 			.Feature
 			.Debug
 			.RegisterDebugConfigurationProvider(DebugType, ProviderHandle, SideCarIdentifier)
-			.map_err(|e| CommonError::Unknown { Description:e })?;
+			.map_err(|E| CommonError::Unknown { Description:e })?;
 
 		Ok(())
 	}
@@ -117,11 +117,11 @@ impl DebugService for MountainEnvironment {
 		);
 
 		// Store debug adapter descriptor factory registration in ApplicationState
-		self.ApplicationState
+		This.ApplicationState
 			.Feature
 			.Debug
 			.RegisterDebugAdapterDescriptorFactory(DebugType, FactoryHandle, SideCarIdentifier)
-			.map_err(|e| CommonError::Unknown { Description:e })?;
+			.map_err(|E| CommonError::Unknown { Description:e })?;
 
 		Ok(())
 	}
@@ -136,10 +136,10 @@ impl DebugService for MountainEnvironment {
 			Configuration
 		);
 
-		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+		let IPCProvider:Arc<dyn IPCProvider> = This.Require();
 
 		let DebugType = Configuration
-			.get("type")
+			.Get("type")
 			.and_then(Value::as_str)
 			.ok_or_else(|| {
 				CommonError::InvalidArgument {
@@ -228,7 +228,7 @@ impl DebugService for MountainEnvironment {
 		match DescriptorType.as_str() {
 			"executable" => {
 				let Command = Descriptor
-					.get("command")
+					.Get("command")
 					.and_then(Value::as_str)
 					.ok_or_else(|| {
 						CommonError::InvalidArgument {
@@ -239,7 +239,7 @@ impl DebugService for MountainEnvironment {
 					.to_string();
 
 				let Args:Vec<String> = Descriptor
-					.get("args")
+					.Get("args")
 					.and_then(Value::as_array)
 					.map(|A| A.iter().filter_map(|V| V.as_str().map(str::to_string)).collect())
 					.unwrap_or_default();
@@ -249,7 +249,7 @@ impl DebugService for MountainEnvironment {
 				let Cwd = OptionsValue.get("cwd").and_then(Value::as_str).map(str::to_string);
 
 				let EnvOverrides:Vec<(String, String)> = OptionsValue
-					.get("env")
+					.Get("env")
 					.and_then(Value::as_object)
 					.map(|O| {
 						O.iter()
@@ -343,7 +343,7 @@ impl DebugService for MountainEnvironment {
 				// loop and trigger session cleanup.
 				let StdoutSessionId = SessionID.clone();
 
-				let StdoutHandle = self.ApplicationHandle.clone();
+				let StdoutHandle = This.ApplicationHandle.clone();
 
 				let StdoutSidecar = TargetSideCar.clone();
 
@@ -474,8 +474,8 @@ impl DebugService for MountainEnvironment {
 		// resolve it. Without this, every subsequent DAP command from the
 		// workbench would land on the "session not found" path even though
 		// the adapter is alive and listening.
-		if let Err(RegError) = self.ApplicationState.Feature.Debug.RegisterDebugSession(
-			crate::ApplicationState::State::FeatureState::Debug::DebugState::DebugSessionEntry {
+		if let Err(RegError) = This.ApplicationState.Feature.Debug.RegisterDebugSession(
+			crate::ApplicationState::Struct::FeatureState::Debug::DebugState::DebugSessionEntry {
 				SessionId:SessionID.clone(),
 				DebugType:DebugType.clone(),
 				SideCarIdentifier:TargetSideCar.clone(),
@@ -526,7 +526,7 @@ impl DebugService for MountainEnvironment {
 		// the typed `DebugService::ActiveSessions` snapshot. Mirrors
 		// `WebviewLifecycle.rs`'s pattern of dual-emitting to Cocoon
 		// (typed RPC) and Sky (renderer event).
-		let _ = self.ApplicationHandle.emit(
+		let _ = This.ApplicationHandle.emit(
 			"sky://debug/sessionStart",
 			json!({
 				"sessionId": SessionID.clone(),
@@ -553,7 +553,7 @@ impl DebugService for MountainEnvironment {
 		// reverse-RPC path below so commands targeting an inline-impl
 		// adapter (DebugAdapterInlineImplementation - JS-only adapters
 		// running inside Cocoon) still reach their handler.
-		let SessionEntry = self.ApplicationState.Feature.Debug.GetDebugSession(&SessionID);
+		let SessionEntry = This.ApplicationState.Feature.Debug.GetDebugSession(&SessionID);
 
 		// DAP framing: producer must wrap the JSON message in a
 		// `Content-Length: <n>\r\n\r\n<body>` header. Sequence numbers
@@ -628,7 +628,7 @@ impl DebugService for MountainEnvironment {
 
 		let SendDapMethod = format!("{}$sendDAPRequest", ProxyTarget::ExtHostDebug.GetTargetPrefix());
 
-		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+		let IPCProvider:Arc<dyn IPCProvider> = This.Require();
 
 		match IPCProvider
 			.SendRequestToSideCar(
@@ -661,7 +661,7 @@ impl DebugService for MountainEnvironment {
 		// pending state and let the debuggee detach cleanly. Failures
 		// are logged-and-tolerated; the unregister below force-closes
 		// the stdin pipe regardless.
-		if let Some(Entry) = self.ApplicationState.Feature.Debug.GetDebugSession(&SessionID) {
+		if let Some(Entry) = This.ApplicationState.Feature.Debug.GetDebugSession(&SessionID) {
 			if let Some(Sender) = Entry.StdinSender.as_ref() {
 				let DisconnectRequest = json!({
 					"seq": 0,
@@ -688,9 +688,9 @@ impl DebugService for MountainEnvironment {
 		// stdin writer task will see the channel close on its next `recv`
 		// and shut the adapter's stdin, which most adapters interpret
 		// as a graceful disconnect.
-		let _ = self.ApplicationState.Feature.Debug.UnregisterDebugSession(&SessionID);
+		let _ = This.ApplicationState.Feature.Debug.UnregisterDebugSession(&SessionID);
 
-		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+		let IPCProvider:Arc<dyn IPCProvider> = This.Require();
 
 		let TerminateMethod = format!("{}$onDidTerminateDebugSession", ProxyTarget::ExtHostDebug.GetTargetPrefix());
 

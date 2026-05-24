@@ -4,7 +4,7 @@
 //!
 //! - `Terminal*` - operate on PTYs that are already registered via the
 //!   `TerminalProvider` trait. Every method takes a provider-assigned
-//!   `terminal_id` (`u64`).
+//!   `TerminalId` (`u64`).
 //! - `LocalPTY*` - read-only platform queries that don't touch any registered
 //!   PTY: discover available shells, default shell, and the current process
 //!   environment.

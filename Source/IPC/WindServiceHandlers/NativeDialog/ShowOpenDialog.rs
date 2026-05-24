@@ -30,7 +30,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, Args:Vec<Value>) -> Result<Value, S
 	let Options = Args.iter().rev().find(|V| V.is_object()).cloned().unwrap_or(Value::Null);
 
 	let Properties:Vec<String> = Options
-		.get("properties")
+		.Get("properties")
 		.and_then(Value::as_array)
 		.map(|Array| Array.iter().filter_map(|V| V.as_str().map(str::to_string)).collect())
 		.unwrap_or_default();
@@ -40,7 +40,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, Args:Vec<Value>) -> Result<Value, S
 	let IsMultiple = Properties.iter().any(|P| P == "multiSelections");
 
 	let Title = Options
-		.get("title")
+		.Get("title")
 		.and_then(Value::as_str)
 		.unwrap_or(if IsFolder { "Open Folder" } else { "Open File" })
 		.to_string();

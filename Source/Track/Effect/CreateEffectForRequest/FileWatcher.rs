@@ -5,15 +5,15 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::Track::Effect::{
-	CreateEffectForRequest::Utilities::Params::{bool_at_true, string_at},
+	CreateEffectForRequest::Utilities::Params::{BoolAtTrue, StringAt},
 	MappedEffectType::MappedEffect,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn Fn<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"FileWatcher.Register" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn FileWatcherProvider> = RunTime.Environment.Require();
 				// Cocoon's `NextProviderHandle()` returns a number;
 				// older callers pass a string. Accept both shapes
 				// rather than silently collapsing numbers to "".
@@ -22,10 +22,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					Some(Value::Number(N)) => N.to_string(),
 					_ => String::new(),
 				};
-				let Root = string_at(&Parameters, 1);
-				let IsRecursive = bool_at_true(&Parameters, 2);
+				let Root = StringAt(&Parameters, 1);
+				let IsRecursive = BoolAtTrue(&Parameters, 2);
 				let Pattern = Parameters
-					.get(3)
+					.Get(3)
 					.and_then(Value::as_str)
 					.map(str::to_string)
 					.filter(|Pat| !Pat.is_empty());
@@ -33,13 +33,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					.RegisterWatcher(Handle, std::path::PathBuf::from(Root), IsRecursive, Pattern)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 
 		"FileWatcher.Unregister" => {
-			crate::effect!(run_time, {
-				let provider:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
+			crate::effect!(RunTime, {
+				let Provider:Arc<dyn FileWatcherProvider> = RunTime.Environment.Require();
 				let Handle = match Parameters.get(0) {
 					Some(Value::String(S)) => S.clone(),
 					Some(Value::Number(N)) => N.to_string(),
@@ -49,7 +49,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					.UnregisterWatcher(Handle)
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|E| e.to_string())
 			})
 		},
 

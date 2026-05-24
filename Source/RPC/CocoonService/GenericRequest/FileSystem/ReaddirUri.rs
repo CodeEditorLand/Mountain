@@ -5,7 +5,7 @@ use crate::Vine::Generated::GenericResponse;
 
 pub async fn Fn(RequestId:u64, Params:Value) -> Response<GenericResponse> {
 	let Uri = Params
-		.get("uri")
+		.Get("uri")
 		.and_then(|V| V.as_str())
 		.or_else(|| Params.as_str())
 		.unwrap_or("")

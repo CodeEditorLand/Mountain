@@ -8,23 +8,22 @@
 //! `process` keeps working unchanged.
 //!
 //! Layout (one Tauri command per file):
-//! - `process_get_exec_path::process_get_exec_path` - current executable path.
-//! - `process_get_platform::process_get_platform` - `darwin` / `win32` /
-//!   `linux`.
-//! - `process_get_arch::process_get_arch` - CPU architecture.
-//! - `process_get_pid::process_get_pid` - running PID.
-//! - `process_get_shell_env::process_get_shell_env` - full environment map.
-//! - `process_get_memory_info::process_get_memory_info` - per-platform `{
-//!   private, shared, residentSet }` triple.
+//! - `ProcessGetExecPath::Fn` - current executable path.
+//! - `ProcessGetPlatform::Fn` - `darwin` / `win32` / `linux`.
+//! - `ProcessGetArch::Fn` - CPU architecture.
+//! - `ProcessGetPid::Fn` - running PID.
+//! - `ProcessGetShellEnv::Fn` - full environment map.
+//! - `ProcessGetMemoryInfo::Fn` - per-platform `{ private,
+//!   shared, residentSet }` triple.
 
-pub mod process_get_arch;
+pub mod ProcessGetArch;
 
-pub mod process_get_exec_path;
+pub mod ProcessGetExecPath;
 
-pub mod process_get_memory_info;
+pub mod ProcessGetMemoryInfo;
 
-pub mod process_get_pid;
+pub mod ProcessGetPid;
 
-pub mod process_get_platform;
+pub mod ProcessGetPlatform;
 
-pub mod process_get_shell_env;
+pub mod ProcessGetShellEnv;

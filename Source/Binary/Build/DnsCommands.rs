@@ -21,19 +21,19 @@ pub mod ZoneInfo;
 
 pub mod ZoneRecord;
 
-pub mod dns_get_forward_allowlist;
+pub mod DnsGetForwardAllowlist;
 
-pub mod dns_get_health_status;
+pub mod DnsGetHealthStatus;
 
-pub mod dns_get_server_info;
+pub mod DnsGetServerInfo;
 
-pub mod dns_get_zone_info;
+pub mod DnsGetZoneInfo;
 
-pub mod dns_health_check;
+pub mod DnsHealthCheck;
 
-pub mod dns_resolve;
+pub mod DnsResolve;
 
-pub mod dns_test_resolution;
+pub mod DnsTestResolution;
 
 #[cfg(test)]
 mod tests {
@@ -56,7 +56,7 @@ mod tests {
 
 		assert_eq!(deserialized.port, 5380);
 
-		assert_eq!(deserialized.is_running, true);
+		assert_eq!(deserialized.IsRunning, true);
 
 		assert_eq!(deserialized.startup_time, "2024-01-01T00:00:00Z");
 	}

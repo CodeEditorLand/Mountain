@@ -117,7 +117,7 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 
 	let user_settings_path = environment
 		.ApplicationHandle
-		.path()
+		.Path()
 		.app_config_dir()
 		.map(|p| p.join("settings.json"))
 		.ok();
@@ -141,12 +141,12 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 	if let Some(user_map) = user_config.as_object() {
 		for (key, value) in user_map {
 			// Deep merge nested objects, shallow merge at root level
-			if value.is_object() && merged.get(key.as_str()).is_some_and(|v| v.is_object()) {
+			if value.is_object() && merged.get(key.as_str()).is_some_and(|V| v.is_object()) {
 				if let (Some(user_value), Some(_base_value)) =
-					(value.as_object(), merged.get(key.as_str()).and_then(|v| v.as_object()))
+					(value.as_object(), merged.get(key.as_str()).and_then(|V| v.as_object()))
 				{
 					for (inner_key, inner_value) in user_value {
-						merged.get_mut(key.as_str()).and_then(|v| v.as_object_mut()).map(|m| {
+						merged.get_mut(key.as_str()).and_then(|V| v.as_object_mut()).map(|m| {
 							m.insert(inner_key.clone(), inner_value.clone());
 						});
 					}
@@ -159,12 +159,12 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 
 	if let Some(workspace_map) = workspace_config.as_object() {
 		for (key, value) in workspace_map {
-			if value.is_object() && merged.get(key.as_str()).is_some_and(|v| v.is_object()) {
+			if value.is_object() && merged.get(key.as_str()).is_some_and(|V| v.is_object()) {
 				if let (Some(workspace_value), Some(_base_value)) =
-					(value.as_object(), merged.get(key.as_str()).and_then(|v| v.as_object()))
+					(value.as_object(), merged.get(key.as_str()).and_then(|V| v.as_object()))
 				{
 					for (inner_key, inner_value) in workspace_value {
-						merged.get_mut(key.as_str()).and_then(|v| v.as_object_mut()).map(|m| {
+						merged.get_mut(key.as_str()).and_then(|V| v.as_object_mut()).map(|m| {
 							m.insert(inner_key.clone(), inner_value.clone());
 						});
 					}
@@ -208,7 +208,7 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 ///     "title": "Git",
 ///     "properties": {
 ///       "git.enabled":                 { "type": "boolean", "default": true,  "description": "…" },
-///       "git.path":                    { "type": ["string","array"], "default": null, "description": "…" },
+///       "git.Path":                    { "type": ["string","array"], "default": null, "description": "…" },
 ///       "git.autoRepositoryDetection": { "type": ["boolean","string"], "default": true, "description": "…" }
 ///     }
 ///   }
@@ -217,7 +217,7 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 ///
 /// The previous implementation searched for a `[ {key, value} ]` array
 /// shape that doesn't exist in any real VS Code manifest, so EVERY
-/// `vscode.workspace.getConfiguration(...).get('foo')` lookup fell
+/// `vscode.workspace.getConfiguration(...).Get('foo')` lookup fell
 /// through to undefined. Extensions that use the lookup's first arg
 /// alone (no explicit default) saw undefined and silently bailed -
 /// which is the failure mode behind vscode.git activating but never
@@ -230,7 +230,7 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 /// `inspect_configuration_value`'s `path.split('.').try_fold(...)`
 /// land on the right node.
 pub(super) fn collect_default_configurations(
-	application_state:&crate::ApplicationState::State::ApplicationState::ApplicationState,
+	application_state:&crate::ApplicationState::Struct::ApplicationState::ApplicationState,
 ) -> Result<Value, CommonError> {
 	let mut default_config = Map::new();
 

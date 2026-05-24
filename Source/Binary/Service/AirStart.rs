@@ -75,7 +75,7 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 	// Try the Tauri sidecar resolver first (release / bundled).
 	// Falls back to the Cargo target dir for dev builds.
 	let BinaryPath:Option<PathBuf> = ApplicationHandle
-		.path()
+		.Path()
 		.resolve("Air", tauri::path::BaseDirectory::Resource)
 		.ok()
 		.filter(|P| P.exists())

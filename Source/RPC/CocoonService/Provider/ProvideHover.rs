@@ -30,7 +30,7 @@ pub async fn Fn(
 	dev_log!(
 		"provider",
 		"ProvideHover entry handle={} uri={} line={} char={}",
-		Request.provider_handle,
+		Request.ProviderHandle,
 		URI,
 		Line,
 		Character
@@ -59,7 +59,7 @@ pub async fn Fn(
 			dev_log!(
 				"provider",
 				"ProvideHover result handle={} contents_len={} hasRange={}",
-				Request.provider_handle,
+				Request.ProviderHandle,
 				Markdown.len(),
 				RangeOption.is_some()
 			);
@@ -71,7 +71,7 @@ pub async fn Fn(
 			dev_log!(
 				"provider",
 				"ProvideHover result handle={} (no provider)",
-				Request.provider_handle
+				Request.ProviderHandle
 			);
 
 			Ok(Response::new(ProvideHoverResponse { markdown:String::new(), range:None }))
@@ -81,7 +81,7 @@ pub async fn Fn(
 			dev_log!(
 				"provider",
 				"warn: ProvideHover failed handle={} err={}",
-				Request.provider_handle,
+				Request.ProviderHandle,
 				Error
 			);
 
