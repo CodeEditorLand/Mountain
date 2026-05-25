@@ -641,6 +641,40 @@ async fn LaunchAndManageCocoonSideCar(
 		}
 		dev_log!("cocoon", "[CocoonManagement] Startup extensions activation (*) triggered");
 
+		// Seed Cocoon's `__textDocuments` with any files already open in the
+		// workbench. Extensions that read `workspace.textDocuments` synchronously
+		// in their `activate()` function (rust-analyzer, ESLint, TypeScript) must
+		// see already-open editors rather than an empty array.
+		{
+			let OpenDocs = EnvironmentForActivation
+				.ApplicationState
+				.Feature
+				.Documents
+				.GetAllDocuments();
+
+			if !OpenDocs.is_empty() {
+				dev_log!(
+					"exthost",
+					"[CocoonManagement] Seeding {} open document(s) to Cocoon",
+					OpenDocs.len()
+				);
+				for Doc in OpenDocs.values() {
+					let Payload = serde_json::json!({
+						"uri": Doc.URI.to_string(),
+						"languageId": Doc.LanguageIdentifier,
+						"version": Doc.Version,
+						"lines": Doc.Lines,
+					});
+					let _ = Vine::Client::SendNotification::Fn(
+						SideCarId.clone(),
+						"$acceptModelAdded".to_string(),
+						Payload,
+					)
+					.await;
+				}
+			}
+		}
+
 		// Phase 2: workspaceContains: events. Iterate the scanned
 		// extension registry, collect every pattern contributed via the
 		// `workspaceContains:<pattern>` activation event, and fire the
