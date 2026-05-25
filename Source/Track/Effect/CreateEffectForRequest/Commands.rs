@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use CommonLibrary::{Command::CommandExecutor::CommandExecutor, Environment::Requires::Requires};
 use serde_json::{Value, json};
-use tauri::Runtime;
+use tauri::{Emitter, Runtime};
 
 use crate::Track::Effect::{
 	CreateEffectForRequest::Utilities::Params::{string_at, val_at},

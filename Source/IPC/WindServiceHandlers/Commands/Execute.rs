@@ -35,5 +35,21 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		json!({ "command": CommandId, "arguments": CommandArgs }),
 	);
 
+	// Dual-emit to Cocoon via Vine so `vscode.commands.onDidExecuteCommand`
+	// callbacks fire inside extensions running in the Node.js extension host.
+	// The Tauri-emit above only reaches the renderer (Sky); Cocoon cannot
+	// listen for `sky://*` events directly because there is no Tauri runtime
+	// in Node. Cocoon's `Services/Handler/Notification/Handler.ts` maps
+	// `$acceptCommandExecuted` → `Emitter.emit("commands.executed", payload)`
+	// which the `Commands/Namespace.ts` `onDidExecuteCommand` subscriber
+	// listens to. Fire-and-forget; failure is non-fatal (the Tauri-emit
+	// already reached the renderer-side observers).
+	let _ = crate::Vine::Client::SendNotification::Fn(
+		"cocoon-main".to_string(),
+		"$acceptCommandExecuted".to_string(),
+		json!({ "command": CommandId, "arguments": CommandArgs }),
+	)
+	.await;
+
 	Result
 }
