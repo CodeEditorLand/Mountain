@@ -38,5 +38,16 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 	dev_log!("config", "updated: {}", key);
 
+	// Notify Cocoon so `vscode.workspace.onDidChangeConfiguration` fires
+	// for extensions that react to config changes (rust-analyzer, ESLint,
+	// Prettier, etc.). Fire-and-forget; a Vine failure must not fail the IPC
+	// call that the extension is awaiting.
+	let _ = crate::Vine::Client::SendNotification::Fn(
+		"cocoon-main".to_string(),
+		"configuration.change".to_string(),
+		serde_json::json!({ "key": key }),
+	)
+	.await;
+
 	Ok(Value::Null)
 }
