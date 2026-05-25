@@ -646,11 +646,7 @@ async fn LaunchAndManageCocoonSideCar(
 		// in their `activate()` function (rust-analyzer, ESLint, TypeScript) must
 		// see already-open editors rather than an empty array.
 		{
-			let OpenDocs = EnvironmentForActivation
-				.ApplicationState
-				.Feature
-				.Documents
-				.GetAllDocuments();
+			let OpenDocs = EnvironmentForActivation.ApplicationState.Feature.Documents.GetAll();
 
 			if !OpenDocs.is_empty() {
 				dev_log!(
@@ -665,12 +661,9 @@ async fn LaunchAndManageCocoonSideCar(
 						"version": Doc.Version,
 						"lines": Doc.Lines,
 					});
-					let _ = Vine::Client::SendNotification::Fn(
-						SideCarId.clone(),
-						"$acceptModelAdded".to_string(),
-						Payload,
-					)
-					.await;
+					let _ =
+						Vine::Client::SendNotification::Fn(SideCarId.clone(), "$acceptModelAdded".to_string(), Payload)
+							.await;
 				}
 			}
 		}
