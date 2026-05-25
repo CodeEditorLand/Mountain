@@ -1996,6 +1996,24 @@ pub async fn mountain_ipc_invoke(
 					DetachFromProcess(RunTime.clone(), Arguments).await
 				},
 
+				// `localPty:setActive` - fired by Sky Bridge when the user
+				// switches terminal tabs. Notifies Cocoon so that
+				// `vscode.window.activeTerminal` reflects the focused terminal.
+				"localPty:setActive" => {
+					let TermId = Arguments.first().and_then(Value::as_i64);
+					let Payload = match TermId {
+						Some(Id) => serde_json::json!({ "id": Id }),
+						None => serde_json::json!({ "id": null }),
+					};
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptActiveTerminalChanged".to_string(),
+						Payload,
+					)
+					.await;
+					Ok(Value::Null)
+				},
+
 				// Remaining `localPty:*` - no Mountain-side state needed.
 				// `installAutoReply` / `uninstallAllAutoReplies`: shell-integration
 				// auto-reply triggers (e.g. sudo password prompts) - not implemented.
@@ -2495,6 +2513,37 @@ pub async fn mountain_ipc_invoke(
 								.unwrap_or(Value::Array(Vec::new())),
 						)
 					}
+				},
+
+				// =====================================================================
+				// Call hierarchy - forward to Cocoon's LanguageProviderRegistry
+				// =====================================================================
+				// VS Code calls these when the user invokes "Show Call Hierarchy"
+				// (Shift+Alt+H). The extension host registers providers via
+				// `vscode.languages.registerCallHierarchyProvider`; Cocoon's
+				// LanguageProviderRegistry routes each request to the correct
+				// extension. Mountain's gRPC handlers exist but are thin shims;
+				// the authoritative implementation lives in the extension host.
+				"language:prepareCallHierarchy"
+				| "language:provideCallHierarchyIncomingCalls"
+				| "language:provideCallHierarchyOutgoingCalls" => {
+					forward_to_cocoon!("language", command, Arguments)
+				},
+
+				// =====================================================================
+				// Type hierarchy - forward to Cocoon's LanguageProviderRegistry
+				// =====================================================================
+				"language:prepareTypeHierarchy"
+				| "language:provideTypeHierarchySupertypes"
+				| "language:provideTypeHierarchySubtypes" => {
+					forward_to_cocoon!("language", command, Arguments)
+				},
+
+				// =====================================================================
+				// Linked editing ranges - forward to Cocoon
+				// =====================================================================
+				"language:provideLinkedEditingRanges" => {
+					forward_to_cocoon!("language", command, Arguments)
 				},
 
 				// =====================================================================

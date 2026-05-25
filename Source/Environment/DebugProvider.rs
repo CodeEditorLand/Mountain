@@ -429,17 +429,280 @@ impl DebugService for MountainEnvironment {
 				);
 			},
 
-			"server" | "pipeServer" => {
+			"server" => {
+				// Connect to an already-running debug adapter over TCP. The
+				// descriptor shape is `{ type: "server", port, host? }` where
+				// `host` defaults to 127.0.0.1. Python debugpy, Go dlv, and
+				// most language-server-driven adapters ship in this mode.
+				let Port = Descriptor.get("port").and_then(Value::as_u64).ok_or_else(|| {
+					CommonError::InvalidArgument {
+						ArgumentName:"Descriptor.port".into(),
+						Reason:"server adapter descriptor missing 'port'".into(),
+					}
+				})? as u16;
+
+				let Host = Descriptor
+					.get("host")
+					.and_then(Value::as_str)
+					.unwrap_or("127.0.0.1")
+					.to_string();
+
+				let Addr = format!("{}:{}", Host, Port);
+
 				dev_log!(
 					"exthost",
-					"warn: [DebugProvider] Adapter type '{}' not yet wired (session '{}'). Reverse-RPC dispatch only.",
-					DescriptorType,
+					"[DebugProvider] Connecting to debug adapter server at {} (session '{}')",
+					Addr,
 					SessionID
 				);
 
-				AdapterStdinSender = None;
+				let TcpStream = tokio::net::TcpStream::connect(&Addr).await.map_err(|Error| {
+					CommonError::IPCError {
+						Description:format!(
+							"Failed to connect to debug adapter server at {} for session {}: {}",
+							Addr, SessionID, Error
+						),
+					}
+				})?;
 
+				let (ReadHalf, WriteHalf) = tokio::io::split(TcpStream);
+
+				let (Sender, mut Receiver) = tokio::sync::mpsc::unbounded_channel::<Vec<u8>>();
+
+				// Writer task: drain mpsc into the TCP write half.
+				let WriterSessionId = SessionID.clone();
+				tokio::spawn(async move {
+					use tokio::io::AsyncWriteExt;
+					let mut Pipe = WriteHalf;
+					while let Some(Frame) = Receiver.recv().await {
+						if let Err(Error) = Pipe.write_all(&Frame).await {
+							crate::dev_log!(
+								"exthost",
+								"warn: [DebugAdapter/server] write failed for session {}: {}",
+								WriterSessionId,
+								Error
+							);
+							break;
+						}
+						let _ = Pipe.flush().await;
+					}
+				});
+
+				// Reader task: parse DAP frames from the TCP read half and
+				// re-emit each JSON message to Sky.
+				let ReaderSessionId = SessionID.clone();
+				let ReaderHandle = self.ApplicationHandle.clone();
+				let ReaderSidecar = TargetSideCar.clone();
+				tokio::spawn(async move {
+					use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
+					let mut Reader = BufReader::new(ReadHalf);
+					let mut Header = String::new();
+					loop {
+						Header.clear();
+						let mut ContentLength:usize = 0;
+						loop {
+							Header.clear();
+							match Reader.read_line(&mut Header).await {
+								Ok(0) => return,
+								Ok(_) => {},
+								Err(Error) => {
+									crate::dev_log!(
+										"exthost",
+										"warn: [DebugAdapter/server] read failed for session {}: {}",
+										ReaderSessionId,
+										Error
+									);
+									return;
+								},
+							}
+							let Trimmed = Header.trim_end_matches("\r\n").trim_end_matches('\n');
+							if Trimmed.is_empty() {
+								break;
+							}
+							if let Some(Rest) = Trimmed.strip_prefix("Content-Length:") {
+								if let Ok(N) = Rest.trim().parse::<usize>() {
+									ContentLength = N;
+								}
+							}
+						}
+						if ContentLength == 0 {
+							continue;
+						}
+						let mut Body = vec![0u8; ContentLength];
+						if let Err(Error) = Reader.read_exact(&mut Body).await {
+							crate::dev_log!(
+								"exthost",
+								"warn: [DebugAdapter/server] body read failed for session {}: {}",
+								ReaderSessionId,
+								Error
+							);
+							return;
+						}
+						let Parsed:Value = serde_json::from_slice(&Body).unwrap_or(Value::Null);
+						let _ = ReaderHandle.emit(
+							"sky://debug/dap-message",
+							json!({
+								"sessionId": ReaderSessionId,
+								"sidecarId": ReaderSidecar,
+								"message": Parsed,
+							}),
+						);
+					}
+				});
+
+				AdapterStdinSender = Some(Sender);
 				AdapterChildPid = None;
+
+				dev_log!(
+					"exthost",
+					"[DebugProvider] Connected to server adapter at {} for session '{}'",
+					Addr,
+					SessionID
+				);
+			},
+
+			"pipeServer" => {
+				// Connect to an already-running debug adapter over a Unix
+				// domain socket (macOS/Linux) or named pipe (Windows). The
+				// descriptor shape is `{ type: "pipeServer", path }`.
+				let PipePath = Descriptor
+					.get("path")
+					.and_then(Value::as_str)
+					.ok_or_else(|| {
+						CommonError::InvalidArgument {
+							ArgumentName:"Descriptor.path".into(),
+							Reason:"pipeServer adapter descriptor missing 'path'".into(),
+						}
+					})?
+					.to_string();
+
+				dev_log!(
+					"exthost",
+					"[DebugProvider] Connecting to debug adapter pipe at '{}' (session '{}')",
+					PipePath,
+					SessionID
+				);
+
+				#[cfg(unix)]
+				let (ReadHalf, WriteHalf) = {
+					let Stream = tokio::net::UnixStream::connect(&PipePath).await.map_err(|Error| {
+						CommonError::IPCError {
+							Description:format!(
+								"Failed to connect to debug adapter pipe '{}' for session {}: {}",
+								PipePath, SessionID, Error
+							),
+						}
+					})?;
+					tokio::io::split(Stream)
+				};
+
+				#[cfg(windows)]
+				let (ReadHalf, WriteHalf) = {
+					// On Windows, named pipes use \\.\pipe\<name>. Tokio's
+					// NamedPipeClient handles both directions.
+					let Stream =
+						tokio::net::windows::named_pipe::ClientOptions::new()
+							.open(&PipePath)
+							.map_err(|Error| {
+								CommonError::IPCError {
+									Description:format!(
+										"Failed to open named pipe '{}' for session {}: {}",
+										PipePath, SessionID, Error
+									),
+								}
+							})?;
+					tokio::io::split(Stream)
+				};
+
+				let (Sender, mut Receiver) = tokio::sync::mpsc::unbounded_channel::<Vec<u8>>();
+
+				let PipeWriterSessionId = SessionID.clone();
+				tokio::spawn(async move {
+					use tokio::io::AsyncWriteExt;
+					let mut Pipe = WriteHalf;
+					while let Some(Frame) = Receiver.recv().await {
+						if let Err(Error) = Pipe.write_all(&Frame).await {
+							crate::dev_log!(
+								"exthost",
+								"warn: [DebugAdapter/pipe] write failed for session {}: {}",
+								PipeWriterSessionId,
+								Error
+							);
+							break;
+						}
+						let _ = Pipe.flush().await;
+					}
+				});
+
+				let PipeReaderSessionId = SessionID.clone();
+				let PipeReaderHandle = self.ApplicationHandle.clone();
+				let PipeReaderSidecar = TargetSideCar.clone();
+				tokio::spawn(async move {
+					use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
+					let mut Reader = BufReader::new(ReadHalf);
+					let mut Header = String::new();
+					loop {
+						Header.clear();
+						let mut ContentLength:usize = 0;
+						loop {
+							Header.clear();
+							match Reader.read_line(&mut Header).await {
+								Ok(0) => return,
+								Ok(_) => {},
+								Err(Error) => {
+									crate::dev_log!(
+										"exthost",
+										"warn: [DebugAdapter/pipe] read failed for session {}: {}",
+										PipeReaderSessionId,
+										Error
+									);
+									return;
+								},
+							}
+							let Trimmed = Header.trim_end_matches("\r\n").trim_end_matches('\n');
+							if Trimmed.is_empty() {
+								break;
+							}
+							if let Some(Rest) = Trimmed.strip_prefix("Content-Length:") {
+								if let Ok(N) = Rest.trim().parse::<usize>() {
+									ContentLength = N;
+								}
+							}
+						}
+						if ContentLength == 0 {
+							continue;
+						}
+						let mut Body = vec![0u8; ContentLength];
+						if let Err(Error) = Reader.read_exact(&mut Body).await {
+							crate::dev_log!(
+								"exthost",
+								"warn: [DebugAdapter/pipe] body read failed for session {}: {}",
+								PipeReaderSessionId,
+								Error
+							);
+							return;
+						}
+						let Parsed:Value = serde_json::from_slice(&Body).unwrap_or(Value::Null);
+						let _ = PipeReaderHandle.emit(
+							"sky://debug/dap-message",
+							json!({
+								"sessionId": PipeReaderSessionId,
+								"sidecarId": PipeReaderSidecar,
+								"message": Parsed,
+							}),
+						);
+					}
+				});
+
+				AdapterStdinSender = Some(Sender);
+				AdapterChildPid = None;
+
+				dev_log!(
+					"exthost",
+					"[DebugProvider] Connected to pipe adapter at '{}' for session '{}'",
+					PipePath,
+					SessionID
+				);
 			},
 
 			"implementation" => {

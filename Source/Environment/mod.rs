@@ -99,6 +99,9 @@ pub mod SynchronizationProvider;
 /// `TerminalProvider`: creates and manages integrated terminal instances.
 pub mod TerminalProvider;
 
+/// Terminal sub-modules: shell integration injection and related utilities.
+pub mod Terminal;
+
 /// `TestController`: registers test run profiles and reports test results.
 pub mod TestProvider;
 

@@ -67,7 +67,12 @@ async fn test_multiple_server_certificates() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate multiple server certificates
-	let hostnames = vec!["code.land.playform.cloud", "api.land.playform.cloud", "cdn.land.playform.cloud", "test.land.playform.cloud"];
+	let hostnames = vec![
+		"code.land.playform.cloud",
+		"api.land.playform.cloud",
+		"cdn.land.playform.cloud",
+		"test.land.playform.cloud",
+	];
 
 	for hostname in hostnames {
 		let server_config = manager
@@ -201,7 +206,11 @@ async fn test_get_all_certificates() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate multiple certificates
-	let hostnames = vec!["all1.land.playform.cloud", "all2.land.playform.cloud", "all3.land.playform.cloud"];
+	let hostnames = vec![
+		"all1.land.playform.cloud",
+		"all2.land.playform.cloud",
+		"all3.land.playform.cloud",
+	];
 
 	for hostname in &hostnames {
 		manager

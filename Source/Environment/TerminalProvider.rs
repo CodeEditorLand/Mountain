@@ -160,7 +160,24 @@ impl TerminalProvider for MountainEnvironment {
 
 		let mut Command = CommandBuilder::new(&TerminalState.ShellPath);
 
-		Command.args(&TerminalState.ShellArguments);
+		// Apply shell integration injection (OSC 633 command tracking).
+		// Mutates args and env vars before the PTY is spawned; no-op when
+		// the shell is unsupported or LAND_SHELL_INTEGRATION=0 is set.
+		if let Some(Injection) =
+			super::Terminal::ShellIntegration::Compute(&self.ApplicationHandle, &TerminalState.ShellPath)
+		{
+			for (Key, Val) in Injection.EnvVars {
+				Command.env(Key, Val);
+			}
+			// Prepend-args come before any user-supplied args (rare but
+			// important for interpreters that parse flags positionally).
+			let mut AllArgs = Injection.PrependArgs;
+			AllArgs.extend(TerminalState.ShellArguments.iter().cloned());
+			AllArgs.extend(Injection.AppendArgs);
+			Command.args(&AllArgs);
+		} else {
+			Command.args(&TerminalState.ShellArguments);
+		}
 
 		if let Some(CWD) = &TerminalState.CurrentWorkingDirectory {
 			Command.cwd(CWD);
