@@ -589,15 +589,14 @@ pub async fn Fn(
 
 		// ---- Language configuration ----
 		"set_language_configuration" => {
-			// Language configuration is consumed by Sky - emit for workbench to pick up
+			// Forward the full params (language + configuration) to Sky so
+			// Monaco's setLanguageConfiguration() receives the actual rules.
 			use tauri::Emitter;
-
-			let Language = Params.get("language").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 			let _ = Service
 				.environment
 				.ApplicationHandle
-				.emit("sky://language/configure", json!({ "language": Language }));
+				.emit("sky://language/configure", &Params);
 		},
 
 		_ => {

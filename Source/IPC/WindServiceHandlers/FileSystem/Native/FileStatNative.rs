@@ -38,7 +38,14 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 		} else {
 			dev_log!("vfs", "stat ENOENT: {}", Path);
 		}
-		format!("Failed to stat file: {} (path: {})", E, Path)
+		// Suffix "resource not found" on ENOENT so Wind's file-system
+		// error classifier maps this to FileSystemError.FileNotFound
+		// rather than FileSystemError.Unknown.
+		if E.kind() == std::io::ErrorKind::NotFound {
+			format!("stat: {} resource not found (path: {})", E, Path)
+		} else {
+			format!("Failed to stat file: {} (path: {})", E, Path)
+		}
 	})?;
 
 	if !DevLog::IsBenignEnoent::Fn(&Path) {

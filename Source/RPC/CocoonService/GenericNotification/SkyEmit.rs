@@ -161,9 +161,7 @@ pub fn HandleOpenExternal(Params:Value, Env:&MountainEnvironment) {
 }
 
 pub fn HandleSetLanguageConfiguration(Params:Value, Env:&MountainEnvironment) {
-	let Language = Params.get("language").and_then(|V| V.as_str()).unwrap_or("").to_string();
-
-	let _ = Env
-		.ApplicationHandle
-		.emit("sky://language/configure", json!({ "language": Language }));
+	// Emit the full params (language + configuration) so Sky's Monaco bridge
+	// receives the actual rules (brackets, comments, indentation, etc.).
+	let _ = Env.ApplicationHandle.emit("sky://language/configure", &Params);
 }

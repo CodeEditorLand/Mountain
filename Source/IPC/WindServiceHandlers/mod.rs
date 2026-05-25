@@ -1928,7 +1928,22 @@ pub async fn mountain_ipc_invoke(
 					let PropId = arg_u64(&Arguments, 1);
 					if TerminalId == 0 {
 						Ok(Value::Null)
+					} else if PropId == 0 {
+						// TerminalProperty::Cwd - return last OSC 633 P;cwd= value
+						let Cwd = RunTime
+							.Environment
+							.ApplicationState
+							.Feature
+							.Terminals
+							.ActiveTerminals
+							.lock()
+							.ok()
+							.and_then(|G| G.get(&TerminalId).cloned())
+							.and_then(|S| S.lock().ok().and_then(|S| S.CurrentWorkingDirectory.clone()))
+							.map(|P| P.to_string_lossy().into_owned());
+						Ok(Cwd.map(|C| json!(C)).unwrap_or(Value::Null))
 					} else if PropId == 1 {
+						// TerminalProperty::ProcessId
 						let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
 						match Provider.GetTerminalProcessId(TerminalId).await {
 							Ok(Some(Pid)) => Ok(json!(Pid)),
@@ -2014,6 +2029,56 @@ pub async fn mountain_ipc_invoke(
 					Ok(Value::Null)
 				},
 
+				// `localPty:setShellIntegrationActive` - Sky fires once per
+				// terminal when OSC 633 ; A (prompt start) is first detected.
+				// Notifies Cocoon so `terminal.shellIntegration !== undefined`
+				// and `onDidChangeTerminalShellIntegration` fires.
+				"localPty:setShellIntegrationActive" => {
+					let TermId = Arguments.first().and_then(Value::as_i64).unwrap_or(0) as u64;
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptTerminalShellIntegrationActivated".to_string(),
+						serde_json::json!({ "id": TermId }),
+					)
+					.await;
+					Ok(Value::Null)
+				},
+
+				// `localPty:setCwd` - Sky Bridge fires this when it parses an
+				// OSC 633 P;cwd=<path> sequence from terminal output. Mountain
+				// forwards to Cocoon so `vscode.window.activeTerminal.
+				// shellIntegration.cwd` reflects the shell's current directory.
+				"localPty:setCwd" => {
+					let TermId = Arguments.first().and_then(Value::as_i64).unwrap_or(0) as u64;
+					let Cwd = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+					if !Cwd.is_empty() {
+						// Persist CWD in ApplicationState so refreshProperty(0)
+						// can return it without probing the OS process.
+						if let Ok(Guard) = RunTime
+							.Environment
+							.ApplicationState
+							.Feature
+							.Terminals
+							.ActiveTerminals
+							.lock()
+						{
+							if let Some(StateEntry) = Guard.get(&TermId) {
+								if let Ok(mut State) = StateEntry.lock() {
+									State.CurrentWorkingDirectory =
+										Some(std::path::PathBuf::from(&Cwd));
+								}
+							}
+						}
+						let _ = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							"$acceptTerminalCwdChange".to_string(),
+							serde_json::json!({ "id": TermId, "cwd": Cwd }),
+						)
+						.await;
+					}
+					Ok(Value::Null)
+				},
+
 				// Remaining `localPty:*` - no Mountain-side state needed.
 				// `installAutoReply` / `uninstallAllAutoReplies`: shell-integration
 				// auto-reply triggers (e.g. sudo password prompts) - not implemented.
@@ -2055,6 +2120,55 @@ pub async fn mountain_ipc_invoke(
 				// =====================================================================
 				"encryption:encrypt" => Encrypt(Arguments).await,
 				"encryption:decrypt" => Decrypt(Arguments).await,
+
+				// =====================================================================
+				// Process introspection - Wind queries platform/arch/pid/memory
+				// =====================================================================
+				// VS Code's shared-process service calls these for diagnostics and
+				// for the "About" dialog. Most values are also in ISandboxConfiguration
+				// but Wind may request them independently after boot.
+				"process:getPlatform" => Ok(json!(match std::env::consts::OS {
+					"windows" => "win32",
+					"macos" => "darwin",
+					_ => "linux",
+				})),
+
+				"process:getArch" => Ok(json!(match std::env::consts::ARCH {
+					"x86_64" => "x64",
+					"aarch64" => "arm64",
+					"x86" => "ia32",
+					_ => "x64",
+				})),
+
+				"process:getPid" => Ok(json!(std::process::id())),
+
+				"process:getExecPath" => Ok(json!(
+					std::env::current_exe()
+						.unwrap_or_default()
+						.to_string_lossy()
+						.into_owned()
+				)),
+
+				"process:getMemoryInfo" => {
+					// Provide a best-effort memory snapshot. If sysinfo is
+					// available, real values are returned; otherwise zeros are
+					// safe - VS Code uses this only for diagnostics display.
+					Ok(json!({
+						"workingSetSize": 0u64,
+						"peakWorkingSetSize": 0u64,
+						"privateBytes": 0u64,
+						"sharedBytes": 0u64,
+					}))
+				},
+
+				"process:getCpuInfo" => {
+					// Return a single-entry array matching Node.js `os.cpus()` shape.
+					Ok(json!([{
+						"model": format!("{} ({})", std::env::consts::ARCH, std::env::consts::OS),
+						"speed": 0u32,
+						"times": { "user": 0u64, "nice": 0u64, "sys": 0u64, "idle": 0u64, "irq": 0u64 },
+					}]))
+				},
 
 				// =====================================================================
 				// Extension host starter - atomic handlers

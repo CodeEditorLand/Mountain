@@ -25,5 +25,8 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 	dev_log!("storage", "get: {}", key);
 
+	// Return JSON null for missing keys. VS Code's storage clients use
+	// `value ?? defaultValue` which treats null and undefined identically,
+	// so null is the correct sentinel for "key not set".
 	Ok(value.unwrap_or(Value::Null))
 }

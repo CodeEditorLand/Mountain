@@ -15,9 +15,13 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 
 	dev_log!("vfs-verbose", "readFile: {}", Path);
 
-	let Bytes = tokio::fs::read(&Path)
-		.await
-		.map_err(|E| format!("Failed to read file: {} (path: {})", E, Path))?;
+	let Bytes = tokio::fs::read(&Path).await.map_err(|E| {
+		if E.kind() == std::io::ErrorKind::NotFound {
+			format!("readFile: {} resource not found (path: {})", E, Path)
+		} else {
+			format!("Failed to read file: {} (path: {})", E, Path)
+		}
+	})?;
 
 	dev_log!("vfs-verbose", "readFile OK: {} ({} bytes)", Path, Bytes.len());
 

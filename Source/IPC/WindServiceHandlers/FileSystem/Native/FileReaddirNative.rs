@@ -17,9 +17,13 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	// Mountain?" diagnostics. The handler itself stays cheap.
 	dev_log!("vfs", "readdir: {}", Path);
 
-	let mut Entries = tokio::fs::read_dir(&Path)
-		.await
-		.map_err(|E| format!("Failed to readdir: {} ({})", Path, E))?;
+	let mut Entries = tokio::fs::read_dir(&Path).await.map_err(|E| {
+		if E.kind() == std::io::ErrorKind::NotFound {
+			format!("readdir: {} resource not found ({})", Path, E)
+		} else {
+			format!("Failed to readdir: {} ({})", Path, E)
+		}
+	})?;
 
 	let mut Result = Vec::new();
 
