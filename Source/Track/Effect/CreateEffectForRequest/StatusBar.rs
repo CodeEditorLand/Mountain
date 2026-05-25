@@ -103,6 +103,36 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			})
 		},
 
+		// Cocoon's `Window/Status/Bar.ts` sends `setStatusBarText` as a
+		// fire-and-forget notification when an extension's StatusBarItem
+		// text mutates (`set text(...)`). It carries `{ itemId, text }`
+		// only - the rest of the entry (id, alignment, priority, etc.)
+		// was set when the item was first created. Forward to the
+		// StatusBarProvider's text-only mutation path. Without this arm,
+		// status bar text never updates after the initial create.
+		"setStatusBarText" => {
+			crate::effect!(run_time, {
+				let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+
+				let item_id = obj_str(&Parameters, "itemId");
+
+				if item_id.is_empty() {
+					return Err("setStatusBarText: missing 'itemId' field".to_string());
+				}
+
+				let text = obj_str(&Parameters, "text").to_string();
+
+				// Re-use the text-only message path (same semantics as
+				// `$setStatusBarMessage`). The item lives under itemId
+				// from the prior `$statusBar:set` registration.
+				provider
+					.SetStatusBarMessage(item_id.to_string(), text)
+					.await
+					.map(|_| json!(null))
+					.map_err(|e| e.to_string())
+			})
+		},
+
 		"$setStatusBarMessage" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();

@@ -213,6 +213,30 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 		);
 
 		ScanPathsGuard.push(UserExtensionPath);
+
+		// Legacy `.land` extensions directory. Pre-FIDDEE installs landed
+		// here, and many users still have extensions installed at
+		// `~/.land/extensions` (Roo Code, GitLens, rust-analyzer, etc.).
+		// Scan it too when it exists, so the renderer's
+		// `extensions:scanUserExtensions` IPC doesn't return 0 entries
+		// while assets at those paths get served by the asset cache. The
+		// additive scan matches the task-plan T3 recommendation in
+		// `NEXT-SESSION-2026-05-26.md`. When `~/.land` is empty or
+		// missing, the push is harmless - the scanner skips paths whose
+		// directory enumeration yields no manifests.
+		if let Some(Home) = dirs::home_dir() {
+			let LandLegacy = Home.join(".land").join("extensions");
+
+			if LandLegacy.is_dir() {
+				dev_log!(
+					"extensions",
+					"[Extensions] [ScanPaths] + {} (User legacy ~/.land)",
+					LandLegacy.display()
+				);
+
+				ScanPathsGuard.push(LandLegacy);
+			}
+		}
 	}
 
 	// Atom U1: additional paths via `Extend`. Mirrors
