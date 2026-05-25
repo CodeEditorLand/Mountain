@@ -34,9 +34,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					.as_array()
 					.map(|Arr| {
 						Arr.iter()
-							.filter_map(|Pair| {
-								Pair.as_array().and_then(|P| P.first().cloned())
-							})
+							.filter_map(|Pair| Pair.as_array().and_then(|P| P.first().cloned()))
 							.collect()
 					})
 					.unwrap_or_default();

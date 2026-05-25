@@ -2132,6 +2132,51 @@ pub async fn mountain_ipc_invoke(
 				| "localPty:installAutoReply"
 				| "localPty:uninstallAllAutoReplies" => Ok(Value::Null),
 
+				// `localPty:shellExecutionStart` - Sky fires this when it
+				// detects OSC 633 ; C (command-output-begins) in terminal
+				// data. Payload: `{ id, commandLine, cwd }`. Forward to
+				// Cocoon so `vscode.window.onDidStartTerminalShellExecution`
+				// subscribers see the execution event. The subscriber lives
+				// at `Window/Namespace.ts` on the
+				// `window.didStartTerminalShellExecution` Emitter channel.
+				"localPty:shellExecutionStart" => {
+					let Payload = arg_val(&Arguments, 0);
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptTerminalShellExecutionStart".to_string(),
+						Payload,
+					)
+					.await;
+					Ok(Value::Null)
+				},
+
+				// `localPty:shellExecutionEnd` - Sky fires this when it
+				// detects OSC 633 ; D (command-finished) in terminal data.
+				// Payload: `{ id, commandLine, cwd, exitCode }`. Fans to
+				// Cocoon as both `$acceptTerminalShellExecutionEnd` (for
+				// `onDidEndTerminalShellExecution`) AND a derived
+				// `$acceptExecutedTerminalCommand` so
+				// `vscode.window.onDidExecuteTerminalCommand` subscribers
+				// see the executed command without a separate Sky-side
+				// detection pass (the shape is a subset of the end
+				// event - same data, different consumer audience).
+				"localPty:shellExecutionEnd" => {
+					let Payload = arg_val(&Arguments, 0);
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptTerminalShellExecutionEnd".to_string(),
+						Payload.clone(),
+					)
+					.await;
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptExecutedTerminalCommand".to_string(),
+						Payload,
+					)
+					.await;
+					Ok(Value::Null)
+				},
+
 				// =====================================================================
 				// Update service - all stubs, no update server
 				// =====================================================================
