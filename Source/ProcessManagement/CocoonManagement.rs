@@ -227,16 +227,17 @@ pub async fn InitializeCocoon(
 		return Ok(());
 	}
 
-	#[cfg(feature = "ExtensionHostCocoon")]
+	#[cfg(all(feature = "ExtensionHostCocoon", not(no_node_host)))]
 	{
 		LaunchAndManageCocoonSideCar(ApplicationHandle.clone(), Environment.clone()).await
 	}
 
-	#[cfg(not(feature = "ExtensionHostCocoon"))]
+	#[cfg(any(not(feature = "ExtensionHostCocoon"), no_node_host))]
 	{
 		dev_log!(
 			"cocoon",
-			"[CocoonManagement] 'ExtensionHostCocoon' feature is disabled. Cocoon will not be launched."
+			"[CocoonManagement] Cocoon spawn gated off (feature=ExtensionHostCocoon disabled or \
+			 TierExtensionHost=WebWorker)."
 		);
 
 		Ok(())

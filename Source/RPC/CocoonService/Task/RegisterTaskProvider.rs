@@ -33,7 +33,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterTaskProviderRequest)
 
 		ExtensionIdentifier:json!(Request.extension_id),
 
-		Options:None,
+		Options:Some(json!({ "type": Request.r#type })),
 	};
 
 	Service

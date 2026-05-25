@@ -45,7 +45,7 @@ pub struct Mutator {
 	pub Kind:MutatorType,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ExtensionCollection {
 	pub Persistent:bool,
 
