@@ -2613,6 +2613,85 @@ pub async fn mountain_ipc_invoke(
 					Ok(Value::Null)
 				},
 
+				// Sky-detected visible-editors change. Forwarded by
+				// `Bridge/InstallEditorOperations.ts` whenever
+				// `IEditorService.onDidVisibleEditorsChange` fires. Payload:
+				// `{ uris: string[] }` (the URIs of editors currently visible
+				// in any group). Mountain fans to Cocoon as
+				// `$acceptVisibleEditorsChanged` so
+				// `vscode.window.onDidChangeVisibleTextEditors` subscribers
+				// receive the change. Without this, linters that clear
+				// diagnostics on close (rust-analyzer, ESLint) leave stale
+				// markers when the user navigates between files.
+				"sky:editor:visibleChanged" => {
+					let Payload = arg_val(&Arguments, 0);
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptVisibleEditorsChanged".to_string(),
+						Payload,
+					)
+					.await;
+					Ok(Value::Null)
+				},
+
+				// Sky-detected tab-model snapshot. Forwarded whenever any
+				// `IEditorGroupsService` group's model mutates (open / close /
+				// move / pin / split). Payload: `{ groups: [{ id, isActive,
+				// tabs: [{ label, uri }] }] }`. Mountain fans the snapshot to
+				// Cocoon as `$acceptTabsChanged`; Cocoon's NotificationHandler
+				// re-emits on `window.didChangeTabs` AND `window.didChangeTabGroups`
+				// (VS Code surfaces both events from the same underlying
+				// group-model change). Used by tab-tracking extensions
+				// (GitLens, Roo Code) and the `vscode.window.tabGroups` API.
+				"sky:editor:tabsChanged" => {
+					let Payload = arg_val(&Arguments, 0);
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptTabsChanged".to_string(),
+						Payload,
+					)
+					.await;
+					Ok(Value::Null)
+				},
+
+				// Monaco scroll-driven visible-range change. Sky debounces
+				// to ~60 ms before forwarding. Payload: `{ uri, viewColumn,
+				// visibleRanges }`. Fans to Cocoon as
+				// `$acceptVisibleRangesChanged` so
+				// `vscode.window.onDidChangeTextEditorVisibleRanges`
+				// subscribers (code lens, lazy-load gutter contributions)
+				// see scroll changes without the workbench-level event
+				// loop.
+				"sky:editor:visibleRangesChanged" => {
+					let Payload = arg_val(&Arguments, 0);
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptVisibleRangesChanged".to_string(),
+						Payload,
+					)
+					.await;
+					Ok(Value::Null)
+				},
+
+				// Monaco config-driven editor-option change (tab size,
+				// insert-spaces, word-wrap, line numbers, etc.). Sky
+				// forwards the resolved option set. Fans to Cocoon as
+				// `$acceptTextEditorOptionsChanged` so
+				// `vscode.window.onDidChangeTextEditorOptions` subscribers
+				// fire. Most extensions only care about tab-size /
+				// insert-spaces; the full Monaco change-set is included
+				// so future consumers can read whatever they need.
+				"sky:editor:optionsChanged" => {
+					let Payload = arg_val(&Arguments, 0);
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptTextEditorOptionsChanged".to_string(),
+						Payload,
+					)
+					.await;
+					Ok(Value::Null)
+				},
+
 				// =====================================================================
 				// Language features (forward to Cocoon Node.js runtime)
 				// =====================================================================

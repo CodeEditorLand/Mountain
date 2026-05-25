@@ -16,11 +16,38 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				let provider:Arc<dyn DiagnosticManager> = run_time.Environment.Require();
 				let owner = string_at(&Parameters, 0);
 				let entries = val_at(&Parameters, 1);
-				provider
-					.SetDiagnostics(owner, entries)
+
+				let Result = provider
+					.SetDiagnostics(owner.clone(), entries.clone())
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|e| e.to_string());
+
+				// Fan back to Cocoon so peer extensions hooking
+				// `vscode.languages.onDidChangeDiagnostics` observe the
+				// change. The matching subscriber lives at
+				// `Languages/Namespace.ts:1140` on the
+				// `diagnostics.didChange` Emitter channel. Extract the
+				// list of changed URIs from the entries payload
+				// (`entries` is `[[uriString, diagnostics[]], ...]`).
+				let Uris:Vec<Value> = entries
+					.as_array()
+					.map(|Arr| {
+						Arr.iter()
+							.filter_map(|Pair| {
+								Pair.as_array().and_then(|P| P.first().cloned())
+							})
+							.collect()
+					})
+					.unwrap_or_default();
+				let _ = crate::Vine::Client::SendNotification::Fn(
+					"cocoon-main".to_string(),
+					"$acceptDiagnosticsChanged".to_string(),
+					json!({ "owner": owner, "uris": Uris }),
+				)
+				.await;
+
+				Result
 			})
 		},
 
@@ -28,11 +55,26 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			crate::effect!(run_time, {
 				let provider:Arc<dyn DiagnosticManager> = run_time.Environment.Require();
 				let owner = string_at(&Parameters, 0);
-				provider
-					.ClearDiagnostics(owner)
+
+				let Result = provider
+					.ClearDiagnostics(owner.clone())
 					.await
 					.map(|_| json!(null))
-					.map_err(|e| e.to_string())
+					.map_err(|e| e.to_string());
+
+				// Clear translates to "every URI previously held by this
+				// owner now has zero diagnostics". Without knowing the
+				// prior URI set we send an empty `uris` list - the
+				// `onDidChangeDiagnostics` subscriber should re-query
+				// `getDiagnostics(uri)` if it needs the new state.
+				let _ = crate::Vine::Client::SendNotification::Fn(
+					"cocoon-main".to_string(),
+					"$acceptDiagnosticsChanged".to_string(),
+					json!({ "owner": owner, "uris": [] }),
+				)
+				.await;
+
+				Result
 			})
 		},
 
