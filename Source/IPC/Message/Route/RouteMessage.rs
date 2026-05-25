@@ -80,7 +80,6 @@ use std::{
 };
 
 use super::super::Define::DefineMessage::{ListenerCallback, TauriIPCMessage};
-
 use crate::dev_log;
 
 /// Maximum listeners per channel to prevent resource exhaustion
@@ -91,13 +90,11 @@ const MAX_LISTENERS_PER_CHANNEL:usize = 100;
 /// This router implements a publish-subscribe pattern where listeners can
 /// register to receive messages on specific channels.
 pub struct Router {
-
 	/// Map from channel names to their registered listeners
 	listeners:Arc<Mutex<HashMap<String, Vec<ListenerCallback>>>>,
 }
 
 impl Router {
-
 	/// Create a new message router
 	///
 	/// # Returns
@@ -113,7 +110,6 @@ impl Router {
 	/// # Returns
 	/// Ok(()) on success, Err with error description on failure
 	pub fn Register(&self, Channel:&str, Callback:ListenerCallback) -> Result<(), String> {
-
 		self.validate_channel_name(Channel)?;
 
 		let mut listeners = self
@@ -125,10 +121,8 @@ impl Router {
 
 		// Check limit before adding
 		if channel_listeners.len() >= MAX_LISTENERS_PER_CHANNEL {
-
 			return Err(format!(
 				"Maximum listeners ({}) reached for channel: {}",
-
 				MAX_LISTENERS_PER_CHANNEL, Channel
 			));
 		}
@@ -137,11 +131,8 @@ impl Router {
 
 		dev_log!(
 			"ipc",
-
 			"[Router] Listener registered for channel: {} (total: {})",
-
 			Channel,
-
 			channel_listeners.len()
 		);
 
@@ -157,14 +148,12 @@ impl Router {
 	/// # Returns
 	/// Ok(()) on success, Err with error descriptionon failure
 	pub fn Remove(&self, Channel:&str, Callback:&ListenerCallback) -> Result<(), String> {
-
 		let mut listeners = self
 			.listeners
 			.lock()
 			.map_err(|e| format!("Failed to access listeners: {}", e))?;
 
 		if let Some(channel_listeners) = listeners.get_mut(Channel) {
-
 			let initial_count = channel_listeners.len();
 
 			channel_listeners.retain(|cb| !std::ptr::eq(cb as *const _, Callback as *const _));
@@ -173,32 +162,23 @@ impl Router {
 
 			// Clean up empty channels
 			if channel_listeners.is_empty() {
-
 				listeners.remove(Channel);
 
 				dev_log!(
 					"ipc",
-
 					"[Router] Channel cleaned up: {} (removed {} listeners)",
-
 					Channel,
-
 					removed_count
 				);
 			} else {
-
 				dev_log!(
 					"ipc",
-
 					"[Router] Listener removed from channel: {}, remaining: {}",
-
 					Channel,
-
 					channel_listeners.len()
 				);
 			}
 		} else {
-
 			dev_log!("ipc", "warn: [Router] Channel not found for listener removal: {}", Channel);
 		}
 
@@ -215,7 +195,6 @@ impl Router {
 	/// Errors from individual listeners are logged but don't fail the entire
 	/// operation
 	pub fn RouteMessage(&self, Message:&TauriIPCMessage) -> Result<(), String> {
-
 		dev_log!("ipc", "[Router] Routing message on channel: {}", Message.channel);
 
 		// Validate message before routing
@@ -231,7 +210,6 @@ impl Router {
 		let channel_listeners = listeners_map.get(&Message.channel);
 
 		if let Some(channel_listeners) = channel_listeners {
-
 			let listener_count = channel_listeners.len();
 
 			let mut success_count = 0;
@@ -239,24 +217,17 @@ impl Router {
 			let mut error_count = 0;
 
 			for (index, callback) in channel_listeners.iter().enumerate() {
-
 				let message_data = Message.data.clone();
 
 				match callback(message_data) {
-
 					Ok(_) => success_count += 1,
 
 					Err(e) => {
-
 						dev_log!(
 							"ipc",
-
 							"error: [Router] Error in listener {} for channel {}: {}",
-
 							index,
-
 							Message.channel,
-
 							e
 						);
 
@@ -267,30 +238,21 @@ impl Router {
 
 			dev_log!(
 				"ipc",
-
 				"[Router] Message routed to channel {}: {}/{} listeners succeeded",
-
 				Message.channel,
-
 				success_count,
-
 				listener_count
 			);
 
 			if error_count > 0 {
-
 				dev_log!(
 					"ipc",
-
 					"warn: [Router] {} listener(s) failed on channel {}",
-
 					error_count,
-
 					Message.channel
 				);
 			}
 		} else {
-
 			dev_log!("ipc", "[Router] No listeners found for channel: {}", Message.channel);
 		}
 
@@ -302,7 +264,6 @@ impl Router {
 	/// # Returns
 	/// Ok(Vec<String>) with all channel names
 	pub fn GetChannels(&self) -> Result<Vec<String>, String> {
-
 		let listeners = self
 			.listeners
 			.lock()
@@ -319,7 +280,6 @@ impl Router {
 	/// # Returns
 	/// Ok(usize) listener count or Err with error
 	pub fn GetListenerCount(&self, Channel:&str) -> Result<usize, String> {
-
 		let listeners = self
 			.listeners
 			.lock()
@@ -336,7 +296,6 @@ impl Router {
 	/// # Returns
 	/// Ok(()) on success, Err with error description
 	pub fn ClearChannel(&self, Channel:&str) -> Result<(), String> {
-
 		self.validate_channel_name(Channel)?;
 
 		let mut listeners = self
@@ -358,7 +317,6 @@ impl Router {
 	/// # Returns
 	/// Ok(()) on success, Err with error description
 	pub fn ClearAll(&self) -> Result<(), String> {
-
 		let mut listeners = self
 			.listeners
 			.lock()
@@ -370,11 +328,8 @@ impl Router {
 
 		dev_log!(
 			"ipc",
-
 			"[Router] Cleared {} listeners from {} channels",
-
 			total_listeners,
-
 			listeners.len()
 		);
 
@@ -389,25 +344,20 @@ impl Router {
 	/// # Returns
 	/// Ok(()) if valid, Err with error description
 	fn validate_channel_name(&self, Channel:&str) -> Result<(), String> {
-
 		if Channel.is_empty() {
-
 			return Err("Channel name cannot be empty".to_string());
 		}
 
 		// Check for valid characters (alphanumeric, hyphen, underscore, colon)
 		if !Channel.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == ':') {
-
 			return Err(format!(
 				"Channel contains invalid characters: '{}' (only alphanumeric, -, _, : allowed)",
-
 				Channel
 			));
 		}
 
 		// Reasonable length limit
 		if Channel.len() > 256 {
-
 			return Err(format!("Channel name too long: {} (max 256)", Channel.len()));
 		}
 
@@ -423,7 +373,6 @@ mod tests {
 	use super::*;
 
 	fn create_test_callback(response:&str) -> ListenerCallback {
-
 		let response = response.to_string();
 
 		Box::new(move |_:serde_json::Value| Ok::<(), String>(response.clone()))
@@ -431,7 +380,6 @@ mod tests {
 
 	#[test]
 	fn test_register_and_route() {
-
 		let router = Router::new();
 
 		let callback = create_test_callback("received");
@@ -445,7 +393,6 @@ mod tests {
 
 	#[test]
 	fn test_channel_validation() {
-
 		let router = Router::new();
 
 		let callback = create_test_callback("ok");
@@ -466,14 +413,12 @@ mod tests {
 
 	#[test]
 	fn test_listener_limit() {
-
 		let router = Router::new();
 
 		let callback = create_test_callback("ok");
 
 		// Register up to limit
 		for i in 0..MAX_LISTENERS_PER_CHANNEL {
-
 			let cb = create_test_callback(&format!("listener{}", i));
 
 			assert!(router.Register("test", cb.clone()).is_ok());
@@ -485,7 +430,6 @@ mod tests {
 
 	#[test]
 	fn test_get_listener_count() {
-
 		let router = Router::new();
 
 		let callback = create_test_callback("ok");
@@ -503,7 +447,6 @@ mod tests {
 
 	#[test]
 	fn test_clear_channel() {
-
 		let router = Router::new();
 
 		let callback = create_test_callback("ok");

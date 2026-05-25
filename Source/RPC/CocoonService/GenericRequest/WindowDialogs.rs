@@ -1,4 +1,3 @@
-
 //! Generic-request window/dialog handlers for `process_mountain_request`.
 //! Handles `UserInterface.ShowOpenDialog`, `UserInterface.ShowSaveDialog`,
 //! `UserInterface.ShowInputBox`, `showInformation`, `showWarning`, `showError`,

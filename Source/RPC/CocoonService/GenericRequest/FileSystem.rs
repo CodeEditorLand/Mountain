@@ -1,4 +1,3 @@
-
 //! Generic-request file-system handlers for `process_mountain_request`.
 //! Handles `fs.*` / `file:*` / `readFile` / `writeFile` / `stat` / `readdir`
 //! aliases used by Cocoon's `FileSystemService` and `MountainGRPCClient`.

@@ -1,4 +1,3 @@
-
 //! Recently-opened workspaces/files persistence.
 //! File lives at `~/.fiddee/workspaces/RecentlyOpened.json` (resolved
 //! through the `FiddeeRoot` atom). Parse failures degrade to an empty

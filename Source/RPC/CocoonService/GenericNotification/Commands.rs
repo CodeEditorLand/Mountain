@@ -1,4 +1,3 @@
-
 //! Notification handlers: `registerCommand`, `unregisterCommand`.
 //! Fire-and-forget variants called from `send_mountain_notification`.
 

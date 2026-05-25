@@ -1,4 +1,3 @@
-
 //! Wire methods: clipboard operations via `nativeHost:*Clipboard*`.
 //! Backed by `arboard` for cross-platform text clipboard access.
 //! Binary clipboard (`readClipboardBuffer`, `writeClipboardBuffer`) returns

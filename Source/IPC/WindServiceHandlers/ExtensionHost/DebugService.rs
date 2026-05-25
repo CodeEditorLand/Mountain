@@ -1,4 +1,3 @@
-
 //! Wire methods: `extensionhostdebugservice:*`.
 //! Bridges VS Code's `IExtensionHostDebugService` channel. `reload` triggers
 //! a real Cocoon restart by emitting `sky://exthost/debug-reload` so Wind can

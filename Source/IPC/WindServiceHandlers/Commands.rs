@@ -1,4 +1,3 @@
-
 //! Command registry handlers - execute and list all registered commands.
 
 use std::sync::Arc;

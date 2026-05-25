@@ -1,4 +1,3 @@
-
 //! Wire methods: `update:*`.
 //! Land has no update server yet; all methods are acknowledged no-ops that
 //! match the shape VS Code's `IUpdateService` channel expects.

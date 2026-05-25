@@ -1,4 +1,3 @@
-
 //! `/Static/Application/` → Sky Target real path. The static root is seeded
 //! once by `AppLifecycle::Dirs` with the resolved `Sky/Target` directory
 //! (debug) or the bundle resource dir (release) so `file:read` on any

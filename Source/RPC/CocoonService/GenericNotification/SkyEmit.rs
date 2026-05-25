@@ -1,4 +1,3 @@
-
 //! Notification handlers that forward events to Sky via `app.emit()`.
 //! Covers: webview messages, status bar, output channels, progress,
 //! `openExternal`, and language configuration.

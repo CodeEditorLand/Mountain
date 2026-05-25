@@ -1,4 +1,3 @@
-
 //! Wire methods: `extensionHostStarter:*`.
 //! Bridges VS Code's `IExtensionHostStarter` channel to Mountain/Cocoon.
 //! `createExtensionHost` allocates a stub id; `start` returns Cocoon's real

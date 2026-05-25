@@ -1,4 +1,3 @@
-
 //! Generic-request command handlers for `process_mountain_request`.
 //! Handles `commands.execute`, `executeCommand`, and `unregisterCommand`
 //! using Cocoon's `MountainGRPCClient` method name conventions.

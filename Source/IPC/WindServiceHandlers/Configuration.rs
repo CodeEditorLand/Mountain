@@ -1,4 +1,3 @@
-
 //! Configuration, environment, and workbench-configuration handlers.
 
 use std::sync::Arc;

@@ -1,4 +1,3 @@
-
 //! Generic-request secret-storage handlers for `process_mountain_request`.
 //! Handles `getSecret`, `storeSecret`, `deleteSecret` using Cocoon's
 //! `MountainGRPCClient` name conventions.
