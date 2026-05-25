@@ -543,6 +543,58 @@ pub fn Fn() {
 						crate::Binary::Build::DnsCommands::StartupTime::init_dns_startup_time();
 					}
 
+					// ---------------------------------------------------------
+					// [Mist WebSocket] Optional Sky↔Mountain direct transport
+					// ---------------------------------------------------------
+					// `TierWebSocket=Mist` activates a localhost JSON-RPC
+					// WebSocket on port 5051 that Sky's TauriMainProcessService
+					// can use for high-frequency IPC (`storage:updateItems`,
+					// decoration updates, model changes) instead of the
+					// Tauri-invoke + Mountain-gRPC double hop. `Disabled` (the
+					// default) skips the bind entirely so the surface stays
+					// pure Tauri. Wiring of the actual handler registry is
+					// staged - this boot-time gate establishes the port and
+					// secret so subsequent atom batches can register handlers
+					// against the existing HandlerRegistry without revisiting
+					// the Mountain boot path.
+					let TierWebSocketSetting =
+						std::env::var("TierWebSocket").unwrap_or_else(|_| env!("TierWebSocket", "Disabled").to_string());
+
+					if TierWebSocketSetting == "Mist" {
+						dev_log!(
+							"lifecycle",
+							"[Lifecycle] [Setup] TierWebSocket=Mist - starting WebSocket transport on 127.0.0.1:5051"
+						);
+
+						let MistRegistry = Mist::WebSocket::HandlerRegistry::new();
+						let MistSecret = Mist::WebSocket::SharedSecret::random();
+
+						// Expose the secret to Cocoon/Sky via env. The startup
+						// helper (`MountainGetWorkbenchConfiguration`) reads
+						// MountainWebSocketSecret + Port to surface in the
+						// workbench configuration payload that Sky consumes.
+						unsafe {
+							std::env::set_var("MountainWebSocketSecret", MistSecret.as_hex());
+							std::env::set_var("MountainWebSocketPort", "5051");
+						}
+
+						tokio::spawn(async move {
+							if let Err(Error) = Mist::WebSocket::ServeLocal(5051, MistSecret, MistRegistry).await {
+								dev_log!(
+									"lifecycle",
+									"warn: [Lifecycle] [Mist] WebSocket server exited: {:?}",
+									Error
+								);
+							}
+						});
+					} else {
+						dev_log!(
+							"lifecycle",
+							"[Lifecycle] [Setup] TierWebSocket={} - WebSocket transport disabled",
+							TierWebSocketSetting
+						);
+					}
+
 					// Register DnsPort as managed state for Tauri commands
 					app.manage(DnsPort(dns_port));
 

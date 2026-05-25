@@ -357,6 +357,34 @@ macro_rules! forward_to_cocoon {
 /// The local parameter names (`command` / `Arguments`) are preserved for diff
 /// minimality; the frontend-facing contract (`method` / `params`) lives
 /// entirely in `InvokeCommand.rs`.
+// Compile-time tier baselines baked by build.rs::EmitTierDefaults. Each
+// dispatch arm reads the matching const and routes Mountain-native vs.
+// Cocoon Node.js per the `.env.Land` (or flavor overlay) value. When a
+// dev override is needed without a rebuild, the `tier_runtime!` macro
+// below picks up the process env var first so a single shell export
+// (`export TierStorage=Node`) flips routing immediately.
+const TIER_TERMINAL: &str = env!("TierTerminal", "Mountain");
+const TIER_SCM: &str = env!("TierSCM", "Mountain");
+const TIER_DEBUG: &str = env!("TierDebug", "Mountain");
+const TIER_LANGUAGE_FEATURES: &str = env!("TierLanguageFeatures", "Mountain");
+const TIER_SEARCH: &str = env!("TierSearch", "Mountain");
+const TIER_OUTPUT_CHANNEL: &str = env!("TierOutputChannel", "Mountain");
+const TIER_NATIVE_HOST: &str = env!("TierNativeHost", "Mountain");
+const TIER_TREE_VIEW: &str = env!("TierTreeView", "Mountain");
+const TIER_STORAGE: &str = env!("TierStorage", "Mountain");
+const TIER_MODEL: &str = env!("TierModel", "Mountain");
+const TIER_TASKS: &str = env!("TierTasks", "Node");
+const TIER_AUTH: &str = env!("TierAuth", "Node");
+const TIER_ENCRYPTION: &str = env!("TierEncryption", "Mountain");
+const TIER_WEBSOCKET: &str = env!("TierWebSocket", "Disabled");
+
+#[inline]
+fn tier_routes_to_node(BakedConst: &'static str, EnvKey: &str) -> bool {
+	let Resolved = std::env::var(EnvKey).unwrap_or_else(|_| BakedConst.to_string());
+
+	Resolved == "Node"
+}
+
 pub async fn mountain_ipc_invoke(
 	ApplicationHandle:AppHandle,
 
@@ -727,6 +755,28 @@ pub async fn mountain_ipc_invoke(
 				// `isUsed`; the shorter `storage:get` / `storage:set` are
 				// Mountain-native conveniences. All route through the
 				// same ApplicationState storage backing.
+				//
+				// TierStorage gate: `TierStorage=Node` forwards every
+				// storage:* call to Cocoon (vscode.ExtensionContext's
+				// globalState/workspaceState lives there too). Default
+				// is Mountain - ApplicationState in-memory map with the
+				// MementoLoader crash-safe boot hydration and the
+				// debounced disk writer.
+				"storage:get"
+				| "storage:set"
+				| "storage:getItems"
+				| "storage:updateItems"
+				| "storage:optimize"
+				| "storage:isUsed"
+				| "storage:close"
+				| "storage:delete"
+				| "storage:keys"
+				| "storage:onDidChangeItems"
+				| "storage:logStorage"
+					if tier_routes_to_node(TIER_STORAGE, "TierStorage") =>
+				{
+					forward_to_cocoon!("storage", command, Arguments)
+				},
 				"storage:get" => StorageGet(RunTime.clone(), Arguments).await,
 				"storage:set" => StorageSet(RunTime.clone(), Arguments).await,
 				// Workbench services poll this on every theme / scope
@@ -2345,6 +2395,26 @@ pub async fn mountain_ipc_invoke(
 				// ILocalGitService surface plus `exec` / `isAvailable` for
 				// the built-in Git extension. Handlers spawn native `git`
 				// via tokio::process. See Batch 4 in HANDOFF §-10.
+				//
+				// TierSCM gate: with `TierSCM=Node` (set in `.env.Land`
+				// or via a flavor overlay) every git:* + scm:* command
+				// forwards to Cocoon's vscode.scm namespace instead so
+				// extensions like the upstream Git extension can run
+				// pure-JS against their own bundled `simple-git`. Default
+				// is Mountain - native subprocess with 30s timeout.
+				"git:exec"
+				| "git:clone"
+				| "git:pull"
+				| "git:checkout"
+				| "git:revParse"
+				| "git:fetch"
+				| "git:revListCount"
+				| "git:cancel"
+				| "git:isAvailable"
+					if tier_routes_to_node(TIER_SCM, "TierSCM") =>
+				{
+					forward_to_cocoon!("scm", command, Arguments)
+				},
 				"git:exec" => {
 					dev_log!("git", "git:exec");
 					Git::HandleExec::Fn(Arguments).await
@@ -2670,12 +2740,20 @@ pub async fn mountain_ipc_invoke(
 				// =====================================================================
 				// Debug - forward to Cocoon's vscode.debug namespace
 				// =====================================================================
+				// TierDebug gate: stays a Cocoon-routed surface today because
+				// Mountain has no native VS Code-equivalent debug-session
+				// orchestrator (the DebugProvider handles adapter spawn only,
+				// not session graph state). When/if Mountain grows a typed
+				// `DebugService::*` host, flip the default to "Mountain" and
+				// add a Mountain-native arm here gated on
+				// `tier_routes_to_node(TIER_DEBUG, "TierDebug") == false`.
 				"debug:startDebugging"
 				| "debug:stopDebugging"
 				| "debug:getSessions"
 				| "debug:getBreakpoints"
 				| "debug:addBreakpoints"
 				| "debug:removeBreakpoints" => {
+					let _ = TIER_DEBUG;
 					forward_to_cocoon!("debug", command, Arguments)
 				},
 

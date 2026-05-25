@@ -459,9 +459,34 @@ pub fn AppLifecycleSetup(
 		}
 
 		// Set GlobalMementoPath now that we know the real Tauri app data dir
+		let GlobalMementoFile = AppDataDir.join("User/globalStorage/global.json");
+
 		if let Ok(mut Path) = app_state.GlobalMementoPath.lock() {
-			*Path = AppDataDir.join("User/globalStorage/global.json");
+			*Path = GlobalMementoFile.clone();
 			dev_log!("lifecycle", "[Lifecycle] [Dirs] GlobalMementoPath: {}", Path.display());
+		}
+
+		// Boot-time memento hydration: use the crash-safe best-effort loader.
+		// A corrupted global.json (partial write during a previous crash, disk
+		// corruption, manual edit gone wrong) gets quarantined to a timestamped
+		// `.json.corrupted.<ts>` sibling and the in-memory map starts empty
+		// rather than panicking the boot path. Workspace memento is loaded on
+		// `UpdateWorkspaceMementoPathAndReload` so we only hydrate global here.
+		{
+			let LoadedGlobal = crate::ApplicationState::Internal::Persistence::MementoLoader::LoadInitialMementoFromDisk::Fn(
+				&GlobalMementoFile,
+			);
+
+			if !LoadedGlobal.is_empty() {
+				dev_log!(
+					"lifecycle",
+					"[Lifecycle] [Memento] Hydrated GlobalMemento ({} keys) from {}",
+					LoadedGlobal.len(),
+					GlobalMementoFile.display()
+				);
+			}
+
+			app_state.Configuration.SetGlobalMemento(LoadedGlobal);
 		}
 
 		dev_log!(

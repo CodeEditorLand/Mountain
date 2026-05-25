@@ -450,8 +450,38 @@ fn EmitTierDefaults() {
 		("TierExtensionScan", "Sequential"),
 		("TierModuleCache", "Simple"),
 		("TierTelemetry", "Synchronous"),
+		// Per-subsystem routing tiers (see .env.Land). All default to Mountain
+		// except where the Atomic-branch baseline diverges (Tasks, Auth → Node;
+		// WebSocket → Disabled until Mist server lands).
+		("TierIPC", "Mountain"),
+		("TierTerminal", "Mountain"),
+		("TierSCM", "Mountain"),
+		("TierDebug", "Mountain"),
+		("TierLanguageFeatures", "Mountain"),
+		("TierSearch", "Mountain"),
+		("TierOutputChannel", "Mountain"),
+		("TierNativeHost", "Mountain"),
+		("TierTreeView", "Mountain"),
+		("TierStorage", "Mountain"),
+		("TierModel", "Mountain"),
+		("TierTasks", "Node"),
+		("TierAuth", "Node"),
+		("TierEncryption", "Mountain"),
+		("TierExtensionHost", "Process"),
+		("TierWebSocket", "Disabled"),
 	] {
 		println!("cargo:rustc-env={}={}", Key, Default);
+	}
+
+	// Optional cfg flag for builds that omit the Cocoon Node.js host entirely.
+	// Activated by setting `TierExtensionHost=WebWorker` in `.env.Land`; gates
+	// out `CocoonManagement.rs` spawn logic via `#[cfg(not(no_node_host))]`.
+	let TierExtensionHost = std::env::var("TierExtensionHost").unwrap_or_else(|_| {
+		ReadTierValueFromEnvFile("TierExtensionHost").unwrap_or_else(|| "Process".into())
+	});
+
+	if TierExtensionHost == "WebWorker" {
+		println!("cargo:rustc-cfg=no_node_host");
 	}
 }
 
@@ -513,6 +543,23 @@ fn IsDefaultTierValue(Key:&str, Value:&str) -> bool {
 			// not compiled into Cargo features). All values are defaults from
 			// Mountain's perspective - no Cargo feature needed.
 			| ("TierIPC", "Mountain" | "NodeDeferred" | "Node")
+			// Per-subsystem routing tiers (mod.rs reads via env!() at runtime
+			// and routes to native vs. Cocoon vs. disabled).
+			| ("TierTerminal", "Mountain" | "Node")
+			| ("TierSCM", "Mountain" | "Node")
+			| ("TierDebug", "Mountain" | "Node")
+			| ("TierLanguageFeatures", "Mountain" | "Node")
+			| ("TierSearch", "Mountain" | "Node")
+			| ("TierOutputChannel", "Mountain" | "Node")
+			| ("TierNativeHost", "Mountain" | "Node")
+			| ("TierTreeView", "Mountain" | "Node")
+			| ("TierStorage", "Mountain" | "Node")
+			| ("TierModel", "Mountain" | "Node")
+			| ("TierTasks", "Mountain" | "Node")
+			| ("TierAuth", "Mountain" | "Node")
+			| ("TierEncryption", "Mountain" | "Node")
+			| ("TierExtensionHost", "Process" | "WebWorker" | "Disabled")
+			| ("TierWebSocket", "Disabled" | "Mountain" | "Mist")
 	)
 }
 

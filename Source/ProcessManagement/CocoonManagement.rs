@@ -641,6 +641,69 @@ async fn LaunchAndManageCocoonSideCar(
 		}
 		dev_log!("cocoon", "[CocoonManagement] Startup extensions activation (*) triggered");
 
+		// Webview panel restore: any panels persisted before the previous
+		// reload landed in global storage under `__webview_panel_state__`.
+		// Now that extensions are activated and their serializers are
+		// re-registered, ask Cocoon to deserialize each entry. Failures are
+		// per-panel - one broken serializer doesn't block the others.
+		{
+			use CommonLibrary::Storage::StorageProvider::StorageProvider;
+
+			const PANEL_STATE_KEY: &str = "__webview_panel_state__";
+
+			if let Ok(Some(Stored)) = EnvironmentForActivation
+				.GetStorageValue(true, PANEL_STATE_KEY)
+				.await
+			{
+				if let Some(Entries) = Stored.as_array() {
+					if !Entries.is_empty() {
+						dev_log!(
+							"cocoon",
+							"[CocoonManagement] Restoring {} webview panel(s) from previous reload",
+							Entries.len()
+						);
+					}
+
+					for Entry in Entries {
+						let ViewType = Entry
+							.get("viewType")
+							.and_then(|V| V.as_str())
+							.unwrap_or("");
+
+						if ViewType.is_empty() {
+							continue;
+						}
+
+						let State = Entry.get("state").cloned().unwrap_or(serde_json::Value::Null);
+
+						let DeserializeMethod = "ExtHostWebviewPanels$deserializeWebviewPanel".to_string();
+
+						if let Err(Error) = Vine::Client::SendRequest::Fn(
+							&SideCarId,
+							DeserializeMethod,
+							serde_json::json!([ViewType, serde_json::Value::Null, State]),
+							5_000,
+						)
+						.await
+						{
+							dev_log!(
+								"cocoon",
+								"warn: [CocoonManagement] deserializeWebviewPanel({}) failed: {:?}",
+								ViewType,
+								Error
+							);
+						}
+					}
+				}
+
+				// Clear the cache so panels aren't re-restored on the NEXT
+				// reload if the user didn't have them open this session.
+				let _ = EnvironmentForActivation
+					.UpdateStorageValue(true, PANEL_STATE_KEY.to_string(), None)
+					.await;
+			}
+		}
+
 		// Seed Cocoon's `__textDocuments` with any files already open in the
 		// workbench. Extensions that read `workspace.textDocuments` synchronously
 		// in their `activate()` function (rust-analyzer, ESLint, TypeScript) must
