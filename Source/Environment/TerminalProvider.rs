@@ -160,6 +160,20 @@ impl TerminalProvider for MountainEnvironment {
 
 		let mut Command = CommandBuilder::new(&TerminalState.ShellPath);
 
+		// Inherit the parent process environment so the spawned shell
+		// sees `PATH`, `HOME`, etc. unchanged from Mountain's view. The
+		// EnvironmentVariableCollection pass below then mutates on top
+		// of this snapshot, matching upstream's `mergedCollection.apply`
+		// behaviour where extension-supplied env stacks on the
+		// inherited base.
+		let mut MergedEnv:std::collections::HashMap<String, String> = std::env::vars().collect();
+
+		// Apply every extension's registered EnvironmentVariableCollection
+		// mutations BEFORE shell integration so the integration's env
+		// (which extensions never see) takes precedence on conflicts -
+		// no extension should be able to break the OSC 633 inputs.
+		super::TerminalEnvCollection::ApplyToEnv(&mut MergedEnv);
+
 		// Apply shell integration injection (OSC 633 command tracking).
 		// Mutates args and env vars before the PTY is spawned; no-op when
 		// the shell is unsupported or LAND_SHELL_INTEGRATION=0 is set.
@@ -167,7 +181,7 @@ impl TerminalProvider for MountainEnvironment {
 			super::Terminal::ShellIntegration::Compute(&self.ApplicationHandle, &TerminalState.ShellPath)
 		{
 			for (Key, Val) in Injection.EnvVars {
-				Command.env(Key, Val);
+				MergedEnv.insert(Key, Val);
 			}
 			// Prepend-args come before any user-supplied args (rare but
 			// important for interpreters that parse flags positionally).
@@ -177,6 +191,12 @@ impl TerminalProvider for MountainEnvironment {
 			Command.args(&AllArgs);
 		} else {
 			Command.args(&TerminalState.ShellArguments);
+		}
+
+		// Apply the merged env to the child process. `portable-pty`'s
+		// CommandBuilder doesn't have `envs(IntoIterator)`, so iterate.
+		for (Key, Val) in &MergedEnv {
+			Command.env(Key, Val);
 		}
 
 		if let Some(CWD) = &TerminalState.CurrentWorkingDirectory {

@@ -90,6 +90,8 @@ pub mod OutputChannelDispose;
 
 pub mod OutputChannelHide;
 
+pub mod OutputChannelReplace;
+
 pub mod OutputChannelShow;
 
 pub mod OutputClear;
@@ -153,7 +155,11 @@ pub mod StatusBarLifecycle;
 
 pub mod StatusBarMessage;
 
+pub mod TerminalEnvCollection;
+
 pub mod TerminalLifecycle;
+
+pub mod TreeRefresh;
 
 pub mod UnregisterCommand;
 

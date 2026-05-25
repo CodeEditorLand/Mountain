@@ -40,16 +40,24 @@
 		<string>1.118.0</string>
 		<key>Record</key>
 		<string>1</string>
+		<key>TierAuth</key>
+		<string>Node</string>
 		<key>TierClipboard</key>
 		<string>Layer3</string>
 		<key>TierConfiguration</key>
 		<string>Cache</string>
+		<key>TierDebug</key>
+		<string>Mountain</string>
 		<key>TierDiagnostics</key>
 		<string>Full</string>
 		<key>TierDocumentMirror</key>
 		<string>Full</string>
+		<key>TierEncryption</key>
+		<string>Mountain</string>
 		<key>TierExtensionActivation</key>
 		<string>Parallel8</string>
+		<key>TierExtensionHost</key>
+		<string>Process</string>
 		<key>TierExtensionScan</key>
 		<string>Sequential</string>
 		<key>TierFileSystem</key>
@@ -64,18 +72,40 @@
 		<string>HandRolled</string>
 		<key>TierIPC</key>
 		<string>Mountain</string>
+		<key>TierLanguageFeatures</key>
+		<string>Mountain</string>
 		<key>TierLogger</key>
 		<string>Standard</string>
+		<key>TierModel</key>
+		<string>Mountain</string>
 		<key>TierModuleCache</key>
 		<string>Simple</string>
+		<key>TierNativeHost</key>
+		<string>Mountain</string>
 		<key>TierOpenExternal</key>
 		<string>Layer3</string>
+		<key>TierOutputChannel</key>
+		<string>Mountain</string>
 		<key>TierRemoteProcedureCall</key>
 		<string>gRPC</string>
+		<key>TierSCM</key>
+		<string>Mountain</string>
 		<key>TierSchemeAssets</key>
 		<string>FileSystem</string>
+		<key>TierSearch</key>
+		<string>Mountain</string>
+		<key>TierStorage</key>
+		<string>Mountain</string>
+		<key>TierTasks</key>
+		<string>Node</string>
 		<key>TierTelemetry</key>
 		<string>Synchronous</string>
+		<key>TierTerminal</key>
+		<string>Mountain</string>
+		<key>TierTreeView</key>
+		<string>Mountain</string>
+		<key>TierWebSocket</key>
+		<string>Disabled</string>
 		<key>Trace</key>
 		<string>all</string>
 	</dict>

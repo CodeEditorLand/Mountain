@@ -14,7 +14,7 @@ use crate::dev_log;
 /// a credential prompt with no TTY, a stuck index lock, or a network mount
 /// that has gone unresponsive - releases the Mountain effect slot before
 /// the extension host's own watchdog fires.
-const GIT_EXEC_TIMEOUT: Duration = Duration::from_secs(30);
+const GIT_EXEC_TIMEOUT:Duration = Duration::from_secs(30);
 
 pub async fn Fn(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Result<(i32, String, String), String> {
 	dev_log!(
@@ -51,10 +51,12 @@ pub async fn Fn(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Result<(i
 	let WaitFuture = Child.wait_with_output();
 
 	let Output = match tokio::time::timeout(GIT_EXEC_TIMEOUT, WaitFuture).await {
-		Ok(WaitResult) => WaitResult.map_err(|Error| {
-			super::ClearPid::Fn(OperationId);
-			format!("git wait failed: {}", Error)
-		})?,
+		Ok(WaitResult) => {
+			WaitResult.map_err(|Error| {
+				super::ClearPid::Fn(OperationId);
+				format!("git wait failed: {}", Error)
+			})?
+		},
 		Err(_) => {
 			// Timeout expired. SIGTERM the PID via the registry-aware helper
 			// so the running-process accounting stays consistent; the

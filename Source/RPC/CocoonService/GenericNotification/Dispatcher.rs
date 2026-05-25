@@ -593,10 +593,7 @@ pub async fn Fn(
 			// Monaco's setLanguageConfiguration() receives the actual rules.
 			use tauri::Emitter;
 
-			let _ = Service
-				.environment
-				.ApplicationHandle
-				.emit("sky://language/configure", &Params);
+			let _ = Service.environment.ApplicationHandle.emit("sky://language/configure", &Params);
 		},
 
 		_ => {

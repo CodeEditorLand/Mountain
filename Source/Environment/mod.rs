@@ -96,6 +96,12 @@ pub mod StorageProvider;
 /// `SynchronizationProvider`: coordinates cross-window state synchronization.
 pub mod SynchronizationProvider;
 
+/// `TerminalEnvCollection`: per-extension env-var mutations applied at
+/// every PTY spawn. Backed by VS Code's `EnvironmentVariableCollection`
+/// API. See `ActivateExtension.ts` for the wire calls and
+/// `TerminalProvider.rs` for the spawn-time application point.
+pub mod TerminalEnvCollection;
+
 /// `TerminalProvider`: creates and manages integrated terminal instances.
 pub mod TerminalProvider;
 

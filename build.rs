@@ -476,9 +476,8 @@ fn EmitTierDefaults() {
 	// Optional cfg flag for builds that omit the Cocoon Node.js host entirely.
 	// Activated by setting `TierExtensionHost=WebWorker` in `.env.Land`; gates
 	// out `CocoonManagement.rs` spawn logic via `#[cfg(not(no_node_host))]`.
-	let TierExtensionHost = std::env::var("TierExtensionHost").unwrap_or_else(|_| {
-		ReadTierValueFromEnvFile("TierExtensionHost").unwrap_or_else(|| "Process".into())
-	});
+	let TierExtensionHost = std::env::var("TierExtensionHost")
+		.unwrap_or_else(|_| ReadTierValueFromEnvFile("TierExtensionHost").unwrap_or_else(|| "Process".into()));
 
 	if TierExtensionHost == "WebWorker" {
 		println!("cargo:rustc-cfg=no_node_host");

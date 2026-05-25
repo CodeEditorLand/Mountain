@@ -32,12 +32,8 @@ pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Va
 	if crate::Vine::Client::IsClientConnected::Fn("cocoon-main") {
 		let SerializeMethod = "ExtHostWebviewPanels$serializeAllWebviewPanels".to_string();
 
-		let SerializeCall = crate::Vine::Client::SendRequest::Fn(
-			"cocoon-main",
-			SerializeMethod,
-			Value::Array(Vec::new()),
-			1500,
-		);
+		let SerializeCall =
+			crate::Vine::Client::SendRequest::Fn("cocoon-main", SerializeMethod, Value::Array(Vec::new()), 1500);
 
 		match tokio::time::timeout(Duration::from_millis(1700), SerializeCall).await {
 			Ok(Ok(Snapshot)) if !Snapshot.is_null() => {
@@ -60,11 +56,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Va
 				// Empty / null snapshot - no panels needed serialization.
 			},
 			Ok(Err(GrpcError)) => {
-				dev_log!(
-					"lifecycle",
-					"warn: [Reload] serializeAllWebviewPanels failed: {:?}",
-					GrpcError
-				);
+				dev_log!("lifecycle", "warn: [Reload] serializeAllWebviewPanels failed: {:?}", GrpcError);
 			},
 			Err(_) => {
 				dev_log!(

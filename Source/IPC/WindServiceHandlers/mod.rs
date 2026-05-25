@@ -363,23 +363,23 @@ macro_rules! forward_to_cocoon {
 // dev override is needed without a rebuild, the `tier_runtime!` macro
 // below picks up the process env var first so a single shell export
 // (`export TierStorage=Node`) flips routing immediately.
-const TIER_TERMINAL: &str = env!("TierTerminal", "Mountain");
-const TIER_SCM: &str = env!("TierSCM", "Mountain");
-const TIER_DEBUG: &str = env!("TierDebug", "Mountain");
-const TIER_LANGUAGE_FEATURES: &str = env!("TierLanguageFeatures", "Mountain");
-const TIER_SEARCH: &str = env!("TierSearch", "Mountain");
-const TIER_OUTPUT_CHANNEL: &str = env!("TierOutputChannel", "Mountain");
-const TIER_NATIVE_HOST: &str = env!("TierNativeHost", "Mountain");
-const TIER_TREE_VIEW: &str = env!("TierTreeView", "Mountain");
-const TIER_STORAGE: &str = env!("TierStorage", "Mountain");
-const TIER_MODEL: &str = env!("TierModel", "Mountain");
-const TIER_TASKS: &str = env!("TierTasks", "Node");
-const TIER_AUTH: &str = env!("TierAuth", "Node");
-const TIER_ENCRYPTION: &str = env!("TierEncryption", "Mountain");
-const TIER_WEBSOCKET: &str = env!("TierWebSocket", "Disabled");
+const TIER_TERMINAL:&str = env!("TierTerminal", "Mountain");
+const TIER_SCM:&str = env!("TierSCM", "Mountain");
+const TIER_DEBUG:&str = env!("TierDebug", "Mountain");
+const TIER_LANGUAGE_FEATURES:&str = env!("TierLanguageFeatures", "Mountain");
+const TIER_SEARCH:&str = env!("TierSearch", "Mountain");
+const TIER_OUTPUT_CHANNEL:&str = env!("TierOutputChannel", "Mountain");
+const TIER_NATIVE_HOST:&str = env!("TierNativeHost", "Mountain");
+const TIER_TREE_VIEW:&str = env!("TierTreeView", "Mountain");
+const TIER_STORAGE:&str = env!("TierStorage", "Mountain");
+const TIER_MODEL:&str = env!("TierModel", "Mountain");
+const TIER_TASKS:&str = env!("TierTasks", "Node");
+const TIER_AUTH:&str = env!("TierAuth", "Node");
+const TIER_ENCRYPTION:&str = env!("TierEncryption", "Mountain");
+const TIER_WEBSOCKET:&str = env!("TierWebSocket", "Disabled");
 
 #[inline]
-fn tier_routes_to_node(BakedConst: &'static str, EnvKey: &str) -> bool {
+fn tier_routes_to_node(BakedConst:&'static str, EnvKey:&str) -> bool {
 	let Resolved = std::env::var(EnvKey).unwrap_or_else(|_| BakedConst.to_string());
 
 	Resolved == "Node"
@@ -2104,18 +2104,11 @@ pub async fn mountain_ipc_invoke(
 					if !Cwd.is_empty() {
 						// Persist CWD in ApplicationState so refreshProperty(0)
 						// can return it without probing the OS process.
-						if let Ok(Guard) = RunTime
-							.Environment
-							.ApplicationState
-							.Feature
-							.Terminals
-							.ActiveTerminals
-							.lock()
+						if let Ok(Guard) = RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock()
 						{
 							if let Some(StateEntry) = Guard.get(&TermId) {
 								if let Ok(mut State) = StateEntry.lock() {
-									State.CurrentWorkingDirectory =
-										Some(std::path::PathBuf::from(&Cwd));
+									State.CurrentWorkingDirectory = Some(std::path::PathBuf::from(&Cwd));
 								}
 							}
 						}
@@ -2177,27 +2170,30 @@ pub async fn mountain_ipc_invoke(
 				// VS Code's shared-process service calls these for diagnostics and
 				// for the "About" dialog. Most values are also in ISandboxConfiguration
 				// but Wind may request them independently after boot.
-				"process:getPlatform" => Ok(json!(match std::env::consts::OS {
-					"windows" => "win32",
-					"macos" => "darwin",
-					_ => "linux",
-				})),
+				"process:getPlatform" => {
+					Ok(json!(match std::env::consts::OS {
+						"windows" => "win32",
+						"macos" => "darwin",
+						_ => "linux",
+					}))
+				},
 
-				"process:getArch" => Ok(json!(match std::env::consts::ARCH {
-					"x86_64" => "x64",
-					"aarch64" => "arm64",
-					"x86" => "ia32",
-					_ => "x64",
-				})),
+				"process:getArch" => {
+					Ok(json!(match std::env::consts::ARCH {
+						"x86_64" => "x64",
+						"aarch64" => "arm64",
+						"x86" => "ia32",
+						_ => "x64",
+					}))
+				},
 
 				"process:getPid" => Ok(json!(std::process::id())),
 
-				"process:getExecPath" => Ok(json!(
-					std::env::current_exe()
-						.unwrap_or_default()
-						.to_string_lossy()
-						.into_owned()
-				)),
+				"process:getExecPath" => {
+					Ok(json!(
+						std::env::current_exe().unwrap_or_default().to_string_lossy().into_owned()
+					))
+				},
 
 				"process:getMemoryInfo" => {
 					// Provide a best-effort memory snapshot. If sysinfo is
@@ -2402,15 +2398,8 @@ pub async fn mountain_ipc_invoke(
 				// extensions like the upstream Git extension can run
 				// pure-JS against their own bundled `simple-git`. Default
 				// is Mountain - native subprocess with 30s timeout.
-				"git:exec"
-				| "git:clone"
-				| "git:pull"
-				| "git:checkout"
-				| "git:revParse"
-				| "git:fetch"
-				| "git:revListCount"
-				| "git:cancel"
-				| "git:isAvailable"
+				"git:exec" | "git:clone" | "git:pull" | "git:checkout" | "git:revParse" | "git:fetch"
+				| "git:revListCount" | "git:cancel" | "git:isAvailable"
 					if tier_routes_to_node(TIER_SCM, "TierSCM") =>
 				{
 					forward_to_cocoon!("scm", command, Arguments)

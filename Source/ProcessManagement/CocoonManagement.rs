@@ -649,12 +649,9 @@ async fn LaunchAndManageCocoonSideCar(
 		{
 			use CommonLibrary::Storage::StorageProvider::StorageProvider;
 
-			const PANEL_STATE_KEY: &str = "__webview_panel_state__";
+			const PANEL_STATE_KEY:&str = "__webview_panel_state__";
 
-			if let Ok(Some(Stored)) = EnvironmentForActivation
-				.GetStorageValue(true, PANEL_STATE_KEY)
-				.await
-			{
+			if let Ok(Some(Stored)) = EnvironmentForActivation.GetStorageValue(true, PANEL_STATE_KEY).await {
 				if let Some(Entries) = Stored.as_array() {
 					if !Entries.is_empty() {
 						dev_log!(
@@ -665,10 +662,7 @@ async fn LaunchAndManageCocoonSideCar(
 					}
 
 					for Entry in Entries {
-						let ViewType = Entry
-							.get("viewType")
-							.and_then(|V| V.as_str())
-							.unwrap_or("");
+						let ViewType = Entry.get("viewType").and_then(|V| V.as_str()).unwrap_or("");
 
 						if ViewType.is_empty() {
 							continue;

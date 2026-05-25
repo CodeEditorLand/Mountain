@@ -557,8 +557,8 @@ pub fn Fn() {
 					// secret so subsequent atom batches can register handlers
 					// against the existing HandlerRegistry without revisiting
 					// the Mountain boot path.
-					let TierWebSocketSetting =
-						std::env::var("TierWebSocket").unwrap_or_else(|_| env!("TierWebSocket", "Disabled").to_string());
+					let TierWebSocketSetting = std::env::var("TierWebSocket")
+						.unwrap_or_else(|_| env!("TierWebSocket", "Disabled").to_string());
 
 					if TierWebSocketSetting == "Mist" {
 						dev_log!(
@@ -580,11 +580,7 @@ pub fn Fn() {
 
 						tokio::spawn(async move {
 							if let Err(Error) = Mist::WebSocket::ServeLocal(5051, MistSecret, MistRegistry).await {
-								dev_log!(
-									"lifecycle",
-									"warn: [Lifecycle] [Mist] WebSocket server exited: {:?}",
-									Error
-								);
+								dev_log!("lifecycle", "warn: [Lifecycle] [Mist] WebSocket server exited: {:?}", Error);
 							}
 						});
 					} else {

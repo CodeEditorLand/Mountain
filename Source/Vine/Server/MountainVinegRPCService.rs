@@ -620,6 +620,29 @@ impl MountainService for MountainVinegRPCService {
 				super::Notification::TerminalLifecycle::TerminalLifecycle(self, &MethodName, &Parameter).await;
 			},
 
+			// Tree view refresh - extension fired its `onDidChangeTreeData`
+			// event. Relay to Sky which calls `ITreeView.refresh()` to
+			// trigger a fresh getChildren() round-trip.
+			"tree.refresh" => {
+
+				super::Notification::TreeRefresh::TreeRefresh(self, &Parameter).await;
+			},
+
+			// EnvironmentVariableCollection mutations - applied to every
+			// PTY spawn that follows. The variant dispatch lives in the
+			// notification module since each op writes to the same global
+			// registry.
+			"terminal.envCollection.replace"
+			| "terminal.envCollection.append"
+			| "terminal.envCollection.prepend"
+			| "terminal.envCollection.delete"
+			| "terminal.envCollection.clear"
+			| "terminal.envCollection.setPersistent"
+			| "terminal.envCollection.setDescription" => {
+
+				super::Notification::TerminalEnvCollection::TerminalEnvCollectionDispatch(self, &MethodName, &Parameter).await;
+			},
+
 			"window.createTextEditorDecorationType" | "window.disposeTextEditorDecorationType" => {
 
 				super::Notification::DecorationTypeLifecycle::DecorationTypeLifecycle(self, &MethodName, &Parameter).await;
@@ -829,6 +852,11 @@ impl MountainService for MountainVinegRPCService {
 			"outputChannel.clear" => {
 
 				super::Notification::OutputChannelClear::OutputChannelClear(self, &Parameter).await;
+			},
+
+			"outputChannel.replace" => {
+
+				super::Notification::OutputChannelReplace::OutputChannelReplace(self, &Parameter).await;
 			},
 
 			"outputChannel.show" => {

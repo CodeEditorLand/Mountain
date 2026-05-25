@@ -473,9 +473,10 @@ pub fn AppLifecycleSetup(
 		// rather than panicking the boot path. Workspace memento is loaded on
 		// `UpdateWorkspaceMementoPathAndReload` so we only hydrate global here.
 		{
-			let LoadedGlobal = crate::ApplicationState::Internal::Persistence::MementoLoader::LoadInitialMementoFromDisk::Fn(
-				&GlobalMementoFile,
-			);
+			let LoadedGlobal =
+				crate::ApplicationState::Internal::Persistence::MementoLoader::LoadInitialMementoFromDisk::Fn(
+					&GlobalMementoFile,
+				);
 
 			if !LoadedGlobal.is_empty() {
 				dev_log!(
