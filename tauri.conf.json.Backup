@@ -69,9 +69,7 @@
 		"category": "DeveloperTool",
 		"copyright": "PlayForm",
 		"createUpdaterArtifacts": false,
-		"externalBin": [
-			"Binary/node"
-		],
+		"externalBin": ["Binary/node"],
 		"fileAssociations": [],
 		"homepage": "https://Land.PlayForm.Cloud",
 		"iOS": {
@@ -126,15 +124,6 @@
 		},
 		"publisher": "PlayForm",
 		"resources": {
-			"../Cocoon/Target/Bootstrap/Implementation/Cocoon": "Cocoon/Target/Bootstrap/Implementation/Cocoon",
-			"../Sky/Target/Browser": "Browser",
-			"../Sky/Target/BrowserProxy": "BrowserProxy",
-			"../Sky/Target/Bundled": "Bundled",
-			"../Sky/Target/Electron": "Electron",
-			"../Sky/Target/Favicon": "Favicon",
-			"../Sky/Target/Isolation": "Isolation",
-			"../Sky/Target/Manifest.json": "Manifest.json",
-			"../Sky/Target/Mountain": "Mountain",
 			"../Sky/Target/Static/Application/bootstrap-esm.js": "Static/Application/bootstrap-esm.js",
 			"../Sky/Target/Static/Application/bootstrap-import.js": "Static/Application/bootstrap-import.js",
 			"../Sky/Target/Static/Application/bootstrap-meta.js": "Static/Application/bootstrap-meta.js",
@@ -145,23 +134,29 @@
 			"../Sky/Target/Static/Application/nls.metadata.json": "Static/Application/nls.metadata.json",
 			"../Sky/Target/Static/Application/node_modules": "Static/Application/node_modules",
 			"../Sky/Target/Static/Application/vs": "Static/Application/vs",
-			"../Sky/Target/Worker.js": "Worker.js",
-			"../Sky/Target/_astro": "_astro",
-			"../Sky/Target/extensions.manifest.json": "extensions.manifest.json",
-			"../Sky/Target/index.html": "index.html",
 			"../Sky/Target/product.json": "product.json",
+			"../Sky/Target/index.html": "index.html",
+			"../Sky/Target/_astro": "_astro",
+			"../Sky/Target/Favicon": "Favicon",
+			"../Sky/Target/Manifest.json": "Manifest.json",
 			"../Sky/Target/robots.txt": "robots.txt",
-			"Proto/Vine.proto": "Mountain/Proto/Vine.proto",
+			"../Sky/Target/Worker.js": "Worker.js",
+			"../Sky/Target/Mountain": "Mountain",
 			"scripts/cocoon/bootstrap-fork.js": "scripts/cocoon/bootstrap-fork.js",
+			"../Sky/Target/extensions.manifest.json": "extensions.manifest.json",
+			"../Cocoon/Target/Bootstrap/Implementation/Cocoon": "Cocoon/Target/Bootstrap/Implementation/Cocoon",
+			"Proto/Vine.proto": "Mountain/Proto/Vine.proto",
 			"scripts/shell-integration/bash.sh": "scripts/shell-integration/bash.sh",
+			"scripts/shell-integration/zsh.zsh": "scripts/shell-integration/zsh.zsh",
 			"scripts/shell-integration/fish.fish": "scripts/shell-integration/fish.fish",
-			"scripts/shell-integration/zsh.zsh": "scripts/shell-integration/zsh.zsh"
+			"../Sky/Target/Electron": "Electron",
+			"../Sky/Target/Browser": "Browser",
+			"../Sky/Target/Bundled": "Bundled",
+			"../Sky/Target/BrowserProxy": "BrowserProxy",
+			"../Sky/Target/Isolation": "Isolation"
 		},
 		"shortDescription": "",
-		"targets": [
-			"app",
-			"dmg"
-		],
+		"targets": ["app", "dmg"],
 		"windows": {
 			"allowDowngrades": true,
 			"certificateThumbprint": null,
@@ -175,7 +170,7 @@
 			}
 		}
 	},
-	"identifier": "land.editor.binary.development.node.environment.microsoft.vscode.dependency.node.22.bundle.clean.debug.electron.profile.esbuild.compiler.mountain",
-	"productName": "DevelopmentNodeEnvironment_MicrosoftVSCodeDependency_22NodeVersion_Bundle_Clean_Debug_ElectronProfile_EsbuildCompiler_Mountain",
+	"identifier": "fiddee.editor.binary",
+	"productName": "Mountain",
 	"version": "0.0.1"
 }
