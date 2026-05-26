@@ -425,15 +425,57 @@ fn CommandVscodeOpen(
 		} else {
 			Argument.clone()
 		};
+		// Resolve the URI to a real wire string. Cocoon may forward a raw
+		// string, a serialised `vscode.Uri` POJO (`{scheme, authority,
+		// path, query, fragment}`), or a `{external, path}` shape used by
+		// older rendering paths. Reconstruct the full URI rather than
+		// picking a single field - extracting bare `path` from a non-file
+		// URI (e.g. `rust-analyzer-diagnostics-view:/diag/foo`) drops the
+		// scheme and Sky then tries to open `/diag/foo` as a file, which
+		// either 404s or renders as "[object Object]" in the editor tab
+		// when the workbench falls back to `String(uri)` on a bad input.
 		let UriString = match &UriRaw {
 			Value::String(S) => S.clone(),
 			Value::Object(Object) => {
-				Object
-					.get("external")
-					.and_then(Value::as_str)
-					.or_else(|| Object.get("path").and_then(Value::as_str))
-					.map(str::to_string)
-					.unwrap_or_default()
+				if let Some(External) = Object.get("external").and_then(Value::as_str) {
+					External.to_string()
+				} else if let Some(Scheme) = Object.get("scheme").and_then(Value::as_str)
+					&& !Scheme.is_empty()
+				{
+					let Authority = Object.get("authority").and_then(Value::as_str).unwrap_or("");
+
+					let Path = Object.get("path").and_then(Value::as_str).unwrap_or("");
+
+					let Query = Object.get("query").and_then(Value::as_str).unwrap_or("");
+
+					let Fragment = Object.get("fragment").and_then(Value::as_str).unwrap_or("");
+
+					let mut Out = format!("{}://{}{}", Scheme, Authority, Path);
+
+					if !Query.is_empty() {
+						Out.push('?');
+
+						Out.push_str(Query);
+					}
+
+					if !Fragment.is_empty() {
+						Out.push('#');
+
+						Out.push_str(Fragment);
+					}
+
+					Out
+				} else if let Some(FsPath) = Object.get("fsPath").and_then(Value::as_str) {
+					if FsPath.starts_with('/') {
+						format!("file://{}", FsPath)
+					} else {
+						FsPath.to_string()
+					}
+				} else if let Some(Path) = Object.get("path").and_then(Value::as_str) {
+					Path.to_string()
+				} else {
+					String::new()
+				}
 			},
 			Value::Null => String::new(),
 			_ => UriRaw.to_string(),

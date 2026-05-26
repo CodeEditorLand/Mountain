@@ -2139,11 +2139,20 @@ pub async fn mountain_ipc_invoke(
 					Ok(Value::Null)
 				},
 
+				// `localPty:processBinary` - the workbench forwards raw binary
+				// input (paste of UTF-16, Ctrl+sequences from xterm.js) here
+				// instead of through `input`. Previously dropped to null, which
+				// meant pasting from system clipboard or sending Cmd+Shift
+				// keyboard escape sequences was silently swallowed. Route
+				// through the same TerminalSendText path the input channel
+				// uses so the bytes reach the PTY.
+				"localPty:processBinary" => {
+					call!(rt, "terminal", TerminalSendText, Arguments)
+				},
 				// Remaining `localPty:*` - no Mountain-side state needed.
 				// `installAutoReply` / `uninstallAllAutoReplies`: shell-integration
 				// auto-reply triggers (e.g. sudo password prompts) - not implemented.
-				"localPty:processBinary"
-				| "localPty:orphanQuestionReply"
+				"localPty:orphanQuestionReply"
 				| "localPty:updateTitle"
 				| "localPty:updateIcon"
 				| "localPty:installAutoReply"

@@ -54,7 +54,11 @@ pub async fn Fn(
 		"handle": Handle,
 	});
 
-	let Reply = match SendRequest("cocoon-main", "$provideTreeChildren".to_string(), Parameters, 5000).await {
+	// 15 s timeout: matches the Wind path. Cold tree-view scans on a
+	// multi-repo workspace (npm, gitlens) can exceed 5 s on first
+	// expansion. Empty response is returned on real hang so callers
+	// don't lock.
+	let Reply = match SendRequest("cocoon-main", "$provideTreeChildren".to_string(), Parameters, 15000).await {
 		Ok(Value_) => Value_,
 
 		Err(Error) => {

@@ -64,9 +64,16 @@ pub async fn Fn(
 		"cocoon-main",
 		"$provideTreeChildren".to_string(),
 		Parameters,
-		// 5000 ms: real cold-boot tree calls take 700-2200 ms
-		// ([DEV:TREE-LATENCY] clangd.ast=2181, gitlens=1652, npm=1560).
-		5000,
+		// 15000 ms: warm tree calls take 1-50 ms but cold scans can
+		// blow well past 5 s on first activation (`npm` walks every
+		// `package.json` in the workspace; `vscode.git` enumerates
+		// every nested submodule). 5 s repeatedly tripped on multi-
+		// repo workspaces like Land itself, so the panel rendered
+		// empty until the user manually refreshed. Bumping to 15 s
+		// keeps the upper bound bounded (renderer still receives
+		// `{items:[]}` on real hang) while letting genuine cold
+		// scans complete.
+		15000,
 	)
 	.await
 	{
