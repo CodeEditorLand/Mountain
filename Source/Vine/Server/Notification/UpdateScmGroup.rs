@@ -23,7 +23,7 @@
 
 use std::collections::HashMap;
 
-use CommonLibrary::SourceControlManagement::SourceControlManagementResourceDTO::SourceControlManagementResourceDTO;
+use CommonLibrary::SourceControlManagement::DTO::SourceControlManagementResourceDTO::SourceControlManagementResourceDTO;
 use serde_json::{Value, json};
 use tauri::Emitter;
 
