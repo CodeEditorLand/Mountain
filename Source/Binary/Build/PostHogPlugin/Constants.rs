@@ -18,16 +18,16 @@ pub const POSTHOG_ENABLED:&str = env!("Report");
 /// dev run for cross-restart correlation.
 pub const POSTHOG_DISTINCT_ID_SEED:&str = env!("Brand");
 
-/// OTLP collector endpoint (`OTLPEndpoint`). Default points at the local
+/// OTLP collector endpoint (`Pipe`). Default points at the local
 /// Jaeger all-in-one HTTP receiver from `Land/Container/Compose.yaml`.
 /// Read by `IPC::DevLog::EmitOTLPSpan` instead of the previous
 /// hard-coded `127.0.0.1:4318`.
-pub const OTLP_ENDPOINT:&str = env!("OTLPEndpoint");
+pub const OTLP_ENDPOINT:&str = env!("Pipe");
 
-/// Per-tier OTLP enable flag (`OTLPEnabled`). Mirrors `POSTHOG_ENABLED`
+/// Per-tier OTLP enable flag (`Emit`). Mirrors `POSTHOG_ENABLED`
 /// for the OTLP pipe. Independent of `Disable` so each pipe can be
 /// flipped separately during diagnosis.
-pub const OTLP_ENABLED:&str = env!("OTLPEnabled");
+pub const OTLP_ENABLED:&str = env!("Emit");
 
 /// Master telemetry kill switch (`Capture`). `false` short-circuits BOTH
 /// PostHog and OTLP regardless of their per-pipe toggles. Distinct from

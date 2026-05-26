@@ -109,7 +109,7 @@
 		<key>TierWebSocket</key>
 		<string>Disabled</string>
 		<key>Trace</key>
-		<string>all</string>
+		<string>ipc,grpc,extensions,ext-activate,storage,lifecycle,breaker,tree-view,cocoon,terminal,output,commands,bootstrap-stage,provider-register</string>
 	</dict>
 </dict>
 </plist>

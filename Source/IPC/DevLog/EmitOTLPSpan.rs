@@ -1,11 +1,11 @@
 //! Fire-and-forget OTLP span exporter. Sends a single
 //! `resourceSpans` payload over plain HTTP to the collector at
-//! `OTLPEndpoint` (default `127.0.0.1:4318`, configurable via
+//! `Pipe` (default `127.0.0.1:4318`, configurable via
 //! `.env.Land.PostHog`). Stops trying after the first failure
 //! (`OTLP_AVAILABLE` flips to `false`) so a missing collector
 //! doesn't tax every IPC call. Release builds are compiled out
 //! via `cfg!(debug_assertions)`. Honors the `Capture` master
-//! telemetry kill switch and the per-pipe `OTLPEnabled` toggle.
+//! telemetry kill switch and the per-pipe `Emit` toggle.
 
 use std::{
 	collections::hash_map::DefaultHasher,
@@ -98,7 +98,7 @@ pub fn Fn(Name:&str, StartNano:u64, EndNano:u64, Attributes:&[(&str, &str)]) {
 		StatusCode,
 	);
 
-	// Resolve `OTLPEndpoint` (e.g. `http://127.0.0.1:4318`) → host:port + path.
+	// Resolve `Pipe` (e.g. `http://127.0.0.1:4318`) → host:port + path.
 	// Strip scheme, split on `/` for the path component if any, default to
 	// `/v1/traces`.
 	let (HostAddress, PathSegment) = ParseEndpoint(Constants::OTLP_ENDPOINT);

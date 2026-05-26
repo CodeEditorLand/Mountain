@@ -4,7 +4,7 @@
 //! by every PostHog capture path.
 //!
 //! Pair: the OTLP pipe in `IPC::DevLog::EmitOTLPSpan` runs the same
-//! `Capture` master + its own `OTLPEnabled` toggle. The `Capture` knob
+//! `Capture` master + its own `Emit` toggle. The `Capture` knob
 //! is distinct from `.env.Land.Diagnostics`'s `Disable`, which kills
 //! polyfills/shims (not telemetry).
 

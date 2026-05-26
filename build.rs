@@ -278,8 +278,8 @@ fn PropagatePostHogSentinel() {
 		"Beam",
 		"Report",
 		"Brand",
-		"OTLPEndpoint",
-		"OTLPEnabled",
+		"Pipe",
+		"Emit",
 		"Capture",
 		"Trace",
 	] {
@@ -294,9 +294,9 @@ fn PropagatePostHogSentinel() {
 
 	let DistinctId = std::env::var("Brand").unwrap_or_default();
 
-	let OTLPEndpoint = std::env::var("OTLPEndpoint").unwrap_or_else(|_| "http://127.0.0.1:4318".into());
+	let Pipe = std::env::var("Pipe").unwrap_or_else(|_| "http://127.0.0.1:4318".into());
 
-	let OTLPEnabled = std::env::var("OTLPEnabled").unwrap_or_else(|_| "true".into());
+	let Emit = std::env::var("Emit").unwrap_or_else(|_| "true".into());
 
 	let TelemetryCapture = std::env::var("Capture").unwrap_or_else(|_| "true".into());
 
@@ -310,9 +310,9 @@ fn PropagatePostHogSentinel() {
 
 	println!("cargo:rustc-env=Brand={DistinctId}");
 
-	println!("cargo:rustc-env=OTLPEndpoint={OTLPEndpoint}");
+	println!("cargo:rustc-env=Pipe={Pipe}");
 
-	println!("cargo:rustc-env=OTLPEnabled={OTLPEnabled}");
+	println!("cargo:rustc-env=Emit={Emit}");
 
 	println!("cargo:rustc-env=Capture={TelemetryCapture}");
 

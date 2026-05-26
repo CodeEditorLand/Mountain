@@ -27,8 +27,8 @@ pub fn Fn() {
 		("Beam", Constants::POSTHOG_HOST),
 		("Report", Constants::POSTHOG_ENABLED),
 		("Brand", Constants::POSTHOG_DISTINCT_ID_SEED),
-		("OTLPEndpoint", Constants::OTLP_ENDPOINT),
-		("OTLPEnabled", Constants::OTLP_ENABLED),
+		("Pipe", Constants::OTLP_ENDPOINT),
+		("Emit", Constants::OTLP_ENABLED),
 		("Capture", Constants::TELEMETRY_CAPTURE),
 	] {
 		if Value.is_empty() {
@@ -50,7 +50,7 @@ pub fn Fn() {
 
 	dev_log!(
 		"lifecycle",
-		"[PostHog] Hydrated runtime env from baked Constants (Authorize={}, Beam={}, Capture={}, OTLPEnabled={})",
+		"[PostHog] Hydrated runtime env from baked Constants (Authorize={}, Beam={}, Capture={}, Emit={})",
 		if Constants::POSTHOG_API_KEY.is_empty() { "<unset>" } else { "<set>" },
 		Constants::POSTHOG_HOST,
 		Constants::TELEMETRY_CAPTURE,
