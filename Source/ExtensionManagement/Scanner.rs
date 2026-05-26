@@ -177,7 +177,7 @@ fn IsTestOnlyExtension(Name:&str) -> bool { TEST_ONLY_EXTENSIONS.iter().any(|Tes
 /// Everything else - the Mountain build's own `Resources/extensions`,
 /// Sky's `Static/Application/extensions`, the VS Code submodule's
 /// `Dependency/…/extensions` - is treated as built-in.
-fn IsUserExtensionScanPath(DirectoryPath:&std::path::Path) -> bool {
+pub(crate) fn IsUserExtensionScanPath(DirectoryPath:&std::path::Path) -> bool {
 	let Normalised = match DirectoryPath.canonicalize() {
 		Ok(Canonical) => Canonical,
 
@@ -199,6 +199,21 @@ fn IsUserExtensionScanPath(DirectoryPath:&std::path::Path) -> bool {
 
 	if Normalised == UserRoot {
 		return true;
+	}
+
+	// Legacy `${HOME}/.land/extensions`. Pre-FIDDEE installs landed here
+	// (Roo Code, GitLens, rust-analyzer, etc.). ScanPathConfigure.rs T3
+	// added this directory to the scan-path registry, but without the
+	// matching classifier entry every extension found there got tagged
+	// `IsBuiltin=true` and hid under "Built-in" in the sidebar - and the
+	// `extensions:scanUserExtensions` IPC returned 0 entries. Treat it as
+	// a user-scope root so the classifier matches the scan-path config.
+	if let Some(Home) = dirs::home_dir() {
+		let LandLegacy = Home.join(".land").join("extensions");
+
+		if Normalised == LandLegacy {
+			return true;
+		}
 	}
 
 	false
