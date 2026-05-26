@@ -469,6 +469,13 @@ fn EmitTierDefaults() {
 		("TierEncryption", "Mountain"),
 		("TierExtensionHost", "Process"),
 		("TierWebSocket", "Disabled"),
+		// TierCommandEventBroadcast - opt-in dual-emit on `Command.Execute`
+		// gRPC arm so subscribers of `vscode.commands.onDidExecuteCommand`
+		// see commands invoked from extension hosts (not just workbench).
+		// Off by default because every gRPC executeCommand adds an extra
+		// Vine notification roundtrip; flip to `On` when an extension
+		// peer needs the event.
+		("TierCommandEventBroadcast", "Off"),
 	] {
 		println!("cargo:rustc-env={}={}", Key, Default);
 	}
@@ -559,6 +566,7 @@ fn IsDefaultTierValue(Key:&str, Value:&str) -> bool {
 			| ("TierEncryption", "Mountain" | "Node")
 			| ("TierExtensionHost", "Process" | "WebWorker" | "Disabled")
 			| ("TierWebSocket", "Disabled" | "Mountain" | "Mist")
+			| ("TierCommandEventBroadcast", "On" | "Off")
 	)
 }
 

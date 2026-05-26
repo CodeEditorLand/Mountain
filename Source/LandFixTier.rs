@@ -104,10 +104,14 @@ pub fn LogResolvedTiers() {
 
 	let WebSocket = std::env::var("TierWebSocket").unwrap_or_else(|_| env!("TierWebSocket", "Disabled").to_string());
 
+	let CommandEventBroadcast = std::env::var("TierCommandEventBroadcast")
+		.unwrap_or_else(|_| env!("TierCommandEventBroadcast", "Off").to_string());
+
 	dev_log!(
 		"lifecycle",
 		"[LandFix:Tier] Runtime: IPC={} Terminal={} SCM={} Debug={} LanguageFeatures={} Search={} OutputChannel={} \
-		 NativeHost={} TreeView={} Storage={} Model={} Tasks={} Auth={} Encryption={} ExtensionHost={} WebSocket={}",
+		 NativeHost={} TreeView={} Storage={} Model={} Tasks={} Auth={} Encryption={} ExtensionHost={} WebSocket={} \
+		 CommandEventBroadcast={}",
 		IPC,
 		Terminal,
 		SCM,
@@ -124,5 +128,6 @@ pub fn LogResolvedTiers() {
 		Encryption,
 		ExtensionHost,
 		WebSocket,
+		CommandEventBroadcast,
 	);
 }

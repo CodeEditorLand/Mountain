@@ -2094,6 +2094,23 @@ pub async fn mountain_ipc_invoke(
 					Ok(Value::Null)
 				},
 
+				// `localPty:setInteracted` - Sky fires once per terminal when
+				// it detects OSC 633 ; B (command-input-begins). Forwards to
+				// Cocoon as `$acceptTerminalStateChanged` so subscribers of
+				// `vscode.window.onDidChangeTerminalState` see
+				// `state.isInteractedWith` flip true. Payload from Sky:
+				// `[{ id, interactedWith }]`.
+				"localPty:setInteracted" => {
+					let Payload = arg_val(&Arguments, 0);
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptTerminalStateChanged".to_string(),
+						Payload,
+					)
+					.await;
+					Ok(Value::Null)
+				},
+
 				// `localPty:setCwd` - Sky Bridge fires this when it parses an
 				// OSC 633 P;cwd=<path> sequence from terminal output. Mountain
 				// forwards to Cocoon so `vscode.window.activeTerminal.
@@ -2731,6 +2748,42 @@ pub async fn mountain_ipc_invoke(
 					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTextEditorOptionsChanged".to_string(),
+						Payload,
+					)
+					.await;
+					Ok(Value::Null)
+				},
+
+				// `sky:editor:diffInformationChanged` - Sky detects when the
+				// active editor pane is a diff editor and Monaco's
+				// `onDidUpdateDiff` fires. Payload:
+				//   `{ modifiedUri, originalUri, changes: LineChange[] }`.
+				// Fans to Cocoon as `$acceptTextEditorDiffInformationChanged`
+				// so subscribers of
+				// `vscode.window.onDidChangeTextEditorDiffInformation` fire.
+				"sky:editor:diffInformationChanged" => {
+					let Payload = arg_val(&Arguments, 0);
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptTextEditorDiffInformationChanged".to_string(),
+						Payload,
+					)
+					.await;
+					Ok(Value::Null)
+				},
+
+				// `sky:editor:viewColumnChanged` - Sky detects when an editor
+				// is moved between editor groups (split-view shuffle,
+				// drag-and-drop tab, `View: Move Editor to Group`) via
+				// per-group `onDidMoveEditor`. Payload: `{ uri, viewColumn }`
+				// where viewColumn is 1-based. Fans to Cocoon as
+				// `$acceptTextEditorViewColumnChanged` so subscribers of
+				// `vscode.window.onDidChangeTextEditorViewColumn` fire.
+				"sky:editor:viewColumnChanged" => {
+					let Payload = arg_val(&Arguments, 0);
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptTextEditorViewColumnChanged".to_string(),
 						Payload,
 					)
 					.await;

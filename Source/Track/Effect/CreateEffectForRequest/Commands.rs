@@ -43,10 +43,44 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				let command_executor:Arc<dyn CommandExecutor> = run_time.Environment.Require();
 				let command_id = string_at(&Parameters, 0);
 				let args = val_at(&Parameters, 1);
-				command_executor
+
+				// Capture before the move so the tier-gated dual-emit can
+				// reuse them. The executor consumes both by value.
+				let BroadcastId = command_id.clone();
+				let BroadcastArgs = args.clone();
+
+				let ExecResult = command_executor
 					.ExecuteCommand(command_id, args)
 					.await
-					.map_err(|e| e.to_string())
+					.map_err(|e| e.to_string());
+
+				// `vscode.commands.onDidExecuteCommand` symmetry. The
+				// renderer-originated `commands:execute` Tauri-IPC arm
+				// (see WindServiceHandlers/Commands/Execute.rs) already
+				// dual-emits `$acceptCommandExecuted`. This arm is hit
+				// when an extension running in the Node.js host calls
+				// `vscode.commands.executeCommand(...)` and the command
+				// is NOT locally registered in Cocoon - the call goes
+				// through Mountain's gRPC `Command.Execute` arm instead.
+				//
+				// Off by default because every executeCommand from the
+				// extension host adds an extra Vine notification roundtrip.
+				// Flip `TierCommandEventBroadcast=On` to enable.
+				let BroadcastEnabled = std::env::var("TierCommandEventBroadcast")
+					.unwrap_or_else(|_| env!("TierCommandEventBroadcast", "Off").to_string());
+				if BroadcastEnabled == "On" {
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$acceptCommandExecuted".to_string(),
+						json!({
+							"command": BroadcastId,
+							"arguments": [BroadcastArgs],
+						}),
+					)
+					.await;
+				}
+
+				ExecResult
 			})
 		},
 
