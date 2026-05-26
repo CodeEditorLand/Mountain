@@ -106,6 +106,21 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 		// Cap to Warn alongside the other dependency mutes.
 		.level_for("keyring", LevelFilter::Warn)
 
+		// Tauri's asset manager logs every fallback probe (`asset.html`,
+		// `asset/index.html`, etc.) at DEBUG and then a single ERROR
+		// when the asset is not in the bundled resources. Land serves
+		// every workbench asset from the Astro dev server at
+		// `localhost:21100`; the requests reaching `tauri::manager`
+		// are sourcemap (`.js.map`, `.wasm.map`) and module URLs that
+		// WebKit auto-fetches with the wrong base because the worker /
+		// importmap is rooted at `tauri://localhost`. The 404 is
+		// expected and harmless. Cap the chatter to Warn so the
+		// extension-activation signal stays readable.
+		.level_for("tauri::manager", LevelFilter::Warn)
+		.level_for("tauri::manager::asset", LevelFilter::Warn)
+		.level_for("tauri::webview", LevelFilter::Info)
+		.level_for("wry", LevelFilter::Info)
+
 		// Filter out extremely noisy targets
 		.filter(|Metadata| {
 			!Metadata.target().starts_with("polling")

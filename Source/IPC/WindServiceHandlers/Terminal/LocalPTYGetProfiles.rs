@@ -4,11 +4,15 @@
 //! `isDefault=true`; on Unix the user's `$SHELL` wins.
 //!
 //! The wire shape matches VS Code's
-//! `ITerminalProfileProvider.profileName / path / Arguments /
+//! `ITerminalProfileProvider.profileName / path / args /
 //! env / icon / isDefault` so Wind's terminal picker renders
-//! without reshaping.
+//! without reshaping. VS Code's `ITerminalProfile` reads
+//! `args` (lowercase); emitting `Arguments` silently mis-parses
+//! and the profile dropdown falls back to `$SHELL`.
 
 use serde_json::{Value, json};
+
+use crate::dev_log;
 
 pub async fn Fn() -> Result<Value, String> {
 	let mut Profiles = Vec::new();
@@ -46,7 +50,7 @@ pub async fn Fn() -> Result<Value, String> {
 					"profileName": Name,
 					"path": Shell,
 					"isDefault": *Shell == DefaultShell.as_str(),
-					"Arguments": [],
+					"args": [],
 					"env": {},
 					"icon": "terminal"
 				}));
@@ -70,7 +74,7 @@ pub async fn Fn() -> Result<Value, String> {
 							"profileName": Name,
 							"path": Trimmed,
 							"isDefault": Trimmed == DefaultShell.as_str(),
-							"Arguments": [],
+							"args": [],
 							"env": {},
 							"icon": "terminal"
 						}));
@@ -124,7 +128,7 @@ pub async fn Fn() -> Result<Value, String> {
 					"profileName": Name,
 					"path": Path,
 					"isDefault": IsFirstFound,
-					"Arguments": Args,
+					"args": Args,
 					"env": {},
 					"icon": "terminal"
 				}));
@@ -133,6 +137,8 @@ pub async fn Fn() -> Result<Value, String> {
 			}
 		}
 	}
+
+	dev_log!("terminal", "[GetProfiles] returning {} profiles", Profiles.len());
 
 	Ok(json!(Profiles))
 }

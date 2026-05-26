@@ -21,6 +21,9 @@
 //! to the legacy `provider_id`/`group_id` keys for any stale caller
 //! that hasn't migrated yet.
 
+use std::collections::HashMap;
+
+use CommonLibrary::SourceControlManagement::SourceControlManagementResourceDTO::SourceControlManagementResourceDTO;
 use serde_json::{Value, json};
 use tauri::Emitter;
 
@@ -105,6 +108,52 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 		);
 
 		return;
+	}
+
+	// Persist the resource snapshot into MarkerState so the boot-time replay
+	// (`Sky/ReplayEvents.rs`) can re-emit it for any listener that subscribed
+	// late. Without this, every UpdateScmGroup arrival only fired its Tauri
+	// event and the in-process Markers map stayed empty - SCM panels that
+	// rendered after the live event missed (and the replay loop with it).
+	if let Some(ScmHandleVal) = ResolvedScmHandle
+		&& let Ok(mut Resources) = Service
+			.RunTime()
+			.Environment
+			.ApplicationState
+			.Feature
+			.Markers
+			.SourceControlManagementResources
+			.lock()
+	{
+		let GroupsForProvider = Resources.entry(ScmHandleVal).or_insert_with(HashMap::new);
+
+		let mut DtoList:Vec<SourceControlManagementResourceDTO> = Vec::new();
+
+		if let Some(Array) = ResourceStates.as_array() {
+			for Raw in Array {
+				let ResourceUri = Raw
+					.get("resourceUri")
+					.or_else(|| Raw.get("sourceUri"))
+					.or_else(|| Raw.get("uri"))
+					.cloned()
+					.unwrap_or(Value::Null);
+
+				if ResourceUri.is_null() {
+					continue;
+				}
+
+				let Decorations = Raw.get("decorations").cloned().unwrap_or(Value::Object(serde_json::Map::new()));
+
+				DtoList.push(SourceControlManagementResourceDTO {
+					ProviderHandle:ScmHandleVal,
+					GroupIdentifier:ResolvedGroupId.clone(),
+					ResourceURI:ResourceUri,
+					Decorations,
+				});
+			}
+		}
+
+		GroupsForProvider.insert(ResolvedGroupId.clone(), DtoList);
 	}
 
 	let _ = Service.ApplicationHandle().emit(

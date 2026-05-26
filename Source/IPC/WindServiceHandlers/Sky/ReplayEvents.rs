@@ -21,6 +21,10 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 
 	let mut ScmCount:usize = 0;
 
+	let mut ScmGroupCount:usize = 0;
+
+	let mut ScmResourceUpdateCount:usize = 0;
+
 	let mut CommandCount:usize = 0;
 
 	let mut TerminalCount:usize = 0;
@@ -83,6 +87,112 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 
 			if ApplicationHandle.emit("sky://scm/register", Payload).is_ok() {
 				ScmCount += 1;
+			}
+		}
+	}
+
+	// ── SCM resource groups ───────────────────────────────────────────────
+	// Cocoon's `createResourceGroup(GroupId, Label)` mints
+	// `GroupHandle = "${ProviderHandle}/${GroupId}"` and fires
+	// `register_scm_resource_group` to Mountain. Replay must reconstruct the
+	// same handle so InstallScm's `ScmShimByHandle`/`ScmShimRegistry` lookup
+	// resolves the same shim that the live wire path would. Without this
+	// replay leg the workbench shows the provider header but zero groups,
+	// because `sky://scm/registerGroup` was emitted before SkyBridge's
+	// listener was up and Tauri events are not buffered.
+	//
+	// We resolve `scmId` from the providers map (defaulting to "git" if
+	// `Identifier` is empty - matches the provider-replay fallback above).
+	let ProviderIdentifierByHandle:std::collections::HashMap<u32, String> = if let Ok(ScmProviders) = RunTime
+		.Environment
+		.ApplicationState
+		.Feature
+		.Markers
+		.SourceControlManagementProviders
+		.lock()
+	{
+		ScmProviders
+			.iter()
+			.map(|(Handle, Dto)| {
+				let Id = if Dto.Identifier.is_empty() {
+					"git".to_string()
+				} else {
+					Dto.Identifier.clone()
+				};
+
+				(*Handle, Id)
+			})
+			.collect()
+	} else {
+		std::collections::HashMap::new()
+	};
+
+	if let Ok(ScmGroups) = RunTime
+		.Environment
+		.ApplicationState
+		.Feature
+		.Markers
+		.SourceControlManagementGroups
+		.lock()
+	{
+		for (ProviderHandle, GroupsByID) in ScmGroups.iter() {
+			let ScmId = ProviderIdentifierByHandle
+				.get(ProviderHandle)
+				.cloned()
+				.unwrap_or_else(|| "git".to_string());
+
+			for (GroupId, GroupDto) in GroupsByID.iter() {
+				let GroupHandle = format!("{}/{}", ProviderHandle, GroupId);
+
+				let Payload = serde_json::json!({
+					"scmId": ScmId,
+					"scmHandle": *ProviderHandle,
+					"groupHandle": GroupHandle,
+					"groupId": GroupId,
+					"label": GroupDto.Label,
+				});
+
+				if ApplicationHandle.emit("sky://scm/registerGroup", Payload).is_ok() {
+					ScmGroupCount += 1;
+				}
+			}
+		}
+	}
+
+	// ── SCM resource updates ──────────────────────────────────────────────
+	// After group registration, replay the most recent resource snapshot for
+	// each (provider, group) so the workbench's tree populates with the
+	// extension's current working-tree state without waiting for the next
+	// `update_scm_group` to land. Without this the panel stays empty until
+	// the user makes a file change that triggers a fresh group update.
+	if let Ok(ScmResources) = RunTime
+		.Environment
+		.ApplicationState
+		.Feature
+		.Markers
+		.SourceControlManagementResources
+		.lock()
+	{
+		for (ProviderHandle, GroupsByID) in ScmResources.iter() {
+			let ScmId = ProviderIdentifierByHandle
+				.get(ProviderHandle)
+				.cloned()
+				.unwrap_or_else(|| "git".to_string());
+
+			for (GroupId, ResourceList) in GroupsByID.iter() {
+				let GroupHandle = format!("{}/{}", ProviderHandle, GroupId);
+
+				let Payload = serde_json::json!({
+					"scmHandle": *ProviderHandle,
+					"providerId": ScmId,
+					"groupHandle": GroupHandle,
+					"groupId": GroupId,
+					"resourceStates": ResourceList,
+				});
+
+				if ApplicationHandle.emit("sky://scm/updateGroup", Payload).is_ok() {
+					ScmResourceUpdateCount += 1;
+				}
 			}
 		}
 	}
@@ -161,9 +271,12 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 
 	crate::dev_log!(
 		"sky-emit",
-		"[SkyEmit] replay-events tree-views={} scm={} commands={} terminals={} terminal-bytes={}",
+		"[SkyEmit] replay-events tree-views={} scm={} scm-groups={} scm-resource-updates={} commands={} terminals={} \
+		 terminal-bytes={}",
 		TreeViewCount,
 		ScmCount,
+		ScmGroupCount,
+		ScmResourceUpdateCount,
 		CommandCount,
 		TerminalCount,
 		TerminalDataBytes
@@ -172,6 +285,8 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 	Ok(serde_json::json!({
 		"treeViews": TreeViewCount,
 		"scmProviders": ScmCount,
+		"scmGroups": ScmGroupCount,
+		"scmResourceUpdates": ScmResourceUpdateCount,
 		"commands": CommandCount,
 		"terminals": TerminalCount,
 		"terminalDataBytes": TerminalDataBytes,

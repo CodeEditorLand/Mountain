@@ -273,16 +273,7 @@ fn PropagateProfileSentinel() {
 // ===========================================================================
 
 fn PropagatePostHogSentinel() {
-	for Key in [
-		"Authorize",
-		"Beam",
-		"Report",
-		"Brand",
-		"Pipe",
-		"Emit",
-		"Capture",
-		"Trace",
-	] {
+	for Key in ["Authorize", "Beam", "Report", "Brand", "Pipe", "Emit", "Capture", "Trace"] {
 		println!("cargo:rerun-if-env-changed={Key}");
 	}
 

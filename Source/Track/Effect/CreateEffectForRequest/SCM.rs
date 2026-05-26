@@ -16,6 +16,8 @@ use crate::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+	dev_log!("scm", "[SCM] CreateEffect method={}", MethodName);
+
 	match MethodName {
 		"$scm:createSourceControl" => {
 			crate::effect!(run_time, {
@@ -86,13 +88,15 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		//
 		// `$scm:openDiff` is an older alias emitted by some extension
 		// versions; we handle it identically.
-		"vscode.diff" | "$scm:openDiff" => {
+		//
+		// `git.openChange` / `git.openFile` are the actual command IDs
+		// the built-in vscode.git extension uses as the `.command` field
+		// on its resource state entries - clicking a changed file in the
+		// SCM sidebar dispatches one of these. We alias them onto the
+		// same diff-forward path so the diff editor opens.
+		"vscode.diff" | "$scm:openDiff" | "git.openChange" | "git.openFile" => {
 			crate::effect!(run_time, {
-				dev_log!(
-					"scm",
-					"[SCM] vscode.diff forwarding to sky://editor/diff params={:?}",
-					Parameters
-				);
+				dev_log!("scm", "[SCM] diff forwarding to sky://editor/diff params={:?}", Parameters);
 
 				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
 					&run_time.Environment,
