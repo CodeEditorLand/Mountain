@@ -8,8 +8,5 @@ pub async fn UnregisterFileSystemProvider(Service:&MountainVinegRPCService, Para
 
 	dev_log!("provider-register", "[ProviderUnregister] file_system scheme={}", Scheme);
 
-	::Vine::Server::Notification::UnregisterFileSystemProvider::UnregisterFileSystemProvider(
-		Service, Parameter,
-	)
-	.await;
+	::Vine::Server::Notification::UnregisterFileSystemProvider::UnregisterFileSystemProvider(Service, Parameter).await;
 }

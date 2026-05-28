@@ -540,58 +540,47 @@ impl MountainService for MountainVinegRPCService {
 		};
 
 		match MethodName.as_str() {
-
 			// Batch 15: extension-host + progress + languages arms now live
 			// as atoms under `Vine::Server::Notification::*`. Each match arm
 			// is pure delegation - adding a new wire method is a one-line
 			// change here plus one new atom file.
 			"extensionHostMessage" => {
-
 				super::Notification::ExtensionHostMessage::ExtensionHostMessage(self, &Parameter).await;
 			},
 
 			"ExtensionActivated" => {
-
 				super::Notification::ExtensionActivated::ExtensionActivated(self, &Parameter).await;
 			},
 
 			"ExtensionDeactivated" => {
-
 				super::Notification::ExtensionDeactivated::ExtensionDeactivated(self, &Parameter).await;
 			},
 
 			"WebviewReady" => {
-
 				super::Notification::WebviewReady::WebviewReady(self, &Parameter).await;
 			},
 
 			"progress.start" => {
-
 				super::Notification::ProgressStart::ProgressStart(self, &Parameter).await;
 			},
 
 			"progress.report" => {
-
 				super::Notification::ProgressReport::ProgressReport(self, &Parameter).await;
 			},
 
 			"progress.end" => {
-
 				super::Notification::ProgressEnd::ProgressEnd(self, &Parameter).await;
 			},
 
 			"languages.setDocumentLanguage" => {
-
 				super::Notification::LanguagesSetDocumentLanguage::LanguagesSetDocumentLanguage(self, &Parameter).await;
 			},
 
 			"workspace.applyEdit" => {
-
 				super::Notification::WorkspaceApplyEdit::WorkspaceApplyEdit(self, &Parameter).await;
 			},
 
 			"window.showTextDocument" => {
-
 				super::Notification::WindowShowTextDocument::WindowShowTextDocument(self, &Parameter).await;
 			},
 
@@ -606,17 +595,14 @@ impl MountainService for MountainVinegRPCService {
 			| "webview.setOptions"
 			| "webview.updateView"
 			| "webview.reveal" => {
-
 				super::Notification::WebviewLifecycle::WebviewLifecycle(self, &MethodName, &Parameter).await;
 			},
 
 			"window.createTerminal" => {
-
 				super::Notification::WindowCreateTerminal::WindowCreateTerminal(self, &Parameter).await;
 			},
 
 			"terminal.sendText" | "terminal.show" | "terminal.hide" | "terminal.dispose" => {
-
 				super::Notification::TerminalLifecycle::TerminalLifecycle(self, &MethodName, &Parameter).await;
 			},
 
@@ -624,7 +610,6 @@ impl MountainService for MountainVinegRPCService {
 			// event. Relay to Sky which calls `ITreeView.refresh()` to
 			// trigger a fresh getChildren() round-trip.
 			"tree.refresh" => {
-
 				super::Notification::TreeRefresh::TreeRefresh(self, &Parameter).await;
 			},
 
@@ -639,20 +624,23 @@ impl MountainService for MountainVinegRPCService {
 			| "terminal.envCollection.clear"
 			| "terminal.envCollection.setPersistent"
 			| "terminal.envCollection.setDescription" => {
-
-				super::Notification::TerminalEnvCollection::TerminalEnvCollectionDispatch(self, &MethodName, &Parameter).await;
+				super::Notification::TerminalEnvCollection::TerminalEnvCollectionDispatch(
+					self,
+					&MethodName,
+					&Parameter,
+				)
+				.await;
 			},
 
 			"window.createTextEditorDecorationType" | "window.disposeTextEditorDecorationType" => {
-
-				super::Notification::DecorationTypeLifecycle::DecorationTypeLifecycle(self, &MethodName, &Parameter).await;
+				super::Notification::DecorationTypeLifecycle::DecorationTypeLifecycle(self, &MethodName, &Parameter)
+					.await;
 			},
 
 			// Extension called `editor.setDecorations(type, ranges)`.
 			// Batched and emitted as `sky://decoration/set-ranges` so Sky can
 			// apply the ranges to the Monaco editor for the matching URI.
 			"window.setTextEditorDecorations" => {
-
 				super::Notification::SetTextEditorDecorations::SetTextEditorDecorations(self, &Parameter).await;
 			},
 
@@ -660,37 +648,30 @@ impl MountainService for MountainVinegRPCService {
 			// Payload: `{ uri, edits: [{range, text}] }`.
 			// Sky applies via `ICodeEditorService` → `editor.executeEdits`.
 			"window.applyTextEdits" => {
-
 				super::Notification::ApplyTextEdits::ApplyTextEdits(self, &Parameter).await;
 			},
 
 			"debug.addBreakpoints" | "debug.removeBreakpoints" | "debug.consoleAppend" => {
-
 				super::Notification::DebugLifecycle::DebugLifecycle(self, &MethodName, &Parameter).await;
 			},
 
 			"statusBar.update" | "statusBar.dispose" => {
-
 				super::Notification::StatusBarLifecycle::StatusBarLifecycle(self, &MethodName, &Parameter).await;
 			},
 
 			"statusBar.message" => {
-
 				super::Notification::StatusBarMessage::StatusBarMessage(self, &Parameter).await;
 			},
 
 			"window.showMessage" => {
-
 				super::Notification::WindowShowMessage::WindowShowMessage(self, &Parameter).await;
 			},
 
 			"registerCommand" => {
-
 				super::Notification::RegisterCommand::RegisterCommand(self, &Parameter).await;
 			},
 
 			"unregisterCommand" => {
-
 				super::Notification::UnregisterCommand::UnregisterCommand(self, &Parameter).await;
 			},
 
@@ -704,57 +685,51 @@ impl MountainService for MountainVinegRPCService {
 			// delegation so adding a variant stays a one-line change here
 			// plus one new file.
 			"unregister_authentication_provider" => {
-
-				super::Notification::UnregisterAuthenticationProvider::UnregisterAuthenticationProvider(self, &Parameter).await;
+				super::Notification::UnregisterAuthenticationProvider::UnregisterAuthenticationProvider(
+					self, &Parameter,
+				)
+				.await;
 			},
 
 			"unregister_debug_adapter" => {
-
 				super::Notification::UnregisterDebugAdapter::UnregisterDebugAdapter(self, &Parameter).await;
 			},
 
 			"unregister_debug_configuration_provider" => {
-
 				super::Notification::UnregisterDebugConfigurationProvider::UnregisterDebugConfigurationProvider(
-					self,
-
-					&Parameter,
+					self, &Parameter,
 				)
 				.await;
 			},
 
 			"unregister_file_system_provider" => {
-
 				super::Notification::UnregisterFileSystemProvider::UnregisterFileSystemProvider(self, &Parameter).await;
 			},
 
 			"unregister_scm_provider" => {
-
 				super::Notification::UnregisterScmProvider::UnregisterScmProvider(self, &Parameter).await;
 			},
 
 			"unregister_task_provider" => {
-
 				super::Notification::UnregisterTaskProvider::UnregisterTaskProvider(self, &Parameter).await;
 			},
 
 			"unregister_external_uri_opener" => {
-
 				super::Notification::UnregisterExternalUriOpener::UnregisterExternalUriOpener(self, &Parameter).await;
 			},
 
 			"unregister_remote_authority_resolver" => {
-
-				super::Notification::UnregisterRemoteAuthorityResolver::UnregisterRemoteAuthorityResolver(self, &Parameter).await;
+				super::Notification::UnregisterRemoteAuthorityResolver::UnregisterRemoteAuthorityResolver(
+					self, &Parameter,
+				)
+				.await;
 			},
 
 			"unregister_uri_handler" => {
-
 				super::Notification::UnregisterUriHandler::UnregisterUriHandler(self, &Parameter).await;
 			},
 
 			"update_scm_group" => {
-
 				super::Notification::UpdateScmGroup::UpdateScmGroup(self, &Parameter).await;
 			},
 
@@ -769,34 +744,28 @@ impl MountainService for MountainVinegRPCService {
 			// atoms write the markers + emit the `sky://scm/*` events the
 			// renderer subscribes to.
 			"register_scm_provider" => {
-
 				super::Notification::RegisterScmProvider::RegisterScmProvider(self, &Parameter).await;
 			},
 
 			"register_scm_resource_group" => {
-
 				super::Notification::RegisterScmResourceGroup::RegisterScmResourceGroup(self, &Parameter).await;
 			},
 
 			// Batch 11: progress lifecycle name alignment.
 			"progress.update" => {
-
 				super::Notification::ProgressUpdate::ProgressUpdate(self, &Parameter).await;
 			},
 
 			"progress.complete" => {
-
 				super::Notification::ProgressComplete::ProgressComplete(self, &Parameter).await;
 			},
 
 			// Batch 10: status-bar text-only fast path + item disposal.
 			"setStatusBarText" => {
-
 				super::Notification::SetStatusBarText::SetStatusBarText(self, &Parameter).await;
 			},
 
 			"disposeStatusBarItem" => {
-
 				super::Notification::DisposeStatusBarItem::DisposeStatusBarItem(self, &Parameter).await;
 			},
 
@@ -805,123 +774,89 @@ impl MountainService for MountainVinegRPCService {
 			// `outputChannel.*` via `SendToMountain`) both forward to the
 			// same `sky://output/*` channels until Cocoon consolidates.
 			"output.create" => {
-
 				super::Notification::OutputCreate::OutputCreate(self, &Parameter).await;
 			},
 
 			"output.append" => {
-
 				super::Notification::OutputAppend::OutputAppend(self, &Parameter).await;
 			},
 
 			"output.appendLine" => {
-
 				super::Notification::OutputAppendLine::OutputAppendLine(self, &Parameter).await;
 			},
 
 			"output.clear" => {
-
 				super::Notification::OutputClear::OutputClear(self, &Parameter).await;
 			},
 
 			"output.show" => {
-
 				super::Notification::OutputShow::OutputShow(self, &Parameter).await;
 			},
 
 			"output.dispose" => {
-
 				super::Notification::OutputDispose::OutputDispose(self, &Parameter).await;
 			},
 
 			"output.replace" => {
-
 				super::Notification::OutputReplace::OutputReplace(self, &Parameter).await;
 			},
 
 			"outputChannel.create" => {
-
 				super::Notification::OutputChannelCreate::OutputChannelCreate(self, &Parameter).await;
 			},
 
 			"outputChannel.append" => {
-
 				super::Notification::OutputChannelAppend::OutputChannelAppend(self, &Parameter).await;
 			},
 
 			"outputChannel.clear" => {
-
 				super::Notification::OutputChannelClear::OutputChannelClear(self, &Parameter).await;
 			},
 
 			"outputChannel.replace" => {
-
 				super::Notification::OutputChannelReplace::OutputChannelReplace(self, &Parameter).await;
 			},
 
 			"outputChannel.show" => {
-
 				super::Notification::OutputChannelShow::OutputChannelShow(self, &Parameter).await;
 			},
 
 			"outputChannel.hide" => {
-
 				super::Notification::OutputChannelHide::OutputChannelHide(self, &Parameter).await;
 			},
 
 			"outputChannel.dispose" => {
-
 				super::Notification::OutputChannelDispose::OutputChannelDispose(self, &Parameter).await;
 			},
 
 			// Batch 13: webview reverse-channel (Mountain → renderer).
 			"webview.postMessage" => {
-
 				super::Notification::WebviewPostMessage::WebviewPostMessage(self, &Parameter).await;
 			},
 
 			"webview.dispose" => {
-
 				super::Notification::WebviewDispose::WebviewDispose(self, &Parameter).await;
 			},
 
 			// Batch 14: grammar config, external-URI open, security alert.
 			"set_language_configuration" => {
-
 				super::Notification::SetLanguageConfiguration::SetLanguageConfiguration(self, &Parameter).await;
 			},
 
 			"openExternal" => {
-
 				super::Notification::OpenExternal::OpenExternal(self, &Parameter).await;
 			},
 
 			"security.incident" => {
-
 				super::Notification::SecurityIncident::SecurityIncident(self, &Parameter).await;
 			},
 
-			// Cocoon → Mountain: provider registration from extensions.
-			//
-			// Covers all 34 `register_*` / `register_*_provider` notification
-			// variants that Cocoon's vscode-API shim emits. Each lands in
-			// Mountain's `ProviderRegistration` keyed on `Handle`; the
-			// language-feature RPC path (e.g. GetHoverAtPosition) then looks
-			// up the handle and proxies back to Cocoon with the original
-			// `$providerXxx` method.
-			//
-			// Wire-method naming: the shim uses snake_case with two trailing
-			// shapes - plain verbs (`register_rename`) and `_provider` suffix
-			// (`register_hover_provider`). The map below strips both.
-			// Full list mirrors Cocoon's `vscode` API shim wire strings - the
-			// authoritative set grep'd from `Cocoon/Source` is: most providers
-			// carry a `_provider` suffix; a handful (debug_adapter,
-			// uri_handler, external_uri_opener, notebook_serializer,
-			// remote_authority_resolver, resource_label_formatter,
-			// scm_resource_group) do not. Keep both the suffixed and
-			// non-suffixed variants listed explicitly so the OR-match stays
-			// readable at a glance; the strip-logic below normalises either
-			// form into `ProviderTypeName` for the enum lookup.
+			// Cocoon → Mountain: language-feature provider registration.
+			// All 46+ `register_*` / `register_*_provider` variants delegate
+			// to `Vine::Server::Notification::RegisterLanguageProvider` which
+			// strips the prefix/suffix, logs, then calls
+			// `VineHost::RegisterLanguageProvider` (Mountain's impl does the
+			// type-name → ProviderType enum mapping and DTO construction).
 			"register_authentication_provider"
 			| "register_call_hierarchy_provider"
 			| "register_code_actions_provider"
@@ -960,12 +895,6 @@ impl MountainService for MountainVinegRPCService {
 			| "register_remote_authority_resolver"
 			| "register_rename_provider"
 			| "register_resource_label_formatter"
-			// `register_scm_provider` / `register_scm_resource_group` were
-			// here pre-Batch-17. They now have their own explicit arms above
-			// because the SCM viewlet binds to
-			// `ApplicationState::Feature::Markers::SourceControlManagement*`,
-			// not to `Extension::ProviderRegistration` which this OR-block
-			// writes. See `Notification/RegisterScmProvider.rs`.
 			| "register_selection_range_provider"
 			| "register_semantic_tokens_provider"
 			| "register_signature_help_provider"
@@ -977,222 +906,15 @@ impl MountainService for MountainVinegRPCService {
 			| "register_type_hierarchy_provider"
 			| "register_uri_handler"
 			| "register_workspace_symbol_provider" => {
-
-				let Handle = Parameter.get("handle").and_then(|h| h.as_u64()).unwrap_or(0) as u32;
-
-				// Wire-shape contract: producer (Cocoon's `*Namespace.ts`)
-				// emits camelCase keys (`languageSelector`, `extensionId`)
-				// to align with VS Code's API surface. We probe camelCase
-				// first and fall back to the legacy snake_case shape so a
-				// partial rebuild (Mountain ahead of Cocoon, or vice
-				// versa) doesn't silently drop traffic.
-				let Selector = Parameter
-					.get("languageSelector")
-					.or_else(|| Parameter.get("language_selector"))
-					.and_then(|s| s.as_str())
-					.unwrap_or("*");
-
-				let ExtId = Parameter
-					.get("extensionId")
-					.or_else(|| Parameter.get("extension_id"))
-					.and_then(|e| e.as_str())
-					.unwrap_or("");
-
-				// Extension-scoped scheme (for FileSystemProvider, TextDocumentContentProvider,
-				// UriHandler). Present only for schema-bound variants; `""` for others.
-				let Scheme = Parameter.get("scheme").and_then(|s| s.as_str()).unwrap_or("");
-
-				let ProviderTypeName = MethodName
-					.strip_prefix("register_")
-					.map(|Stripped| Stripped.strip_suffix("_provider").unwrap_or(Stripped))
-					.unwrap_or("");
-
-				// The second `provider-register` dev_log below carries the
-				// superset of fields (MethodName, scheme, extension id)
-				// that make the line useful. The `grpc`-tagged copy here
-				// was just the short form printed twice per register.
-				// Route to `grpc-verbose` so the `short` log only shows
-				// one line per provider registration.
-				dev_log!(
-					"grpc-verbose",
-
-					"[MountainVinegRPCService] Cocoon registered {} provider: handle={}, lang={}",
-
-					ProviderTypeName,
-
-					Handle,
-
-					Selector
-				);
-
-				dev_log!(
-					"provider-register",
-
-					"[ProviderRegister] accepted method={} type={} handle={} lang={} scheme={} ext={}",
-
-					MethodName,
-
-					ProviderTypeName,
-
-					Handle,
-
-					Selector,
-
-					Scheme,
-
-					ExtId
-				);
-
-				use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType as PT;
-
-				let ProvType = match ProviderTypeName {
-
-					"authentication" => Some(PT::Authentication),
-
-					"call_hierarchy" => Some(PT::CallHierarchy),
-
-					"code_actions" => Some(PT::CodeAction),
-
-					"code_lens" => Some(PT::CodeLens),
-
-					"color" => Some(PT::Color),
-
-					"completion_item" => Some(PT::Completion),
-
-					"debug_adapter" => Some(PT::DebugAdapter),
-
-					"debug_configuration" => Some(PT::DebugConfiguration),
-
-					"declaration" => Some(PT::Declaration),
-
-					"definition" => Some(PT::Definition),
-
-					"document_drop_edit" => Some(PT::DocumentDropEdit),
-
-					"document_formatting" => Some(PT::DocumentFormatting),
-
-					"document_highlight" => Some(PT::DocumentHighlight),
-
-					"document_link" => Some(PT::DocumentLink),
-
-					"document_paste_edit" => Some(PT::DocumentPasteEdit),
-
-					"document_range_formatting" => Some(PT::DocumentRangeFormatting),
-
-					"document_symbol" => Some(PT::DocumentSymbol),
-
-					"evaluatable_expression" => Some(PT::EvaluatableExpression),
-
-					"external_uri_opener" => Some(PT::ExternalUriOpener),
-
-					"file_decoration" => Some(PT::FileDecoration),
-
-					"file_system" => Some(PT::FileSystem),
-
-					"folding_range" => Some(PT::FoldingRange),
-
-					"hover" => Some(PT::Hover),
-
-					"implementation" => Some(PT::Implementation),
-
-					"inlay_hints" => Some(PT::InlayHint),
-
-					"inline_completion_item" => Some(PT::InlineCompletion),
-
-					"inline_edit" => Some(PT::InlineEdit),
-
-					"inline_values" => Some(PT::InlineValues),
-
-					"linked_editing_range" => Some(PT::LinkedEditingRange),
-
-					"mapped_edits" => Some(PT::MappedEdits),
-
-					"multi_document_highlight" => Some(PT::MultiDocumentHighlight),
-
-					"notebook_content" => Some(PT::NotebookContent),
-
-					"notebook_serializer" => Some(PT::NotebookSerializer),
-
-					"on_type_formatting" => Some(PT::OnTypeFormatting),
-
-					"reference" => Some(PT::References),
-
-					"remote_authority_resolver" => Some(PT::RemoteAuthorityResolver),
-
-					"rename" => Some(PT::Rename),
-
-					"resource_label_formatter" => Some(PT::ResourceLabelFormatter),
-
-					"scm" => Some(PT::SourceControl),
-
-					"scm_resource_group" => Some(PT::ScmResourceGroup),
-
-					"selection_range" => Some(PT::SelectionRange),
-
-					"semantic_tokens" => Some(PT::SemanticTokens),
-
-					"signature_help" => Some(PT::SignatureHelp),
-
-					"task" => Some(PT::Task),
-
-					"terminal_link" => Some(PT::TerminalLink),
-
-					"terminal_profile" => Some(PT::TerminalProfile),
-
-					"text_document_content" => Some(PT::TextDocumentContent),
-
-					"type_definition" => Some(PT::TypeDefinition),
-
-					"type_hierarchy" => Some(PT::TypeHierarchy),
-
-					"uri_handler" => Some(PT::UriHandler),
-
-					"workspace_symbol" => Some(PT::WorkspaceSymbol),
-
-					_ => None,
-				};
-
-				if let Some(ProviderType) = ProvType {
-
-					use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
-
-					// Scheme-bound providers carry their scheme in the selector payload so
-					// the Mountain-side resolver (FileSystem router, URI handler dispatch,
-					// TextDocumentContent view, …) can match on it.
-					let SelectorValue = if !Scheme.is_empty() {
-
-						json!([{ "scheme": Scheme, "language": Selector }])
-					} else {
-
-						json!([{ "language": Selector }])
-					};
-
-					let Dto = ProviderRegistrationDTO {
-
-						Handle,
-
-						ProviderType,
-
-						Selector:SelectorValue,
-
-						SideCarIdentifier:"cocoon-main".to_string(),
-
-						ExtensionIdentifier:json!(ExtId),
-
-						Options:Parameter.get("options").cloned(),
-					};
-
-					self.RunTime
-						.Environment
-						.ApplicationState
-						.Extension
-						.ProviderRegistration
-						.RegisterProvider(Handle, Dto);
-				}
+				let _ = super::Notification::RegisterLanguageProvider::RegisterLanguageProvider(
+					self,
+					&MethodName,
+					&Parameter,
+				)
+				.await;
 			},
 
 			_ => {
-
 				dev_log!("grpc", "[MountainVinegRPCService] Cocoon notification: {}", MethodName);
 
 				// No typed match arm exists for this notification - it hits
@@ -1208,10 +930,8 @@ impl MountainService for MountainVinegRPCService {
 				// handler. Payload preview included so diagnosis doesn't need
 				// a second run.
 				let PayloadPreview = if NotificationData.parameter.len() <= 160 {
-
 					String::from_utf8_lossy(&NotificationData.parameter).into_owned()
 				} else {
-
 					let Slice = &NotificationData.parameter[..160];
 
 					format!("{}…", String::from_utf8_lossy(Slice))
@@ -1219,15 +939,10 @@ impl MountainService for MountainVinegRPCService {
 
 				dev_log!(
 					"notif-drop",
-
 					"[NotifDrop] method={} payload_bytes={} preview={:?} (falls through to cocoon:{} event)",
-
 					MethodName,
-
 					NotificationData.parameter.len(),
-
 					PayloadPreview,
-
 					MethodName
 				);
 
@@ -1236,25 +951,23 @@ impl MountainService for MountainVinegRPCService {
 				// Sanitize: Tauri only allows [a-zA-Z0-9\-/:_] in event names.
 				// Dots → slashes (e.g. "webview.setOptions" → "webview/setOptions");
 				// any other invalid char → "-".
-				let SanitizedMethod: String = MethodName
+				let SanitizedMethod:String = MethodName
 					.chars()
-					.map(|C| match C {
-						'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '/' | ':' | '_' => C,
-						'.' => '/',
-						_ => '-',
+					.map(|C| {
+						match C {
+							'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '/' | ':' | '_' => C,
+							'.' => '/',
+							_ => '-',
+						}
 					})
 					.collect();
 				let EventName = format!("cocoon:{}", SanitizedMethod);
 
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
-
 					dev_log!(
 						"grpc",
-
 						"warn: [MountainVinegRPCService] Failed to emit {}: {}",
-
 						EventName,
-
 						Error
 					);
 				}

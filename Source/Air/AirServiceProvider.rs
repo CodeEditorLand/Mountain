@@ -4,8 +4,7 @@
 //! only what Mountain code still references by path:
 //!
 //! - [`AirServiceProvider`] type alias to the canonical type.
-//! - [`GenerateRequestID`] submodule - thin delegator to the canonical
-//!   helper.
+//! - [`GenerateRequestID`] submodule - thin delegator to the canonical helper.
 
 pub mod GenerateRequestID;
 

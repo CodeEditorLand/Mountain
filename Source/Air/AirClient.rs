@@ -7,8 +7,8 @@
 //! - [`DEFAULT_AIR_SERVER_ADDRESS`] - gRPC port string (`"[::1]:50053"`).
 //! - DTO submodules - each is its own one-line `pub type` alias.
 //! - [`MapAirError`] - translation from [`::AirLibrary::AirError`] to
-//!   [`CommonError`], used at the Mountain/Air boundary so call sites
-//!   keep their `Result<_, CommonError>` signatures and `?` propagation.
+//!   [`CommonError`], used at the Mountain/Air boundary so call sites keep
+//!   their `Result<_, CommonError>` signatures and `?` propagation.
 
 pub mod AirMetrics;
 
@@ -57,9 +57,7 @@ pub fn MapAirError(Error:AirError) -> CommonError {
 	match Error {
 		AirError::Authentication(Reason) => CommonError::AccessDenied { Reason },
 
-		AirError::Validation(Reason) => {
-			CommonError::InvalidArgument { ArgumentName:"AirRequest".to_string(), Reason }
-		},
+		AirError::Validation(Reason) => CommonError::InvalidArgument { ArgumentName:"AirRequest".to_string(), Reason },
 
 		AirError::Serialization(Description) => CommonError::SerializationError { Description },
 
