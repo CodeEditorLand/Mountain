@@ -80,10 +80,6 @@
 
 // Core Infrastructure
 
-/// Local error taxonomy (superseded; zero callers - see
-/// `CommonLibrary::Error::CommonError`).
-pub mod Error;
-
 /// Centralized, thread-safe application state managed by Tauri.
 pub mod ApplicationState;
 

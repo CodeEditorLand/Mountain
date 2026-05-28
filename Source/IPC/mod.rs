@@ -90,12 +90,6 @@ pub mod UriComponents;
 /// dead-code duplicates of plural-side implementations.
 pub mod WindServiceHandlers;
 
-// --- Legacy Subdirectories ---
-
-/// Legacy Enhanced subdirectory.
-pub mod Enhanced;
-
-/// Legacy Permission subdirectory.
 pub mod Permission;
 
 // No `pub use` re-exports - callers spell the full path
