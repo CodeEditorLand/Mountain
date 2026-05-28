@@ -29,6 +29,7 @@ pub async fn Fn() -> Result<Value, String> {
 				.ok()
 				.map(|O| {
 					let Output = String::from_utf8_lossy(&O.stdout);
+
 					Output.contains("0x1") || Output.contains("REG_DWORD    1")
 				})
 				.unwrap_or(false)
@@ -81,6 +82,7 @@ fn detect_dark_mode() -> bool {
 			.ok()
 			.map(|O| {
 				let Output = String::from_utf8_lossy(&O.stdout);
+
 				Output.contains("0x0") || Output.contains("REG_DWORD    0")
 			})
 			.unwrap_or(false)

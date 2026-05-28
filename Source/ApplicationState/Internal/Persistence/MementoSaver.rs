@@ -62,6 +62,7 @@ pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> R
 					parent.display(),
 					e
 				);
+
 				CommonError::FileSystemIO {
 					Path:parent.to_path_buf(),
 					Description:format!("Failed to create directory: {}", e),
@@ -75,6 +76,7 @@ pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> R
 	// Serialize memento data to JSON
 	let json_content = serde_json::to_string_pretty(MementoData).map_err(|e| {
 		dev_log!("storage", "error: [MementoSaver] Failed to serialize memento data: {}", e);
+
 		CommonError::SerializationError { Description:format!("Failed to serialize memento data: {}", e) }
 	})?;
 
@@ -88,6 +90,7 @@ pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> R
 			temp_path.display(),
 			e
 		);
+
 		CommonError::FileSystemIO { Path:temp_path.clone(), Description:format!("Failed to write memento: {}", e) }
 	})?;
 
@@ -99,8 +102,10 @@ pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> R
 			StorageFilePath.display(),
 			e
 		);
+
 		// Clean up temp file if rename fails
 		let _ = fs::remove_file(&temp_path);
+
 		CommonError::FileSystemIO {
 			Path:StorageFilePath.to_path_buf(),
 			Description:format!("Failed to rename memento file: {}", e),

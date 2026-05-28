@@ -92,6 +92,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	// returning empty and notified() being registered, the signal would be
 	// lost (Notify does not latch) and we'd wait the full 5 s timeout.
 	let ScanReady = RunTime.Environment.ApplicationState.Extension.ScanReady.clone();
+
 	let NotifyFuture = ScanReady.notified();
 
 	let mut Extensions = RunTime
@@ -133,6 +134,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.into_iter()
 		.filter_map(|Manifest| {
 			let IsBuiltin = Manifest.get("isBuiltin").and_then(Value::as_bool).unwrap_or(true);
+
 			let ExtensionType = if IsBuiltin { EXTENSION_TYPE_SYSTEM } else { EXTENSION_TYPE_USER };
 
 			if let Some(Wanted) = TypeFilter
@@ -147,12 +149,14 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 				.filter(|S| !S.is_empty())
 				.unwrap_or("unknown")
 				.to_string();
+
 			let Name = Manifest
 				.get("name")
 				.and_then(Value::as_str)
 				.filter(|S| !S.is_empty())
 				.unwrap_or("unknown")
 				.to_string();
+
 			let Id = format!("{}.{}", Publisher, Name);
 
 			let Location = NormalizeUri(Manifest.get("extensionLocation"));
@@ -161,10 +165,14 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 				Value::Object(_) => Manifest,
 				_ => json!({}),
 			};
+
 			if let Value::Object(ref mut Map) = Manifest {
 				Map.insert("extensionLocation".to_string(), Location.clone());
+
 				Map.entry("publisher".to_string()).or_insert_with(|| json!(Publisher.clone()));
+
 				Map.entry("name".to_string()).or_insert_with(|| json!(Name.clone()));
+
 				Map.entry("version".to_string()).or_insert_with(|| json!("0.0.0"));
 			}
 

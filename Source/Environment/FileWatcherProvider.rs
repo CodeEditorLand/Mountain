@@ -106,6 +106,7 @@ impl WatcherState {
 		GLOBAL
 			.get_or_init(|| {
 				let (tx, mut rx) = TokioMPSC::unbounded_channel::<WatchEvent>();
+
 				let state = Arc::new(WatcherState {
 					Entries:Arc::new(StandardMutex::new(HashMap::new())),
 					EventSender:tx,
@@ -118,27 +119,34 @@ impl WatcherState {
 				// it unwinds cleanly if the env is ever torn down. State is
 				// captured by Arc clone for the alias fan-out lookup.
 				let env_clone = env.clone();
+
 				let state_clone = state.clone();
+
 				tokio::spawn(async move {
 					use tauri::Emitter;
+
 					while let Some(WatchEvent { Handle, Kind, Path }) = rx.recv().await {
 						let ipc_provider:Arc<dyn IPCProvider> = env_clone.Require();
+
 						// Fan events to the primary handle plus every alias
 						// registered against it. Without this, the second
 						// extension to register a duplicate watcher would
 						// silently miss every event.
 						let mut Recipients:Vec<String> = vec![Handle.clone()];
+
 						if let Ok(AliasGuard) = state_clone.Aliases.lock() {
 							if let Some(AliasList) = AliasGuard.get(&Handle) {
 								Recipients.extend(AliasList.iter().cloned());
 							}
 						}
+
 						for RecipientHandle in Recipients {
 							let payload = json!({
 								"handle": RecipientHandle,
 								"kind": Kind.AsString(),
 								"path": Path.to_string_lossy().to_string(),
 							});
+
 							if let Err(error) = ipc_provider
 								.SendNotificationToSideCar(
 									"cocoon-main".to_string(),
@@ -157,6 +165,7 @@ impl WatcherState {
 									error
 								);
 							}
+
 							// Dual-emit to Wind/Sky so the Explorer tree,
 							// search index, and any other webview-side
 							// consumer can react to disk mutations without
@@ -376,7 +385,9 @@ impl FileWatcherProvider for MountainEnvironment {
 
 		let mut watcher = notify::recommended_watcher(move |event_result:notify::Result<notify::Event>| {
 			let Ok(event) = event_result else { return };
+
 			let Some(kind) = MapEventKind(&event.kind) else { return };
+
 			let kind_tag = kind.AsString();
 
 			// Pattern filter + server-side ignore list - reject early so the
@@ -402,6 +413,7 @@ impl FileWatcherProvider for MountainEnvironment {
 					}
 				})
 				.collect();
+
 			if matched_paths.is_empty() {
 				return;
 			}
@@ -409,21 +421,27 @@ impl FileWatcherProvider for MountainEnvironment {
 			// Debounce per (handle, path, kind). Lock is uncontested for
 			// single-path events; bursts from FSEvents coalesce cleanly.
 			let mut final_paths:Vec<PathBuf> = Vec::with_capacity(matched_paths.len());
+
 			if let Ok(mut guard) = entries.lock() {
 				if let Some(entry) = guard.get_mut(&handle_for_callback) {
 					let now = Instant::now();
+
 					entry
 						.LastSeen
 						.retain(|_, instant| now.duration_since(*instant) < Duration::from_secs(10));
+
 					for path in matched_paths {
 						let key = (path.clone(), kind_tag);
+
 						let keep = match entry.LastSeen.get(&key) {
 							Some(previous) if now.duration_since(*previous) < DebounceWindow => false,
 							_ => {
 								entry.LastSeen.insert(key, now);
+
 								true
 							},
 						};
+
 						if keep {
 							final_paths.push(path);
 						}

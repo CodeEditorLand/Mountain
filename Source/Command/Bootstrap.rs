@@ -355,6 +355,7 @@ fn CommandSetContext(
 		// to `commands-verbose` so per-keypress context changes don't
 		// flood the default log.
 		dev_log!("commands-verbose", "[Native Command] setContext: {}", Argument);
+
 		Ok(Value::Null)
 	})
 }
@@ -375,6 +376,7 @@ fn CommandOpenWalkthrough(
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 	Box::pin(async move {
 		dev_log!("commands", "[Native Command] openWalkthrough (no-op): {}", Argument);
+
 		Ok(Value::Null)
 	})
 }
@@ -425,6 +427,7 @@ fn CommandVscodeOpen(
 		} else {
 			Argument.clone()
 		};
+
 		// Resolve the URI to a real wire string. Cocoon may forward a raw
 		// string, a serialised `vscode.Uri` POJO (`{scheme, authority,
 		// path, query, fragment}`), or a `{external, path}` shape used by
@@ -480,10 +483,13 @@ fn CommandVscodeOpen(
 			Value::Null => String::new(),
 			_ => UriRaw.to_string(),
 		};
+
 		if UriString.is_empty() {
 			return Err("vscode.open requires a URI".to_string());
 		}
+
 		let IsFileLike = UriString.starts_with("file:") || UriString.starts_with('/');
+
 		if IsFileLike {
 			if let Err(Error) = ApplicationHandle.emit("sky://window/showTextDocument", json!({ "uri": UriString })) {
 				dev_log!(
@@ -492,6 +498,7 @@ fn CommandVscodeOpen(
 					Error
 				);
 			}
+
 			Ok(json!(true))
 		} else {
 			// Fall through to platform open. Mirrors `NativeHost.OpenExternal`.
@@ -502,9 +509,11 @@ fn CommandVscodeOpen(
 			} else {
 				Some(("xdg-open", vec![UriString.clone()]))
 			};
+
 			if let Some((Bin, Args)) = Command {
 				let _ = tokio::process::Command::new(Bin).args(&Args).spawn();
 			}
+
 			Ok(json!(true))
 		}
 	})

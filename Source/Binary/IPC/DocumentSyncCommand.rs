@@ -68,6 +68,7 @@ pub async fn MountainAddDocumentForSync(app_handle:AppHandle, document_data:Valu
 		.as_str()
 		.ok_or_else(|| {
 			dev_log!("ipc", "error: [IPC] [Sync] Missing document_id in document_data");
+
 			"Missing document_id"
 		})?
 		.to_string();
@@ -76,6 +77,7 @@ pub async fn MountainAddDocumentForSync(app_handle:AppHandle, document_data:Valu
 		.as_str()
 		.ok_or_else(|| {
 			dev_log!("ipc", "error: [IPC] [Sync] Missing file_path in document_data");
+
 			"Missing file_path"
 		})?
 		.to_string();
@@ -84,6 +86,7 @@ pub async fn MountainAddDocumentForSync(app_handle:AppHandle, document_data:Valu
 		.await
 		.map_err(|Error| {
 			dev_log!("ipc", "error: [IPC] [Sync] Failed to add document for sync: {}", Error);
+
 			Error.to_string()
 		})
 		.map(|_| Value::Null)
@@ -110,6 +113,7 @@ pub async fn MountainGetSyncStatus(app_handle:AppHandle) -> Result<Value, String
 		.await
 		.map_err(|Error| {
 			dev_log!("ipc", "error: [IPC] [Sync] Failed to get sync status: {}", Error);
+
 			Error.to_string()
 		})
 		.map(|Status| serde_json::to_value(Status).unwrap_or(Value::Null))

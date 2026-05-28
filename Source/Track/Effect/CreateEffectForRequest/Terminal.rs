@@ -17,7 +17,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$terminal:create" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+
 				let options = val_at(&Parameters, 0);
+
 				provider.CreateTerminal(options).await.map_err(|e| e.to_string())
 			})
 		},
@@ -25,8 +27,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$terminal:sendText" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+
 				let terminal_id = i64_at(&Parameters, 0) as u64;
+
 				let text = string_at(&Parameters, 1);
+
 				provider
 					.SendTextToTerminal(terminal_id, text)
 					.await
@@ -38,7 +43,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$terminal:dispose" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+
 				let terminal_id = i64_at(&Parameters, 0) as u64;
+
 				provider
 					.DisposeTerminal(terminal_id)
 					.await
@@ -50,6 +57,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Terminal.Resize" | "$terminal:resize" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+
 				let terminal_id = match Parameters.get(0) {
 					Some(Value::Number(n)) => n.as_u64().unwrap_or(0),
 					Some(Value::String(s)) => {
@@ -57,8 +65,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					},
 					_ => 0,
 				};
+
 				let cols = u64_at_or(&Parameters, 1, 80) as u16;
+
 				let rows = u64_at_or(&Parameters, 2, 24) as u16;
+
 				provider
 					.ResizeTerminal(terminal_id, cols, rows)
 					.await
@@ -70,7 +81,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Terminal.GetProcessId" => {
 			crate::effect!(run_time, {
 				let Provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+
 				let Handle = val_at(&Parameters, 0);
+
 				let Id:u64 = if let Some(n) = Handle.as_u64() {
 					n
 				} else if let Some(s) = Handle.as_str() {
@@ -78,6 +91,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				} else {
 					0
 				};
+
 				match Provider.GetTerminalProcessId(Id).await {
 					Ok(Some(Pid)) => Ok(json!(Pid)),
 					Ok(None) => Ok(Value::Null),
@@ -94,8 +108,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$terminal:show" | "Terminal.Show" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+
 				let terminal_id = u64_at(&Parameters, 0);
+
 				let preserve_focus = bool_at(&Parameters, 1);
+
 				provider
 					.ShowTerminal(terminal_id, preserve_focus)
 					.await
@@ -107,7 +124,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$terminal:hide" | "Terminal.Hide" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+
 				let terminal_id = u64_at(&Parameters, 0);
+
 				provider
 					.HideTerminal(terminal_id)
 					.await

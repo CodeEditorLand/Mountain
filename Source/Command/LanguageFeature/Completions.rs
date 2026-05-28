@@ -50,6 +50,7 @@ pub(super) async fn provide_completions_impl(
 			let result = provider
 				.ProvideCompletions(document_uri, position_dto, context_dto, None)
 				.await?;
+
 			Ok(serde_json::to_value(result)?)
 		}
 	})

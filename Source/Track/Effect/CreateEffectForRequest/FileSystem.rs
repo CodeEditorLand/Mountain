@@ -43,6 +43,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"FileSystem.ReadFile" => {
 			crate::effect!(run_time, {
 				let path_str = str_at(&Parameters, 0);
+
 				// Empty-path guard: extensions occasionally
 				// pass `""` to `vscode.workspace.fs.readFile`
 				// when probing optional config files. Stock VS
@@ -56,13 +57,18 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				if path_str.is_empty() {
 					return Err("FileSystem.ReadFile: empty path (resource not found)".to_string());
 				}
+
 				if path_str.starts_with("vscode://schemas-associations/") {
 					let payload =
 						serde_json::to_vec(&json!({ "schemas": [] })).unwrap_or_else(|_| b"{\"schemas\":[]}".to_vec());
+
 					return Ok(json!(payload));
 				}
+
 				let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
+
 				let path = std::path::PathBuf::from(strip_file_uri(path_str));
+
 				fs_reader
 					.ReadFile(&path)
 					.await
@@ -74,17 +80,23 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"FileSystem.WriteFile" => {
 			crate::effect!(run_time, {
 				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
+
 				let path_str = str_at(&Parameters, 0);
+
 				if path_str.is_empty() {
 					return Err("FileSystem.WriteFile: empty path (resource not found)".to_string());
 				}
+
 				let path = std::path::PathBuf::from(strip_file_uri(path_str));
+
 				let content = Parameters.get(1).cloned();
+
 				let content_bytes = match content {
 					Some(Value::Array(arr)) => arr.into_iter().filter_map(|v| v.as_u64().map(|n| n as u8)).collect(),
 					Some(Value::String(s)) => STANDARD.decode(&s).unwrap_or_default(),
 					_ => vec![],
 				};
+
 				fs_writer
 					.WriteFile(&path, content_bytes, true, true)
 					.await
@@ -96,6 +108,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"FileSystem.ReadDirectory" => {
 			crate::effect!(run_time, {
 				let path_str = str_at(&Parameters, 0);
+
 				// Empty-path guard: same contract as ReadFile and
 				// Stat. An empty string from an extension probe
 				// must return "resource not found" so the
@@ -106,8 +119,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				if path_str.is_empty() {
 					return Err("FileSystem.ReadDirectory: empty path (resource not found)".to_string());
 				}
+
 				let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
+
 				let path = std::path::PathBuf::from(strip_file_uri(path_str));
+
 				fs_reader
 					.ReadDirectory(&path)
 					.await
@@ -119,7 +135,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"FileSystem.Stat" => {
 			crate::effect!(run_time, {
 				let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
+
 				let path_str = str_at(&Parameters, 0);
+
 				// Empty-path guard: same rationale as
 				// `FileSystem.ReadFile` above. Returning
 				// `not found` matches VS Code's
@@ -129,7 +147,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				if path_str.is_empty() {
 					return Err("FileSystem.Stat: empty path (resource not found)".to_string());
 				}
+
 				let path = std::path::PathBuf::from(strip_file_uri(path_str));
+
 				fs_reader
 					.StatFile(&path)
 					.await
@@ -141,8 +161,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"FileSystem.CreateDirectory" => {
 			crate::effect!(run_time, {
 				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
+
 				let path_str = str_at(&Parameters, 0);
+
 				let path = std::path::PathBuf::from(strip_file_uri(path_str));
+
 				fs_writer
 					.CreateDirectory(&path, true)
 					.await
@@ -154,9 +177,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"FileSystem.Delete" => {
 			crate::effect!(run_time, {
 				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
+
 				let path_str = str_at(&Parameters, 0);
+
 				let path = std::path::PathBuf::from(strip_file_uri(path_str));
+
 				let recursive = bool_at(&Parameters, 1);
+
 				fs_writer
 					.Delete(&path, recursive, false)
 					.await
@@ -168,8 +195,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"FileSystem.Rename" => {
 			crate::effect!(run_time, {
 				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
+
 				let source = str_at(&Parameters, 0);
+
 				let target = str_at(&Parameters, 1);
+
 				fs_writer
 					.Rename(
 						&std::path::PathBuf::from(strip_file_uri(source)),
@@ -185,8 +215,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"FileSystem.Copy" => {
 			crate::effect!(run_time, {
 				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
+
 				let source = str_at(&Parameters, 0);
+
 				let target = str_at(&Parameters, 1);
+
 				fs_writer
 					.Copy(
 						&std::path::PathBuf::from(strip_file_uri(source)),

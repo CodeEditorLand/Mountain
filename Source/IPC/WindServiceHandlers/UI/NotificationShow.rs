@@ -21,6 +21,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Val
 
 	let Actions = {
 		let V = arg_val(&Arguments, 2);
+
 		if V.is_null() { json!([]) } else { V }
 	};
 

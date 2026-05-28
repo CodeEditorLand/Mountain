@@ -36,19 +36,24 @@ pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Val
 
 	let Joined = tokio::task::spawn_blocking(move || -> bool {
 		let mut Builder = Handle.dialog().message(&Message).kind(Kind);
+
 		if !Title.is_empty() {
 			Builder = Builder.title(&Title);
 		}
+
 		if let Some(DetailText) = Detail.as_deref() {
 			// MessageDialogBuilder has no .body() method. Append the detail
 			// text to the message so it appears in the dialog body rather
 			// than overwriting the title (the original bug).
 			let Combined = format!("{}\n\n{}", &Message, DetailText);
+
 			Builder = Handle.dialog().message(&Combined).kind(Kind);
+
 			if !Title.is_empty() {
 				Builder = Builder.title(&Title);
 			}
 		}
+
 		Builder.blocking_show()
 	})
 	.await;

@@ -27,10 +27,15 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				use tauri::Emitter;
 
 				let AppHandle = run_time.Environment.ApplicationHandle.clone();
+
 				let Payload = array_unwrap(Parameters);
+
 				let Message = Payload.get("message").and_then(Value::as_str).unwrap_or("").to_string();
+
 				let Level = Payload.get("level").and_then(Value::as_str).unwrap_or("info").to_string();
+
 				let Items = Payload.get("items").and_then(Value::as_array).cloned().unwrap_or_default();
+
 				let Options = Payload.get("options").cloned().unwrap_or(json!({}));
 
 				if Items.is_empty() {
@@ -44,6 +49,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							"options": Options,
 						}),
 					);
+
 					return Ok(Value::Null);
 				}
 
@@ -51,9 +57,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				// (which INotificationService handles with real action
 				// buttons) and block until the user clicks or dismisses.
 				static UI_MSG_SEQ:AtomicU64 = AtomicU64::new(1);
+
 				let Nonce = format!("msg-{}", UI_MSG_SEQ.fetch_add(1, AO::Relaxed));
 
 				let (tx, rx) = tokio::sync::oneshot::channel();
+
 				run_time.Environment.ApplicationState.UI.AddPendingRequest(Nonce.clone(), tx);
 
 				let Actions:Vec<serde_json::Value> = Items
@@ -73,7 +81,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					}),
 				) {
 					run_time.Environment.ApplicationState.UI.RemovePendingRequest(&Nonce);
+
 					dev_log!("notification", "warn: [Window.ShowMessage] emit failed: {}", Error);
+
 					return Ok(Value::Null);
 				}
 
@@ -109,14 +119,18 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				// Register the reply channel before emitting so the
 				// frontend can never race-resolve before we are waiting.
 				let (tx, rx) = tokio::sync::oneshot::channel();
+
 				run_time.Environment.ApplicationState.UI.AddPendingRequest(Nonce.clone(), tx);
 
 				let AppHandle = run_time.Environment.ApplicationHandle.clone();
+
 				if let Err(Error) = AppHandle.emit(Channel, json!({ "nonce": Nonce, "args": Args })) {
 					// Emit failed -- remove the dangling sender so the map
 					// does not grow unboundedly on repeated failures.
 					run_time.Environment.ApplicationState.UI.RemovePendingRequest(&Nonce.clone());
+
 					dev_log!("ipc", "warn: [{}] {} emit failed: {}", MethodNameOwned, Channel, Error);
+
 					return Err(format!("[{}] emit failed: {}", MethodNameOwned, Error));
 				}
 
@@ -132,6 +146,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						// host sees `undefined` (VS Code contract for cancelled
 						// quick-pick / input-box).
 						dev_log!("ipc", "[{}] dialog dismissed (nonce dropped)", MethodNameOwned);
+
 						Ok(Value::Null)
 					},
 				}

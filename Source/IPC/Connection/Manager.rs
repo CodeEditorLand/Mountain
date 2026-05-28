@@ -262,6 +262,7 @@ impl ConnectionPool {
 					Ok(idle_time) => idle_time > stale_threshold,
 					Err(_) => true, // If time went backwards, consider it stale
 				};
+
 				is_stale_by_time || !Handle.is_healthy()
 			})
 			.map(|(id, _)| id.clone())
@@ -303,6 +304,7 @@ impl ConnectionPool {
 				interval.tick().await;
 
 				let checker = health_checker.lock().await;
+
 				let mut connections = match active_connection.try_lock() {
 					Ok(conns) => conns,
 					Err(_) => continue,
@@ -310,6 +312,7 @@ impl ConnectionPool {
 
 				if let Some(Handle) = connections.get_mut(&connection_id) {
 					let is_healthy = checker.check_connection_health(Handle).await;
+
 					Handle.update_health(is_healthy);
 
 					if !Handle.is_healthy() {
@@ -328,6 +331,7 @@ impl ConnectionPool {
 						"[ConnectionPool] Connection {} removed from pool, stopping health monitoring",
 						connection_id
 					);
+
 					break;
 				}
 			}

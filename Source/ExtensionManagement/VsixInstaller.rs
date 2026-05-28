@@ -348,6 +348,7 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 
 				match std::fs::File::open(&Target).and_then(|mut Handle| {
 					use std::io::Read as IoRead;
+
 					IoRead::read(&mut Handle, &mut Probe).map(|BytesRead| (BytesRead, Probe))
 				}) {
 					Ok((BytesRead, Bytes)) if BytesRead >= 2 => {

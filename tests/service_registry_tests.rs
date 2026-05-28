@@ -186,8 +186,11 @@ async fn test_service_health_check_with_running_server() {
 		while let Ok((mut socket, _)) = listener.accept().await {
 			tokio::spawn(async move {
 				let mut buf = [0u8; 1024];
+
 				let _ = socket.read(&mut buf).await;
+
 				let response = "HTTP/1.1 200 OK\r\n\r\n";
+
 				let _ = socket.write_all(response.as_bytes()).await;
 			});
 		}
@@ -272,6 +275,7 @@ fn test_concurrent_service_registration() {
 
 		let handle = std::thread::spawn(move || {
 			let name = format!("service{}.land", i);
+
 			registry_clone.register(name, 8080 + i as u16, None);
 		});
 
@@ -313,6 +317,7 @@ fn test_concurrent_service_lookup() {
 
 		let handle = std::thread::spawn(move || {
 			let name = format!("service{}.land", i % 5);
+
 			registry_clone.lookup(&name)
 		});
 

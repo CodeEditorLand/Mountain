@@ -37,6 +37,7 @@ pub(super) async fn provide_hover_impl(
 	invoke_provider(application_handle, |provider| {
 		async move {
 			let result = provider.ProvideHover(document_uri, position_dto).await?;
+
 			Ok(serde_json::to_value(result)?)
 		}
 	})

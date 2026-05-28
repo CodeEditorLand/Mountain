@@ -45,9 +45,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Debug.Start" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn DebugService> = run_time.Environment.Require();
+
 				let folder_uri_str = str_at(&Parameters, 0);
+
 				let folder_uri = if folder_uri_str.is_empty() { None } else { Url::parse(folder_uri_str).ok() };
+
 				let configuration = Parameters.get(1).cloned().unwrap_or_else(|| json!({ "type": "node" }));
+
 				provider
 					.StartDebugging(folder_uri, configuration)
 					.await
@@ -59,9 +63,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Debug.RegisterConfigurationProvider" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn DebugService> = run_time.Environment.Require();
+
 				let debug_type = string_at_or(&Parameters, 0, "node");
+
 				let provider_handle = i64_at_or(&Parameters, 1, 1) as u32;
+
 				let sidecar_id = string_at_or(&Parameters, 2, "cocoon-main");
+
 				provider
 					.RegisterDebugConfigurationProvider(debug_type, provider_handle, sidecar_id)
 					.await
@@ -73,7 +81,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Debug.Stop" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn DebugService> = run_time.Environment.Require();
+
 				let SessionId = string_at(&Parameters, 0);
+
 				provider
 					.StopDebugging(SessionId)
 					.await

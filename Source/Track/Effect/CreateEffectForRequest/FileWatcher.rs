@@ -14,6 +14,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"FileWatcher.Register" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
+
 				// Cocoon's `NextProviderHandle()` returns a number;
 				// older callers pass a string. Accept both shapes
 				// rather than silently collapsing numbers to "".
@@ -22,13 +23,17 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					Some(Value::Number(N)) => N.to_string(),
 					_ => String::new(),
 				};
+
 				let Root = string_at(&Parameters, 1);
+
 				let IsRecursive = bool_at_true(&Parameters, 2);
+
 				let Pattern = Parameters
 					.get(3)
 					.and_then(Value::as_str)
 					.map(str::to_string)
 					.filter(|Pat| !Pat.is_empty());
+
 				provider
 					.RegisterWatcher(Handle, std::path::PathBuf::from(Root), IsRecursive, Pattern)
 					.await
@@ -40,11 +45,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"FileWatcher.Unregister" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
+
 				let Handle = match Parameters.get(0) {
 					Some(Value::String(S)) => S.clone(),
 					Some(Value::Number(N)) => N.to_string(),
 					_ => String::new(),
 				};
+
 				provider
 					.UnregisterWatcher(Handle)
 					.await

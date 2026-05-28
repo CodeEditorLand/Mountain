@@ -21,6 +21,7 @@ impl ApplicationRunTime {
 					"error: [ApplicationRunTime] Failed to lock pending UI requests: {}",
 					E
 				);
+
 				E.into_inner()
 			});
 

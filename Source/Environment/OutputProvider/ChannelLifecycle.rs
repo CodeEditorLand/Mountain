@@ -58,6 +58,7 @@ pub(super) async fn register_channel(
 	channels_guard.entry(channel_identifier.clone()).or_insert_with(|| {
 		OutputChannelStateDTO::Create(&name, language_identifier.clone()).unwrap_or_else(|e| {
 			dev_log!("output", "error: [OutputProvider] Failed to create output channel: {}", e);
+
 			OutputChannelStateDTO::default()
 		})
 	});

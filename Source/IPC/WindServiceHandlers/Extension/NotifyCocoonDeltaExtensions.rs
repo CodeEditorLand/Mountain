@@ -44,6 +44,7 @@ pub fn Fn(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 			},
 			Err(Error) => {
 				dev_log!("extensions", "warn: $deltaExtensions failed (non-fatal): {}", Error);
+
 				// Skip the activation burst when delta itself failed.
 				return;
 			},
@@ -55,6 +56,7 @@ pub fn Fn(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 		// Ready). Firing `"*"` would over-activate lazy extensions.
 		for Event in ["onStartupFinished"] {
 			let ActivationParameters = json!({ "activationEvent": Event });
+
 			match ::Vine::Client::SendRequest::Fn(
 				&COCOON_SIDE_CAR_IDENTIFIER.to_string(),
 				"$activateByEvent".to_string(),

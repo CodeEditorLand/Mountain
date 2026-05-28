@@ -24,6 +24,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, _Arguments:Vec<Value>) -> Resul
 							Value::String(S) => S.clone(),
 							_ => V.to_string(),
 						};
+
 						json!([K, ValStr])
 					})
 					.collect();

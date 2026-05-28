@@ -33,6 +33,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 				// base64-encoded buffer (sent by some VS Code serialisation paths).
 				// Decode it; fall back to raw UTF-8 bytes if not valid base64.
 				use base64::Engine as _;
+
 				base64::engine::general_purpose::STANDARD
 					.decode(S)
 					.unwrap_or_else(|_| S.as_bytes().to_vec())
@@ -74,6 +75,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 		.await
 		{
 			let ErrStr = format!("{:?}", Error);
+
 			if ErrStr.contains("ClientNotConnected") {
 				dev_log!(
 					"vfs-verbose",

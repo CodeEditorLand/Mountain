@@ -13,6 +13,7 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:ReaddirRequest) -> Result<R
 
 	let mut ReadDir = tokio::fs::read_dir(&Path).await.map_err(|Error| {
 		dev_log!("cocoon", "warn: [CocoonService] readdir failed for {:?}: {}", Path, Error);
+
 		Status::not_found(format!("readdir: {}: {}", Path.display(), Error))
 	})?;
 

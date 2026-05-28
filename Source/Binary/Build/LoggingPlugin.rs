@@ -124,7 +124,9 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 		// Filter out extremely noisy targets
 		.filter(|Metadata| {
 			!Metadata.target().starts_with("polling")
+
 				&& !Metadata.target().starts_with("tokio_reactor")
+
 				&& !Metadata.target().starts_with("want")
 		})
 
@@ -132,8 +134,11 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 		.format(|out, message, record| {
 			if DevLog::IsShort::Fn() {
 				let ShortTarget = CompressTarget(record.target());
+
 				let RawMessage = format!("{}", message);
+
 				let Aliased = DevLog::AliasPath::Fn(&RawMessage);
+
 				out.finish(format_args!(
 					"[{:<5}] [{}] {}",
 

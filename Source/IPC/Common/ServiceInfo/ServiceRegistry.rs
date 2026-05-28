@@ -33,6 +33,7 @@ impl Struct {
 	pub fn Unregister(&mut self, Name:&str) -> Option<ServiceInfo::Struct> {
 		self.Services.remove(Name).map(|Service| {
 			self.LastDiscovery = Instant::now();
+
 			Service
 		})
 	}

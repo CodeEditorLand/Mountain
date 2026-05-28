@@ -169,21 +169,26 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 	let BundleExtensionsRoot = ExeParent.as_ref().and_then(|Parent| {
 		// New canonical location under Static/Application/
 		let Candidate = Parent.join("../Resources/Static/Application/extensions");
+
 		if Candidate.exists() {
 			return Candidate.canonicalize().ok().or(Some(Candidate));
 		}
+
 		// Legacy flat location - kept for backward compat during transition
 		let Legacy = Parent.join("../Resources/extensions");
+
 		Legacy.canonicalize().ok().or(Some(Legacy))
 	});
 
 	let BundleExtensionsAppRoot = ExeParent.as_ref().and_then(|Parent| {
 		let Candidate = Parent.join("../Resources/app/extensions");
+
 		Candidate.canonicalize().ok().or(Some(Candidate))
 	});
 
 	let RepoExtensionsRoot = ExeParent.as_ref().and_then(|Parent| {
 		let Candidate = Parent.join("../../../Sky/Target/Static/Application/extensions");
+
 		Candidate.canonicalize().ok().or(Some(Candidate))
 	});
 
@@ -198,14 +203,18 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 	let StaticRoot = ExeParent.as_ref().and_then(|Parent| {
 		// Production bundle: MacOS/<bin> → ../Resources/
 		let Bundle = Parent.join("../Resources");
+
 		if Bundle.exists() {
 			return Bundle.canonicalize().ok().or(Some(Bundle));
 		}
+
 		// Monorepo dev: Target/<profile>/<bin> → ../../../Sky/Target/
 		let Repo = Parent.join("../../../Sky/Target");
+
 		if Repo.exists() {
 			return Repo.canonicalize().ok().or(Some(Repo));
 		}
+
 		None
 	});
 
@@ -240,7 +249,9 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 		.on_request(|Request, Response| {
 			// CORS headers for Service Workers and frontend integration.
 			Response.add_header("Access-Control-Allow-Origin", "*");
+
 			Response.add_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD");
+
 			Response.add_header("Access-Control-Allow-Headers", "Content-Type, Authorization, Origin, Accept");
 
 			let Url = Request.url();

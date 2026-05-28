@@ -14,7 +14,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Diagnostic.Set" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn DiagnosticManager> = run_time.Environment.Require();
+
 				let owner = string_at(&Parameters, 0);
+
 				let entries = val_at(&Parameters, 1);
 
 				let Result = provider
@@ -38,6 +40,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.collect()
 					})
 					.unwrap_or_default();
+
 				let _ = ::Vine::Client::SendNotification::Fn(
 					"cocoon-main".to_string(),
 					"$acceptDiagnosticsChanged".to_string(),
@@ -52,6 +55,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Diagnostic.Clear" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn DiagnosticManager> = run_time.Environment.Require();
+
 				let owner = string_at(&Parameters, 0);
 
 				let Result = provider

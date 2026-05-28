@@ -37,6 +37,7 @@ impl Struct {
 		Scheduler.Submit(
 			async move {
 				let Output = Task.await;
+
 				let _ = Sender.send(Output);
 			},
 			Priority,

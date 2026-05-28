@@ -38,6 +38,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 		} else {
 			dev_log!("vfs", "stat ENOENT: {}", Path);
 		}
+
 		// Suffix "resource not found" on ENOENT so Wind's file-system
 		// error classifier maps this to FileSystemError.FileNotFound
 		// rather than FileSystemError.Unknown.

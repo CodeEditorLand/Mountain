@@ -83,7 +83,9 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 			let CargoTarget = std::env::var("CARGO_TARGET_DIR")
 				.map(PathBuf::from)
 				.unwrap_or_else(|_| PathBuf::from("Element/Air/Target/debug"));
+
 			let Candidate = CargoTarget.join("Air");
+
 			Candidate.exists().then_some(Candidate)
 		});
 
@@ -135,7 +137,9 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 	if let Some(Stdout) = Child.stdout.take() {
 		tokio::spawn(async move {
 			use tokio::io::{AsyncBufReadExt, BufReader};
+
 			let mut Reader = BufReader::new(Stdout).lines();
+
 			while let Ok(Some(Line)) = Reader.next_line().await {
 				dev_log!("grpc", "[Air stdout] {}", Line);
 			}
@@ -145,7 +149,9 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 	if let Some(Stderr) = Child.stderr.take() {
 		tokio::spawn(async move {
 			use tokio::io::{AsyncBufReadExt, BufReader};
+
 			let mut Reader = BufReader::new(Stderr).lines();
+
 			while let Ok(Some(Line)) = Reader.next_line().await {
 				dev_log!("grpc", "[Air stderr] {}", Line);
 			}

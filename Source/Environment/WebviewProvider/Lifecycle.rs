@@ -118,6 +118,7 @@ pub(super) async fn create_webview_panel_impl(
 				"error: [WebviewProvider] Failed to create Webview window: {}",
 				error
 			);
+
 			CommonError::UserInterfaceInteraction { Reason:error.to_string() }
 		})?;
 

@@ -500,45 +500,59 @@ impl WorkspaceProvider for MountainEnvironment {
 
 			Builder.build_parallel().run(|| {
 				let RootForRel = RootForRel.clone();
+
 				let IncludeMatcher = IncludeMatcher.clone();
+
 				let ExcludeMatcher = ExcludeMatcher.clone();
+
 				let ResultsArc = ResultsArc.clone();
+
 				Box::new(move |EntryResult| {
 					if ResultsArc.lock().map(|G| G.len() >= Cap).unwrap_or(true) {
 						return ignore::WalkState::Quit;
 					}
+
 					let Entry = match EntryResult {
 						Ok(E) => E,
 						Err(_) => return ignore::WalkState::Continue,
 					};
+
 					if !Entry.file_type().map(|T| T.is_file()).unwrap_or(false) {
 						return ignore::WalkState::Continue;
 					}
+
 					let Path = Entry.path();
+
 					let Relative = match Path.strip_prefix(&RootForRel) {
 						Ok(R) => R.to_string_lossy().replace('\\', "/"),
 						Err(_) => Path.to_string_lossy().to_string(),
 					};
+
 					if let Some(Excl) = &ExcludeMatcher {
 						if Excl.is_match(&Relative) {
 							return ignore::WalkState::Continue;
 						}
 					}
+
 					if !IncludeMatcher.is_match(&Relative) {
 						return ignore::WalkState::Continue;
 					}
+
 					if let Ok(FileUrl) = Url::from_file_path(Path) {
 						let mut Guard = match ResultsArc.lock() {
 							Ok(G) => G,
 							Err(_) => return ignore::WalkState::Quit,
 						};
+
 						if Guard.len() < Cap {
 							Guard.push(FileUrl);
 						}
+
 						if Guard.len() >= Cap {
 							return ignore::WalkState::Quit;
 						}
 					}
+
 					ignore::WalkState::Continue
 				})
 			});

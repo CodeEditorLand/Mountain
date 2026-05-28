@@ -66,6 +66,7 @@ pub async fn MountainIPCGetStatus(app_handle:AppHandle) -> Result<Value, String>
 		.await
 		.map_err(|Error| {
 			dev_log!("ipc", "error: [IPC] [Command] Failed to get IPC status: {}", Error);
+
 			Error.to_string()
 		})?;
 

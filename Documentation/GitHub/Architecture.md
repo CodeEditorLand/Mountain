@@ -165,30 +165,20 @@ Element/Mountain/Source/
 
 +-- Vine/ (gRPC)
 |   +-- Server/               - gRPC server (tonic)
-|   +-- Client/               - gRPC client (tonic)
-|   +-- Multiplexer.rs         - Connection multiplexing
-|   +-- Generated/             - Prost-generated code
 
 +-- ProcessManagement/
 |   +-- CocoonManagement.rs    - Cocoon sidecar lifecycle
-|   +-- AirManagement.rs       - Air sidecar lifecycle
 |   +-- InitializationData.rs  - Startup payload construction
 |   +-- NodeResolver/          - Node.js binary resolution
 
 +-- IPC/ (Tauri)
 |   +-- TauriIPCServer.rs      - Tauri IPC server
 |   +-- WindServiceHandlers/   - Wind-specific handlers
-|   +-- WindAirCommands/       - Air communication handlers
 |   +-- WindAdvancedSync/      - Sync handlers
 |   +-- DevLog/                - Developer logging
-|   +-- Connection/            - Connection management
 
 +-- RPC/ (Internal dispatch)
-|   +-- Commands/              - Command dispatch
-|   +-- Configuration/         - Configuration dispatch
-|   +-- Vine/                  - Vine protocol dispatch
-|   +-- Types/                 - RPC type definitions
-|   +-- Telemetry/             - Telemetry dispatch
+|   +-- CocoonService/         - Cocoon gRPC service implementation
 
 +-- RunTime/
 |   +-- ApplicationRunTime/    - Effect execution engine
@@ -197,14 +187,9 @@ Element/Mountain/Source/
 
 +-- Command/                   - Command implementation
 +-- Track/                     - Request tracking
-+-- Cache/                     - Asset caching
 +-- ExtensionManagement/       - Extension lifecycle
 +-- FileSystem/                - File system operations
 +-- Workspace/                 - Workspace management
-+-- Telemetry/                 - Telemetry integration
-+-- Air/                       - Air daemon client
-+-- Error/                     - Error definitions
-+-- Update/                    - Application updates
 +-- LandFixTier.rs             - Runtime tier banner
 +-- Library.rs                 - Library root
 ```
@@ -327,14 +312,13 @@ Server::builder()
 
 ### Service Handlers 📋
 
-| Service            | RPC                | Handler Module                            |
-| ------------------ | ------------------ | ----------------------------------------- |
-| ExtensionHost      | Initialize         | `ProcessManagement/InitializationData.rs` |
-| ExtensionHost      | ExecuteCommand     | `RPC/Commands/`                           |
-| ExtensionHost      | ProvideHover       | `RPC/Vine/`                               |
-| ExtensionHost      | CreateWebviewPanel | `RPC/Types/` (webview management)         |
-| BackgroundServices | PerformAction      | `Air/AirServiceProvider/`                 |
-| BackgroundServices | HealthCheck        | `Vine/Server/`                            |
+| Service       | RPC                | Handler Module                            |
+| ------------- | ------------------ | ----------------------------------------- |
+| ExtensionHost | Initialize         | `ProcessManagement/InitializationData.rs` |
+| ExtensionHost | ExecuteCommand     | `RPC/CocoonService/Command/`              |
+| ExtensionHost | ProvideHover       | `RPC/CocoonService/Provider/`             |
+| ExtensionHost | CreateWebviewPanel | `RPC/CocoonService/Window/`               |
+| ExtensionHost | HealthCheck        | `Vine/Server/`                            |
 
 ---
 

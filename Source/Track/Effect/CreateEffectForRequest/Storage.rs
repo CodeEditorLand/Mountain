@@ -11,7 +11,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Storage.Get" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
+
 				let key = string_at(&Parameters, 0);
+
 				provider
 					.GetStorageValue(false, &key)
 					.await
@@ -23,8 +25,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Storage.Set" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
+
 				let key = string_at(&Parameters, 0);
+
 				let value = Parameters.get(1).cloned();
+
 				provider
 					.UpdateStorageValue(false, key, value)
 					.await
@@ -40,6 +45,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Storage.GetItems" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
+
 				match provider.GetAllStorage(true).await {
 					Ok(State) => {
 						if let Some(Obj) = State.as_object() {
@@ -50,9 +56,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 										Value::String(S) => S.clone(),
 										_ => V.to_string(),
 									};
+
 									json!([K, ValStr])
 								})
 								.collect();
+
 							Ok(json!(Tuples))
 						} else {
 							Ok(json!([]))

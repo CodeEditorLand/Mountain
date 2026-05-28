@@ -19,9 +19,13 @@ pub fn init_dns_startup_time() {
 		.duration_since(UNIX_EPOCH)
 		.map(|d| {
 			let secs = d.as_secs();
+
 			let hh = (secs % 86400) / 3600;
+
 			let mm = (secs % 3600) / 60;
+
 			let ss = secs % 60;
+
 			format!("T{:02}:{:02}:{:02}Z", hh, mm, ss)
 		})
 		.unwrap_or_else(|_| "unknown".to_string());

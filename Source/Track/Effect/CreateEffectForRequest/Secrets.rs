@@ -38,7 +38,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"secrets.get" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
+
 				let (Key, ExtensionId) = ExtractSecretKey(&Parameters);
+
 				match provider.GetSecret(ExtensionId, Key).await {
 					Ok(Some(Value)) => Ok(json!(Value)),
 					Ok(None) => Ok(Value::Null),
@@ -50,12 +52,15 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"secrets.store" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
+
 				let (Key, ExtensionId) = ExtractSecretKey(&Parameters);
+
 				let SecretValue = if let Some(Object) = Parameters.as_object() {
 					Object.get("value").and_then(Value::as_str).unwrap_or("").to_string()
 				} else {
 					string_at(&Parameters, 1)
 				};
+
 				provider
 					.StoreSecret(ExtensionId, Key, SecretValue)
 					.await
@@ -67,7 +72,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"secrets.delete" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
+
 				let (Key, ExtensionId) = ExtractSecretKey(&Parameters);
+
 				provider
 					.DeleteSecret(ExtensionId, Key)
 					.await

@@ -244,6 +244,7 @@ impl Struct {
 				interval.tick().await;
 
 				let cleaned_count = pool.cleanup_stale_connections().await;
+
 				if cleaned_count > 0 {
 					dev_log!("ipc", "[ConnectionPool] Cleaned {} stale connections", cleaned_count);
 				}

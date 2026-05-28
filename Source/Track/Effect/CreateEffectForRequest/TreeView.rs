@@ -33,11 +33,15 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				let (ViewId, Options) = if Parameters.get(2).is_some() {
 					let vid = Parameters.get(1).and_then(Value::as_str).unwrap_or(first).to_string();
+
 					let opts = val_at(&Parameters, 2);
+
 					(vid, opts)
 				} else {
 					let vid = first.to_string();
+
 					let opts = val_at(&Parameters, 1);
+
 					(vid, opts)
 				};
 
@@ -109,11 +113,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						"options": val_at(&Parameters, 2),
 					})
 				};
+
 				if let Err(Error) =
 					LogSkyEmit(&run_time.Environment.ApplicationHandle, "sky://tree-view/reveal", Payload)
 				{
 					dev_log!("tree-view", "warn: [TreeView] reveal emit failed: {}", Error);
 				}
+
 				Ok(json!(null))
 			})
 		},

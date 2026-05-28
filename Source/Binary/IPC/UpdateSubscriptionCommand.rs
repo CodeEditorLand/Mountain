@@ -67,6 +67,7 @@ pub async fn MountainSubscribeToUpdates(app_handle:AppHandle, subscription_data:
 		.as_str()
 		.ok_or_else(|| {
 			dev_log!("ipc", "error: [IPC] [Sync] Missing target in subscription_data");
+
 			"Missing target"
 		})?
 		.to_string();
@@ -75,6 +76,7 @@ pub async fn MountainSubscribeToUpdates(app_handle:AppHandle, subscription_data:
 		.as_str()
 		.ok_or_else(|| {
 			dev_log!("ipc", "error: [IPC] [Sync] Missing subscriber in subscription_data");
+
 			"Missing subscriber"
 		})?
 		.to_string();
@@ -83,6 +85,7 @@ pub async fn MountainSubscribeToUpdates(app_handle:AppHandle, subscription_data:
 		.await
 		.map_err(|Error| {
 			dev_log!("ipc", "error: [IPC] [Sync] Failed to subscribe to updates: {}", Error);
+
 			Error.to_string()
 		})
 		.map(|_| Value::Null)

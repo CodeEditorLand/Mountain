@@ -323,7 +323,9 @@ use crate::{
 fn cocoon_payload(args:Vec<Value>) -> Value {
 	match args.len() {
 		0 => Value::Null,
+
 		1 => args.into_iter().next().unwrap(),
+
 		_ => Value::Array(args),
 	}
 }
@@ -331,8 +333,11 @@ fn cocoon_payload(args:Vec<Value>) -> Value {
 macro_rules! forward_to_cocoon {
 	($tag:literal, $command:ident, $Arguments:ident) => {{
 		dev_log!("ipc", "{}: {} (→ Cocoon)", $tag, $command);
+
 		let Payload = cocoon_payload($Arguments);
+
 		let _ = ::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+
 		Ok(
 			::Vine::Client::SendRequest::Fn("cocoon-main", $command.clone(), Payload, 10_000)
 				.await
@@ -364,18 +369,31 @@ macro_rules! forward_to_cocoon {
 // below picks up the process env var first so a single shell export
 // (`export TierStorage=Node`) flips routing immediately.
 const TIER_TERMINAL:&str = env!("TierTerminal", "Mountain");
+
 const TIER_SCM:&str = env!("TierSCM", "Mountain");
+
 const TIER_DEBUG:&str = env!("TierDebug", "Mountain");
+
 const TIER_LANGUAGE_FEATURES:&str = env!("TierLanguageFeatures", "Mountain");
+
 const TIER_SEARCH:&str = env!("TierSearch", "Mountain");
+
 const TIER_OUTPUT_CHANNEL:&str = env!("TierOutputChannel", "Mountain");
+
 const TIER_NATIVE_HOST:&str = env!("TierNativeHost", "Mountain");
+
 const TIER_TREE_VIEW:&str = env!("TierTreeView", "Mountain");
+
 const TIER_STORAGE:&str = env!("TierStorage", "Mountain");
+
 const TIER_MODEL:&str = env!("TierModel", "Mountain");
+
 const TIER_TASKS:&str = env!("TierTasks", "Node");
+
 const TIER_AUTH:&str = env!("TierAuth", "Node");
+
 const TIER_ENCRYPTION:&str = env!("TierEncryption", "Mountain");
+
 const TIER_WEBSOCKET:&str = env!("TierWebSocket", "Disabled");
 
 #[inline]
@@ -600,8 +618,11 @@ pub async fn mountain_ipc_invoke(
 	Scheduler.Submit(
 		async move {
 			let ApplicationHandle = DispatchAppHandle;
+
 			let RunTime = DispatchRuntime;
+
 			let command = DispatchCommand;
+
 			let Arguments = DispatchArgs;
 
 			// Defined here (not at module level) so macro hygiene resolves
@@ -609,30 +630,43 @@ pub async fn mountain_ipc_invoke(
 			macro_rules! call {
 				(rt, $tag:literal, $Fn:path, $Arguments:ident) => {{
 					dev_log!($tag, "{}", command);
+
 					$Fn(RunTime.clone(), $Arguments).await
 				}};
+
 				(rt, $tag:literal, $Fn:path) => {{
 					dev_log!($tag, "{}", command);
+
 					$Fn(RunTime.clone()).await
 				}};
+
 				(rt, $tag:literal, $msg:literal, $Fn:path, $Arguments:ident) => {{
 					dev_log!($tag, $msg);
+
 					$Fn(RunTime.clone(), $Arguments).await
 				}};
+
 				(rt, $tag:literal, $msg:literal, $Fn:path) => {{
 					dev_log!($tag, $msg);
+
 					$Fn(RunTime.clone()).await
 				}};
+
 				(app, $tag:literal, $Fn:path, $Arguments:ident) => {{
 					dev_log!($tag, "{}", command);
+
 					$Fn(ApplicationHandle.clone(), $Arguments).await
 				}};
+
 				(app, $tag:literal, $msg:literal, $Fn:path, $Arguments:ident) => {{
 					dev_log!($tag, $msg);
+
 					$Fn(ApplicationHandle.clone(), $Arguments).await
 				}};
+
 				(app, $tag:literal, $msg:literal, $Fn:path) => {{
 					dev_log!($tag, $msg);
+
 					$Fn(ApplicationHandle.clone()).await
 				}};
 			}
@@ -674,7 +708,9 @@ pub async fn mountain_ipc_invoke(
 				// exist.
 				"configuration:inspect" => {
 					dev_log!("config", "configuration:inspect");
+
 					let CurrentValue = ConfigurationGet(RunTime.clone(), Arguments).await.unwrap_or(Value::Null);
+
 					Ok(json!({
 						"value": CurrentValue,
 						"default": CurrentValue,
@@ -691,12 +727,14 @@ pub async fn mountain_ipc_invoke(
 				// dev_log output as the fast-path for safety.
 				"logger:log" | "logger:warn" | "logger:error" | "logger:info" | "logger:debug" | "logger:trace" => {
 					let Level = command.trim_start_matches("logger:");
+
 					let Msg = if Arguments.len() >= 2 {
 						let Tail:Vec<String> = Arguments
 							.iter()
 							.skip(1)
 							.filter_map(|V| V.as_str().map(str::to_owned).or_else(|| serde_json::to_string(V).ok()))
 							.collect();
+
 						Tail.join(" ")
 					} else {
 						Arguments
@@ -704,6 +742,7 @@ pub async fn mountain_ipc_invoke(
 							.and_then(|V| V.as_str().map(str::to_owned))
 							.unwrap_or_default()
 					};
+
 					if !Msg.is_empty() {
 						match Level {
 							"error" | "critical" => dev_log!("vscode-log", "[ERROR] {}", Msg),
@@ -711,6 +750,7 @@ pub async fn mountain_ipc_invoke(
 							_ => dev_log!("vscode-log", "{}", Msg),
 						}
 					}
+
 					Ok(Value::Null)
 				},
 				"logger:flush"
@@ -788,14 +828,17 @@ pub async fn mountain_ipc_invoke(
 				},
 				"storage:optimize" => {
 					dev_log!("storage", "storage:optimize");
+
 					Ok(Value::Null)
 				},
 				"storage:isUsed" => {
 					dev_log!("storage", "storage:isUsed");
+
 					Ok(Value::Null)
 				},
 				"storage:close" => {
 					dev_log!("storage", "storage:close");
+
 					Ok(Value::Null)
 				},
 				// Stock VS Code exposes `onDidChangeItems` as a channel
@@ -803,6 +846,7 @@ pub async fn mountain_ipc_invoke(
 				// via Tauri event elsewhere.
 				"storage:onDidChangeItems" | "storage:logStorage" => {
 					dev_log!("storage-verbose", "{} (stub-ack)", command);
+
 					Ok(Value::Null)
 				},
 
@@ -823,13 +867,16 @@ pub async fn mountain_ipc_invoke(
 				// into the same Mountain.dev.log that carries Rust-side events.
 				"diagnostic:log" => {
 					let Tag = arg_string_or(&Arguments, 0, "webview");
+
 					let Message = arg_string(&Arguments, 1);
+
 					let Extras = if Arguments.len() > 2 {
 						let Tail:Vec<String> = Arguments
 							.iter()
 							.skip(2)
 							.map(|V| {
 								let S = serde_json::to_string(V).unwrap_or_default();
+
 								// Char-aware truncation - JSON-encoded values may
 								// embed multi-byte UTF-8 (extension names, repo
 								// paths with non-ASCII, debug payloads). Slicing
@@ -842,17 +889,21 @@ pub async fn mountain_ipc_invoke(
 										.take_while(|Index| *Index <= 240)
 										.last()
 										.unwrap_or(0);
+
 									format!("{}…", &S[..CutAt])
 								} else {
 									S
 								}
 							})
 							.collect();
+
 						format!(" {}", Tail.join(" "))
 					} else {
 						String::new()
 					};
+
 					dev_log!("diagnostic", "[{}] {}{}", Tag, Message, Extras);
+
 					Ok(Value::Null)
 				},
 
@@ -882,7 +933,9 @@ pub async fn mountain_ipc_invoke(
 				// ExtensionsService trigger activation programmatically.
 				"extensions:activate" => {
 					let ExtensionId = arg_string(&Arguments, 0);
+
 					dev_log!("extensions", "extensions:activate id={}", ExtensionId);
+
 					if ExtensionId.is_empty() {
 						Ok(Value::Null)
 					} else {
@@ -890,12 +943,14 @@ pub async fn mountain_ipc_invoke(
 							"event": format!("onCustom:{}", ExtensionId),
 							"extensionId": ExtensionId,
 						});
+
 						let _ = ::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
 							"$activateByEvent".to_string(),
 							Notification,
 						)
 						.await;
+
 						Ok(Value::Null)
 					}
 				},
@@ -923,6 +978,7 @@ pub async fn mountain_ipc_invoke(
 						.enumerate()
 						.map(|(Idx, V)| {
 							let Preview = serde_json::to_string(V).unwrap_or_default();
+
 							// Char-aware truncation - same UTF-8 hazard as
 							// the diagnostic-tag formatter above.
 							let Trimmed = if Preview.len() > 180 {
@@ -932,15 +988,19 @@ pub async fn mountain_ipc_invoke(
 									.take_while(|Index| *Index <= 180)
 									.last()
 									.unwrap_or(0);
+
 								format!("{}…", &Preview[..CutAt])
 							} else {
 								Preview
 							};
+
 							format!("[{}]={}", Idx, Trimmed)
 						})
 						.collect::<Vec<_>>()
 						.join(" ");
+
 					dev_log!("extensions", "{} Arguments={}", command, ArgsSummary);
+
 					// `scanSystemExtensions` is conceptually
 					// `getInstalled(type=ExtensionType.System)`, so override
 					// `Arguments[0]` to `0` before forwarding. Without the override
@@ -951,14 +1011,18 @@ pub async fn mountain_ipc_invoke(
 					// handler layer, one level up.
 					let EffectiveArgs = if command == "extensions:scanSystemExtensions" {
 						let mut Overridden = Arguments.clone();
+
 						if Overridden.is_empty() {
 							Overridden.push(Value::Null);
 						}
+
 						Overridden[0] = json!(0);
+
 						Overridden
 					} else {
 						Arguments.clone()
 					};
+
 					ExtensionsGetInstalled(RunTime.clone(), EffectiveArgs).await
 				},
 				"extensions:scanUserExtensions" => {
@@ -971,11 +1035,15 @@ pub async fn mountain_ipc_invoke(
 					// previously saw an empty list after every
 					// Install-from-VSIX).
 					dev_log!("extensions", "{} (forwarded to getInstalled with type=User)", command);
+
 					let mut UserArgs = Arguments.clone();
+
 					if UserArgs.is_empty() {
 						UserArgs.push(Value::Null);
 					}
+
 					UserArgs[0] = json!(1);
+
 					ExtensionsGetInstalled(RunTime.clone(), UserArgs).await
 				},
 				"extensions:getUninstalled" => {
@@ -983,6 +1051,7 @@ pub async fn mountain_ipc_invoke(
 					// the profile) isn't tracked yet; an empty array is the
 					// correct "nothing pending uninstall" response.
 					dev_log!("extensions", "{} (returning [])", command);
+
 					Ok(Value::Array(Vec::new()))
 				},
 				// Gallery is offline: Mountain has no marketplace backend. Return
@@ -990,6 +1059,7 @@ pub async fn mountain_ipc_invoke(
 				// mirrors what a network-air-gapped VS Code session shows.
 				"extensions:query" | "extensions:getExtensions" | "extensions:getRecommendations" => {
 					dev_log!("extensions", "{} (offline gallery - returning [])", command);
+
 					Ok(Value::Array(Vec::new()))
 				},
 				// `IExtensionsControlManifest` - consulted by the Extensions
@@ -999,6 +1069,7 @@ pub async fn mountain_ipc_invoke(
 				// shape (not null) matters - VS Code destructures each field.
 				"extensions:getExtensionsControlManifest" => {
 					dev_log!("extensions", "{} (offline gallery - empty manifest)", command);
+
 					Ok(json!({
 						"malicious": [],
 						"deprecated": {},
@@ -1014,6 +1085,7 @@ pub async fn mountain_ipc_invoke(
 				// is optional - VS Code sometimes passes `{ refreshPinned: true }`.
 				"extensions:resetPinnedStateForAllUserExtensions" => {
 					dev_log!("extensions", "{} (no-op, pin state is UI-local)", command);
+
 					Ok(Value::Null)
 				},
 				// Atom K2: local VSIX install. Wind passes the file path from a
@@ -1050,11 +1122,14 @@ pub async fn mountain_ipc_invoke(
 						},
 						None => String::new(),
 					};
+
 					dev_log!("extensions", "extensions:getManifest vsix={}", VsixPath);
+
 					if VsixPath.is_empty() {
 						Err("extensions:getManifest: missing VSIX path argument".to_string())
 					} else {
 						let Path = std::path::PathBuf::from(&VsixPath);
+
 						match crate::ExtensionManagement::VsixInstaller::ReadFullManifest(&Path) {
 							Ok(Manifest) => Ok(Manifest),
 							Err(Error) => {
@@ -1064,6 +1139,7 @@ pub async fn mountain_ipc_invoke(
 									VsixPath,
 									Error
 								);
+
 								Err(format!("extensions:getManifest failed: {}", Error))
 							},
 						}
@@ -1075,6 +1151,7 @@ pub async fn mountain_ipc_invoke(
 				// track. Left as explicit logs so the UI doesn't silently fail.
 				"extensions:reinstall" | "extensions:updateMetadata" => {
 					dev_log!("extensions", "{} (no-op: no gallery backend)", command);
+
 					Ok(Value::Null)
 				},
 
@@ -1183,6 +1260,7 @@ pub async fn mountain_ipc_invoke(
 				// treat the call as a no-op.
 				"search:cancel" | "search:clearCache" | "search:onDidChangeResult" => {
 					dev_log!("search", "{} (stub-ack)", command);
+
 					Ok(Value::Null)
 				},
 
@@ -1218,11 +1296,13 @@ pub async fn mountain_ipc_invoke(
 				},
 				"lifecycle:advancePhase" | "lifecycle:setPhase" => {
 					dev_log!("lifecycle", "{}", command);
+
 					// Wind calls this at the end of every workbench init pass so
 					// the phase advances Starting → Ready → Restored → Eventually.
 					// Mountain emits `sky://lifecycle/phaseChanged` so any extension
 					// host or service waiting on a later phase wakes up.
 					let NewPhase = arg_u64_or(&Arguments, 0, 1) as u8;
+
 					RunTime
 						.Environment
 						.ApplicationState
@@ -1259,6 +1339,7 @@ pub async fn mountain_ipc_invoke(
 										"[Lifecycle] main window revealed on phase {} (hidden-until-ready)",
 										NewPhase
 									);
+
 									let _ = MainWindow.set_focus();
 								}
 							}
@@ -1271,66 +1352,81 @@ pub async fn mountain_ipc_invoke(
 				// Label commands
 				"label:getUri" => {
 					dev_log!("label", "label:getUri");
+
 					LabelGetURI(RunTime.clone(), Arguments).await
 				},
 				"label:getWorkspace" => {
 					dev_log!("label", "label:getWorkspace");
+
 					LabelGetWorkspace(RunTime.clone()).await
 				},
 				"label:getBase" => {
 					dev_log!("label", "label:getBase");
+
 					LabelGetBase(Arguments).await
 				},
 
 				// Model (text model registry) commands
 				"model:open" => {
 					dev_log!("model", "model:open");
+
 					ModelOpen(RunTime.clone(), Arguments).await
 				},
 				"model:close" => {
 					dev_log!("model", "model:close");
+
 					ModelClose(RunTime.clone(), Arguments).await
 				},
 				"model:get" => {
 					dev_log!("model", "model:get");
+
 					ModelGet(RunTime.clone(), Arguments).await
 				},
 				"model:getAll" => {
 					dev_log!("model", "model:getAll");
+
 					ModelGetAll(RunTime.clone()).await
 				},
 				"model:updateContent" => {
 					dev_log!("model", "model:updateContent");
+
 					ModelUpdateContent(RunTime.clone(), Arguments).await
 				},
 
 				// Navigation history commands
 				"history:goBack" => {
 					dev_log!("history", "history:goBack");
+
 					HistoryGoBack(RunTime.clone()).await
 				},
 				"history:goForward" => {
 					dev_log!("history", "history:goForward");
+
 					HistoryGoForward(RunTime.clone()).await
 				},
 				"history:canGoBack" => {
 					dev_log!("history", "history:canGoBack");
+
 					HistoryCanGoBack(RunTime.clone()).await
 				},
 				"history:canGoForward" => {
 					dev_log!("history", "history:canGoForward");
+
 					HistoryCanGoForward(RunTime.clone()).await
 				},
 				"history:push" => {
 					dev_log!("history", "history:push");
+
 					HistoryPush(RunTime.clone(), Arguments).await
 				},
 				"history:clear" => {
 					dev_log!("history", "history:clear");
+
 					HistoryClear(RunTime.clone()).await
 				},
 				"history:getStack" => {
 					dev_log!("history", "history:getStack");
+
 					HistoryGetStack(RunTime.clone()).await
 				},
 
@@ -1340,15 +1436,18 @@ pub async fn mountain_ipc_invoke(
 						"connected": true,
 						"version": "1.0.0"
 					});
+
 					Ok(status)
 				},
 				"mountain_get_configuration" => {
 					// Return the live merged configuration object.
 					let Config = RunTime.Environment.ApplicationState.Configuration.GetGlobalConfiguration();
+
 					Ok(Config)
 				},
 				"mountain_get_services_status" => {
 					let CocoonConnected = ::Vine::Client::IsClientConnected::Fn("cocoon-main");
+
 					Ok(json!({
 						"cocoon": { "connected": CocoonConnected },
 						"vine": { "running": true }
@@ -1363,6 +1462,7 @@ pub async fn mountain_ipc_invoke(
 						.lock()
 						.map(|G| G.len())
 						.unwrap_or(0);
+
 					Ok(json!({
 						"workspace": { "folderCount": FolderCount },
 						"activeDocument": RunTime.Environment.ApplicationState.Workspace.GetActiveDocumentURI()
@@ -1403,6 +1503,7 @@ pub async fn mountain_ipc_invoke(
 								.and_then(|V| V.as_array())
 								.cloned()
 								.unwrap_or_default();
+
 							Ok(Value::Array(Paths))
 						},
 						Err(Error) => Err(Error),
@@ -1422,36 +1523,44 @@ pub async fn mountain_ipc_invoke(
 				// OS info
 				"nativeHost:getOSColorScheme" => {
 					dev_log!("nativehost", "nativeHost:getOSColorScheme");
+
 					NativeGetColorScheme().await
 				},
 				"nativeHost:getOSProperties" => {
 					dev_log!("nativehost", "nativeHost:getOSProperties");
+
 					NativeOSProperties().await
 				},
 				"nativeHost:getOSStatistics" => {
 					dev_log!("nativehost", "nativeHost:getOSStatistics");
+
 					NativeOSStatistics().await
 				},
 				"nativeHost:getOSVirtualMachineHint" => {
 					dev_log!("nativehost", "nativeHost:getOSVirtualMachineHint");
+
 					Ok(json!(0))
 				},
 
 				// Window state
 				"nativeHost:isWindowAlwaysOnTop" => {
 					dev_log!("window", "nativeHost:isWindowAlwaysOnTop");
+
 					Ok(json!(false))
 				},
 				"nativeHost:isFullScreen" => {
 					dev_log!("window", "nativeHost:isFullScreen");
+
 					NativeIsFullscreen(ApplicationHandle.clone()).await
 				},
 				"nativeHost:isMaximized" => {
 					dev_log!("window", "nativeHost:isMaximized");
+
 					NativeIsMaximized(ApplicationHandle.clone()).await
 				},
 				"nativeHost:getActiveWindowId" => {
 					dev_log!("window", "nativeHost:getActiveWindowId");
+
 					Ok(json!(1))
 				},
 				// LAND-FIX: workbench polls the cursor screen point for
@@ -1470,6 +1579,7 @@ pub async fn mountain_ipc_invoke(
 				// loss.
 				"nativeHost:getCursorScreenPoint" => {
 					dev_log!("window", "nativeHost:getCursorScreenPoint");
+
 					// Cursor position is used by the workbench to bias overlay
 					// placement. (0,0) causes overlays to appear at the top-left
 					// and get clipped to sane positions - zero overhead vs
@@ -1478,12 +1588,14 @@ pub async fn mountain_ipc_invoke(
 				},
 				"nativeHost:getWindows" => {
 					let Title = std::env::var("ProductNameShort").unwrap_or_else(|_| "Land".into());
+
 					let ActiveDoc = RunTime
 						.Environment
 						.ApplicationState
 						.Workspace
 						.GetActiveDocumentURI()
 						.unwrap_or_default();
+
 					Ok(json!([{ "id": 1, "title": Title, "filename": ActiveDoc }]))
 				},
 				"nativeHost:getWindowCount" => Ok(json!(1)),
@@ -1499,6 +1611,7 @@ pub async fn mountain_ipc_invoke(
 				// an error.
 				"nativeHost:openAgentsWindow" | "nativeHost:openDevToolsWindow" | "nativeHost:openAuxiliaryWindow" => {
 					dev_log!("window", "{} (acknowledged, no-op - aux window unsupported)", command);
+
 					Ok(Value::Null)
 				},
 
@@ -1507,42 +1620,54 @@ pub async fn mountain_ipc_invoke(
 				// native window the same way VS Code's Electron path does.
 				"nativeHost:focusWindow" => {
 					dev_log!("window", "{}", command);
+
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.set_focus();
 					}
+
 					Ok(Value::Null)
 				},
 				"nativeHost:maximizeWindow" => {
 					dev_log!("window", "{}", command);
+
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.maximize();
 					}
+
 					Ok(Value::Null)
 				},
 				"nativeHost:unmaximizeWindow" => {
 					dev_log!("window", "{}", command);
+
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.unmaximize();
 					}
+
 					Ok(Value::Null)
 				},
 				"nativeHost:minimizeWindow" => {
 					dev_log!("window", "{}", command);
+
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.minimize();
 					}
+
 					Ok(Value::Null)
 				},
 				"nativeHost:toggleFullScreen" => {
 					dev_log!("window", "{}", command);
+
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let IsFullscreen = Window.is_fullscreen().unwrap_or(false);
+
 						let _ = Window.set_fullscreen(!IsFullscreen);
 					}
+
 					Ok(Value::Null)
 				},
 				"nativeHost:closeWindow" => {
 					dev_log!("window", "{}", command);
+
 					// `destroy()` tears the window down without firing
 					// `CloseRequested` again, which lets us safely exit the
 					// `prevent_close` intercept registered in AppLifecycle.
@@ -1551,23 +1676,31 @@ pub async fn mountain_ipc_invoke(
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.destroy();
 					}
+
 					Ok(Value::Null)
 				},
 				"nativeHost:setWindowAlwaysOnTop" => {
 					dev_log!("window", "{}", command);
+
 					let OnTop = arg_bool(&Arguments, 0);
+
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.set_always_on_top(OnTop);
 					}
+
 					Ok(Value::Null)
 				},
 				"nativeHost:toggleWindowAlwaysOnTop" => {
 					dev_log!("window", "{}", command);
+
 					static ALWAYS_ON_TOP:std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 					let Next = !ALWAYS_ON_TOP.fetch_xor(true, std::sync::atomic::Ordering::Relaxed);
+
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.set_always_on_top(Next);
 					}
+
 					Ok(Value::Null)
 				},
 				// `NSWindow.representedFilename` - sets the proxy icon in the
@@ -1575,7 +1708,9 @@ pub async fn mountain_ipc_invoke(
 				// Window.set_title as a best-effort (shows path in title).
 				"nativeHost:setRepresentedFilename" => {
 					dev_log!("window", "{}", command);
+
 					let Path = arg_string(&Arguments, 0);
+
 					if !Path.is_empty() {
 						if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 							// Show just the filename component as the title; the
@@ -1584,9 +1719,11 @@ pub async fn mountain_ipc_invoke(
 								.file_name()
 								.and_then(|N| N.to_str())
 								.unwrap_or(&Path);
+
 							let _ = Window.set_title(Filename);
 						}
 					}
+
 					Ok(Value::Null)
 				},
 
@@ -1595,6 +1732,7 @@ pub async fn mountain_ipc_invoke(
 				// Tauri 2.x's WebviewWindow API; acknowledged as no-op.
 				"nativeHost:setDocumentEdited" => {
 					let _ = Arguments;
+
 					Ok(Value::Null)
 				},
 
@@ -1602,13 +1740,16 @@ pub async fn mountain_ipc_invoke(
 				// the workbench never collapses to a 1×1 pixel frame.
 				"nativeHost:setMinimumSize" => {
 					let Width = arg_u64_or(&Arguments, 0, 400) as u32;
+
 					let Height = arg_u64_or(&Arguments, 1, 300) as u32;
+
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.set_min_size(Some(tauri::Size::Physical(tauri::PhysicalSize {
 							width:Width,
 							height:Height,
 						})));
 					}
+
 					Ok(Value::Null)
 				},
 
@@ -1617,18 +1758,24 @@ pub async fn mountain_ipc_invoke(
 				"nativeHost:positionWindow" => {
 					if let Some(Rect) = Arguments.first() {
 						let X = Rect.get("x").and_then(|V| V.as_i64()).unwrap_or(0) as i32;
+
 						let Y = Rect.get("y").and_then(|V| V.as_i64()).unwrap_or(0) as i32;
+
 						let W = Rect.get("width").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 						let H = Rect.get("height").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 						if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 							let _ =
 								Window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x:X, y:Y }));
+
 							if W > 0 && H > 0 {
 								let _ =
 									Window.set_size(tauri::Size::Physical(tauri::PhysicalSize { width:W, height:H }));
 							}
 						}
 					}
+
 					Ok(Value::Null)
 				},
 
@@ -1641,6 +1788,7 @@ pub async fn mountain_ipc_invoke(
 				| "nativeHost:setBackgroundThrottling"
 				| "nativeHost:updateWindowAccentColor" => {
 					dev_log!("window", "{}", command);
+
 					Ok(Value::Null)
 				},
 
@@ -1652,6 +1800,7 @@ pub async fn mountain_ipc_invoke(
 					{
 						Ok(json!(std::path::Path::new("C:\\Windows\\System32\\wsl.exe").exists()))
 					}
+
 					#[cfg(not(target_os = "windows"))]
 					{
 						Ok(json!(false))
@@ -1662,44 +1811,54 @@ pub async fn mountain_ipc_invoke(
 				// Trash bin - atomic handler handles all platform variants.
 				"nativeHost:moveItemToTrash" => {
 					dev_log!("nativehost", "nativeHost:moveItemToTrash");
+
 					NativeMoveItemToTrash(Arguments).await
 				},
 
 				// Clipboard - atomic handlers backed by `arboard`.
 				"nativeHost:readClipboardText" => {
 					dev_log!("clipboard", "readClipboardText");
+
 					NativeReadClipboardText(Arguments).await
 				},
 				"nativeHost:writeClipboardText" => {
 					dev_log!("clipboard", "writeClipboardText");
+
 					NativeWriteClipboardText(Arguments).await
 				},
 				"nativeHost:readClipboardFindText" => {
 					dev_log!("clipboard", "readClipboardFindText");
+
 					NativeReadClipboardFindText(Arguments).await
 				},
 				"nativeHost:writeClipboardFindText" => {
 					dev_log!("clipboard", "writeClipboardFindText");
+
 					NativeWriteClipboardFindText(Arguments).await
 				},
 				"nativeHost:readClipboardBuffer" => {
 					dev_log!("clipboard", "readClipboardBuffer");
+
 					NativeReadClipboardBuffer(Arguments).await
 				},
 				"nativeHost:writeClipboardBuffer" => {
 					dev_log!("clipboard", "writeClipboardBuffer");
+
 					NativeWriteClipboardBuffer(Arguments).await
 				},
 				"nativeHost:hasClipboard" => {
 					dev_log!("clipboard", "hasClipboard");
+
 					NativeHasClipboard(Arguments).await
 				},
 				"nativeHost:readImage" => {
 					dev_log!("clipboard", "readImage");
+
 					NativeReadImage(Arguments).await
 				},
 				"nativeHost:triggerPaste" => {
 					dev_log!("clipboard", "triggerPaste");
+
 					NativeTriggerPaste(Arguments).await
 				},
 
@@ -1711,12 +1870,14 @@ pub async fn mountain_ipc_invoke(
 				"nativeHost:findFreePort" => NativeFindFreePort(Arguments).await,
 				"nativeHost:isPortFree" => {
 					let Port = arg_u64(&Arguments, 0) as u16;
+
 					if Port == 0 {
 						Ok(json!(false))
 					} else {
 						let Free = tokio::net::TcpListener::bind(std::net::SocketAddr::from(([127, 0, 0, 1], Port)))
 							.await
 							.is_ok();
+
 						Ok(json!(Free))
 					}
 				},
@@ -1726,17 +1887,21 @@ pub async fn mountain_ipc_invoke(
 				// extensions that call `fetch` route through the right gateway.
 				"nativeHost:resolveProxy" => {
 					let Url = arg_str(&Arguments, 0);
+
 					let Scheme = if Url.starts_with("https") { "HTTPS" } else { "HTTP" };
+
 					let ProxyEnv = std::env::var(format!("{}_PROXY", Scheme))
 						.or_else(|_| std::env::var(format!("{}_proxy", Scheme.to_lowercase())))
 						.or_else(|_| std::env::var("ALL_PROXY"))
 						.or_else(|_| std::env::var("all_proxy"));
+
 					match ProxyEnv {
 						Ok(P) if !P.is_empty() => {
 							// Strip scheme and emit the correct PAC keyword.
 							// socks/socks4/socks5 → "SOCKS host:port" (RFC 3513)
 							// http/https          → "PROXY host:port"
 							let Lower = P.to_lowercase();
+
 							let (Keyword, Host) = if Lower.starts_with("socks") {
 								let H = P
 									.trim_start_matches("socks5://")
@@ -1804,10 +1969,12 @@ pub async fn mountain_ipc_invoke(
 				// =====================================================================
 				"localPty:getProfiles" => {
 					dev_log!("terminal", "localPty:getProfiles");
+
 					LocalPTYGetProfiles().await
 				},
 				"localPty:getDefaultSystemShell" => {
 					dev_log!("terminal", "localPty:getDefaultSystemShell");
+
 					LocalPTYGetDefaultShell().await
 				},
 				// `ILocalPtyService.getTerminalLayoutInfo` - return the last
@@ -1819,13 +1986,17 @@ pub async fn mountain_ipc_invoke(
 				// (active tab, split dimensions) across window reloads.
 				"localPty:getTerminalLayoutInfo" => {
 					dev_log!("terminal", "localPty:getTerminalLayoutInfo");
+
 					use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
+
 					let StorageProvider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
+
 					match StorageProvider.GetStorageValue(true, "terminal:layoutInfo").await {
 						Ok(Some(Stored)) => Ok(Stored),
 						Ok(None) => Ok(Value::Null),
 						Err(Error) => {
 							dev_log!("terminal", "warn: [getTerminalLayoutInfo] storage read failed: {}", Error);
+
 							Ok(Value::Null)
 						},
 					}
@@ -1834,28 +2005,37 @@ pub async fn mountain_ipc_invoke(
 				// snapshot so `getTerminalLayoutInfo` can replay it on next boot.
 				"localPty:setTerminalLayoutInfo" => {
 					dev_log!("terminal", "localPty:setTerminalLayoutInfo");
+
 					use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
+
 					let StorageProvider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
+
 					let Payload = arg_val(&Arguments, 0);
+
 					let _ = StorageProvider
 						.UpdateStorageValue(true, "terminal:layoutInfo".to_string(), Some(Payload))
 						.await;
+
 					Ok(Value::Null)
 				},
 				"localPty:getPerformanceMarks" => {
 					dev_log!("terminal", "localPty:getPerformanceMarks");
+
 					Ok(json!([]))
 				},
 				"localPty:reduceConnectionGraceTime" => {
 					dev_log!("terminal", "localPty:reduceConnectionGraceTime");
+
 					Ok(Value::Null)
 				},
 				"localPty:listProcesses" => {
 					dev_log!("terminal", "localPty:listProcesses");
+
 					Ok(json!([]))
 				},
 				"localPty:getEnvironment" => {
 					dev_log!("terminal", "localPty:getEnvironment");
+
 					LocalPTYGetEnvironment().await
 				},
 				// `IPtyService.getLatency` (per
@@ -1871,6 +2051,7 @@ pub async fn mountain_ipc_invoke(
 				// `TauriInvoke ok=false` line per attempt.
 				"localPty:getLatency" => {
 					dev_log!("terminal", "localPty:getLatency");
+
 					Ok(json!([]))
 				},
 
@@ -1886,10 +2067,12 @@ pub async fn mountain_ipc_invoke(
 				// observers).
 				"cocoon:request" => {
 					dev_log!("ipc", "cocoon:request method={:?}", Arguments.first());
+
 					CocoonRequest(Arguments).await
 				},
 				"cocoon:notify" => {
 					dev_log!("ipc", "cocoon:notify method={:?}", Arguments.first());
+
 					CocoonNotify(Arguments).await
 				},
 
@@ -1928,6 +2111,7 @@ pub async fn mountain_ipc_invoke(
 					// shadow PTY (id=2) starts and streams data nobody
 					// renders.
 					dev_log!("terminal", "{} no-op (eager-spawn)", command);
+
 					Ok(Value::Null)
 				},
 				"localPty:input" | "localPty:write" => call!(rt, "terminal", TerminalSendText, Arguments),
@@ -1946,14 +2130,17 @@ pub async fn mountain_ipc_invoke(
 					{
 						Ok(json!(1))
 					}
+
 					#[cfg(target_os = "linux")]
 					{
 						Ok(json!(2))
 					}
+
 					#[cfg(target_os = "windows")]
 					{
 						Ok(json!(3))
 					}
+
 					#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
 					{
 						Ok(json!(2))
@@ -1974,8 +2161,11 @@ pub async fn mountain_ipc_invoke(
 						Environment::Requires::Requires,
 						Terminal::TerminalProvider::TerminalProvider,
 					};
+
 					let TerminalId = arg_u64(&Arguments, 0);
+
 					let PropId = arg_u64(&Arguments, 1);
+
 					if TerminalId == 0 {
 						Ok(Value::Null)
 					} else if PropId == 0 {
@@ -1991,10 +2181,12 @@ pub async fn mountain_ipc_invoke(
 							.and_then(|G| G.get(&TerminalId).cloned())
 							.and_then(|S| S.lock().ok().and_then(|S| S.CurrentWorkingDirectory.clone()))
 							.map(|P| P.to_string_lossy().into_owned());
+
 						Ok(Cwd.map(|C| json!(C)).unwrap_or(Value::Null))
 					} else if PropId == 1 {
 						// TerminalProperty::ProcessId
 						let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
+
 						match Provider.GetTerminalProcessId(TerminalId).await {
 							Ok(Some(Pid)) => Ok(json!(Pid)),
 							_ => Ok(Value::Null),
@@ -2012,6 +2204,7 @@ pub async fn mountain_ipc_invoke(
 				// is listening on a port so a new terminal can bind it.
 				"localPty:freePortKillProcess" => {
 					dev_log!("terminal", "localPty:freePortKillProcess");
+
 					LocalPTYFreePortKillProcess(Arguments).await
 				},
 
@@ -2021,6 +2214,7 @@ pub async fn mountain_ipc_invoke(
 				// `ISerializedTerminalState[]`.
 				"localPty:serializeTerminalState" => {
 					dev_log!("terminal", "localPty:serializeTerminalState");
+
 					SerializeTerminalState(RunTime.clone()).await
 				},
 
@@ -2033,6 +2227,7 @@ pub async fn mountain_ipc_invoke(
 						"localPty:reviveTerminalProcesses count={}",
 						Arguments.first().and_then(|V| V.as_array()).map(|A| A.len()).unwrap_or(0)
 					);
+
 					ReviveTerminalProcesses(RunTime.clone(), Arguments).await
 				},
 
@@ -2043,7 +2238,9 @@ pub async fn mountain_ipc_invoke(
 				// keeps IDs unique and collision-free across reloads.
 				"localPty:getRevivedPtyNewId" => {
 					let NewId = RunTime.Environment.ApplicationState.GetNextTerminalIdentifier();
+
 					dev_log!("terminal", "localPty:getRevivedPtyNewId id={}", NewId);
+
 					Ok(json!(NewId))
 				},
 
@@ -2054,10 +2251,12 @@ pub async fn mountain_ipc_invoke(
 				// the next attach or sky:replay-events drain.
 				"localPty:attachToProcess" => {
 					dev_log!("terminal", "localPty:attachToProcess");
+
 					AttachToProcess(RunTime.clone(), Arguments).await
 				},
 				"localPty:detachFromProcess" => {
 					dev_log!("terminal", "localPty:detachFromProcess");
+
 					DetachFromProcess(RunTime.clone(), Arguments).await
 				},
 
@@ -2066,16 +2265,19 @@ pub async fn mountain_ipc_invoke(
 				// `vscode.window.activeTerminal` reflects the focused terminal.
 				"localPty:setActive" => {
 					let TermId = Arguments.first().and_then(Value::as_i64);
+
 					let Payload = match TermId {
 						Some(Id) => serde_json::json!({ "id": Id }),
 						None => serde_json::json!({ "id": null }),
 					};
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptActiveTerminalChanged".to_string(),
 						Payload,
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2085,12 +2287,14 @@ pub async fn mountain_ipc_invoke(
 				// and `onDidChangeTerminalShellIntegration` fires.
 				"localPty:setShellIntegrationActive" => {
 					let TermId = Arguments.first().and_then(Value::as_i64).unwrap_or(0) as u64;
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTerminalShellIntegrationActivated".to_string(),
 						serde_json::json!({ "id": TermId }),
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2102,12 +2306,14 @@ pub async fn mountain_ipc_invoke(
 				// `[{ id, interactedWith }]`.
 				"localPty:setInteracted" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTerminalStateChanged".to_string(),
 						Payload,
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2117,7 +2323,9 @@ pub async fn mountain_ipc_invoke(
 				// shellIntegration.cwd` reflects the shell's current directory.
 				"localPty:setCwd" => {
 					let TermId = Arguments.first().and_then(Value::as_i64).unwrap_or(0) as u64;
+
 					let Cwd = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+
 					if !Cwd.is_empty() {
 						// Persist CWD in ApplicationState so refreshProperty(0)
 						// can return it without probing the OS process.
@@ -2129,6 +2337,7 @@ pub async fn mountain_ipc_invoke(
 								}
 							}
 						}
+
 						let _ = ::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
 							"$acceptTerminalCwdChange".to_string(),
@@ -2136,6 +2345,7 @@ pub async fn mountain_ipc_invoke(
 						)
 						.await;
 					}
+
 					Ok(Value::Null)
 				},
 
@@ -2167,12 +2377,14 @@ pub async fn mountain_ipc_invoke(
 				// `window.didStartTerminalShellExecution` Emitter channel.
 				"localPty:shellExecutionStart" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTerminalShellExecutionStart".to_string(),
 						Payload,
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2188,18 +2400,21 @@ pub async fn mountain_ipc_invoke(
 				// event - same data, different consumer audience).
 				"localPty:shellExecutionEnd" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTerminalShellExecutionEnd".to_string(),
 						Payload.clone(),
 					)
 					.await;
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptExecutedTerminalCommand".to_string(),
 						Payload,
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2226,6 +2441,7 @@ pub async fn mountain_ipc_invoke(
 				// =====================================================================
 				"url:registerExternalUriOpener" => {
 					dev_log!("url", "url:registerExternalUriOpener");
+
 					Ok(Value::Null)
 				},
 
@@ -2292,22 +2508,27 @@ pub async fn mountain_ipc_invoke(
 				// =====================================================================
 				"extensionHostStarter:createExtensionHost" => {
 					dev_log!("exthost", "extensionHostStarter:createExtensionHost");
+
 					ExtensionHostStarterCreate(Arguments).await
 				},
 				"extensionHostStarter:start" => {
 					dev_log!("exthost", "extensionHostStarter:start");
+
 					ExtensionHostStarterStart(Arguments).await
 				},
 				"extensionHostStarter:kill" => {
 					dev_log!("exthost", "extensionHostStarter:kill");
+
 					ExtensionHostStarterKill(Arguments).await
 				},
 				"extensionHostStarter:getExitInfo" => {
 					dev_log!("exthost", "extensionHostStarter:getExitInfo");
+
 					ExtensionHostStarterGetExitInfo(Arguments).await
 				},
 				"extensionHostStarter:waitForExit" => {
 					dev_log!("exthost", "extensionHostStarter:waitForExit");
+
 					ExtensionHostStarterWaitForExit(Arguments).await
 				},
 
@@ -2316,6 +2537,7 @@ pub async fn mountain_ipc_invoke(
 				// =====================================================================
 				"cocoon:extensionHostMessage" => {
 					dev_log!("exthost", "cocoon:extensionHostMessage");
+
 					CocoonExtensionHostMessage(ApplicationHandle.clone(), Arguments).await
 				},
 
@@ -2324,14 +2546,17 @@ pub async fn mountain_ipc_invoke(
 				// =====================================================================
 				"extensionhostdebugservice:reload" => {
 					dev_log!("exthost", "extensionhostdebugservice:reload");
+
 					ExtensionHostDebugReload(ApplicationHandle.clone()).await
 				},
 				"extensionhostdebugservice:close" => {
 					dev_log!("exthost", "extensionhostdebugservice:close");
+
 					ExtensionHostDebugClose(ApplicationHandle.clone()).await
 				},
 				"extensionhostdebugservice:attachSession" | "extensionhostdebugservice:terminateSession" => {
 					dev_log!("exthost", "{}", command);
+
 					Ok(Value::Null)
 				},
 
@@ -2340,28 +2565,35 @@ pub async fn mountain_ipc_invoke(
 				// =====================================================================
 				"workspaces:getRecentlyOpened" => {
 					dev_log!("workspaces", "workspaces:getRecentlyOpened");
+
 					ReadRecentlyOpened()
 				},
 				"workspaces:removeRecentlyOpened" => {
 					dev_log!("workspaces", "workspaces:removeRecentlyOpened");
+
 					let Uri = arg_string(&Arguments, 0);
+
 					if !Uri.is_empty() {
 						MutateRecentlyOpened(|List| {
 							if let Some(Workspaces) = List.get_mut("workspaces").and_then(|V| V.as_array_mut()) {
 								Workspaces
 									.retain(|Entry| Entry.get("uri").and_then(|V| V.as_str()).unwrap_or("") != Uri);
 							}
+
 							if let Some(Files) = List.get_mut("files").and_then(|V| V.as_array_mut()) {
 								Files.retain(|Entry| Entry.get("uri").and_then(|V| V.as_str()).unwrap_or("") != Uri);
 							}
 						});
 					}
+
 					Ok(Value::Null)
 				},
 				"workspaces:addRecentlyOpened" => {
 					dev_log!("workspaces", "workspaces:addRecentlyOpened");
+
 					// VS Code passes `[{ workspace?, folderUri?, fileUri?, label? }, …]`.
 					let Entries:Vec<Value> = Arguments.first().and_then(|V| V.as_array()).cloned().unwrap_or_default();
+
 					if !Entries.is_empty() {
 						MutateRecentlyOpened(|List| {
 							let Workspaces = List
@@ -2369,65 +2601,90 @@ pub async fn mountain_ipc_invoke(
 								.and_then(|V| V.as_array_mut())
 								.map(|V| std::mem::take(V))
 								.unwrap_or_default();
+
 							let Files = List
 								.get_mut("files")
 								.and_then(|V| V.as_array_mut())
 								.map(|V| std::mem::take(V))
 								.unwrap_or_default();
+
 							let mut MergedWorkspaces = Workspaces;
+
 							let mut MergedFiles = Files;
+
 							for Entry in Entries {
 								let Folder = Entry
 									.get("folderUri")
 									.cloned()
 									.or_else(|| Entry.get("workspace").and_then(|W| W.get("configPath").cloned()));
+
 								let File = Entry.get("fileUri").cloned();
+
 								if let Some(FolderUri) = Folder.and_then(|V| v_str(&V)) {
 									MergedWorkspaces
 										.retain(|E| E.get("uri").and_then(|V| V.as_str()).unwrap_or("") != FolderUri);
+
 									let mut Item = serde_json::Map::new();
+
 									Item.insert("uri".into(), json!(FolderUri));
+
 									if let Some(Label) = Entry.get("label").and_then(|V| V.as_str()) {
 										Item.insert("label".into(), json!(Label));
 									}
+
 									MergedWorkspaces.insert(0, Value::Object(Item));
 								}
+
 								if let Some(FileUri) = File.and_then(|V| v_str(&V)) {
 									MergedFiles
 										.retain(|E| E.get("uri").and_then(|V| V.as_str()).unwrap_or("") != FileUri);
+
 									let mut Item = serde_json::Map::new();
+
 									Item.insert("uri".into(), json!(FileUri));
+
 									MergedFiles.insert(0, Value::Object(Item));
 								}
 							}
+
 							// Cap at 50 each - matches VS Code's default in
 							// `src/vs/platform/workspaces/common/workspaces.ts`.
 							MergedWorkspaces.truncate(50);
+
 							MergedFiles.truncate(50);
+
 							List.insert("workspaces".into(), Value::Array(MergedWorkspaces));
+
 							List.insert("files".into(), Value::Array(MergedFiles));
 						});
 					}
+
 					Ok(Value::Null)
 				},
 				"workspaces:clearRecentlyOpened" => {
 					dev_log!("workspaces", "workspaces:clearRecentlyOpened");
+
 					MutateRecentlyOpened(|List| {
 						List.insert("workspaces".into(), json!([]));
+
 						List.insert("files".into(), json!([]));
 					});
+
 					Ok(Value::Null)
 				},
 				"workspaces:enterWorkspace" => {
 					dev_log!("workspaces", "workspaces:enterWorkspace");
+
 					Ok(Value::Null)
 				},
 				"workspaces:createUntitledWorkspace" => {
 					dev_log!("workspaces", "workspaces:createUntitledWorkspace");
+
 					Ok(Value::Null)
 				},
 				"workspaces:deleteUntitledWorkspace" => {
 					dev_log!("workspaces", "workspaces:deleteUntitledWorkspace");
+
 					Ok(Value::Null)
 				},
 				"workspaces:getWorkspaceIdentifier" => {
@@ -2438,15 +2695,21 @@ pub async fn mountain_ipc_invoke(
 					// VS Code's expected shape for a multi-root workspace identifier;
 					// we only use single-root so configPath stays null.
 					let Workspace = &RunTime.Environment.ApplicationState.Workspace;
+
 					let Folders = Workspace.GetWorkspaceFolders();
+
 					if let Some(First) = Folders.first() {
 						use std::{
 							collections::hash_map::DefaultHasher,
 							hash::{Hash, Hasher},
 						};
+
 						let mut Hasher = DefaultHasher::new();
+
 						First.URI.as_str().hash(&mut Hasher);
+
 						let Id = format!("{:016x}", Hasher.finish());
+
 						Ok(json!({
 							"id": Id,
 							"configPath": Value::Null,
@@ -2477,38 +2740,47 @@ pub async fn mountain_ipc_invoke(
 				},
 				"git:exec" => {
 					dev_log!("git", "git:exec");
+
 					Git::HandleExec::Fn(Arguments).await
 				},
 				"git:clone" => {
 					dev_log!("git", "git:clone");
+
 					Git::HandleClone::Fn(Arguments).await
 				},
 				"git:pull" => {
 					dev_log!("git", "git:pull");
+
 					Git::HandlePull::Fn(Arguments).await
 				},
 				"git:checkout" => {
 					dev_log!("git", "git:checkout");
+
 					Git::HandleCheckout::Fn(Arguments).await
 				},
 				"git:revParse" => {
 					dev_log!("git", "git:revParse");
+
 					Git::HandleRevParse::Fn(Arguments).await
 				},
 				"git:fetch" => {
 					dev_log!("git", "git:fetch");
+
 					Git::HandleFetch::Fn(Arguments).await
 				},
 				"git:revListCount" => {
 					dev_log!("git", "git:revListCount");
+
 					Git::HandleRevListCount::Fn(Arguments).await
 				},
 				"git:cancel" => {
 					dev_log!("git", "git:cancel");
+
 					Git::HandleCancel::Fn(Arguments).await
 				},
 				"git:isAvailable" => {
 					dev_log!("git", "git:isAvailable");
+
 					Git::HandleIsAvailable::Fn(Arguments).await
 				},
 
@@ -2524,10 +2796,15 @@ pub async fn mountain_ipc_invoke(
 				// Emits a Sky event that triggers `IViewsService.openView(viewId)`.
 				"tree.reveal" | "tree:reveal" => {
 					use tauri::Emitter;
+
 					let ViewId = arg_string(&Arguments, 0);
+
 					let Handle = arg_string(&Arguments, 1);
+
 					let Options = arg_val(&Arguments, 2);
+
 					dev_log!("ipc", "tree.reveal viewId={} handle={}", ViewId, Handle);
+
 					let _ = ApplicationHandle.emit(
 						"sky://tree-view/reveal",
 						json!({
@@ -2536,6 +2813,7 @@ pub async fn mountain_ipc_invoke(
 							"options": Options,
 						}),
 					);
+
 					Ok(Value::Null)
 				},
 
@@ -2544,12 +2822,14 @@ pub async fn mountain_ipc_invoke(
 				// onDidCollapseElement, onDidExpandElement, onDidChangeVisibility.
 				"tree:selectionChanged" | "tree:collapseElement" | "tree:expandElement" | "tree:visibilityChanged" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let Method = match command.as_str() {
 						"tree:selectionChanged" => "$treeView:selectionChanged",
 						"tree:collapseElement" => "$treeView:collapseElement",
 						"tree:expandElement" => "$treeView:expandElement",
 						_ => "$treeView:visibilityChanged",
 					};
+
 					tokio::spawn(async move {
 						if let Err(E) =
 							::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), Method.to_string(), Payload)
@@ -2558,6 +2838,7 @@ pub async fn mountain_ipc_invoke(
 							dev_log!("ipc", "warn: [tree] Cocoon notify {} failed: {:?}", Method, E);
 						}
 					});
+
 					Ok(Value::Null)
 				},
 
@@ -2569,8 +2850,11 @@ pub async fn mountain_ipc_invoke(
 				// Effect path). This IPC arm lets Wind call it directly without gRPC.
 				"editor:revealRange" | "window:revealRange" => {
 					use tauri::Emitter;
+
 					let Payload = arg_val(&Arguments, 0);
+
 					let _ = ApplicationHandle.emit("sky://editor/revealRange", &Payload);
+
 					Ok(Value::Null)
 				},
 
@@ -2588,12 +2872,15 @@ pub async fn mountain_ipc_invoke(
 						.and_then(|V| V.as_str())
 						.unwrap_or("")
 						.to_string();
+
 					let Selections = Arguments
 						.first()
 						.and_then(|V| V.get("selections"))
 						.cloned()
 						.unwrap_or(Value::Array(Vec::new()));
+
 					dev_log!("model", "[SelectionChanged] uri={}", Uri);
+
 					// Store on workspace state
 					if !Uri.is_empty() {
 						RunTime
@@ -2602,21 +2889,25 @@ pub async fn mountain_ipc_invoke(
 							.Workspace
 							.SetActiveDocumentURI(Some(Uri.clone()));
 					}
+
 					let ViewColumn = Arguments
 						.first()
 						.and_then(|V| V.get("viewColumn"))
 						.and_then(|V| V.as_u64())
 						.unwrap_or(1);
+
 					// Forward to Cocoon - include viewColumn so extensions
 					// calling `activeTextEditor.viewColumn` see the correct
 					// pane number in split-editor layouts.
 					let Payload = json!({ "uri": Uri, "selections": Selections, "viewColumn": ViewColumn });
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"window.didChangeTextEditorSelection".to_string(),
 						Payload,
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2627,15 +2918,22 @@ pub async fn mountain_ipc_invoke(
 				// up-to-date content without waiting for a file save.
 				"sky:model:contentChanged" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let Uri = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
+
 					if !Uri.is_empty() {
 						let Content = Payload.get("content").and_then(Value::as_str).unwrap_or("").to_string();
+
 						let Version = Payload.get("version").and_then(Value::as_i64).unwrap_or(1);
+
 						// Update in-memory document state.
 						if let Some(mut Doc) = RunTime.Environment.ApplicationState.Feature.Documents.Get(&Uri) {
 							Doc.Version = Version;
+
 							Doc.Lines = Content.lines().map(|L| L.to_owned()).collect();
+
 							Doc.IsDirty = true;
+
 							RunTime
 								.Environment
 								.ApplicationState
@@ -2643,12 +2941,14 @@ pub async fn mountain_ipc_invoke(
 								.Documents
 								.AddOrUpdate(Uri.clone(), Doc);
 						}
+
 						// Notify Cocoon so onDidChangeTextDocument fires in extensions.
 						let Payload2 = json!([
 							{ "external": Uri.clone(), "$mid": 1 },
 
 							{ "content": Content, "versionId": Version, "isDirty": true, "changes": [] }
 						]);
+
 						tokio::spawn(async move {
 							let _ = ::Vine::Client::SendNotification::Fn(
 								"cocoon-main".to_string(),
@@ -2658,13 +2958,17 @@ pub async fn mountain_ipc_invoke(
 							.await;
 						});
 					}
+
 					Ok(Value::Null)
 				},
 
 				"sky:editor:activeChanged" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let Uri = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
+
 					dev_log!("model", "[ActiveEditorChanged] uri={}", Uri);
+
 					if !Uri.is_empty() {
 						RunTime
 							.Environment
@@ -2672,12 +2976,14 @@ pub async fn mountain_ipc_invoke(
 							.Workspace
 							.SetActiveDocumentURI(Some(Uri.clone()));
 					}
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"window.didChangeActiveTextEditor".to_string(),
 						Payload,
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2693,12 +2999,14 @@ pub async fn mountain_ipc_invoke(
 				// markers when the user navigates between files.
 				"sky:editor:visibleChanged" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptVisibleEditorsChanged".to_string(),
 						Payload,
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2713,12 +3021,14 @@ pub async fn mountain_ipc_invoke(
 				// (GitLens, Roo Code) and the `vscode.window.tabGroups` API.
 				"sky:editor:tabsChanged" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTabsChanged".to_string(),
 						Payload,
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2732,12 +3042,14 @@ pub async fn mountain_ipc_invoke(
 				// loop.
 				"sky:editor:visibleRangesChanged" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptVisibleRangesChanged".to_string(),
 						Payload,
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2751,12 +3063,14 @@ pub async fn mountain_ipc_invoke(
 				// so future consumers can read whatever they need.
 				"sky:editor:optionsChanged" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTextEditorOptionsChanged".to_string(),
 						Payload,
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2769,12 +3083,14 @@ pub async fn mountain_ipc_invoke(
 				// `vscode.window.onDidChangeTextEditorDiffInformation` fire.
 				"sky:editor:diffInformationChanged" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTextEditorDiffInformationChanged".to_string(),
 						Payload,
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2787,12 +3103,14 @@ pub async fn mountain_ipc_invoke(
 				// `vscode.window.onDidChangeTextEditorViewColumn` fire.
 				"sky:editor:viewColumnChanged" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTextEditorViewColumnChanged".to_string(),
 						Payload,
 					)
 					.await;
+
 					Ok(Value::Null)
 				},
 
@@ -2808,6 +3126,7 @@ pub async fn mountain_ipc_invoke(
 				// pipeline as Mountain's own gRPC ProvideInlineCompletionItems handler.
 				"language:provideInlineCompletions" => {
 					let Payload = arg_val(&Arguments, 0);
+
 					let UriStr = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
 
 					if UriStr.is_empty() {
@@ -2818,27 +3137,32 @@ pub async fn mountain_ipc_invoke(
 							.and_then(|P| P.get("line"))
 							.and_then(Value::as_u64)
 							.unwrap_or(0) as i64 + 1;
+
 						let Character = Payload
 							.get("position")
 							.and_then(|P| P.get("character"))
 							.and_then(Value::as_u64)
 							.unwrap_or(0) as i64 + 1;
+
 						let Context = Payload.get("context").cloned().unwrap_or_else(|| json!({ "triggerKind": 0 }));
 
 						match url::Url::parse(&UriStr) {
 							Ok(Uri) => {
 								let Position = PositionDTO { LineNumber:Line as u32, Column:Character as u32 };
+
 								match RunTime.Environment.ProvideInlineCompletionItems(Uri, Position, Context).await {
 									Ok(Some(Result)) => {
 										let Items = Result
 											.get("items")
 											.cloned()
 											.unwrap_or_else(|| if Result.is_array() { Result } else { json!([]) });
+
 										Ok(json!({ "items": Items }))
 									},
 									Ok(None) => Ok(json!({ "items": [] })),
 									Err(Error) => {
 										dev_log!("ipc", "warn: language:provideInlineCompletions error: {}", Error);
+
 										Ok(json!({ "items": [] }))
 									},
 								}
@@ -2850,7 +3174,9 @@ pub async fn mountain_ipc_invoke(
 
 				"languages:getAll" | "languages:getEncodedLanguageId" => {
 					dev_log!("extensions", "languages: {} (→ Cocoon)", command);
+
 					let Payload = Arguments.into_iter().next().unwrap_or(Value::Null);
+
 					// Skip the 3-second blocking wait at boot. If Cocoon isn't
 					// connected yet, return an empty fallback immediately so the
 					// tokenizer doesn't stall the worker for up to 3 s on first
@@ -2924,6 +3250,7 @@ pub async fn mountain_ipc_invoke(
 				| "debug:addBreakpoints"
 				| "debug:removeBreakpoints" => {
 					let _ = TIER_DEBUG;
+
 					forward_to_cocoon!("debug", command, Arguments)
 				},
 
@@ -2961,6 +3288,7 @@ pub async fn mountain_ipc_invoke(
 					// build.rs; at runtime we also accept it via process env for
 					// debug overrides.
 					let TierIPC = std::env::var("TierIPC").unwrap_or_else(|_| "Mountain".into());
+
 					let ShouldDefer = TierIPC == "NodeDeferred" || TierIPC == "Node";
 
 					if ShouldDefer {
@@ -2968,8 +3296,11 @@ pub async fn mountain_ipc_invoke(
 						// Cocoon's RequestRoutingHandler + extension namespaces
 						// cover language:*, scm:*, debug:*, tasks:*, auth:*, etc.
 						let Payload = cocoon_payload(Arguments);
+
 						dev_log!("ipc", "deferred → Cocoon: {}", command);
+
 						let _ = ::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+
 						match ::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 15_000).await {
 							Ok(Response) => Ok(Response),
 							Err(CocoonError) => {
@@ -2979,6 +3310,7 @@ pub async fn mountain_ipc_invoke(
 									command,
 									CocoonError
 								);
+
 								Ok(Value::Null)
 							},
 						}
@@ -2990,10 +3322,12 @@ pub async fn mountain_ipc_invoke(
 									"error: [WindServiceHandlers] Channel {:?} is registered but has no dispatch arm",
 									KnownChannel
 								);
+
 								Err(format!("IPC channel registered but unimplemented: {}", command))
 							},
 							Err(_) => {
 								dev_log!("ipc", "error: [WindServiceHandlers] Unknown IPC command: {}", command);
+
 								Err(format!("Unknown IPC command: {}", command))
 							},
 						}

@@ -183,11 +183,15 @@ impl TerminalProvider for MountainEnvironment {
 			for (Key, Val) in Injection.EnvVars {
 				MergedEnv.insert(Key, Val);
 			}
+
 			// Prepend-args come before any user-supplied args (rare but
 			// important for interpreters that parse flags positionally).
 			let mut AllArgs = Injection.PrependArgs;
+
 			AllArgs.extend(TerminalState.ShellArguments.iter().cloned());
+
 			AllArgs.extend(Injection.AppendArgs);
+
 			Command.args(&AllArgs);
 		} else {
 			Command.args(&TerminalState.ShellArguments);
@@ -289,6 +293,7 @@ impl TerminalProvider for MountainEnvironment {
 						// delivery bypasses the webview entirely (BATCH-19
 						// Part B).
 						let Payload = json!([TermIDForOutput, DataString.clone()]);
+
 						if let Err(Error) = IPCProvider
 							.SendNotificationToSideCar(
 								"cocoon-main".into(),
@@ -383,6 +388,7 @@ impl TerminalProvider for MountainEnvironment {
 			if let Ok(mut Guard) = EnvironmentClone.ApplicationState.Feature.Terminals.ActiveTerminals.lock() {
 				Guard.remove(&TermIDForExit);
 			}
+
 			// Drop the recent-output replay buffer; nothing left to replay
 			// after the shell has exited.
 			RemoveTerminalOutputBuffer(TermIDForExit);
@@ -464,11 +470,13 @@ impl TerminalProvider for MountainEnvironment {
 			// measured on a slow test machine; modern M-series hardware completes
 			// the full cycle in <5 ms. 20 ms gives 4× headroom.
 			tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+
 			let CreatePayload = json!({
 				"id": CreateTermId,
 				"name": CreateName.clone(),
 				"pid": CreatePid,
 			});
+
 			// `LogSkyEmit` makes the deferred emit visible under
 			// `[DEV:SKY-EMIT]` so the next log dissection can confirm
 			// the deferral landed (and how many `localPty:input` calls
@@ -642,6 +650,7 @@ impl TerminalProvider for MountainEnvironment {
 		// child shell is ptrace-frozen or mid-syscall.
 		tokio::task::spawn_blocking(move || {
 			let Guard = Master.lock().map_err(|_| "PTY master mutex poisoned".to_string())?;
+
 			Guard.resize(Size).map_err(|Error| Error.to_string())
 		})
 		.await

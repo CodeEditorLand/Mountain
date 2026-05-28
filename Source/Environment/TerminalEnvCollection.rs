@@ -32,7 +32,9 @@ use serde_json::Value;
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum MutatorType {
 	Replace = 1,
+
 	Append = 2,
+
 	Prepend = 3,
 }
 

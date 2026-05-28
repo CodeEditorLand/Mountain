@@ -14,6 +14,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"executeCommand" => {
 			crate::effect!(run_time, {
 				let command_executor:Arc<dyn CommandExecutor> = run_time.Environment.Require();
+
 				let (command_id, args) = if let Some(Object) = Parameters.as_object() {
 					let Id = Object
 						.get("command")
@@ -21,16 +22,21 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						.and_then(Value::as_str)
 						.unwrap_or("")
 						.to_string();
+
 					let A = Object
 						.get("args")
 						.cloned()
 						.unwrap_or_else(|| Object.get("arguments").cloned().unwrap_or_default());
+
 					(Id, A)
 				} else {
 					let Id = string_at(&Parameters, 0);
+
 					let A = val_at(&Parameters, 1);
+
 					(Id, A)
 				};
+
 				command_executor
 					.ExecuteCommand(command_id, args)
 					.await
@@ -41,12 +47,15 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Command.Execute" => {
 			crate::effect!(run_time, {
 				let command_executor:Arc<dyn CommandExecutor> = run_time.Environment.Require();
+
 				let command_id = string_at(&Parameters, 0);
+
 				let args = val_at(&Parameters, 1);
 
 				// Capture before the move so the tier-gated dual-emit can
 				// reuse them. The executor consumes both by value.
 				let BroadcastId = command_id.clone();
+
 				let BroadcastArgs = args.clone();
 
 				let ExecResult = command_executor
@@ -68,6 +77,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				// Flip `TierCommandEventBroadcast=On` to enable.
 				let BroadcastEnabled = std::env::var("TierCommandEventBroadcast")
 					.unwrap_or_else(|_| env!("TierCommandEventBroadcast", "Off").to_string());
+
 				if BroadcastEnabled == "On" {
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
@@ -87,6 +97,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Command.GetAll" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn CommandExecutor> = run_time.Environment.Require();
+
 				provider
 					.GetAllCommands()
 					.await

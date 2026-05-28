@@ -29,7 +29,9 @@ pub fn Fn(StorageFilePath:&Path) -> HashMap<String, Value> {
 					StorageFilePath.display(),
 					Error
 				);
+
 				AttemptMementoRecovery::Fn(StorageFilePath, &Content);
+
 				HashMap::new()
 			})
 		},

@@ -35,6 +35,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:InitExtensionHostRequest) ->
 		.enumerate()
 		.filter_map(|(Index, F)| {
 			let URI = F.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
+
 			url::Url::parse(URI)
 				.ok()
 				.and_then(|Parsed| WorkspaceFolderStateDTO::New(Parsed, F.name.clone(), Index).ok())

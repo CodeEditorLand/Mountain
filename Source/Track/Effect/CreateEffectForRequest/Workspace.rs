@@ -38,6 +38,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				} else {
 					Parameters
 				};
+
 				crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
 					&run_time.Environment,
 					"sky://workspace/applyEdit",
@@ -46,6 +47,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				.await
 				.map_err(|Error| {
 					dev_log!("ipc", "error: [applyEdit] Sky did not answer ({:?})", Error);
+
 					Error.to_string()
 				})
 			})
@@ -72,6 +74,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							"warn: [showTextDocument] Sky did not answer ({:?}); returning null",
 							Error
 						);
+
 						Ok(json!(null))
 					},
 				}
@@ -117,6 +120,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$updateWorkspaceFolders" => {
 			crate::effect!(run_time, {
 				let Payload = array_unwrap(Parameters);
+
 				let Additions:Vec<(String, String)> = Payload
 					.get("additions")
 					.and_then(Value::as_array)
@@ -128,12 +132,15 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 									.get("uri")
 									.and_then(|U| U.get("value").and_then(Value::as_str).or_else(|| U.as_str()))
 									.map(str::to_string)?;
+
 								let Name = Entry.get("name").and_then(Value::as_str).unwrap_or("").to_string();
+
 								Some((Uri, Name))
 							})
 							.collect()
 					})
 					.unwrap_or_default();
+
 				let Removals:Vec<String> = Payload
 					.get("removals")
 					.and_then(Value::as_array)
@@ -151,9 +158,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					.unwrap_or_default();
 
 				let Workspace = &run_time.Environment.ApplicationState.Workspace;
+
 				let mut Folders = Workspace.GetWorkspaceFolders();
+
 				Folders.retain(|F| !Removals.contains(&F.URI.to_string()));
+
 				let Base = Folders.len();
+
 				for (Index, (UriStr, Name)) in Additions.iter().enumerate() {
 					if let Ok(Url) = url::Url::parse(UriStr) {
 						if let Ok(Dto) =
@@ -166,9 +177,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						}
 					}
 				}
+
 				crate::ApplicationState::State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify(
 					Workspace, Folders,
 				);
+
 				Ok(json!(null))
 			})
 		},
@@ -191,6 +204,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					"uri": UriVal,
 					"reason": 1, // TextDocumentSaveReason.Manual
 				});
+
 				let _ = tokio::time::timeout(
 					std::time::Duration::from_millis(1500),
 					::Vine::Client::SendNotification::Fn(
@@ -217,6 +231,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					},
 					Err(Error) => {
 						dev_log!("ipc", "warn: [Workspace.Save] Sky did not answer ({:?}); ok", Error);
+
 						UriVal.clone()
 					},
 				};
@@ -240,6 +255,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Workspace.SaveAs" => {
 			crate::effect!(run_time, {
 				let UriVal = uri_from_params(Parameters);
+
 				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
 					&run_time.Environment,
 					"sky://workspace/saveAs",
@@ -269,6 +285,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					Ok(Result) => Ok(Result),
 					Err(Error) => {
 						dev_log!("ipc", "warn: [saveAll] Sky did not answer ({:?}); ok", Error);
+
 						Ok(serde_json::json!(null))
 					},
 				}

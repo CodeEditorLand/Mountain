@@ -88,6 +88,7 @@ pub async fn MountainGetWorkbenchConfiguration(
 		.await
 		.map_err(|Error| {
 			dev_log!("ipc", "[IPC] [WorkbenchConfig] Failed: {}", Error);
+
 			Error.to_string()
 		})?;
 

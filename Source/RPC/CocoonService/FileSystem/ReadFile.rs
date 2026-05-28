@@ -14,6 +14,7 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:ReadFileRequest) -> Result<
 
 	let Content = tokio::fs::read(&Path).await.map_err(|Error| {
 		dev_log!("cocoon", "warn: [CocoonService] read_file failed for {:?}: {}", Path, Error);
+
 		Status::not_found(format!("read_file: {}: {}", Path.display(), Error))
 	})?;
 

@@ -37,14 +37,19 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"UserInterface.ShowMessage" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+
 				let severity_str = string_at_or(&Parameters, 0, "info");
+
 				let message = string_at(&Parameters, 1);
+
 				let options = Parameters.get(2).cloned();
+
 				let severity = match severity_str.as_str() {
 					"warning" => MessageSeverity::Warning,
 					"error" => MessageSeverity::Error,
 					_ => MessageSeverity::Info,
 				};
+
 				provider
 					.ShowMessage(severity, message, options)
 					.await
@@ -56,6 +61,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"UserInterface.ShowQuickPick" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+
 				let items = Parameters
 					.get(0)
 					.and_then(Value::as_array)
@@ -69,6 +75,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						.ok()
 					})
 					.collect::<Vec<_>>();
+
 				let options = Parameters.get(1).and_then(|V| {
 					if V.is_object() {
 						match serde_json::from_value::<
@@ -78,6 +85,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							Ok(dto) => Some(dto),
 							Err(e) => {
 								dev_log!("ipc", "warn: Failed to deserialize QuickPickOptionsDTO: {}", e);
+
 								Some(Default::default())
 							},
 						}
@@ -85,6 +93,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						None
 					}
 				});
+
 				provider
 					.ShowQuickPick(items, options)
 					.await
@@ -96,6 +105,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"UserInterface.ShowInputBox" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+
 				let options = if let Some(Value::Object(obj)) = Parameters.get(0) {
 					match serde_json::from_value::<
 						CommonLibrary::UserInterface::DTO::InputBoxOptionsDTO::InputBoxOptionsDTO,
@@ -104,12 +114,14 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						Ok(dto) => Some(dto),
 						Err(e) => {
 							dev_log!("ipc", "warn: Failed to deserialize InputBoxOptionsDTO: {}", e);
+
 							Some(CommonLibrary::UserInterface::DTO::InputBoxOptionsDTO::InputBoxOptionsDTO::default())
 						},
 					}
 				} else {
 					None
 				};
+
 				provider
 					.ShowInputBox(options)
 					.await
@@ -121,6 +133,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"UserInterface.ShowOpenDialog" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+
 				let options = if let Some(Value::Object(obj)) = Parameters.get(0) {
 					match serde_json::from_value::<
 						CommonLibrary::UserInterface::DTO::OpenDialogOptionsDTO::OpenDialogOptionsDTO,
@@ -129,12 +142,14 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						Ok(dto) => Some(dto),
 						Err(e) => {
 							dev_log!("ipc", "warn: Failed to deserialize OpenDialogOptionsDTO: {}", e);
+
 							Some(Default::default())
 						},
 					}
 				} else {
 					None
 				};
+
 				provider
 					.ShowOpenDialog(options)
 					.await
@@ -146,6 +161,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"UserInterface.ShowSaveDialog" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+
 				let options = if let Some(Value::Object(obj)) = Parameters.get(0) {
 					match serde_json::from_value::<
 						CommonLibrary::UserInterface::DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO,
@@ -154,12 +170,14 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						Ok(dto) => Some(dto),
 						Err(e) => {
 							dev_log!("ipc", "warn: Failed to deserialize SaveDialogOptionsDTO: {}", e);
+
 							Some(Default::default())
 						},
 					}
 				} else {
 					None
 				};
+
 				provider
 					.ShowSaveDialog(options)
 					.await

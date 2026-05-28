@@ -311,7 +311,9 @@ impl DebugService for MountainEnvironment {
 
 				tokio::spawn(async move {
 					use tokio::io::AsyncWriteExt;
+
 					let mut Pipe = Stdin;
+
 					while let Some(Frame) = Receiver.recv().await {
 						if let Err(Error) = Pipe.write_all(&Frame).await {
 							crate::dev_log!(
@@ -320,8 +322,10 @@ impl DebugService for MountainEnvironment {
 								StdinSessionId,
 								Error
 							);
+
 							break;
 						}
+
 						if let Err(Error) = Pipe.flush().await {
 							crate::dev_log!(
 								"exthost",
@@ -329,9 +333,11 @@ impl DebugService for MountainEnvironment {
 								StdinSessionId,
 								Error
 							);
+
 							break;
 						}
 					}
+
 					let _ = Pipe.shutdown().await;
 				});
 
@@ -349,13 +355,19 @@ impl DebugService for MountainEnvironment {
 
 				tokio::spawn(async move {
 					use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
+
 					let mut Reader = BufReader::new(Stdout);
+
 					let mut Header = String::new();
+
 					loop {
 						Header.clear();
+
 						let mut ContentLength:usize = 0;
+
 						loop {
 							Header.clear();
+
 							match Reader.read_line(&mut Header).await {
 								Ok(0) => return, // EOF
 								Ok(_) => {},
@@ -366,23 +378,30 @@ impl DebugService for MountainEnvironment {
 										StdoutSessionId,
 										Error
 									);
+
 									return;
 								},
 							}
+
 							let Trimmed = Header.trim_end_matches("\r\n").trim_end_matches('\n');
+
 							if Trimmed.is_empty() {
 								break;
 							}
+
 							if let Some(Rest) = Trimmed.strip_prefix("Content-Length:") {
 								if let Ok(N) = Rest.trim().parse::<usize>() {
 									ContentLength = N;
 								}
 							}
 						}
+
 						if ContentLength == 0 {
 							continue;
 						}
+
 						let mut Body = vec![0u8; ContentLength];
+
 						if let Err(Error) = Reader.read_exact(&mut Body).await {
 							crate::dev_log!(
 								"exthost",
@@ -390,9 +409,12 @@ impl DebugService for MountainEnvironment {
 								StdoutSessionId,
 								Error
 							);
+
 							return;
 						}
+
 						let Parsed:Value = serde_json::from_slice(&Body).unwrap_or(Value::Null);
+
 						let _ = StdoutHandle.emit(
 							"sky://debug/dap-message",
 							json!({
@@ -410,7 +432,9 @@ impl DebugService for MountainEnvironment {
 
 				tokio::spawn(async move {
 					use tokio::io::{AsyncBufReadExt, BufReader};
+
 					let mut Lines = BufReader::new(Stderr).lines();
+
 					while let Ok(Some(Line)) = Lines.next_line().await {
 						crate::dev_log!("exthost", "[DebugAdapter] stderr session={}: {}", StderrSessionId, Line);
 					}
@@ -471,9 +495,12 @@ impl DebugService for MountainEnvironment {
 
 				// Writer task: drain mpsc into the TCP write half.
 				let WriterSessionId = SessionID.clone();
+
 				tokio::spawn(async move {
 					use tokio::io::AsyncWriteExt;
+
 					let mut Pipe = WriteHalf;
+
 					while let Some(Frame) = Receiver.recv().await {
 						if let Err(Error) = Pipe.write_all(&Frame).await {
 							crate::dev_log!(
@@ -482,8 +509,10 @@ impl DebugService for MountainEnvironment {
 								WriterSessionId,
 								Error
 							);
+
 							break;
 						}
+
 						let _ = Pipe.flush().await;
 					}
 				});
@@ -491,17 +520,26 @@ impl DebugService for MountainEnvironment {
 				// Reader task: parse DAP frames from the TCP read half and
 				// re-emit each JSON message to Sky.
 				let ReaderSessionId = SessionID.clone();
+
 				let ReaderHandle = self.ApplicationHandle.clone();
+
 				let ReaderSidecar = TargetSideCar.clone();
+
 				tokio::spawn(async move {
 					use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
+
 					let mut Reader = BufReader::new(ReadHalf);
+
 					let mut Header = String::new();
+
 					loop {
 						Header.clear();
+
 						let mut ContentLength:usize = 0;
+
 						loop {
 							Header.clear();
+
 							match Reader.read_line(&mut Header).await {
 								Ok(0) => return,
 								Ok(_) => {},
@@ -512,23 +550,30 @@ impl DebugService for MountainEnvironment {
 										ReaderSessionId,
 										Error
 									);
+
 									return;
 								},
 							}
+
 							let Trimmed = Header.trim_end_matches("\r\n").trim_end_matches('\n');
+
 							if Trimmed.is_empty() {
 								break;
 							}
+
 							if let Some(Rest) = Trimmed.strip_prefix("Content-Length:") {
 								if let Ok(N) = Rest.trim().parse::<usize>() {
 									ContentLength = N;
 								}
 							}
 						}
+
 						if ContentLength == 0 {
 							continue;
 						}
+
 						let mut Body = vec![0u8; ContentLength];
+
 						if let Err(Error) = Reader.read_exact(&mut Body).await {
 							crate::dev_log!(
 								"exthost",
@@ -536,9 +581,12 @@ impl DebugService for MountainEnvironment {
 								ReaderSessionId,
 								Error
 							);
+
 							return;
 						}
+
 						let Parsed:Value = serde_json::from_slice(&Body).unwrap_or(Value::Null);
+
 						let _ = ReaderHandle.emit(
 							"sky://debug/dap-message",
 							json!({
@@ -551,6 +599,7 @@ impl DebugService for MountainEnvironment {
 				});
 
 				AdapterStdinSender = Some(Sender);
+
 				AdapterChildPid = None;
 
 				dev_log!(
@@ -593,6 +642,7 @@ impl DebugService for MountainEnvironment {
 							),
 						}
 					})?;
+
 					tokio::io::split(Stream)
 				};
 
@@ -611,15 +661,19 @@ impl DebugService for MountainEnvironment {
 									),
 								}
 							})?;
+
 					tokio::io::split(Stream)
 				};
 
 				let (Sender, mut Receiver) = tokio::sync::mpsc::unbounded_channel::<Vec<u8>>();
 
 				let PipeWriterSessionId = SessionID.clone();
+
 				tokio::spawn(async move {
 					use tokio::io::AsyncWriteExt;
+
 					let mut Pipe = WriteHalf;
+
 					while let Some(Frame) = Receiver.recv().await {
 						if let Err(Error) = Pipe.write_all(&Frame).await {
 							crate::dev_log!(
@@ -628,24 +682,35 @@ impl DebugService for MountainEnvironment {
 								PipeWriterSessionId,
 								Error
 							);
+
 							break;
 						}
+
 						let _ = Pipe.flush().await;
 					}
 				});
 
 				let PipeReaderSessionId = SessionID.clone();
+
 				let PipeReaderHandle = self.ApplicationHandle.clone();
+
 				let PipeReaderSidecar = TargetSideCar.clone();
+
 				tokio::spawn(async move {
 					use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
+
 					let mut Reader = BufReader::new(ReadHalf);
+
 					let mut Header = String::new();
+
 					loop {
 						Header.clear();
+
 						let mut ContentLength:usize = 0;
+
 						loop {
 							Header.clear();
+
 							match Reader.read_line(&mut Header).await {
 								Ok(0) => return,
 								Ok(_) => {},
@@ -656,23 +721,30 @@ impl DebugService for MountainEnvironment {
 										PipeReaderSessionId,
 										Error
 									);
+
 									return;
 								},
 							}
+
 							let Trimmed = Header.trim_end_matches("\r\n").trim_end_matches('\n');
+
 							if Trimmed.is_empty() {
 								break;
 							}
+
 							if let Some(Rest) = Trimmed.strip_prefix("Content-Length:") {
 								if let Ok(N) = Rest.trim().parse::<usize>() {
 									ContentLength = N;
 								}
 							}
 						}
+
 						if ContentLength == 0 {
 							continue;
 						}
+
 						let mut Body = vec![0u8; ContentLength];
+
 						if let Err(Error) = Reader.read_exact(&mut Body).await {
 							crate::dev_log!(
 								"exthost",
@@ -680,9 +752,12 @@ impl DebugService for MountainEnvironment {
 								PipeReaderSessionId,
 								Error
 							);
+
 							return;
 						}
+
 						let Parsed:Value = serde_json::from_slice(&Body).unwrap_or(Value::Null);
+
 						let _ = PipeReaderHandle.emit(
 							"sky://debug/dap-message",
 							json!({
@@ -695,6 +770,7 @@ impl DebugService for MountainEnvironment {
 				});
 
 				AdapterStdinSender = Some(Sender);
+
 				AdapterChildPid = None;
 
 				dev_log!(

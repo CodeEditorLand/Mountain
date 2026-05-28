@@ -68,9 +68,11 @@ pub fn strip_file_uri(input:&str) -> &str {
 		if rest.starts_with('/') {
 			return rest;
 		}
+
 		if let Some(idx) = rest.find('/') {
 			return &rest[idx..];
 		}
 	}
+
 	input
 }

@@ -356,6 +356,7 @@ pub fn Fn() {
 		// [Boot] [Args] CLI parsing (using CliParse module)
 		// ---------------------------------------------------------------------
 		let _WorkspaceConfigurationPath = CliParseFn();
+
 		let _InitialFolders:Vec<String> = vec![];
 
 		// ---------------------------------------------------------------------
@@ -375,6 +376,7 @@ pub fn Fn() {
 		// -------------------------------------------------------------------
 		{
 			let InitialFolderPaths = crate::Binary::Initialize::CliParse::ParseWorkspaceFolders();
+
 			if InitialFolderPaths.is_empty() {
 				dev_log!(
 					"lifecycle",
@@ -382,7 +384,9 @@ pub fn Fn() {
 				);
 			} else {
 				use crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO;
+
 				let mut Folders:Vec<WorkspaceFolderStateDTO> = Vec::new();
+
 				for (Index, Path) in InitialFolderPaths.iter().enumerate() {
 					let Uri = match url::Url::from_directory_path(Path) {
 						Ok(U) => U,
@@ -392,14 +396,17 @@ pub fn Fn() {
 								"warn: [Boot] [Workspace] Failed to build URL for {}; skipping",
 								Path.display()
 							);
+
 							continue;
 						},
 					};
+
 					let Name = Path
 						.file_name()
 						.and_then(|N| N.to_str())
 						.map(str::to_string)
 						.unwrap_or_else(|| Path.display().to_string());
+
 					match WorkspaceFolderStateDTO::New(Uri, Name, Index) {
 						Ok(Dto) => Folders.push(Dto),
 						Err(Error) => {
@@ -412,12 +419,14 @@ pub fn Fn() {
 						},
 					}
 				}
+
 				if !Folders.is_empty() {
 					// Seed state directly; Cocoon is not yet spawned at this
 					// point, so there is no sidecar to notify. The initial
 					// workspace makes it to Cocoon via `InitializeExtensionHost`'s
 					// `workspace` payload during its handshake instead.
 					AppState.Workspace.SetWorkspaceFolders(Folders);
+
 					dev_log!(
 						"lifecycle",
 						"[Boot] [Workspace] Seeded {} workspace folder(s).",
@@ -440,13 +449,16 @@ pub fn Fn() {
 		// [Boot] [Runtime] Scheduler handles (using RuntimeBuild module)
 		// ---------------------------------------------------------------------
 		let Scheduler = Arc::new(SchedulerBuilder::Create().Build());
+
 		let SchedulerForClosure = Scheduler.clone();
+
 		TraceStep!("[Boot] [Echo] Scheduler handles prepared.");
 
 		// ---------------------------------------------------------------------
 		// [Boot] [Localhost] Port selection (using PortSelector module)
 		// ---------------------------------------------------------------------
 		let ServerPort = SelectPort();
+
 		let LocalhostUrl = BuildPortUrl(ServerPort);
 
 		// ---------------------------------------------------------------------
@@ -465,9 +477,12 @@ pub fn Fn() {
 			.manage(AppStateArcForClosure.clone())
 			.setup({
 				let LocalhostUrl = LocalhostUrl.clone();
+
 				let ServerPortForClosure = ServerPort;
+
 				move |app:&mut App| {
 					dev_log!("lifecycle", "[Lifecycle] [Setup] Setup hook started.");
+
 					dev_log!("lifecycle", "[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
 
 					// ---------------------------------------------------------
@@ -477,7 +492,9 @@ pub fn Fn() {
 						"lifecycle",
 						"[Lifecycle] [Setup] Initializing ServiceRegistry for land:// scheme..."
 					);
+
 					let service_registry = ServiceRegistryFn::new();
+
 					init_service_registry(service_registry.clone());
 
 					// ---------------------------------------------------------
@@ -489,6 +506,7 @@ pub fn Fn() {
 						"[Lifecycle] [Setup] Registering code.land.playform.cloud service on port {}",
 						ServerPortForClosure
 					);
+
 					register_land_service("code.land.playform.cloud", ServerPortForClosure);
 
 					// Register API editor service (same port for now, can be separate later)
@@ -499,6 +517,7 @@ pub fn Fn() {
 
 					// Make the registry available as managed state for Tauri commands
 					app.manage(service_registry);
+
 					dev_log!(
 						"lifecycle",
 						"[Lifecycle] [Setup] ServiceRegistry initialized and services registered."
@@ -510,12 +529,14 @@ pub fn Fn() {
 					// The DNS server must start BEFORE any webview loads to ensure
 					// that land:// protocol_resolution is available
 					dev_log!("lifecycle", "[Lifecycle] [Setup] Starting DNS server on preferred port 5380...");
+
 					let dns_port = Mist::start(5380).unwrap_or_else(|e| {
 						dev_log!(
 							"lifecycle",
 							"warn: [Lifecycle] [Setup] Failed to start DNS server on port 5380: {}",
 							e
 						);
+
 						// Fallback to random port if preferred port fails
 						Mist::start(0).unwrap_or_else(|e| {
 							dev_log!(
@@ -523,6 +544,7 @@ pub fn Fn() {
 								"error: [Lifecycle] [Setup] Completely failed to start DNS server: {}",
 								e
 							);
+
 							0 // Return 0 as error indicator
 						})
 					});
@@ -539,6 +561,7 @@ pub fn Fn() {
 							"[Lifecycle] [Setup] DNS server started successfully on port {}",
 							dns_port
 						);
+
 						// Initialize DNS startup time for tracking
 						crate::Binary::Build::DnsCommands::StartupTime::init_dns_startup_time();
 					}
@@ -567,6 +590,7 @@ pub fn Fn() {
 						);
 
 						let MistRegistry = Mist::WebSocket::HandlerRegistry::new();
+
 						let MistSecret = Mist::WebSocket::SharedSecret::random();
 
 						// Expose the secret to Cocoon/Sky via env. The startup
@@ -575,6 +599,7 @@ pub fn Fn() {
 						// workbench configuration payload that Sky consumes.
 						unsafe {
 							std::env::set_var("MountainWebSocketSecret", MistSecret.as_hex());
+
 							std::env::set_var("MountainWebSocketPort", "5051");
 						}
 
@@ -595,6 +620,7 @@ pub fn Fn() {
 					app.manage(DnsPort(dns_port));
 
 					let AppHandle = app.handle().clone();
+
 					TraceStep!("[Lifecycle] [Setup] AppHandle acquired.");
 
 					// ---------------------------------------------------------
@@ -618,14 +644,17 @@ pub fn Fn() {
 			.register_asynchronous_uri_scheme_protocol("fiddee", |_ctx, request, responder| {
 				// Implemented: delegate to synchronous scheme handler
 				let response = crate::Binary::Build::Scheme::land_scheme_handler(&request);
+
 				responder.respond(response);
 			})
 			.register_asynchronous_uri_scheme_protocol("vscode-file", |ctx, request, responder| {
 				// VS Code Electron workbench uses vscode-file:// to load assets.
 				// Maps to embedded frontend assets from Sky/Target.
 				let AppHandle = ctx.app_handle().clone();
+
 				std::thread::spawn(move || {
 					let response = crate::Binary::Build::Scheme::VscodeFileSchemeHandler(&AppHandle, &request);
+
 					responder.respond(response);
 				});
 			})
@@ -640,8 +669,10 @@ pub fn Fn() {
 				// extension HTML itself comes through later via the workbench's
 				// `swMessage` postMessage channel, not this scheme.
 				let AppHandle = ctx.app_handle().clone();
+
 				std::thread::spawn(move || {
 					let response = crate::Binary::Build::Scheme::VscodeWebviewSchemeHandler(&AppHandle, &request);
+
 					responder.respond(response);
 				});
 			})
@@ -659,30 +690,39 @@ pub fn Fn() {
 				// the path to `VscodeFileSchemeHandler` by rewriting the
 				// URI to `vscode-file://vscode-app/<path>`.
 				let AppHandle = ctx.app_handle().clone();
+
 				std::thread::spawn(move || {
 					let Original = request.uri().to_string();
+
 					let RewrittenUri = match Original.strip_prefix("vscode-webview-resource://") {
 						Some(After) => {
 							let Rest = After.find('/').map(|I| &After[I..]).unwrap_or("/");
+
 							format!("vscode-file://vscode-app{}", Rest)
 						},
 						None => "vscode-file://vscode-app/".to_string(),
 					};
+
 					crate::dev_log!(
 						"scheme-assets",
 						"[LandFix:VscodeWebviewResource] {} -> {}",
 						Original,
 						RewrittenUri
 					);
+
 					let mut Builder = tauri::http::request::Request::builder().uri(&RewrittenUri);
+
 					for (Name, Value) in request.headers().iter() {
 						Builder = Builder.header(Name, Value);
 					}
+
 					let Forwarded = Builder
 						.method(request.method().clone())
 						.body(request.body().clone())
 						.unwrap_or_else(|_| request.clone());
+
 					let response = crate::Binary::Build::Scheme::VscodeFileSchemeHandler(&AppHandle, &Forwarded);
+
 					responder.respond(response);
 				});
 			})
@@ -691,25 +731,34 @@ pub fn Fn() {
 				// `vscode-webview-resource` - rewrite to `vscode-file://`
 				// and dispatch through the existing file handler.
 				let AppHandle = ctx.app_handle().clone();
+
 				std::thread::spawn(move || {
 					let Original = request.uri().to_string();
+
 					let RewrittenUri = match Original.strip_prefix("vscode-resource://") {
 						Some(After) => {
 							let Rest = After.find('/').map(|I| &After[I..]).unwrap_or("/");
+
 							format!("vscode-file://vscode-app{}", Rest)
 						},
 						None => "vscode-file://vscode-app/".to_string(),
 					};
+
 					crate::dev_log!("scheme-assets", "[LandFix:VscodeResource] {} -> {}", Original, RewrittenUri);
+
 					let mut Builder = tauri::http::request::Request::builder().uri(&RewrittenUri);
+
 					for (Name, Value) in request.headers().iter() {
 						Builder = Builder.header(Name, Value);
 					}
+
 					let Forwarded = Builder
 						.method(request.method().clone())
 						.body(request.body().clone())
 						.unwrap_or_else(|_| request.clone());
+
 					let response = crate::Binary::Build::Scheme::VscodeFileSchemeHandler(&AppHandle, &Forwarded);
+
 					responder.respond(response);
 				});
 			})
@@ -855,6 +904,7 @@ pub fn Fn() {
 					// second pass would log spurious "tcp connect error"
 					// warnings trying to notify a dead sidecar.
 					static SHUTTING_DOWN:AtomicBool = AtomicBool::new(false);
+
 					if SHUTTING_DOWN.swap(true, Ordering::SeqCst) {
 						return;
 					}
@@ -863,19 +913,24 @@ pub fn Fn() {
 						"lifecycle",
 						"warn: [Lifecycle] [Shutdown] Exit requested. Starting graceful shutdown..."
 					);
+
 					api.prevent_exit();
 
 					let SchedulerHandle = Scheduler.clone();
+
 					let app_handle_clone = app_handle.clone();
 
 					tokio::spawn(async move {
 						dev_log!("lifecycle", "[Lifecycle] [Shutdown] Shutting down ApplicationRunTime...");
+
 						let _ = RuntimeShutdownFn(&app_handle_clone).await;
 
 						dev_log!("lifecycle", "[Lifecycle] [Shutdown] Stopping Echo scheduler...");
+
 						let _ = SchedulerShutdownFn(SchedulerHandle).await;
 
 						dev_log!("lifecycle", "[Lifecycle] [Shutdown] Done. Exiting process.");
+
 						app_handle_clone.exit(0);
 					});
 				}

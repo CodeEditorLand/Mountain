@@ -16,11 +16,13 @@ pub fn Fn(Options:&Value) -> Vec<DialogFilter> {
 				.iter()
 				.filter_map(|Entry| {
 					let Name = Entry.get("name").and_then(Value::as_str).unwrap_or("Files").to_string();
+
 					let Extensions:Vec<String> = Entry
 						.get("extensions")
 						.and_then(Value::as_array)
 						.map(|List| List.iter().filter_map(|V| V.as_str().map(str::to_string)).collect())
 						.unwrap_or_default();
+
 					if Extensions.is_empty() {
 						None
 					} else {

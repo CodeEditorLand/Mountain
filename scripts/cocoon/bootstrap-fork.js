@@ -89,6 +89,7 @@ const PostHogCapture = async (EventName, Properties = {}) => {
 		});
 
 		Req.on("error", () => {}); // Swallow - fire and forget
+
 		Req.write(Body);
 
 		Req.end();
@@ -221,7 +222,9 @@ if (ParentPID) {
 			process.kill(Number(ParentPID), 0);
 		} catch {
 			Trace("lifecycle", "orphan-exit");
+
 			PostHogCapture("cocoon:session:end", { reason: "orphan" });
+
 			OTLPFlush().then(() => process.exit(0));
 		}
 	}, 5000);
@@ -245,6 +248,7 @@ PostHogCapture("cocoon:session:start", {
 // Three-level = repo  (Element/Mountain/scripts/cocoon/ → Element/Cocoon/).
 const CocoonBase = (Rel) => [
 	new URL(`../../${Rel}`, import.meta.url),
+
 	new URL(`../../../${Rel}`, import.meta.url),
 ];
 

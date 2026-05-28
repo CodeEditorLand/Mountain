@@ -82,8 +82,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"config.get" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
+
 				let Key = str_obj_or_pos(&Parameters, "key", 0).to_string();
+
 				let result = provider.InspectConfigurationValue(Key, Default::default()).await;
+
 				result
 					.map(|Inspection| serde_json::to_value(Inspection).unwrap_or(Value::Null))
 					.map_err(|e| e.to_string())
@@ -94,23 +97,30 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			crate::effect!(run_time, {
 				let (Key, Value_, Target) = if let Some(Object) = Parameters.as_object() {
 					let K = Object.get("key").and_then(Value::as_str).unwrap_or("").to_string();
+
 					let V = Object.get("value").cloned().unwrap_or_default();
+
 					let T = match Object.get("target").and_then(Value::as_u64) {
 						Some(0) => ConfigurationTarget::User,
 						Some(1) => ConfigurationTarget::Workspace,
 						_ => ConfigurationTarget::User,
 					};
+
 					(K, V, T)
 				} else {
 					let K = string_at(&Parameters, 0);
+
 					let V = val_at(&Parameters, 1);
+
 					let T = match u64_at(&Parameters, 2) {
 						0 => ConfigurationTarget::User,
 						1 => ConfigurationTarget::Workspace,
 						_ => ConfigurationTarget::User,
 					};
+
 					(K, V, T)
 				};
+
 				UpdateConfigurationValueAndNotify(run_time, Key, Value_, Target, "config.update").await
 			})
 		},
@@ -118,8 +128,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Configuration.Inspect" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
+
 				let section = string_at(&Parameters, 0);
+
 				let result = provider.InspectConfigurationValue(section, Default::default()).await;
+
 				result
 					.map(|Inspection| serde_json::to_value(Inspection).unwrap_or(Value::Null))
 					.map_err(|e| e.to_string())
@@ -129,12 +142,15 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Configuration.Update" => {
 			crate::effect!(run_time, {
 				let key = string_at(&Parameters, 0);
+
 				let value = val_at(&Parameters, 1);
+
 				let target = match u64_at(&Parameters, 2) {
 					0 => ConfigurationTarget::User,
 					1 => ConfigurationTarget::Workspace,
 					_ => ConfigurationTarget::User,
 				};
+
 				UpdateConfigurationValueAndNotify(run_time, key, value, target, "Configuration.Update").await
 			})
 		},

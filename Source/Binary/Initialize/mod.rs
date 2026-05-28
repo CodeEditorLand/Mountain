@@ -4,9 +4,6 @@
 //! Covers Tokio runtime construction, CLI argument parsing, application
 //! state assembly, port selection, and log-level configuration.
 
-/// Build and return the configured multi-thread Tokio runtime.
-pub mod RuntimeBuild;
-
 /// Parse and validate command-line arguments into a typed configuration struct.
 pub mod CliParse;
 

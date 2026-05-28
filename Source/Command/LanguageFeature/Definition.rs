@@ -42,6 +42,7 @@ pub(super) async fn provide_definition_impl(
 	invoke_provider(application_handle, |provider| {
 		async move {
 			let result = provider.ProvideDefinition(document_uri, position_dto).await?;
+
 			Ok(serde_json::to_value(result)?)
 		}
 	})

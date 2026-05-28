@@ -22,8 +22,6 @@ pub mod DevLog;
 
 pub mod SkyEmit;
 
-pub mod EmitWithTraceparent;
-
 pub mod UriComponents;
 
 pub mod WindServiceHandlers;

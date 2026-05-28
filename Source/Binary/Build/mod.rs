@@ -29,9 +29,6 @@ pub mod DnsCommands;
 /// TLS certificate lifecycle management (generation, renewal, trust store).
 pub mod CertificateManager;
 
-/// Tauri commands exposing TLS certificate status and manual rotation.
-pub mod TlsCommands;
-
 /// PostHog analytics plugin (opt-in telemetry event forwarding).
 pub mod PostHogPlugin;
 

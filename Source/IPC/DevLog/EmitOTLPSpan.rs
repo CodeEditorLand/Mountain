@@ -25,8 +25,11 @@ static OTLP_TRACE_ID:OnceLock<String> = OnceLock::new();
 fn GetTraceId() -> &'static str {
 	OTLP_TRACE_ID.get_or_init(|| {
 		let mut H = DefaultHasher::new();
+
 		std::process::id().hash(&mut H);
+
 		NowNano::Fn().hash(&mut H);
+
 		format!("{:032x}", H.finish() as u128)
 	})
 }
@@ -112,13 +115,18 @@ pub fn Fn(Name:&str, StartNano:u64, EndNano:u64, Attributes:&[(&str, &str)]) {
 
 		let Ok(SocketAddress) = HostAddress.parse() else {
 			OTLP_AVAILABLE.store(false, Ordering::Relaxed);
+
 			return;
 		};
+
 		let Ok(mut Stream) = TcpStream::connect_timeout(&SocketAddress, Duration::from_millis(200)) else {
 			OTLP_AVAILABLE.store(false, Ordering::Relaxed);
+
 			return;
 		};
+
 		let _ = Stream.set_write_timeout(Some(Duration::from_millis(200)));
+
 		let _ = Stream.set_read_timeout(Some(Duration::from_millis(200)));
 
 		let HttpReq = format!(
@@ -128,14 +136,19 @@ pub fn Fn(Name:&str, StartNano:u64, EndNano:u64, Attributes:&[(&str, &str)]) {
 			HostAddress,
 			Payload.len()
 		);
+
 		if Stream.write_all(HttpReq.as_bytes()).is_err() {
 			return;
 		}
+
 		if Stream.write_all(Payload.as_bytes()).is_err() {
 			return;
 		}
+
 		let mut Buf = [0u8; 32];
+
 		let _ = Stream.read(&mut Buf);
+
 		if !(Buf.starts_with(b"HTTP/1.1 2") || Buf.starts_with(b"HTTP/1.0 2")) {
 			OTLP_AVAILABLE.store(false, Ordering::Relaxed);
 		}

@@ -26,7 +26,6 @@ Root CA Certificate (stored in OS keyring)
 
 1. **CertificateManager** - Core module for certificate lifecycle management
 2. **ServiceRegistry** - Integration point for HTTPS service registration
-3. **TlsCommands** - Tauri commands for webview interaction
 
 ## Trust Model
 

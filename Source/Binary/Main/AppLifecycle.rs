@@ -295,7 +295,9 @@ pub fn AppLifecycleSetup(
 		MainWindow.on_window_event(move |Event| {
 			if let tauri::WindowEvent::CloseRequested { api, .. } = Event {
 				api.prevent_close();
+
 				let _ = CloseEmitter.emit("sky://window/close-requested", ());
+
 				dev_log!("window", "[UI] [Window] CloseRequested intercepted; forwarded to webview");
 			}
 		});
@@ -340,6 +342,7 @@ pub fn AppLifecycleSetup(
 
 				// `.app/Contents/MacOS/<bin>` → `Contents/Resources/`
 				let BundleResources = ExeParent.join("../Resources");
+
 				if BundleResources.exists() {
 					return BundleResources;
 				}
@@ -348,6 +351,7 @@ pub fn AppLifecycleSetup(
 				// `Element/Sky/Target/`. Used by both debug runs and raw-
 				// release launches from inside the repo.
 				let RepoSky = ExeParent.join("../../../Sky/Target");
+
 				if RepoSky.exists() {
 					return RepoSky;
 				}
@@ -559,8 +563,11 @@ pub fn AppLifecycleSetup(
 
 	tauri::async_runtime::spawn(async move {
 		dev_log!("lifecycle", "[Lifecycle] [PostSetup] Starting...");
+
 		let PostSetupStart = crate::IPC::DevLog::NowNano::Fn();
+
 		let AppStateForSetup = PostSetupEnvironment.ApplicationState.clone();
+
 		TraceStep!("[Lifecycle] [PostSetup] AppState cloned.");
 
 		// [Config]
@@ -576,7 +583,9 @@ pub fn AppLifecycleSetup(
 		// below repairs this without disturbing the existing initial
 		// merge that the rest of bootstrap depends on.
 		let ConfigStart = crate::IPC::DevLog::NowNano::Fn();
+
 		let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
+
 		crate::otel_span!("lifecycle:config:initialize", ConfigStart);
 
 		// [Workspace] [Trust] Desktop app - trust local workspace by default
@@ -584,10 +593,12 @@ pub fn AppLifecycleSetup(
 
 		// [Extensions] [ScanPaths]
 		let ExtScanStart = crate::IPC::DevLog::NowNano::Fn();
+
 		let _ = ScanPathConfigureFn(&AppStateForSetup);
 
 		// [Extensions] [Scan]
 		let _ = ExtensionPopulateFn(PostSetupAppHandle.clone(), &AppStateForSetup).await;
+
 		crate::otel_span!("lifecycle:extensions:scan", ExtScanStart);
 
 		// [Config] [Re-merge] - now that ScannedExtensions is populated,
@@ -601,17 +612,21 @@ pub fn AppLifecycleSetup(
 		// preserved because the merge order is Default → User → Workspace
 		// and the cached User/Workspace JSON files are re-read each call.
 		let ConfigRemergeStart = crate::IPC::DevLog::NowNano::Fn();
+
 		let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
+
 		crate::otel_span!("lifecycle:config:remerge-after-extension-scan", ConfigRemergeStart);
 
 		// [Vine] [gRPC]
 		let VineStart = crate::IPC::DevLog::NowNano::Fn();
+
 		let _ = VineStartFn(
 			PostSetupAppHandle.clone(),
 			"127.0.0.1:50051".to_string(),
 			"127.0.0.1:50052".to_string(),
 		)
 		.await;
+
 		crate::otel_span!("lifecycle:vine:start", VineStart);
 
 		// [Cocoon] [Sidecar] - skipped when Disable=true so the
@@ -625,7 +640,9 @@ pub fn AppLifecycleSetup(
 			);
 		} else {
 			let CocoonStart = crate::IPC::DevLog::NowNano::Fn();
+
 			let _ = CocoonStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
+
 			crate::otel_span!("lifecycle:cocoon:start", CocoonStart);
 		}
 
@@ -639,7 +656,9 @@ pub fn AppLifecycleSetup(
 			dev_log!("grpc", "[Air] [Start] Disable=true: Air spawn SKIPPED");
 		} else {
 			let AirStartT0 = crate::IPC::DevLog::NowNano::Fn();
+
 			let _ = AirStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
+
 			crate::otel_span!("lifecycle:air:start", AirStartT0);
 		}
 
@@ -668,9 +687,12 @@ pub fn AppLifecycleSetup(
 		// without visibly delaying late-binding extensions that legitimately
 		// need Eventually to fire.
 		let LifecycleStateClone = AppStateForSetup.Feature.Lifecycle.clone();
+
 		let AppHandleForPhase = PostSetupAppHandle.clone();
+
 		tauri::async_runtime::spawn(async move {
 			tokio::time::sleep(tokio::time::Duration::from_millis(8_000)).await;
+
 			if LifecycleStateClone.GetPhase() < 3 {
 				dev_log!(
 					"lifecycle",
@@ -678,9 +700,12 @@ pub fn AppLifecycleSetup(
 					 (current phase={})",
 					LifecycleStateClone.GetPhase()
 				);
+
 				LifecycleStateClone.AdvanceAndBroadcast(3, &AppHandleForPhase);
 			}
+
 			tokio::time::sleep(tokio::time::Duration::from_millis(15_000)).await;
+
 			if LifecycleStateClone.GetPhase() < 4 {
 				dev_log!(
 					"lifecycle",
@@ -688,6 +713,7 @@ pub fn AppLifecycleSetup(
 					 auto-advancing (current phase={})",
 					LifecycleStateClone.GetPhase()
 				);
+
 				LifecycleStateClone.AdvanceAndBroadcast(4, &AppHandleForPhase);
 			}
 		});
@@ -701,8 +727,10 @@ pub fn AppLifecycleSetup(
 		// observed p95 of `[Lifecycle] [Phase] Advance Ready` on a cold
 		// M-series boot, so the timer rarely fires on a healthy path.
 		let AppHandleForEmergencyShow = PostSetupAppHandle.clone();
+
 		tauri::async_runtime::spawn(async move {
 			tokio::time::sleep(tokio::time::Duration::from_millis(3_000)).await;
+
 			if let Some(MainWindow) = AppHandleForEmergencyShow.get_webview_window("main") {
 				if let Ok(false) = MainWindow.is_visible() {
 					dev_log!(
@@ -710,13 +738,16 @@ pub fn AppLifecycleSetup(
 						"warn: [Lifecycle] [Fallback] main window hidden at +3s; force-revealing to avoid an \
 						 invisible-window lockup (Sky never reached phase 3)"
 					);
+
 					let _ = MainWindow.show();
+
 					let _ = MainWindow.set_focus();
 				}
 			}
 		});
 
 		crate::otel_span!("lifecycle:postsetup:complete", PostSetupStart);
+
 		dev_log!("lifecycle", "[Lifecycle] [PostSetup] Complete. System ready.");
 	});
 

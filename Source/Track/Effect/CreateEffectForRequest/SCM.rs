@@ -22,7 +22,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$scm:createSourceControl" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+
 				let resource = val_at(&Parameters, 0);
+
 				provider
 					.CreateSourceControl(resource)
 					.await
@@ -34,8 +36,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$scm:updateSourceControl" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+
 				let handle = i64_at(&Parameters, 0) as u32;
+
 				let update = val_at(&Parameters, 1);
+
 				provider
 					.UpdateSourceControl(handle, update)
 					.await
@@ -47,8 +52,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$scm:updateGroup" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+
 				let handle = i64_at(&Parameters, 0) as u32;
+
 				let group_data = val_at(&Parameters, 1);
+
 				provider
 					.UpdateSourceControlGroup(handle, group_data)
 					.await
@@ -60,8 +68,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$scm:registerInputBox" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+
 				let handle = i64_at(&Parameters, 0) as u32;
+
 				let options = val_at(&Parameters, 1);
+
 				provider
 					.RegisterInputBox(handle, options)
 					.await
@@ -112,6 +123,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							"warn: [SCM] vscode.diff sky://editor/diff did not answer ({:?}); returning null",
 							Error
 						);
+
 						Ok(json!(null))
 					},
 				}

@@ -15,10 +15,12 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Task.Fetch" => {
 			crate::effect!(run_time, {
 				let filter = val_at(&Parameters, 0);
+
 				proxy_cocoon(&run_time, ProxyTarget::ExtHostTaskService, "fetchTasks", json!([filter]), 5000)
 					.await
 					.or_else(|error| {
 						dev_log!("ipc", "warn: [Task.Fetch] extension did not answer ({:?}); returning []", error);
+
 						Ok(json!([]))
 					})
 			})
@@ -27,6 +29,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Task.Execute" => {
 			crate::effect!(run_time, {
 				let task = val_at(&Parameters, 0);
+
 				proxy_cocoon(&run_time, ProxyTarget::ExtHostTaskService, "executeTask", json!([task]), 30000)
 					.await
 					.or_else(|error| {
@@ -35,6 +38,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							"warn: [Task.Execute] extension did not answer ({:?}); returning null",
 							error
 						);
+
 						Ok(json!(null))
 					})
 			})
@@ -49,6 +53,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"terminate_task" | "Task.Terminate" => {
 			crate::effect!(run_time, {
 				let execution = val_at(&Parameters, 0);
+
 				proxy_cocoon(
 					&run_time,
 					ProxyTarget::ExtHostTaskService,
@@ -63,6 +68,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						"warn: [Task.Terminate] extension did not answer ({:?}); treating as no-op",
 						error
 					);
+
 					Ok(json!(null))
 				})
 			})

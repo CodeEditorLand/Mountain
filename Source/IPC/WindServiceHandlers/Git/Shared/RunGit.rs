@@ -41,6 +41,7 @@ pub async fn Fn(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Result<(i
 			Args.join(" "),
 			Error
 		);
+
 		format!("git spawn failed: {}", Error)
 	})?;
 
@@ -54,9 +55,11 @@ pub async fn Fn(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Result<(i
 		Ok(WaitResult) => {
 			WaitResult.map_err(|Error| {
 				super::ClearPid::Fn(OperationId);
+
 				format!("git wait failed: {}", Error)
 			})?
 		},
+
 		Err(_) => {
 			// Timeout expired. SIGTERM the PID via the registry-aware helper
 			// so the running-process accounting stays consistent; the

@@ -81,6 +81,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 			} else {
 				Value::String("../Sky/Target".into())
 			};
+
 			if let Some(B) = Build.as_object_mut() {
 				B.insert("frontendDist".into(), FrontendDist);
 			}
@@ -139,6 +140,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 					"scripts/cocoon/bootstrap-fork.js": "scripts/cocoon/bootstrap-fork.js"
 				})
 			};
+
 			if let Some(B) = Bundle.as_object_mut() {
 				B.insert("resources".into(), Resources);
 			}
@@ -176,10 +178,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// a direct `cargo build -p Mountain` run without a prior Sky build. At
 	// runtime LoadFromCache.rs falls back to a live scan when the array is empty.
 	let ExtensionsManifest = std::path::Path::new("../Sky/Target/extensions.manifest.json");
+
 	if !ExtensionsManifest.exists() {
 		if let Some(Parent) = ExtensionsManifest.parent() {
 			let _ = std::fs::create_dir_all(Parent);
 		}
+
 		// Write a valid empty CacheBlob - the parser expects
 		// { version, count, extensions } not a bare array.
 		let _ = std::fs::write(ExtensionsManifest, r#"{"version":1,"count":0,"extensions":[]}"#);
@@ -532,6 +536,7 @@ fn IsDefaultTierValue(Key:&str, Value:&str) -> bool {
 			| ("TierDocumentMirror", "Full" | "Lazy")
 			| (
 				"TierExtensionActivation",
+
 				"Sequential" | "Parallel4" | "Parallel8" | "Parallel16"
 			) | ("TierExtensionScan", "Sequential")
 			| ("TierModuleCache", "Off" | "Simple" | "Shared")

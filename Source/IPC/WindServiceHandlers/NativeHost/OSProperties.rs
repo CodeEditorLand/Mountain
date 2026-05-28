@@ -53,6 +53,7 @@ fn compute_os_properties() -> Value {
 				.ok()
 				.map(|O| {
 					let Output = String::from_utf8_lossy(&O.stdout);
+
 					Output
 						.split('[')
 						.nth(1)

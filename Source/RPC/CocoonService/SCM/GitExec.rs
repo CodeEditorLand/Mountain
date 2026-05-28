@@ -34,6 +34,7 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<R
 		.await
 		.map_err(|Error| {
 			dev_log!("cocoon", "error: [CocoonService] git_exec failed to spawn: {}", Error);
+
 			dev_log!(
 				"git",
 				"[Git] exec-spawn-fail cwd={:?} args=[{}] error={}",
@@ -41,6 +42,7 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<R
 				Request.args.join(" "),
 				Error
 			);
+
 			Status::internal(format!("git_exec: failed to spawn git: {}", Error))
 		})?;
 

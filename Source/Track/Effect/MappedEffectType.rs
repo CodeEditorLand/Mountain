@@ -61,16 +61,21 @@ pub type MappedEffect =
 /// After: `effect!(run_time, { ... })`
 #[macro_export]
 macro_rules! effect {
+
 	($run_time:ident, $body:block) => {{
 		let effect = move |$run_time: std::sync::Arc<
 			$crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+
 		>|
 			-> std::pin::Pin<
 			Box<
 				dyn std::future::Future<Output = Result<serde_json::Value, String>>
 					+ Send,
+
 			>,
+
 		> { Box::pin(async move $body) };
+
 		Some(Ok(
 			Box::new(effect) as $crate::Track::Effect::MappedEffectType::MappedEffect,
 		))

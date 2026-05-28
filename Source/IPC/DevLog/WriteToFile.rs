@@ -35,15 +35,21 @@ pub(super) fn InitFileSink() -> &'static Mutex<Option<BufWriter<File>>> {
 		if !FileSinkEnabled() {
 			return Mutex::new(None);
 		}
+
 		let Dir = ResolveLogDirectory();
+
 		if create_dir_all(&Dir).is_err() {
 			eprintln!("[DEV:LOG] Failed to create log directory {}", Dir.display());
+
 			return Mutex::new(None);
 		}
+
 		let Path = Dir.join("Mountain.dev.log");
+
 		match OpenOptions::new().create(true).append(true).open(&Path) {
 			Ok(File) => {
 				let mut Writer = BufWriter::with_capacity(64 * 1024, File);
+
 				let Header = format!(
 					"# Land dev log - started {}, pid {}, short={}, ipc-enabled={}\n",
 					SessionTimestamp::Fn(),
@@ -51,13 +57,18 @@ pub(super) fn InitFileSink() -> &'static Mutex<Option<BufWriter<File>>> {
 					IsShort::Fn(),
 					IsEnabled::Fn("ipc"),
 				);
+
 				let _ = Writer.write_all(Header.as_bytes());
+
 				let _ = Writer.flush();
+
 				eprintln!("[DEV:LOG] File sink → {}", Path.display());
+
 				Mutex::new(Some(Writer))
 			},
 			Err(Error) => {
 				eprintln!("[DEV:LOG] Failed to open {}: {}", Path.display(), Error);
+
 				Mutex::new(None)
 			},
 		}

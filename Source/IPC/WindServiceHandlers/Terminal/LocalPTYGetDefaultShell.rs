@@ -15,6 +15,7 @@ pub async fn Fn() -> Result<Value, String> {
 					return Path.to_string();
 				}
 			}
+
 			"/bin/sh".to_string()
 		});
 

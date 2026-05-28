@@ -782,6 +782,7 @@ impl MountainService for MountainVinegRPCService {
 					"[ProviderUnregister] file_system scheme={}",
 					Parameter.get("scheme").and_then(Value::as_str).unwrap_or("")
 				);
+
 				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
 					self,
 					&Parameter,
@@ -800,6 +801,7 @@ impl MountainService for MountainVinegRPCService {
 					"[ProviderUnregister] uri_handler scheme={}",
 					Parameter.get("scheme").and_then(Value::as_str).unwrap_or("")
 				);
+
 				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
 					self,
 					&Parameter,
@@ -1107,6 +1109,7 @@ impl MountainService for MountainVinegRPCService {
 						}
 					})
 					.collect();
+
 				let EventName = format!("cocoon:{}", SanitizedMethod);
 
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {

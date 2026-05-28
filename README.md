@@ -151,11 +151,9 @@ graph LR
         end
         subgraph IPC_LAYER["IPC/ - Tauri IPC Server"]
             WindHandlers["WindServiceHandlers mod.rs"]:::ipc
-            Encryption["Encryption / Permissions"]:::ipc
         end
         subgraph VINE_LAYER["Vine/ - gRPC Layer"]
             VineServer["Vine gRPC Server (tonic) 🌿"]:::ipc
-            VineMux["Multiplexer"]:::ipc
         end
         subgraph RPC_LAYER["RPC/ - gRPC Handlers"]
             CocoonRPC["CocoonService handlers"]:::mountain
@@ -168,8 +166,7 @@ graph LR
         AppRunTime --> EnvProviders
         EnvProviders -.implements.-> CommonCrate
         AppState --- AppRunTime
-        VineServer --> VineMux
-        VineMux --> CocoonRPC
+        VineServer --> CocoonRPC
         CocoonRPC --> TrackDispatcher
         EchoScheduler --- AppRunTime
     end
@@ -177,14 +174,12 @@ graph LR
     subgraph CLIENTS["Clients"]
         SkyWind["Sky / Wind - UI WebView 🍃🌌"]:::wind
         CocoonHost["Cocoon - Node.js Extension Host 🦋"]:::cocoon
-        AirDaemon["Air - Background Daemon 🪁"]:::air
     end
 
     TauriRuntime -- hosts --> SkyWind
     SkyWind -- tauri::invoke --> WindHandlers
     WindHandlers -- sky:// events --> SkyWind
     VineServer <-- gRPC :50052 --> CocoonHost
-    VineServer <-- gRPC :50053 --> AirDaemon
 ```
 
 ---
@@ -199,23 +194,18 @@ Mountain/
 ├── Source/
 │   ├── Library.rs                     # Library entry point, Tauri setup.
 │   ├── LandFixTier.rs                 # Compile-time tier variable boot banner.
-│   ├── Air/                           # gRPC client for the Air daemon (updates, auth, indexing, search, metrics).
 │   ├── ApplicationState/              # Thread-safe state machine with DTOs, persistence, recovery, and feature state.
 │   ├── Binary/                        # Application lifecycle, Tauri command registration, initialization, shutdown.
-│   ├── Cache/                         # Asset memory-mapped cache and process-wide path canonicalization cache.
 │   ├── Command/                       # Tauri command handlers grouped by domain (Keybinding, LanguageFeature, TreeView, etc.).
 │   ├── Environment/                   # Concrete implementations of Common provider traits (filesystem, documents, terminal, etc.).
-│   ├── Error/                         # Local error taxonomy (currently superseded by Common::CommonError).
 │   ├── ExtensionManagement/           # Extension discovery, manifest parsing, and VSIX installation.
 │   ├── FileSystem/                    # Native file-explorer tree-view provider for the workspace sidebar.
-│   ├── IPC/                           # Inter-process communication: Tauri IPC server, Wind service handlers, encryption, permissions, status reporting.
+│   ├── IPC/                           # Inter-process communication: Tauri IPC server, Wind service handlers, dev logging, Sky event emission.
 │   ├── ProcessManagement/             # Sidecar process lifecycle, Node.js binary resolution (nvm, fnm, asdf, volta, homebrew, shipped).
-│   ├── RPC/                           # gRPC service implementations (CocoonService) and scaffolding for multi-extension-host roadmap.
+│   ├── RPC/                           # gRPC service implementations (CocoonService).
 │   ├── RunTime/                       # Effect execution engine (ApplicationRunTime, Execute, graceful Shutdown).
-│   ├── Telemetry/                     # Feature-gated observability: tracing, metrics, feature flags, and runtime gates.
 │   ├── Track/                         # Central request dispatcher routing frontend and sidecar commands into ActionEffects.
-│   ├── Update/                        # Application self-updating via Tauri bundled updater and optional Air gRPC delegation.
-│   ├── Vine/                          # gRPC IPC layer: server, client, multiplexer, and generated protobuf bindings.
+│   ├── Vine/                          # gRPC IPC layer: server implementation and VineHost embedder trait.
 │   └── Workspace/                     # Workspace file (.code-workspace) parsing and multi-root folder resolution.
 ├── Proto/
 │   └── Vine.proto                     # The gRPC contract definition file.

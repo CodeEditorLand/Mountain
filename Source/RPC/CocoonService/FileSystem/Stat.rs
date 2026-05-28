@@ -15,6 +15,7 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:StatRequest) -> Result<Resp
 
 	let Metadata = tokio::fs::metadata(&Path).await.map_err(|Error| {
 		dev_log!("cocoon", "warn: [CocoonService] stat failed for {:?}: {}", Path, Error);
+
 		Status::not_found(format!("stat: {}: {}", Path.display(), Error))
 	})?;
 

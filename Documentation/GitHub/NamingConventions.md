@@ -596,9 +596,9 @@ Before renaming, assess the impact:
 | `Environment`      | ✅ Complete | All providers and helpers follow PascalCase            |
 | `RunTime`          | ✅ Complete | ApplicationRunTime and all helpers follow PascalCase   |
 | `Track`            | ✅ Complete | DispatchLogic and EffectCreation follow PascalCase     |
-| `Vine`             | ✅ Complete | Client, Server, and gRPC integration follow PascalCase |
+| `Vine`             | ✅ Complete | Server and gRPC integration follow PascalCase          |
 | `IPC`              | ✅ Complete | All IPC handlers and adapters follow PascalCase        |
-| `WorkSpace`        | ✅ Complete | WorkSpaceFileService follows PascalCase                |
+| `WorkSpace`        | ✅ Complete | WorkspaceProvider follows PascalCase                   |
 
 ### DTOs ✅
 

@@ -178,8 +178,10 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 		.filter_map(|Path| {
 			if !Path.is_dir() {
 				eprintln!("[LandFix:WsInit] Skipping non-directory workspace folder: {}", Path.display());
+
 				return None;
 			}
+
 			Path.canonicalize().ok().or(Some(Path))
 		})
 		.collect()

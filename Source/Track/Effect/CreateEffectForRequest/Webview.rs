@@ -59,11 +59,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				let Method = Method.clone();
 
 				let RawSuffix = Method.trim_start_matches("$webview:").trim_start_matches("webview.");
+
 				let Suffix:&str = match RawSuffix {
 					"setHtml" => "set-html",
 					"postMessage" => "postMessage",
 					Other => Other,
 				};
+
 				let Payload:Value = if Parameters.is_object() {
 					Parameters.clone()
 				} else if let Some(First) = Parameters.get(0) {
@@ -71,9 +73,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						First.clone()
 					} else {
 						let mut Object = serde_json::Map::new();
+
 						Object.insert("method".to_string(), Value::String(Method.clone()));
+
 						Object.insert("handle".to_string(), First.clone());
+
 						Object.insert("args".to_string(), Parameters.clone());
+
 						if let Some(Second) = Parameters.get(1) {
 							let Alias = match Method.as_str() {
 								"webview.setHtml" => "html",
@@ -84,13 +90,16 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 								| "webview.create" => "viewType",
 								_ => "value",
 							};
+
 							Object.insert(Alias.to_string(), Second.clone());
+
 							if Method.as_str() == "webview.create" {
 								if let Some(Third) = Parameters.get(2) {
 									Object.insert("title".to_string(), Third.clone());
 								}
 							}
 						}
+
 						Value::Object(Object)
 					}
 				} else {
@@ -99,10 +108,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						"handle": Parameters.clone(),
 					})
 				};
+
 				let EventName = format!("sky://webview/{}", Suffix);
+
 				if let Err(Error) = LogSkyEmit(&run_time.Environment.ApplicationHandle, &EventName, &Payload) {
 					dev_log!("ipc", "warn: [WebviewEffect] emit {} failed: {}", EventName, Error);
 				}
+
 				Ok(json!(null))
 			})
 		},
@@ -110,8 +122,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$resolveCustomEditor" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn CustomEditorProvider> = run_time.Environment.Require();
+
 				let view_type = string_at(&Parameters, 0);
+
 				let resource_uri_str = str_at(&Parameters, 1);
+
 				// Do not substitute a fallback path for a missing
 				// or malformed URI. A silent swap to
 				// `file:///tmp/test.txt` would:
@@ -126,8 +141,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						"warn: [$resolveCustomEditor] empty resource URI view_type={}",
 						view_type
 					);
+
 					return Err(format!("$resolveCustomEditor: empty resource URI for view_type={}", view_type));
 				}
+
 				let resource_uri = match Url::parse(resource_uri_str) {
 					Ok(u) => u,
 					Err(parse_err) => {
@@ -138,13 +155,16 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							parse_err,
 							view_type
 						);
+
 						return Err(format!(
 							"$resolveCustomEditor: invalid resource URI '{}': {}",
 							resource_uri_str, parse_err
 						));
 					},
 				};
+
 				let webview_handle = string_at(&Parameters, 2);
+
 				if webview_handle.is_empty() {
 					dev_log!(
 						"grpc",
@@ -152,11 +172,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						resource_uri_str,
 						view_type
 					);
+
 					return Err(format!(
 						"$resolveCustomEditor: empty webview handle for view_type={} uri={}",
 						view_type, resource_uri_str
 					));
 				}
+
 				provider
 					.ResolveCustomEditor(view_type, resource_uri, webview_handle)
 					.await

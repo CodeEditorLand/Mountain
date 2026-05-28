@@ -15,8 +15,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Authentication.GetSession" => {
 			crate::effect!(run_time, {
 				let provider_id = string_at(&Parameters, 0);
+
 				let scopes = Parameters.get(1).cloned().unwrap_or(json!([]));
+
 				let options = Parameters.get(2).cloned().unwrap_or(json!({}));
+
 				proxy_cocoon(
 					&run_time,
 					ProxyTarget::ExtHostAuthentication,
@@ -31,6 +34,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						"warn: [Authentication.GetSession] extension did not answer ({:?}); returning null",
 						error
 					);
+
 					Ok(json!(null))
 				})
 			})
@@ -39,6 +43,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Authentication.GetAccounts" => {
 			crate::effect!(run_time, {
 				let provider_id = string_at(&Parameters, 0);
+
 				proxy_cocoon(
 					&run_time,
 					ProxyTarget::ExtHostAuthentication,
@@ -53,6 +58,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						"warn: [Authentication.GetAccounts] extension did not answer ({:?}); returning []",
 						error
 					);
+
 					Ok(json!([]))
 				})
 			})

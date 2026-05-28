@@ -297,7 +297,9 @@ async fn LaunchAndManageCocoonSideCar(
 		.or_else(|| {
 			std::env::current_exe().ok().and_then(|Exe| {
 				let MountainRoot = Exe.parent()?.parent()?.parent()?;
+
 				let Candidate = MountainRoot.join(BOOTSTRAP_SCRIPT_PATH);
+
 				if Candidate.exists() { Some(Candidate) } else { None }
 			})
 		})
@@ -638,8 +640,10 @@ async fn LaunchAndManageCocoonSideCar(
 		.await
 		{
 			dev_log!("cocoon", "warn: [CocoonManagement] $activateByEvent(\"*\") failed: {}", Error);
+
 			return;
 		}
+
 		dev_log!("cocoon", "[CocoonManagement] Startup extensions activation (*) triggered");
 
 		// Webview panel restore: any panels persisted before the previous
@@ -712,6 +716,7 @@ async fn LaunchAndManageCocoonSideCar(
 					"[CocoonManagement] Seeding {} open document(s) to Cocoon",
 					OpenDocs.len()
 				);
+
 				for Doc in OpenDocs.values() {
 					let Payload = serde_json::json!({
 						"uri": Doc.URI.to_string(),
@@ -719,6 +724,7 @@ async fn LaunchAndManageCocoonSideCar(
 						"version": Doc.Version,
 						"lines": Doc.Lines,
 					});
+
 					let _ = ::Vine::Client::SendNotification::Fn(
 						SideCarId.clone(),
 						"$acceptModelAdded".to_string(),
@@ -739,6 +745,7 @@ async fn LaunchAndManageCocoonSideCar(
 		// entries per folder to cap worst-case cost on huge repos.
 		let WorkspacePatterns = {
 			let AppState = &EnvironmentForActivation.ApplicationState;
+
 			let Folders:Vec<std::path::PathBuf> = AppState
 				.Workspace
 				.WorkspaceFolders
@@ -760,6 +767,7 @@ async fn LaunchAndManageCocoonSideCar(
 				.ok()
 				.map(|Guard| {
 					let mut Set:std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+
 					for Description in Guard.values() {
 						if let Some(Events) = &Description.ActivationEvents {
 							for Event in Events {
@@ -769,6 +777,7 @@ async fn LaunchAndManageCocoonSideCar(
 							}
 						}
 					}
+
 					Set.into_iter().collect()
 				})
 				.unwrap_or_default();
@@ -777,16 +786,20 @@ async fn LaunchAndManageCocoonSideCar(
 		};
 
 		let (WorkspaceFolders, Patterns):(Vec<std::path::PathBuf>, Vec<String>) = WorkspacePatterns;
+
 		if !WorkspaceFolders.is_empty() && !Patterns.is_empty() {
 			let Matched = FindMatchingWorkspaceContainsPatterns(&WorkspaceFolders, &Patterns);
+
 			dev_log!(
 				"exthost",
 				"[CocoonManagement] workspaceContains scan: {} pattern(s) matched across {} folder(s)",
 				Matched.len(),
 				WorkspaceFolders.len()
 			);
+
 			for Pattern in Matched {
 				let Event = format!("workspaceContains:{}", Pattern);
+
 				if let Err(Error) = ::Vine::Client::SendRequest::Fn(
 					&SideCarId,
 					"$activateByEvent".to_string(),
@@ -809,6 +822,7 @@ async fn LaunchAndManageCocoonSideCar(
 		// moment to complete so late-binding extensions layered on top
 		// of startup contributions resolve in the expected order.
 		sleep(Duration::from_millis(2_000)).await;
+
 		if let Err(Error) = ::Vine::Client::SendRequest::Fn(
 			&SideCarId,
 			"$activateByEvent".to_string(),
@@ -1108,6 +1122,7 @@ fn SpawnCocoonIoForwarders(Process:&mut tokio::process::Child) {
 	if let Some(Stdout) = Process.stdout.take() {
 		tauri::async_runtime::spawn(async move {
 			let mut Lines = BufReader::new(Stdout).lines();
+
 			loop {
 				match Lines.next_line().await {
 					Ok(Some(Line)) => {
@@ -1125,10 +1140,12 @@ fn SpawnCocoonIoForwarders(Process:&mut tokio::process::Child) {
 					},
 					Ok(None) => {
 						dev_log!("cocoon", "[CocoonIO] stdout pipe closed (EOF)");
+
 						break;
 					},
 					Err(Error) => {
 						dev_log!("cocoon", "warn: [CocoonIO] stdout read error: {}", Error);
+
 						break;
 					},
 				}
@@ -1141,30 +1158,40 @@ fn SpawnCocoonIoForwarders(Process:&mut tokio::process::Child) {
 	if let Some(Stderr) = Process.stderr.take() {
 		tauri::async_runtime::spawn(async move {
 			let mut Lines = BufReader::new(Stderr).lines();
+
 			let mut SuppressStack = false;
+
 			loop {
 				match Lines.next_line().await {
 					Ok(Some(Line)) => {
 						let T = Line.trim_start();
+
 						let IsFrame = T.starts_with("at ") || T.starts_with("code: '") || T == "}" || T.is_empty();
+
 						if SuppressStack && IsFrame {
 							dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
+
 							continue;
 						}
+
 						SuppressStack = false;
+
 						let Benign = Line.contains(": is already signed")
 							|| Line.contains(": replacing existing signature")
 							|| Line.contains("DeprecationWarning:")
 							|| Line.contains("--trace-deprecation")
 							|| Line.contains("--trace-warnings");
+
 						let BenignHead = Line.contains("EntryNotFound (FileSystemError):")
 							|| Line.contains("FileNotFound (FileSystemError):")
 							|| Line.contains("[LandFix:UnhandledRejection]")
 							|| Line.starts_with("[Patcher] unhandledRejection:")
 							|| Line.starts_with("[Patcher] uncaughtException:");
+
 						if BenignHead {
 							SuppressStack = true;
 						}
+
 						if Benign || BenignHead {
 							dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
 						} else {
@@ -1173,10 +1200,12 @@ fn SpawnCocoonIoForwarders(Process:&mut tokio::process::Child) {
 					},
 					Ok(None) => {
 						dev_log!("cocoon", "[CocoonIO] stderr pipe closed (EOF)");
+
 						break;
 					},
 					Err(Error) => {
 						dev_log!("cocoon", "warn: [CocoonIO] stderr read error: {}", Error);
+
 						break;
 					},
 				}

@@ -239,6 +239,7 @@ fn forward_http_request(
 		.iter()
 		.filter_map(|(name, value)| {
 			let header_name = name.as_str().to_lowercase();
+
 			let hop_by_hop_headers = [
 				"connection",
 				"keep-alive",
@@ -249,6 +250,7 @@ fn forward_http_request(
 				"transfer-encoding",
 				"upgrade",
 			];
+
 			if !hop_by_hop_headers.contains(&header_name.as_str()) {
 				value.to_str().ok().map(|v| (name.as_str().to_string(), v.to_string()))
 			} else {
@@ -302,6 +304,7 @@ fn forward_http_request(
 
 			// Read response
 			let mut buffer = Vec::new();
+
 			let mut temp_buf = [0u8; 8192];
 
 			loop {
@@ -321,6 +324,7 @@ fn forward_http_request(
 				if buffer.len() > 1024 * 1024 {
 					// Limit to 1MB
 					dev_log!("lifecycle", "warn: [Scheme] Response too large, truncating");
+
 					break;
 				}
 
@@ -328,9 +332,11 @@ fn forward_http_request(
 				// if we've read everything
 				if let Some(headers_end) = buffer.windows(4).position(|w| w == b"\r\n\r\n") {
 					let headers = String::from_utf8_lossy(&buffer[..headers_end]);
+
 					if let Some(cl_line) = headers.lines().find(|l| l.to_lowercase().starts_with("content-length:")) {
 						if let Ok(cl) = cl_line.trim_start_matches("content-length:").trim().parse::<usize>() {
 							let body_expected = headers_end + 4 + cl;
+
 							if buffer.len() >= body_expected {
 								break;
 							}
@@ -738,6 +744,7 @@ pub fn land_scheme_handler_async<R:tauri::Runtime>(
 	// Spawn a new thread to handle the request asynchronously
 	std::thread::spawn(move || {
 		let response = land_scheme_handler(&request);
+
 		responder.respond(response);
 	});
 }
@@ -903,7 +910,9 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 			// Generic `vscode-file://<authority>/<path>` - skip past the
 			// `vscode-file://` scheme + the authority's first `/`.
 			let After = Uri.strip_prefix("vscode-file://")?;
+
 			let SlashIdx = After.find('/')?;
+
 			Some(&After[SlashIdx + 1..])
 		})
 		.unwrap_or("");

@@ -330,6 +330,7 @@ impl ConnectionPool {
 
 			IdleConnection.retain(|_, Handle| {
 				let IdleTime = Now.duration_since(Handle.LastActivity);
+
 				IdleTime < TimeoutDuration
 			});
 

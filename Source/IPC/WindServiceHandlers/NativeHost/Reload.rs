@@ -52,12 +52,15 @@ pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Va
 					}
 				}
 			},
+
 			Ok(Ok(_)) => {
 				// Empty / null snapshot - no panels needed serialization.
 			},
+
 			Ok(Err(GrpcError)) => {
 				dev_log!("lifecycle", "warn: [Reload] serializeAllWebviewPanels failed: {:?}", GrpcError);
 			},
+
 			Err(_) => {
 				dev_log!(
 					"lifecycle",

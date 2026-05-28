@@ -691,6 +691,7 @@ impl CertificateManager {
 							x509_parser::extensions::GeneralName::DNSName(dns) => Some(dns.to_string()),
 							x509_parser::extensions::GeneralName::IPAddress(ip) => {
 								let octets:&[u8] = ip.as_ref();
+
 								Some(match octets.len() {
 									4 => format!("{}.{}.{}.{}", octets[0], octets[1], octets[2], octets[3]),
 									16 => {

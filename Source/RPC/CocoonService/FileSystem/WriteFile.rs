@@ -26,6 +26,7 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:WriteFileRequest) -> Result
 
 	tokio::fs::write(&Path, &Request.content).await.map_err(|Error| {
 		dev_log!("cocoon", "warn: [CocoonService] write_file failed for {:?}: {}", Path, Error);
+
 		Status::internal(format!("write_file: {}: {}", Path.display(), Error))
 	})?;
 

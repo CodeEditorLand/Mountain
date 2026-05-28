@@ -41,6 +41,7 @@ pub(super) async fn provide_code_actions_impl(
 			let result = provider
 				.ProvideCodeActions(document_uri, position.clone(), context.clone())
 				.await?;
+
 			Ok(serde_json::to_value(result)?)
 		}
 	})

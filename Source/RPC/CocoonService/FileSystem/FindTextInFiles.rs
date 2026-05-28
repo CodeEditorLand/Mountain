@@ -36,23 +36,29 @@ pub async fn Fn(
 
 	let Matches = tokio::task::spawn_blocking(move || {
 		let mut Results:Vec<TextMatch> = Vec::new();
+
 		const MAX_MATCHES:usize = 1000;
 
 		fn WalkAndSearch(Directory:&std::path::Path, Pattern:&str, Results:&mut Vec<TextMatch>) {
 			if Results.len() >= MAX_MATCHES {
 				return;
 			}
+
 			if let Ok(Entries) = std::fs::read_dir(Directory) {
 				for Entry in Entries.flatten() {
 					if Results.len() >= MAX_MATCHES {
 						break;
 					}
+
 					let Path = Entry.path();
+
 					if Path.is_dir() {
 						let Name = Path.file_name().and_then(|N| N.to_str()).unwrap_or("");
+
 						if Name.starts_with('.') || Name == "node_modules" || Name == "target" {
 							continue;
 						}
+
 						WalkAndSearch(&Path, Pattern, Results);
 					} else if Path.is_file() {
 						if let Ok(Content) = std::fs::read_to_string(&Path) {
@@ -60,6 +66,7 @@ pub async fn Fn(
 								if Results.len() >= MAX_MATCHES {
 									break;
 								}
+
 								if let Some(ColumnIndex) = Line.find(Pattern) {
 									Results.push(TextMatch {
 										uri:Some(Uri { value:format!("file://{}", Path.display()) }),
@@ -85,10 +92,12 @@ pub async fn Fn(
 
 		for Root in &SearchRoots {
 			WalkAndSearch(Root, &Pattern, &mut Results);
+
 			if Results.len() >= MAX_MATCHES {
 				break;
 			}
 		}
+
 		Results
 	})
 	.await

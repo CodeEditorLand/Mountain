@@ -32,6 +32,7 @@ pub fn Fn(StorageFilePath:&Path) -> Result<HashMap<String, Value>, CommonError> 
 
 	serde_json::from_str(&Content).map_err(|E| {
 		CreateCorruptedBackup::Fn(StorageFilePath, &Content);
+
 		CommonError::SerializationError {
 			Description:format!("Failed to parse memento JSON from '{}': {}", StorageFilePath.display(), E),
 		}

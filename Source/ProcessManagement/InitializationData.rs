@@ -535,14 +535,19 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 				.ok()
 				.and_then(|P| P.parent().map(|D| D.to_path_buf()))
 				.unwrap_or_default();
+
 			let BundleResources = ExeDir.join("../Resources");
+
 			if BundleResources.exists() {
 				return Some(BundleResources.canonicalize().unwrap_or(BundleResources));
 			}
+
 			let SkyTarget = ExeDir.join("../../../Sky/Target");
+
 			if SkyTarget.exists() {
 				return Some(SkyTarget.canonicalize().unwrap_or(SkyTarget));
 			}
+
 			None
 		})
 		.ok_or_else(|| {

@@ -95,8 +95,10 @@ pub fn Fn(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), C
 			Ok(P) => P,
 			Err(_) => return false,
 		};
+
 		let CanonicalFolderPath =
 			::Cache::PathCanon::Canonicalize::Fn(&FolderPath).unwrap_or_else(|_| FolderPath.clone());
+
 		// Try both canonical-canonical AND raw-raw - either match wins.
 		PathToCheck.starts_with(&FolderPath)
 			|| PathToCheck.starts_with(&CanonicalFolderPath)

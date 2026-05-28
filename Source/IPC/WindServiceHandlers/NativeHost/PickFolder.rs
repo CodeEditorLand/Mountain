@@ -35,20 +35,25 @@ pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Va
 
 		if let Some(Path) = FolderPath {
 			let PathStr = Path.to_string();
+
 			dev_log!("folder", "picked: {}", PathStr);
 
 			if let Some(State) = Handle.try_state::<Arc<ApplicationState>>() {
 				let PathBuf = PathBuf::from(&PathStr);
+
 				let Canonical = PathBuf.canonicalize().unwrap_or(PathBuf.clone());
+
 				if let Ok(Uri) = url::Url::from_directory_path(&Canonical) {
 					let Name = Canonical
 						.file_name()
 						.and_then(|N| N.to_str())
 						.map(str::to_string)
 						.unwrap_or_else(|| Canonical.display().to_string());
+
 					match WorkspaceFolderStateDTO::New(Uri, Name, 0) {
 						Ok(Dto) => {
 							dev_log!("folder", "pre-nav workspace-delta: broadcasting 1 folder to Cocoon");
+
 							UpdateWorkspaceFoldersAndBroadcast(&Handle, &State.Workspace, vec![Dto]);
 						},
 						Err(Error) => {
@@ -76,12 +81,17 @@ pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Va
 			if let Some(Window) = Handle.get_webview_window("main") {
 				if let Ok(CurrentUrl) = Window.url() {
 					let Origin = CurrentUrl.origin().unicode_serialization();
+
 					let EncodedPath = url::form_urlencoded::Serializer::new(String::new())
 						.append_pair("folder", &PathStr)
 						.finish();
+
 					let NewUrl = format!("{}/?{}", Origin, EncodedPath);
+
 					dev_log!("folder", "navigating: {}", NewUrl);
+
 					let _ = Window.navigate(NewUrl.parse().unwrap());
+
 					dev_log!("folder", "post-nav Window.navigate() returned; webview reloading");
 				}
 			}

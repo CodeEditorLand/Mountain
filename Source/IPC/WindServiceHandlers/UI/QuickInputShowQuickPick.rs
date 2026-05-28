@@ -19,9 +19,13 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 			Arr.iter()
 				.filter_map(|Item| {
 					let Label = Item.get("label").and_then(|L| L.as_str()).unwrap_or("").to_string();
+
 					let Description = Item.get("description").and_then(|D| D.as_str()).map(|S| S.to_string());
+
 					let Detail = Item.get("detail").and_then(|D| D.as_str()).map(|S| S.to_string());
+
 					let Picked = Item.get("picked").and_then(|P| P.as_bool()).unwrap_or(false);
+
 					Some(QuickPickItemDTO { Label, Description, Detail, Picked:Some(Picked), AlwaysShow:Some(false) })
 				})
 				.collect()

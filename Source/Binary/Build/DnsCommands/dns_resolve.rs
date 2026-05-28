@@ -30,6 +30,7 @@ pub fn dns_resolve(domain:String, dns_port:State<DnsPort>) -> Result<DnsResoluti
 
 	let is_allowed = allowlist.iter().any(|d| {
 		let test_domain = if domain.ends_with('.') { domain.clone() } else { format!("{}.", domain) };
+
 		test_domain == *d || test_domain.ends_with(d)
 	});
 

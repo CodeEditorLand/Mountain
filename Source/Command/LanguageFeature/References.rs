@@ -45,6 +45,7 @@ pub(super) async fn provide_references_impl(
 	invoke_provider(application_handle, |provider| {
 		async move {
 			let result = provider.ProvideReferences(document_uri, position_dto, context.clone()).await?;
+
 			Ok(serde_json::to_value(result)?)
 		}
 	})

@@ -414,14 +414,21 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 				r#"(async function(){{
                     try {{
                       const cs = require(vs/platform/commands/common/commands).CommandsRegistry;
+
                       const svcId = require(vs/platform/instantiation/common/instantiation).IInstantiationService;
+
                       const ws = (globalThis.MonacoEnvironment || globalThis).__workbench__;
+
                       // Resolve through the workbench command service if available.
                       const cmdSvc = ws?.commandService
                         || ws?.services?.get?.(require(vs/platform/commands/common/commands).ICommandService);
+
                       if (!cmdSvc) return JSON.stringify({{error:"command service unavailable"}});
+
                       const args = {0};
+
                       const result = await cmdSvc.executeCommand({1}, ...args);
+
                       return JSON.stringify({{ ok: true, result: result ?? null }});
                     }} catch (e) {{ return JSON.stringify({{ ok:false, error: String(e?.stack||e) }}); }}
                 }})()"#,
@@ -453,9 +460,13 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 					r#"(async function(){{
                         try {{
                           const URI = require(vs/base/common/uri).URI;
+
                           const cmdSvc = (globalThis).__workbench__?.commandService;
+
                           if (!cmdSvc) return JSON.stringify({{error:"command service unavailable"}});
+
                           await cmdSvc.executeCommand(vscode.diff, URI.parse({0}), URI.parse({1}), {2});
+
                           return JSON.stringify({{ok:true}});
                         }} catch (e) {{ return JSON.stringify({{ok:false,error:String(e?.stack||e)}}); }}
                     }})()"#,

@@ -179,7 +179,9 @@ impl TreeViewProvider for Struct {
 			.into_iter()
 			.map(|(Name, FileType)| {
 				let FullPath = PathToRead.join(&Name);
+
 				let URI = Url::from_file_path(FullPath).unwrap();
+
 				self.CreateTreeItemDTO(&Name, &URI, FileType)
 			})
 			.collect())

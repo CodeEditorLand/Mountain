@@ -11,6 +11,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Keybinding.GetResolved" => {
 			crate::effect!(run_time, {
 				let provider:Arc<dyn KeybindingProvider> = run_time.Environment.Require();
+
 				provider.GetResolvedKeybinding().await.map_err(|e| e.to_string())
 			})
 		},

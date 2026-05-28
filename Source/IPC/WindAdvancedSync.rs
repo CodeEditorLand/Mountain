@@ -595,6 +595,7 @@ impl WindAdvancedSync {
 				if let Ok(mut stats) = performance_stats.lock() {
 					stats.last_update =
 						SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
+
 					stats.connection_uptime += 10;
 
 					// Emit performance update - off by default. Same

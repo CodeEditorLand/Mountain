@@ -34,8 +34,10 @@ use crate::dev_log;
 pub struct Injection {
 	/// Additional environment variables to set before spawning the shell.
 	pub EnvVars:Vec<(String, String)>,
+
 	/// Extra arguments to prepend to the shell's argument list.
 	pub PrependArgs:Vec<String>,
+
 	/// Extra arguments to append to the shell's argument list.
 	pub AppendArgs:Vec<String>,
 }
@@ -54,6 +56,7 @@ fn ScriptPath(AppHandle:&AppHandle, Name:&str) -> Option<PathBuf> {
 			"[ShellIntegration] script not found at {} (bundled .app only)",
 			Candidate.display()
 		);
+
 		None
 	}
 }
@@ -67,16 +70,20 @@ fn ShellName(ShellPath:&str) -> &str { Path::new(ShellPath).file_name().and_then
 pub fn Compute(AppHandle:&AppHandle, ShellPath:&str) -> Option<Injection> {
 	if std::env::var("LAND_SHELL_INTEGRATION").as_deref() == Ok("0") {
 		dev_log!("terminal", "[ShellIntegration] disabled via LAND_SHELL_INTEGRATION=0");
+
 		return None;
 	}
 
 	let Shell = ShellName(ShellPath);
+
 	dev_log!("terminal", "[ShellIntegration] shell={} path={}", Shell, ShellPath);
 
 	match Shell {
 		"bash" => {
 			let Script = ScriptPath(AppHandle, "bash.sh")?;
+
 			dev_log!("terminal", "[ShellIntegration] bash: --init-file {}", Script.display());
+
 			Some(Injection {
 				EnvVars:vec![("VSCODE_SHELL_INTEGRATION".into(), "1".into())],
 				PrependArgs:Vec::new(),
@@ -86,6 +93,7 @@ pub fn Compute(AppHandle:&AppHandle, ShellPath:&str) -> Option<Injection> {
 
 		"zsh" => {
 			let Script = ScriptPath(AppHandle, "zsh.zsh")?;
+
 			dev_log!(
 				"terminal",
 				"[ShellIntegration] zsh: ZDOTDIR injection script={}",
@@ -128,11 +136,13 @@ pub fn Compute(AppHandle:&AppHandle, ShellPath:&str) -> Option<Injection> {
 
 		"fish" => {
 			let Script = ScriptPath(AppHandle, "fish.fish")?;
+
 			dev_log!(
 				"terminal",
 				"[ShellIntegration] fish: --init-command source {}",
 				Script.display()
 			);
+
 			Some(Injection {
 				EnvVars:vec![("VSCODE_SHELL_INTEGRATION".into(), "1".into())],
 				PrependArgs:Vec::new(),
@@ -145,6 +155,7 @@ pub fn Compute(AppHandle:&AppHandle, ShellPath:&str) -> Option<Injection> {
 
 		Other => {
 			dev_log!("terminal", "[ShellIntegration] unsupported shell '{}' - no injection", Other);
+
 			None
 		},
 	}

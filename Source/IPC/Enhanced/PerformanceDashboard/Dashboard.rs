@@ -243,7 +243,9 @@ impl Struct {
 
 			while *dashboard.is_running.lock().await {
 				interval.tick().await;
+
 				dashboard.collect_system_metrics().await;
+
 				dashboard.update_statistics().await;
 			}
 		});
@@ -257,6 +259,7 @@ impl Struct {
 
 			while *dashboard.is_running.lock().await {
 				interval.tick().await;
+
 				dashboard.check_performance_alerts().await;
 			}
 		});
@@ -270,6 +273,7 @@ impl Struct {
 
 			while *dashboard.is_running.lock().await {
 				interval.tick().await;
+
 				dashboard.cleanup_old_data().await;
 			}
 		});

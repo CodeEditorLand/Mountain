@@ -257,6 +257,7 @@ mod tests {
 
 		// Create binary file
 		let binary_data = vec![0x48, 0x65, 0x6C, 0x6C, 0x6F]; // "Hello" in ASCII
+
 		fs::write(&test_file, &binary_data).await.unwrap();
 
 		let args = vec![json!(test_file.to_string_lossy())];
@@ -280,6 +281,7 @@ mod tests {
 		let test_file = temp_dir.path().join("test.bin");
 
 		let binary_data = vec![0x48, 0x65, 0x6C, 0x6C, 0x6F]; // "Hello" in ASCII
+
 		let args = vec![json!(test_file.to_string_lossy()), json!(binary_data)];
 
 		let result = handle_file_write_binary(runtime, args).await;
@@ -306,6 +308,7 @@ mod tests {
 
 		// Test with invalid arguments
 		let args = vec![json!(123)]; // Invalid path type
+
 		let result = handle_file_read(runtime, args).await;
 
 		assert!(result.is_err());

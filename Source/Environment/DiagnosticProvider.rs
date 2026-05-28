@@ -213,6 +213,7 @@ impl DiagnosticManager for MountainEnvironment {
 				.remove(&Owner)
 				.map(|OwnerMap| {
 					let keys:Vec<String> = OwnerMap.keys().cloned().collect();
+
 					(keys.len(), keys)
 				})
 				.unwrap_or((0, vec![]))

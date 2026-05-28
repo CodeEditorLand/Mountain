@@ -81,9 +81,13 @@ pub async fn Fn(
 		.into_iter()
 		.map(|Item| {
 			let Handle = Item.get("handle").and_then(Value::as_str).unwrap_or("").to_string();
+
 			let Label = Item.get("label").and_then(Value::as_str).unwrap_or("").to_string();
+
 			let IsCollapsed = Item.get("isCollapsed").and_then(Value::as_bool).unwrap_or(false);
+
 			let Icon = Item.get("icon").and_then(Value::as_str).unwrap_or("").to_string();
+
 			TreeItem { handle:Handle, label:Label, is_collapsed:IsCollapsed, icon:Icon }
 		})
 		.collect::<Vec<TreeItem>>();

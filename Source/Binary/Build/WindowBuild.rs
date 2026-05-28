@@ -106,6 +106,7 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 		document.addEventListener('keydown', function(e) {
 			if (e.metaKey && !e.ctrlKey && !e.altKey) {
 				if (e.key === 'z' || e.key === 'Z') { e.preventDefault(); }
+
 				if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); }
 			}
 		}, true);
@@ -182,11 +183,17 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 					r#"(function() {
 					if (!window.__MOUNTAIN_DEBUG_CONSOLE) {
 						window.__MOUNTAIN_DEBUG_CONSOLE = [];
+
 						const origLog = console.log;
+
 						const origError = console.error;
+
 						const origWarn = console.warn;
+
 						const origInfo = console.info;
+
 						const origDebug = console.debug;
+
 						function pushLog(level, args) {
 							const argStrings = args.map(arg => {
 								if (typeof arg === 'object') {
@@ -195,15 +202,22 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 									return String(arg);
 								}
 							});
+
 							window.__MOUNTAIN_DEBUG_CONSOLE.push({ level, messages: argStrings, timestamp: Date.now() });
+
 							if (window.__MOUNTAIN_DEBUG_CONSOLE.length > 1000) {
 								window.__MOUNTAIN_DEBUG_CONSOLE = window.__MOUNTAIN_DEBUG_CONSOLE.slice(-1000);
 							}
 						}
+
 						console.log = function(...args) { pushLog('log', args); origLog.apply(console, args); };
+
 						console.error = function(...args) { pushLog('error', args); origError.apply(console, args); };
+
 						console.warn = function(...args) { pushLog('warn', args); origWarn.apply(console, args); };
+
 						console.info = function(...args) { pushLog('info', args); origInfo.apply(console, args); };
+
 						console.debug = function(...args) { pushLog('debug', args); origDebug.apply(console, args); };
 					}
 				})()"#,

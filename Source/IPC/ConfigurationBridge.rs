@@ -399,11 +399,13 @@ impl ConfigurationBridge {
 
 		let machine_id = self.generate_machine_id().await.unwrap_or_else(|e| {
 			dev_log!("config", "warn: [ConfigurationBridge] Failed to generate machine ID: {}", e);
+
 			"wind-machine-fallback".to_string()
 		});
 
 		let session_id = self.generate_session_id().await.unwrap_or_else(|e| {
 			dev_log!("config", "warn: [ConfigurationBridge] Failed to generate session ID: {}", e);
+
 			"wind-session-fallback".to_string()
 		});
 

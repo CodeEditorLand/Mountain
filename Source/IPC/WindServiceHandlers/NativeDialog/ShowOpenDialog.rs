@@ -55,17 +55,21 @@ pub async fn Fn(ApplicationHandle:AppHandle, Args:Vec<Value>) -> Result<Value, S
 
 	let Selected = tokio::task::spawn_blocking(move || -> Vec<String> {
 		let mut Builder = Handle.dialog().file().set_title(&Title);
+
 		if let Some(Path) = DefaultPath.as_deref() {
 			Builder = Builder.set_directory(Path);
 		}
+
 		// Apply filters only for file pickers - Tauri returns an error on
 		// folder pickers if filters are set on some platforms.
 		if !IsFolder {
 			for Filter in &FiltersForThread {
 				let ExtRefs:Vec<&str> = Filter.Extensions.iter().map(String::as_str).collect();
+
 				Builder = Builder.add_filter(&Filter.Name, &ExtRefs);
 			}
 		}
+
 		if IsFolder {
 			if IsMultiple {
 				Builder
