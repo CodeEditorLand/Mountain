@@ -1,11 +1,8 @@
-//! Public-crate alias for `PublishNotification::Fn` so `Vine::Multiplexer`
-//! can fan out notifications received over the streaming channel through
-//! the same broadcast subscribers consume from.
+//! Internal fan-out path - now dead code. Mountain's Multiplexer is
+//! `::Vine::Multiplexer::Multiplexer` (type alias), so multiplexer
+//! notifications fan out through Vine's own broadcast. Nothing in
+//! Mountain calls this function.
 
 use serde_json::Value;
 
-use crate::Vine::Client::PublishNotification;
-
-pub(crate) fn Fn(SideCarIdentifier:&str, Method:&str, Parameters:&Value) {
-	PublishNotification::Fn(SideCarIdentifier, Method, Parameters);
-}
+pub(crate) fn Fn(_SideCarIdentifier:&str, _Method:&str, _Parameters:&Value) {}
