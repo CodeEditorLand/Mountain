@@ -75,7 +75,3 @@ pub mod AirClient;
 pub mod AirServiceProvider;
 
 // Stub types for Air integration when AirLibrary is not available (legacy)
-// Note: These are kept for backward compatibility but should not be used in new
-// code
-#[deprecated(note = "Use AirClient and AirServiceProvider instead")]
-pub mod AirServiceTypesStub;

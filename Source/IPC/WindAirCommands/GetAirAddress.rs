@@ -2,6 +2,6 @@
 //! to `DEFAULT_AIR_SERVER_ADDRESS`; future revisions will read
 //! a runtime config slot.
 
-use crate::Air::AirClient::DEFAULT_AIR_SERVER_ADDRESS;
-
-pub(super) fn Fn() -> Result<String, String> { Ok(DEFAULT_AIR_SERVER_ADDRESS.to_string()) }
+pub(super) fn Fn() -> Result<String, String> {
+	Ok(::AirLibrary::Client::AirClient::DEFAULT_AIR_SERVER_ADDRESS.to_string())
+}
