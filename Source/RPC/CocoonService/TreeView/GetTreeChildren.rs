@@ -4,13 +4,11 @@
 
 use serde_json::{Value, json};
 use tonic::{Response, Status};
+use ::Vine::Client::SendRequest::Fn as SendRequest;
 
 use crate::{
 	RPC::CocoonService::{CocoonServiceImpl, TreeView::ViewIdHandle},
-	Vine::{
-		Client::SendRequest::Fn as SendRequest,
-		Generated::{GetTreeChildrenRequest, GetTreeChildrenResponse, TreeItem},
-	},
+	Vine::Generated::{GetTreeChildrenRequest, GetTreeChildrenResponse, TreeItem},
 	dev_log,
 };
 

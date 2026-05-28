@@ -35,9 +35,9 @@
 use CommonLibrary::{Error::CommonError::CommonError, IPC::IPCProvider::IPCProvider};
 use async_trait::async_trait;
 use serde_json::Value;
+use ::Vine::Client;
 
 use super::MountainEnvironment::MountainEnvironment;
-use ::Vine::Client as Client;
 
 // TODO: message queuing for offline scenarios, bidirectional request handling
 // (sidecar → main), streaming support, request cancellation, priority queue,

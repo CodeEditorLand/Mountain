@@ -719,9 +719,12 @@ async fn LaunchAndManageCocoonSideCar(
 						"version": Doc.Version,
 						"lines": Doc.Lines,
 					});
-					let _ =
-						::Vine::Client::SendNotification::Fn(SideCarId.clone(), "$acceptModelAdded".to_string(), Payload)
-							.await;
+					let _ = ::Vine::Client::SendNotification::Fn(
+						SideCarId.clone(),
+						"$acceptModelAdded".to_string(),
+						Payload,
+					)
+					.await;
 				}
 			}
 		}

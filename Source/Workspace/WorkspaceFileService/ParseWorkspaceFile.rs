@@ -11,13 +11,12 @@ use std::path::Path;
 
 use CommonLibrary::Error::CommonError::CommonError;
 use url::Url;
+use ::Cache::PathCanon::Canonicalize;
 
 use crate::{
 	ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
 	Workspace::WorkspaceFileService::WorkspaceFile,
 };
-
-use ::Cache::PathCanon::Canonicalize;
 
 pub fn Fn(WorkspaceFilePath:&Path, FileContent:&str) -> Result<Vec<WorkspaceFolderStateDTO>, CommonError> {
 	let Parsed:WorkspaceFile::Struct = serde_json::from_str(FileContent)

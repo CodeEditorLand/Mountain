@@ -18,14 +18,13 @@
 
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 use serde_json::json;
+use ::Vine::Client;
 
 use crate::{
 	ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
 	IPC::SkyEmit::LogSkyEmit,
 	dev_log,
 };
-
-use ::Vine::Client as Client;
 
 /// Serialisation shape matching the Cocoon-side Workspace shim. Mirrors the
 /// camelCase DTO Sky already serialises for `workspaces:getFolders`, so the

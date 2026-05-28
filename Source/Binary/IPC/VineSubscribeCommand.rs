@@ -24,8 +24,9 @@
 use serde::Serialize;
 use serde_json::Value;
 use tauri::ipc::Channel;
+use ::Vine::Client::SubscribeNotifications::Fn as SubscribeNotifications;
 
-use crate::{Vine::Client::SubscribeNotifications::Fn as SubscribeNotifications, dev_log};
+use crate::dev_log;
 
 /// Webview-facing notification frame. Mirror of the Rust
 /// `Vine::Client::NotificationFrame` with camelCase field names per

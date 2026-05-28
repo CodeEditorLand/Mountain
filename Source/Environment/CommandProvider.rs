@@ -51,11 +51,10 @@ use CommonLibrary::{
 use async_trait::async_trait;
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
+use ::Vine::Client;
 
 use super::MountainEnvironment::MountainEnvironment;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
-
-use ::Vine::Client as Client;
 
 /// An enum representing the different ways a command can be handled.
 ///
