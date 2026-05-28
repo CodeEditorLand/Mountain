@@ -2,4 +2,4 @@
 //! Each Air RPC carries one of these so Mountain can correlate replies
 //! with the originating call across log lines + traces.
 
-pub fn Fn() -> String { ::Air::Client::AirServiceProvider::GenerateRequestID::Fn() }
+pub fn Fn() -> String { ::AirLibrary::Client::AirServiceProvider::GenerateRequestID::Fn() }
