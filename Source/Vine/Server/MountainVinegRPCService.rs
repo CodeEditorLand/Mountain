@@ -545,43 +545,43 @@ impl MountainService for MountainVinegRPCService {
 			// is pure delegation - adding a new wire method is a one-line
 			// change here plus one new atom file.
 			"extensionHostMessage" => {
-				super::Notification::ExtensionHostMessage::ExtensionHostMessage(self, &Parameter).await;
+				::Vine::Server::Notification::ExtensionHostMessage::ExtensionHostMessage(self, &Parameter).await;
 			},
 
 			"ExtensionActivated" => {
-				super::Notification::ExtensionActivated::ExtensionActivated(self, &Parameter).await;
+				::Vine::Server::Notification::ExtensionActivated::ExtensionActivated(self, &Parameter).await;
 			},
 
 			"ExtensionDeactivated" => {
-				super::Notification::ExtensionDeactivated::ExtensionDeactivated(self, &Parameter).await;
+				::Vine::Server::Notification::ExtensionDeactivated::ExtensionDeactivated(self, &Parameter).await;
 			},
 
 			"WebviewReady" => {
-				super::Notification::WebviewReady::WebviewReady(self, &Parameter).await;
+				::Vine::Server::Notification::WebviewReady::WebviewReady(self, &Parameter).await;
 			},
 
 			"progress.start" => {
-				super::Notification::ProgressStart::ProgressStart(self, &Parameter).await;
+				::Vine::Server::Notification::ProgressStart::ProgressStart(self, &Parameter).await;
 			},
 
 			"progress.report" => {
-				super::Notification::ProgressReport::ProgressReport(self, &Parameter).await;
+				::Vine::Server::Notification::ProgressReport::ProgressReport(self, &Parameter).await;
 			},
 
 			"progress.end" => {
-				super::Notification::ProgressEnd::ProgressEnd(self, &Parameter).await;
+				::Vine::Server::Notification::ProgressEnd::ProgressEnd(self, &Parameter).await;
 			},
 
 			"languages.setDocumentLanguage" => {
-				super::Notification::LanguagesSetDocumentLanguage::LanguagesSetDocumentLanguage(self, &Parameter).await;
+				::Vine::Server::Notification::LanguagesSetDocumentLanguage::LanguagesSetDocumentLanguage(self, &Parameter).await;
 			},
 
 			"workspace.applyEdit" => {
-				super::Notification::WorkspaceApplyEdit::WorkspaceApplyEdit(self, &Parameter).await;
+				::Vine::Server::Notification::WorkspaceApplyEdit::WorkspaceApplyEdit(self, &Parameter).await;
 			},
 
 			"window.showTextDocument" => {
-				super::Notification::WindowShowTextDocument::WindowShowTextDocument(self, &Parameter).await;
+				::Vine::Server::Notification::WindowShowTextDocument::WindowShowTextDocument(self, &Parameter).await;
 			},
 
 			// Batch 16: the remaining Cocoon-notification arms, now pure
@@ -595,22 +595,22 @@ impl MountainService for MountainVinegRPCService {
 			| "webview.setOptions"
 			| "webview.updateView"
 			| "webview.reveal" => {
-				super::Notification::WebviewLifecycle::WebviewLifecycle(self, &MethodName, &Parameter).await;
+				::Vine::Server::Notification::WebviewLifecycle::WebviewLifecycle(self, &MethodName, &Parameter).await;
 			},
 
 			"window.createTerminal" => {
-				super::Notification::WindowCreateTerminal::WindowCreateTerminal(self, &Parameter).await;
+				::Vine::Server::Notification::WindowCreateTerminal::WindowCreateTerminal(self, &Parameter).await;
 			},
 
 			"terminal.sendText" | "terminal.show" | "terminal.hide" | "terminal.dispose" => {
-				super::Notification::TerminalLifecycle::TerminalLifecycle(self, &MethodName, &Parameter).await;
+				::Vine::Server::Notification::TerminalLifecycle::TerminalLifecycle(self, &MethodName, &Parameter).await;
 			},
 
 			// Tree view refresh - extension fired its `onDidChangeTreeData`
 			// event. Relay to Sky which calls `ITreeView.refresh()` to
 			// trigger a fresh getChildren() round-trip.
 			"tree.refresh" => {
-				super::Notification::TreeRefresh::TreeRefresh(self, &Parameter).await;
+				::Vine::Server::Notification::TreeRefresh::TreeRefresh(self, &Parameter).await;
 			},
 
 			// EnvironmentVariableCollection mutations - applied to every
@@ -633,7 +633,7 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"window.createTextEditorDecorationType" | "window.disposeTextEditorDecorationType" => {
-				super::Notification::DecorationTypeLifecycle::DecorationTypeLifecycle(self, &MethodName, &Parameter)
+				::Vine::Server::Notification::DecorationTypeLifecycle::DecorationTypeLifecycle(self, &MethodName, &Parameter)
 					.await;
 			},
 
@@ -641,38 +641,38 @@ impl MountainService for MountainVinegRPCService {
 			// Batched and emitted as `sky://decoration/set-ranges` so Sky can
 			// apply the ranges to the Monaco editor for the matching URI.
 			"window.setTextEditorDecorations" => {
-				super::Notification::SetTextEditorDecorations::SetTextEditorDecorations(self, &Parameter).await;
+				::Vine::Server::Notification::SetTextEditorDecorations::SetTextEditorDecorations(self, &Parameter).await;
 			},
 
 			// Extension called `editor.edit(cb)` - an in-place text mutation.
 			// Payload: `{ uri, edits: [{range, text}] }`.
 			// Sky applies via `ICodeEditorService` → `editor.executeEdits`.
 			"window.applyTextEdits" => {
-				super::Notification::ApplyTextEdits::ApplyTextEdits(self, &Parameter).await;
+				::Vine::Server::Notification::ApplyTextEdits::ApplyTextEdits(self, &Parameter).await;
 			},
 
 			"debug.addBreakpoints" | "debug.removeBreakpoints" | "debug.consoleAppend" => {
-				super::Notification::DebugLifecycle::DebugLifecycle(self, &MethodName, &Parameter).await;
+				::Vine::Server::Notification::DebugLifecycle::DebugLifecycle(self, &MethodName, &Parameter).await;
 			},
 
 			"statusBar.update" | "statusBar.dispose" => {
-				super::Notification::StatusBarLifecycle::StatusBarLifecycle(self, &MethodName, &Parameter).await;
+				::Vine::Server::Notification::StatusBarLifecycle::StatusBarLifecycle(self, &MethodName, &Parameter).await;
 			},
 
 			"statusBar.message" => {
-				super::Notification::StatusBarMessage::StatusBarMessage(self, &Parameter).await;
+				::Vine::Server::Notification::StatusBarMessage::StatusBarMessage(self, &Parameter).await;
 			},
 
 			"window.showMessage" => {
-				super::Notification::WindowShowMessage::WindowShowMessage(self, &Parameter).await;
+				::Vine::Server::Notification::WindowShowMessage::WindowShowMessage(self, &Parameter).await;
 			},
 
 			"registerCommand" => {
-				super::Notification::RegisterCommand::RegisterCommand(self, &Parameter).await;
+				::Vine::Server::Notification::RegisterCommand::RegisterCommand(self, &Parameter).await;
 			},
 
 			"unregisterCommand" => {
-				super::Notification::UnregisterCommand::UnregisterCommand(self, &Parameter).await;
+				::Vine::Server::Notification::UnregisterCommand::UnregisterCommand(self, &Parameter).await;
 			},
 
 			// NOTE: `outputChannel.*` arms were previously here fanning to
@@ -750,7 +750,7 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"update_scm_group" => {
-				super::Notification::UpdateScmGroup::UpdateScmGroup(self, &Parameter).await;
+				::Vine::Server::Notification::UpdateScmGroup::UpdateScmGroup(self, &Parameter).await;
 			},
 
 			// SCM register pair: explicit arms BEFORE the language-providers
@@ -764,29 +764,29 @@ impl MountainService for MountainVinegRPCService {
 			// atoms write the markers + emit the `sky://scm/*` events the
 			// renderer subscribes to.
 			"register_scm_provider" => {
-				super::Notification::RegisterScmProvider::RegisterScmProvider(self, &Parameter).await;
+				::Vine::Server::Notification::RegisterScmProvider::RegisterScmProvider(self, &Parameter).await;
 			},
 
 			"register_scm_resource_group" => {
-				super::Notification::RegisterScmResourceGroup::RegisterScmResourceGroup(self, &Parameter).await;
+				::Vine::Server::Notification::RegisterScmResourceGroup::RegisterScmResourceGroup(self, &Parameter).await;
 			},
 
 			// Batch 11: progress lifecycle name alignment.
 			"progress.update" => {
-				super::Notification::ProgressUpdate::ProgressUpdate(self, &Parameter).await;
+				::Vine::Server::Notification::ProgressUpdate::ProgressUpdate(self, &Parameter).await;
 			},
 
 			"progress.complete" => {
-				super::Notification::ProgressComplete::ProgressComplete(self, &Parameter).await;
+				::Vine::Server::Notification::ProgressComplete::ProgressComplete(self, &Parameter).await;
 			},
 
 			// Batch 10: status-bar text-only fast path + item disposal.
 			"setStatusBarText" => {
-				super::Notification::SetStatusBarText::SetStatusBarText(self, &Parameter).await;
+				::Vine::Server::Notification::SetStatusBarText::SetStatusBarText(self, &Parameter).await;
 			},
 
 			"disposeStatusBarItem" => {
-				super::Notification::DisposeStatusBarItem::DisposeStatusBarItem(self, &Parameter).await;
+				::Vine::Server::Notification::DisposeStatusBarItem::DisposeStatusBarItem(self, &Parameter).await;
 			},
 
 			// Batch 9: output channel lifecycle. Two parallel wire names
@@ -794,81 +794,81 @@ impl MountainService for MountainVinegRPCService {
 			// `outputChannel.*` via `SendToMountain`) both forward to the
 			// same `sky://output/*` channels until Cocoon consolidates.
 			"output.create" => {
-				super::Notification::OutputCreate::OutputCreate(self, &Parameter).await;
+				::Vine::Server::Notification::OutputCreate::OutputCreate(self, &Parameter).await;
 			},
 
 			"output.append" => {
-				super::Notification::OutputAppend::OutputAppend(self, &Parameter).await;
+				::Vine::Server::Notification::OutputAppend::OutputAppend(self, &Parameter).await;
 			},
 
 			"output.appendLine" => {
-				super::Notification::OutputAppendLine::OutputAppendLine(self, &Parameter).await;
+				::Vine::Server::Notification::OutputAppendLine::OutputAppendLine(self, &Parameter).await;
 			},
 
 			"output.clear" => {
-				super::Notification::OutputClear::OutputClear(self, &Parameter).await;
+				::Vine::Server::Notification::OutputClear::OutputClear(self, &Parameter).await;
 			},
 
 			"output.show" => {
-				super::Notification::OutputShow::OutputShow(self, &Parameter).await;
+				::Vine::Server::Notification::OutputShow::OutputShow(self, &Parameter).await;
 			},
 
 			"output.dispose" => {
-				super::Notification::OutputDispose::OutputDispose(self, &Parameter).await;
+				::Vine::Server::Notification::OutputDispose::OutputDispose(self, &Parameter).await;
 			},
 
 			"output.replace" => {
-				super::Notification::OutputReplace::OutputReplace(self, &Parameter).await;
+				::Vine::Server::Notification::OutputReplace::OutputReplace(self, &Parameter).await;
 			},
 
 			"outputChannel.create" => {
-				super::Notification::OutputChannelCreate::OutputChannelCreate(self, &Parameter).await;
+				::Vine::Server::Notification::OutputChannelCreate::OutputChannelCreate(self, &Parameter).await;
 			},
 
 			"outputChannel.append" => {
-				super::Notification::OutputChannelAppend::OutputChannelAppend(self, &Parameter).await;
+				::Vine::Server::Notification::OutputChannelAppend::OutputChannelAppend(self, &Parameter).await;
 			},
 
 			"outputChannel.clear" => {
-				super::Notification::OutputChannelClear::OutputChannelClear(self, &Parameter).await;
+				::Vine::Server::Notification::OutputChannelClear::OutputChannelClear(self, &Parameter).await;
 			},
 
 			"outputChannel.replace" => {
-				super::Notification::OutputChannelReplace::OutputChannelReplace(self, &Parameter).await;
+				::Vine::Server::Notification::OutputChannelReplace::OutputChannelReplace(self, &Parameter).await;
 			},
 
 			"outputChannel.show" => {
-				super::Notification::OutputChannelShow::OutputChannelShow(self, &Parameter).await;
+				::Vine::Server::Notification::OutputChannelShow::OutputChannelShow(self, &Parameter).await;
 			},
 
 			"outputChannel.hide" => {
-				super::Notification::OutputChannelHide::OutputChannelHide(self, &Parameter).await;
+				::Vine::Server::Notification::OutputChannelHide::OutputChannelHide(self, &Parameter).await;
 			},
 
 			"outputChannel.dispose" => {
-				super::Notification::OutputChannelDispose::OutputChannelDispose(self, &Parameter).await;
+				::Vine::Server::Notification::OutputChannelDispose::OutputChannelDispose(self, &Parameter).await;
 			},
 
 			// Batch 13: webview reverse-channel (Mountain → renderer).
 			"webview.postMessage" => {
-				super::Notification::WebviewPostMessage::WebviewPostMessage(self, &Parameter).await;
+				::Vine::Server::Notification::WebviewPostMessage::WebviewPostMessage(self, &Parameter).await;
 			},
 
 			"webview.dispose" => {
-				super::Notification::WebviewDispose::WebviewDispose(self, &Parameter).await;
+				::Vine::Server::Notification::WebviewDispose::WebviewDispose(self, &Parameter).await;
 			},
 
 			// Batch 14: grammar config, external-URI open, security alert.
 			"set_language_configuration" => {
-				super::Notification::SetLanguageConfiguration::SetLanguageConfiguration(self, &Parameter).await;
+				::Vine::Server::Notification::SetLanguageConfiguration::SetLanguageConfiguration(self, &Parameter).await;
 			},
 
 			"openExternal" => {
-				super::Notification::OpenExternal::OpenExternal(self, &Parameter).await;
+				::Vine::Server::Notification::OpenExternal::OpenExternal(self, &Parameter).await;
 			},
 
 			"security.incident" => {
-				super::Notification::SecurityIncident::SecurityIncident(self, &Parameter).await;
+				::Vine::Server::Notification::SecurityIncident::SecurityIncident(self, &Parameter).await;
 			},
 
 			// Cocoon → Mountain: language-feature provider registration.
@@ -926,7 +926,7 @@ impl MountainService for MountainVinegRPCService {
 			| "register_type_hierarchy_provider"
 			| "register_uri_handler"
 			| "register_workspace_symbol_provider" => {
-				let _ = super::Notification::RegisterLanguageProvider::RegisterLanguageProvider(
+				let _ = ::Vine::Server::Notification::RegisterLanguageProvider::RegisterLanguageProvider(
 					self,
 					&MethodName,
 					&Parameter,
