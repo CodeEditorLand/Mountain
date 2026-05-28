@@ -22,9 +22,9 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 			// Cocoon's gRPC handshake completes. 5000 ms chosen because the
 			// bundled-electron boot trace shows Cocoon's `Successfully connected`
 			// lands ~620 log lines after the workbench's first request.
-			let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 5000).await;
+			let _ = ::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 5000).await;
 
-			crate::Vine::Client::SendRequest::Fn("cocoon-main", Method.clone(), Payload, 30_000)
+			::Vine::Client::SendRequest::Fn("cocoon-main", Method.clone(), Payload, 30_000)
 				.await
 				.map_err(|Error| format!("cocoon:request {} failed: {:?}", Method, Error))
 		},

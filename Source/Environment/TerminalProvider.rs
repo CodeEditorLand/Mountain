@@ -407,7 +407,7 @@ impl TerminalProvider for MountainEnvironment {
 			// B6: Notify Cocoon so vscode.window.terminals removes the entry.
 			// Cocoon's NotificationHandler maps `$acceptTerminalClosed` →
 			// filters `__terminals` by id.
-			let _ = crate::Vine::Client::SendNotification::Fn(
+			let _ = ::Vine::Client::SendNotification::Fn(
 				"cocoon-main".to_string(),
 				"$acceptTerminalClosed".to_string(),
 				serde_json::json!({ "id": TermIDForExit }),
@@ -487,7 +487,7 @@ impl TerminalProvider for MountainEnvironment {
 			// when terminals are created from the UI rather than via the
 			// extension API (createTerminal()). Cocoon's NotificationHandler
 			// maps `$acceptTerminalOpened` → pushes a stub to `__terminals`.
-			if let Err(E) = crate::Vine::Client::SendNotification::Fn(
+			if let Err(E) = ::Vine::Client::SendNotification::Fn(
 				"cocoon-main".to_string(),
 				"$acceptTerminalOpened".to_string(),
 				serde_json::json!({ "id": CreateTermId, "name": CreateName, "pid": CreatePid }),

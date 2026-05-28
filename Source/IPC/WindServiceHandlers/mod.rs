@@ -332,9 +332,9 @@ macro_rules! forward_to_cocoon {
 	($tag:literal, $command:ident, $Arguments:ident) => {{
 		dev_log!("ipc", "{}: {} (→ Cocoon)", $tag, $command);
 		let Payload = cocoon_payload($Arguments);
-		let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+		let _ = ::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
 		Ok(
-			crate::Vine::Client::SendRequest::Fn("cocoon-main", $command.clone(), Payload, 10_000)
+			::Vine::Client::SendRequest::Fn("cocoon-main", $command.clone(), Payload, 10_000)
 				.await
 				.unwrap_or(Value::Null),
 		)
@@ -890,7 +890,7 @@ pub async fn mountain_ipc_invoke(
 							"event": format!("onCustom:{}", ExtensionId),
 							"extensionId": ExtensionId,
 						});
-						let _ = crate::Vine::Client::SendNotification::Fn(
+						let _ = ::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
 							"$activateByEvent".to_string(),
 							Notification,
@@ -1348,7 +1348,7 @@ pub async fn mountain_ipc_invoke(
 					Ok(Config)
 				},
 				"mountain_get_services_status" => {
-					let CocoonConnected = crate::Vine::Client::IsClientConnected::Fn("cocoon-main");
+					let CocoonConnected = ::Vine::Client::IsClientConnected::Fn("cocoon-main");
 					Ok(json!({
 						"cocoon": { "connected": CocoonConnected },
 						"vine": { "running": true }
@@ -2070,7 +2070,7 @@ pub async fn mountain_ipc_invoke(
 						Some(Id) => serde_json::json!({ "id": Id }),
 						None => serde_json::json!({ "id": null }),
 					};
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptActiveTerminalChanged".to_string(),
 						Payload,
@@ -2085,7 +2085,7 @@ pub async fn mountain_ipc_invoke(
 				// and `onDidChangeTerminalShellIntegration` fires.
 				"localPty:setShellIntegrationActive" => {
 					let TermId = Arguments.first().and_then(Value::as_i64).unwrap_or(0) as u64;
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTerminalShellIntegrationActivated".to_string(),
 						serde_json::json!({ "id": TermId }),
@@ -2102,7 +2102,7 @@ pub async fn mountain_ipc_invoke(
 				// `[{ id, interactedWith }]`.
 				"localPty:setInteracted" => {
 					let Payload = arg_val(&Arguments, 0);
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTerminalStateChanged".to_string(),
 						Payload,
@@ -2129,7 +2129,7 @@ pub async fn mountain_ipc_invoke(
 								}
 							}
 						}
-						let _ = crate::Vine::Client::SendNotification::Fn(
+						let _ = ::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
 							"$acceptTerminalCwdChange".to_string(),
 							serde_json::json!({ "id": TermId, "cwd": Cwd }),
@@ -2167,7 +2167,7 @@ pub async fn mountain_ipc_invoke(
 				// `window.didStartTerminalShellExecution` Emitter channel.
 				"localPty:shellExecutionStart" => {
 					let Payload = arg_val(&Arguments, 0);
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTerminalShellExecutionStart".to_string(),
 						Payload,
@@ -2188,13 +2188,13 @@ pub async fn mountain_ipc_invoke(
 				// event - same data, different consumer audience).
 				"localPty:shellExecutionEnd" => {
 					let Payload = arg_val(&Arguments, 0);
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTerminalShellExecutionEnd".to_string(),
 						Payload.clone(),
 					)
 					.await;
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptExecutedTerminalCommand".to_string(),
 						Payload,
@@ -2551,12 +2551,9 @@ pub async fn mountain_ipc_invoke(
 						_ => "$treeView:visibilityChanged",
 					};
 					tokio::spawn(async move {
-						if let Err(E) = crate::Vine::Client::SendNotification::Fn(
-							"cocoon-main".to_string(),
-							Method.to_string(),
-							Payload,
-						)
-						.await
+						if let Err(E) =
+							::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), Method.to_string(), Payload)
+								.await
 						{
 							dev_log!("ipc", "warn: [tree] Cocoon notify {} failed: {:?}", Method, E);
 						}
@@ -2614,7 +2611,7 @@ pub async fn mountain_ipc_invoke(
 					// calling `activeTextEditor.viewColumn` see the correct
 					// pane number in split-editor layouts.
 					let Payload = json!({ "uri": Uri, "selections": Selections, "viewColumn": ViewColumn });
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"window.didChangeTextEditorSelection".to_string(),
 						Payload,
@@ -2653,7 +2650,7 @@ pub async fn mountain_ipc_invoke(
 							{ "content": Content, "versionId": Version, "isDirty": true, "changes": [] }
 						]);
 						tokio::spawn(async move {
-							let _ = crate::Vine::Client::SendNotification::Fn(
+							let _ = ::Vine::Client::SendNotification::Fn(
 								"cocoon-main".to_string(),
 								"$acceptModelChanged".to_string(),
 								Payload2,
@@ -2675,7 +2672,7 @@ pub async fn mountain_ipc_invoke(
 							.Workspace
 							.SetActiveDocumentURI(Some(Uri.clone()));
 					}
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"window.didChangeActiveTextEditor".to_string(),
 						Payload,
@@ -2696,7 +2693,7 @@ pub async fn mountain_ipc_invoke(
 				// markers when the user navigates between files.
 				"sky:editor:visibleChanged" => {
 					let Payload = arg_val(&Arguments, 0);
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptVisibleEditorsChanged".to_string(),
 						Payload,
@@ -2716,7 +2713,7 @@ pub async fn mountain_ipc_invoke(
 				// (GitLens, Roo Code) and the `vscode.window.tabGroups` API.
 				"sky:editor:tabsChanged" => {
 					let Payload = arg_val(&Arguments, 0);
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTabsChanged".to_string(),
 						Payload,
@@ -2735,7 +2732,7 @@ pub async fn mountain_ipc_invoke(
 				// loop.
 				"sky:editor:visibleRangesChanged" => {
 					let Payload = arg_val(&Arguments, 0);
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptVisibleRangesChanged".to_string(),
 						Payload,
@@ -2754,7 +2751,7 @@ pub async fn mountain_ipc_invoke(
 				// so future consumers can read whatever they need.
 				"sky:editor:optionsChanged" => {
 					let Payload = arg_val(&Arguments, 0);
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTextEditorOptionsChanged".to_string(),
 						Payload,
@@ -2772,7 +2769,7 @@ pub async fn mountain_ipc_invoke(
 				// `vscode.window.onDidChangeTextEditorDiffInformation` fire.
 				"sky:editor:diffInformationChanged" => {
 					let Payload = arg_val(&Arguments, 0);
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTextEditorDiffInformationChanged".to_string(),
 						Payload,
@@ -2790,7 +2787,7 @@ pub async fn mountain_ipc_invoke(
 				// `vscode.window.onDidChangeTextEditorViewColumn` fire.
 				"sky:editor:viewColumnChanged" => {
 					let Payload = arg_val(&Arguments, 0);
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTextEditorViewColumnChanged".to_string(),
 						Payload,
@@ -2863,14 +2860,12 @@ pub async fn mountain_ipc_invoke(
 					// async block (not just the arm), changing the block's inferred
 					// return type from `()` to `Result<Value, _>` and breaking
 					// Scheduler::Submit's Output = () bound.
-					if !crate::Vine::Client::IsClientConnected::Fn("cocoon-main") {
+					if !::Vine::Client::IsClientConnected::Fn("cocoon-main") {
 						Ok(Value::Array(Vec::new()))
 					} else {
-						Ok(
-							crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 5_000)
-								.await
-								.unwrap_or(Value::Array(Vec::new())),
-						)
+						Ok(::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 5_000)
+							.await
+							.unwrap_or(Value::Array(Vec::new())))
 					}
 				},
 
@@ -2974,10 +2969,8 @@ pub async fn mountain_ipc_invoke(
 						// cover language:*, scm:*, debug:*, tasks:*, auth:*, etc.
 						let Payload = cocoon_payload(Arguments);
 						dev_log!("ipc", "deferred → Cocoon: {}", command);
-						let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
-						match crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 15_000)
-							.await
-						{
+						let _ = ::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+						match ::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 15_000).await {
 							Ok(Response) => Ok(Response),
 							Err(CocoonError) => {
 								dev_log!(

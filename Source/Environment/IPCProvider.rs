@@ -37,7 +37,7 @@ use async_trait::async_trait;
 use serde_json::Value;
 
 use super::MountainEnvironment::MountainEnvironment;
-use crate::Vine::Client;
+use ::Vine::Client as Client;
 
 // TODO: message queuing for offline scenarios, bidirectional request handling
 // (sidecar → main), streaming support, request cancellation, priority queue,

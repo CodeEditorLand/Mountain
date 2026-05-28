@@ -14,9 +14,10 @@ use url::Url;
 
 use crate::{
 	ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
-	Cache::PathCanon::Canonicalize,
 	Workspace::WorkspaceFileService::WorkspaceFile,
 };
+
+use ::Cache::PathCanon::Canonicalize;
 
 pub fn Fn(WorkspaceFilePath:&Path, FileContent:&str) -> Result<Vec<WorkspaceFolderStateDTO>, CommonError> {
 	let Parsed:WorkspaceFile::Struct = serde_json::from_str(FileContent)

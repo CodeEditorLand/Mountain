@@ -73,7 +73,7 @@ impl IPCProvider for MountainIPCProvider {
 		let M = Method.to_string();
 
 		tauri::async_runtime::spawn(async move {
-			let _ = crate::Vine::Client::SendNotification::Fn(Ch, M, Payload).await;
+			let _ = ::Vine::Client::SendNotification::Fn(Ch, M, Payload).await;
 		});
 	}
 }

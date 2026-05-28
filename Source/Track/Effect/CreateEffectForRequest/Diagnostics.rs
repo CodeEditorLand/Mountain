@@ -38,7 +38,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.collect()
 					})
 					.unwrap_or_default();
-				let _ = crate::Vine::Client::SendNotification::Fn(
+				let _ = ::Vine::Client::SendNotification::Fn(
 					"cocoon-main".to_string(),
 					"$acceptDiagnosticsChanged".to_string(),
 					json!({ "owner": owner, "uris": Uris }),
@@ -65,7 +65,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				// prior URI set we send an empty `uris` list - the
 				// `onDidChangeDiagnostics` subscriber should re-query
 				// `getDiagnostics(uri)` if it needs the new state.
-				let _ = crate::Vine::Client::SendNotification::Fn(
+				let _ = ::Vine::Client::SendNotification::Fn(
 					"cocoon-main".to_string(),
 					"$acceptDiagnosticsChanged".to_string(),
 					json!({ "owner": owner, "uris": [] }),

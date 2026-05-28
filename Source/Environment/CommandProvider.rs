@@ -53,7 +53,9 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
 
 use super::MountainEnvironment::MountainEnvironment;
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Vine::Client, dev_log};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+
+use ::Vine::Client as Client;
 
 /// An enum representing the different ways a command can be handled.
 ///

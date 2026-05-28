@@ -31,7 +31,7 @@ pub fn Fn(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 			"toRemove": ToRemove,
 		});
 
-		match Vine::Client::SendRequest::Fn(
+		match ::Vine::Client::SendRequest::Fn(
 			&COCOON_SIDE_CAR_IDENTIFIER.to_string(),
 			"$deltaExtensions".to_string(),
 			Parameters,
@@ -55,7 +55,7 @@ pub fn Fn(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 		// Ready). Firing `"*"` would over-activate lazy extensions.
 		for Event in ["onStartupFinished"] {
 			let ActivationParameters = json!({ "activationEvent": Event });
-			match Vine::Client::SendRequest::Fn(
+			match ::Vine::Client::SendRequest::Fn(
 				&COCOON_SIDE_CAR_IDENTIFIER.to_string(),
 				"$activateByEvent".to_string(),
 				ActivationParameters,

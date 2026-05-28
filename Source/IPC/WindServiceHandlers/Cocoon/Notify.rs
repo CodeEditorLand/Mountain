@@ -20,7 +20,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 			let Payload = arg_val(&Arguments, 1);
 
 			if let Err(Error) =
-				crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), Method.clone(), Payload).await
+				::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), Method.clone(), Payload).await
 			{
 				crate::dev_log!("ipc", "warn: [cocoon:notify] {} failed: {:?}", Method, Error);
 			}

@@ -37,7 +37,7 @@ pub async fn Fn(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Resul
 	let FileUri = format!("file://{}", Path);
 
 	tokio::spawn(async move {
-		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
+		if let Err(Error) = ::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),
 			"$acceptModelSaved".to_string(),
 			json!({ "uri": FileUri }),

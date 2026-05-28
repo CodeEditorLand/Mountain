@@ -69,7 +69,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				let BroadcastEnabled = std::env::var("TierCommandEventBroadcast")
 					.unwrap_or_else(|_| env!("TierCommandEventBroadcast", "Off").to_string());
 				if BroadcastEnabled == "On" {
-					let _ = crate::Vine::Client::SendNotification::Fn(
+					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptCommandExecuted".to_string(),
 						json!({

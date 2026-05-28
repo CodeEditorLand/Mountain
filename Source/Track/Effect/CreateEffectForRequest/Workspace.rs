@@ -193,7 +193,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				});
 				let _ = tokio::time::timeout(
 					std::time::Duration::from_millis(1500),
-					crate::Vine::Client::SendNotification::Fn(
+					::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"document.willSave".to_string(),
 						WillSavePayload,
@@ -223,7 +223,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				// Notify Cocoon that the file was saved so `onDidSaveTextDocument`
 				// fires for extension-triggered saves (format-on-save, etc.).
-				let _ = crate::Vine::Client::SendNotification::Fn(
+				let _ = ::Vine::Client::SendNotification::Fn(
 					"cocoon-main".to_string(),
 					"$acceptModelSaved".to_string(),
 					serde_json::json!({ "uri": UriVal }),

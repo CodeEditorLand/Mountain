@@ -35,7 +35,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	dev_log!("vfs", "file:delete ok path={}", Path);
 
 	tokio::spawn(async move {
-		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
+		if let Err(Error) = ::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),
 			"$acceptDidDeleteFiles".to_string(),
 			json!({ "files": [{ "uri": FileUri }] }),

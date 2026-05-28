@@ -1057,7 +1057,7 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 			// wait-free DashMap reads. Brotli sibling (`<file>.br`)
 			// is auto-discovered and served when the request offers
 			// `Accept-Encoding: br`.
-			match crate::Cache::AssetMemoryMap::LoadOrInsert::Fn(FilesystemPath) {
+			match ::Cache::AssetMemoryMap::LoadOrInsert::Fn(FilesystemPath) {
 				Ok(Entry) => {
 					let AcceptsBrotli = Request
 						.headers()
@@ -1172,7 +1172,7 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 			// LAND-PATCH B7.P01: mmap-cache the StaticRoot fallback
 			// path so dev-mode workbench reloads pay the syscall
 			// once per asset for the entire session.
-			match crate::Cache::AssetMemoryMap::LoadOrInsert::Fn(&FilesystemPath) {
+			match ::Cache::AssetMemoryMap::LoadOrInsert::Fn(&FilesystemPath) {
 				Ok(Entry) => {
 					let AcceptsBrotli = Request
 						.headers()

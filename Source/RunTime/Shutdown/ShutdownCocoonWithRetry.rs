@@ -58,7 +58,7 @@ impl ApplicationRunTime {
 		// background tokio task firing `SendNotification` after this flips
 		// short-circuits to `Ok(())` instead of attempting a TCP connect to
 		// the dead socket and logging a false-positive `Connection refused`.
-		crate::Vine::Client::MarkShutdown::Fn();
+		::Vine::Client::MarkShutdown::Fn();
 
 		// Atom I6: always reap the child after the graceful attempt. No-op if
 		// the child already exited from $shutdown.

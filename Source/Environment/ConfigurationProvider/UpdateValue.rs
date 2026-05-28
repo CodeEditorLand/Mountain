@@ -230,7 +230,7 @@ pub(super) async fn update_configuration_value(
 	let NotifyKey = key.clone();
 
 	tokio::spawn(async move {
-		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
+		if let Err(Error) = ::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),
 			"configuration.change".to_string(),
 			serde_json::json!({ "keys": [NotifyKey] }),

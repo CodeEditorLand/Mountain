@@ -460,7 +460,7 @@ async fn LaunchAndManageCocoonSideCar(
 			ConnectStart.elapsed().as_millis()
 		);
 
-		match Vine::Client::ConnectToSideCar::Fn(SideCarIdentifier.clone(), GRPCAddress.clone()).await {
+		match ::Vine::Client::ConnectToSideCar::Fn(SideCarIdentifier.clone(), GRPCAddress.clone()).await {
 			Ok(()) => {
 				crate::dev_log!(
 					"grpc",
@@ -569,7 +569,7 @@ async fn LaunchAndManageCocoonSideCar(
 		})?;
 
 	// Send initialization request with timeout
-	let Response = Vine::Client::SendRequest::Fn(
+	let Response = ::Vine::Client::SendRequest::Fn(
 		&SideCarIdentifier,
 		"InitializeExtensionHost".to_string(),
 		MainInitializationData,
@@ -629,7 +629,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 		crate::dev_log!("exthost", "Sending $activateByEvent(\"*\") to Cocoon");
 
-		if let Err(Error) = Vine::Client::SendRequest::Fn(
+		if let Err(Error) = ::Vine::Client::SendRequest::Fn(
 			&SideCarId,
 			"$activateByEvent".to_string(),
 			serde_json::json!({ "activationEvent": "*" }),
@@ -673,7 +673,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 						let DeserializeMethod = "ExtHostWebviewPanels$deserializeWebviewPanel".to_string();
 
-						if let Err(Error) = Vine::Client::SendRequest::Fn(
+						if let Err(Error) = ::Vine::Client::SendRequest::Fn(
 							&SideCarId,
 							DeserializeMethod,
 							serde_json::json!([ViewType, serde_json::Value::Null, State]),
@@ -720,7 +720,7 @@ async fn LaunchAndManageCocoonSideCar(
 						"lines": Doc.Lines,
 					});
 					let _ =
-						Vine::Client::SendNotification::Fn(SideCarId.clone(), "$acceptModelAdded".to_string(), Payload)
+						::Vine::Client::SendNotification::Fn(SideCarId.clone(), "$acceptModelAdded".to_string(), Payload)
 							.await;
 				}
 			}
@@ -784,7 +784,7 @@ async fn LaunchAndManageCocoonSideCar(
 			);
 			for Pattern in Matched {
 				let Event = format!("workspaceContains:{}", Pattern);
-				if let Err(Error) = Vine::Client::SendRequest::Fn(
+				if let Err(Error) = ::Vine::Client::SendRequest::Fn(
 					&SideCarId,
 					"$activateByEvent".to_string(),
 					serde_json::json!({ "activationEvent": Event }),
@@ -806,7 +806,7 @@ async fn LaunchAndManageCocoonSideCar(
 		// moment to complete so late-binding extensions layered on top
 		// of startup contributions resolve in the expected order.
 		sleep(Duration::from_millis(2_000)).await;
-		if let Err(Error) = Vine::Client::SendRequest::Fn(
+		if let Err(Error) = ::Vine::Client::SendRequest::Fn(
 			&SideCarId,
 			"$activateByEvent".to_string(),
 			serde_json::json!({ "activationEvent": "onStartupFinished" }),
