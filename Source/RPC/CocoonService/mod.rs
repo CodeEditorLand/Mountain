@@ -70,6 +70,7 @@ use serde_json::json;
 use tokio::sync::RwLock;
 use tonic::{Request, Response, Status};
 use url::Url;
+use ::Vine::Generated::cocoon_service_server::CocoonService;
 
 use crate::{
 	ApplicationState::DTO::{
@@ -275,7 +276,6 @@ use crate::Vine::Generated::{
 	WorkspaceFolder,
 	WriteFileRequest,
 
-	cocoon_service_server::CocoonService,
 	on_did_receive_message_request,
 	post_webview_message_request,
 };
