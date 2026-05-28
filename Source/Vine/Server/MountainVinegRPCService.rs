@@ -542,22 +542,40 @@ impl MountainService for MountainVinegRPCService {
 		match MethodName.as_str() {
 			// Batch 15: extension-host + progress + languages arms now live
 			// as atoms under `Vine::Server::Notification::*`. Each match arm
-			// is pure delegation - adding a new wire method is a one-line
-			// change here plus one new atom file.
 			"extensionHostMessage" => {
-				::Vine::Server::Notification::ExtensionHostMessage::ExtensionHostMessage(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"cocoon:extensionHostReply",
+					&Parameter,
+					"",
+					"",
+				);
 			},
 
 			"ExtensionActivated" => {
-				::Vine::Server::Notification::ExtensionActivated::ExtensionActivated(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"cocoon:extensionActivated",
+					&Parameter,
+					"",
+					"",
+				);
 			},
 
 			"ExtensionDeactivated" => {
-				::Vine::Server::Notification::ExtensionDeactivated::ExtensionDeactivated(self, &Parameter).await;
+				dev_log!(
+					"grpc",
+					"[Extension] deactivated id={}",
+					Parameter.get("extensionId").and_then(Value::as_str).unwrap_or("?")
+				);
 			},
 
 			"WebviewReady" => {
-				::Vine::Server::Notification::WebviewReady::WebviewReady(self, &Parameter).await;
+				dev_log!(
+					"grpc",
+					"[Webview] ready handle={}",
+					Parameter.get("handle").and_then(Value::as_str).unwrap_or("?")
+				);
 			},
 
 			"progress.start" => {
@@ -573,18 +591,33 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"languages.setDocumentLanguage" => {
-				::Vine::Server::Notification::LanguagesSetDocumentLanguage::LanguagesSetDocumentLanguage(
-					self, &Parameter,
-				)
-				.await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://languages/setDocumentLanguage",
+					&Parameter,
+					"grpc",
+					"",
+				);
 			},
 
 			"workspace.applyEdit" => {
-				::Vine::Server::Notification::WorkspaceApplyEdit::WorkspaceApplyEdit(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://workspace/applyEdit",
+					&Parameter,
+					"",
+					"",
+				);
 			},
 
 			"window.showTextDocument" => {
-				::Vine::Server::Notification::WindowShowTextDocument::WindowShowTextDocument(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://window/showTextDocument",
+					&Parameter,
+					"",
+					"",
+				);
 			},
 
 			// Batch 16: the remaining Cocoon-notification arms, now pure
@@ -613,7 +646,13 @@ impl MountainService for MountainVinegRPCService {
 			// event. Relay to Sky which calls `ITreeView.refresh()` to
 			// trigger a fresh getChildren() round-trip.
 			"tree.refresh" => {
-				::Vine::Server::Notification::TreeRefresh::TreeRefresh(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://tree-view/refresh",
+					&Parameter,
+					"grpc",
+					"[Tree] refresh",
+				);
 			},
 
 			// EnvironmentVariableCollection mutations - applied to every
@@ -795,16 +834,26 @@ impl MountainService for MountainVinegRPCService {
 					.await;
 			},
 
-			// Batch 11: progress lifecycle name alignment.
 			"progress.update" => {
-				::Vine::Server::Notification::ProgressUpdate::ProgressUpdate(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://notification/progress-update",
+					&Parameter,
+					"grpc",
+					"[Progress] update",
+				);
 			},
 
 			"progress.complete" => {
-				::Vine::Server::Notification::ProgressComplete::ProgressComplete(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://progress/complete",
+					&Parameter,
+					"grpc",
+					"[Progress] complete",
+				);
 			},
 
-			// Batch 10: status-bar text-only fast path + item disposal.
 			"setStatusBarText" => {
 				::Vine::Server::Notification::SetStatusBarText::SetStatusBarText(self, &Parameter).await;
 			},
@@ -813,16 +862,26 @@ impl MountainService for MountainVinegRPCService {
 				::Vine::Server::Notification::DisposeStatusBarItem::DisposeStatusBarItem(self, &Parameter).await;
 			},
 
-			// Batch 9: output channel lifecycle. Two parallel wire names
-			// (`output.*` via `MountainClient.sendNotification` and
-			// `outputChannel.*` via `SendToMountain`) both forward to the
-			// same `sky://output/*` channels until Cocoon consolidates.
+			// output.* and outputChannel.* both forward to sky://output/* channels.
+			// Pure relay arms are inlined; atoms with coalescer or payload reshape keep their Vine impl.
 			"output.create" => {
-				::Vine::Server::Notification::OutputCreate::OutputCreate(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://output/create",
+					&Parameter,
+					"grpc",
+					"[Output] create",
+				);
 			},
 
 			"output.append" => {
-				::Vine::Server::Notification::OutputAppend::OutputAppend(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://output/append",
+					&Parameter,
+					"grpc",
+					"[Output] append",
+				);
 			},
 
 			"output.appendLine" => {
@@ -830,15 +889,33 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"output.clear" => {
-				::Vine::Server::Notification::OutputClear::OutputClear(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://output/clear",
+					&Parameter,
+					"grpc",
+					"[Output] clear",
+				);
 			},
 
 			"output.show" => {
-				::Vine::Server::Notification::OutputShow::OutputShow(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://output/show",
+					&Parameter,
+					"grpc",
+					"[Output] show",
+				);
 			},
 
 			"output.dispose" => {
-				::Vine::Server::Notification::OutputDispose::OutputDispose(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://output/dispose",
+					&Parameter,
+					"grpc",
+					"[Output] dispose",
+				);
 			},
 
 			"output.replace" => {
@@ -846,7 +923,13 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"outputChannel.create" => {
-				::Vine::Server::Notification::OutputChannelCreate::OutputChannelCreate(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://output/create",
+					&Parameter,
+					"output-verbose",
+					"[OutputChannel] create",
+				);
 			},
 
 			"outputChannel.append" => {
@@ -854,15 +937,33 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"outputChannel.clear" => {
-				::Vine::Server::Notification::OutputChannelClear::OutputChannelClear(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://output/clear",
+					&Parameter,
+					"grpc",
+					"[OutputChannel] clear",
+				);
 			},
 
 			"outputChannel.replace" => {
-				::Vine::Server::Notification::OutputChannelReplace::OutputChannelReplace(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://output/replace",
+					&Parameter,
+					"grpc",
+					"[OutputChannel] replace",
+				);
 			},
 
 			"outputChannel.show" => {
-				::Vine::Server::Notification::OutputChannelShow::OutputChannelShow(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://output/show",
+					&Parameter,
+					"grpc",
+					"[OutputChannel] show",
+				);
 			},
 
 			"outputChannel.hide" => {
@@ -870,10 +971,15 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"outputChannel.dispose" => {
-				::Vine::Server::Notification::OutputChannelDispose::OutputChannelDispose(self, &Parameter).await;
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://output/dispose",
+					&Parameter,
+					"grpc",
+					"[OutputChannel] dispose",
+				);
 			},
 
-			// Batch 13: webview reverse-channel (Mountain → renderer).
 			"webview.postMessage" => {
 				::Vine::Server::Notification::WebviewPostMessage::WebviewPostMessage(self, &Parameter).await;
 			},
@@ -882,7 +988,6 @@ impl MountainService for MountainVinegRPCService {
 				::Vine::Server::Notification::WebviewDispose::WebviewDispose(self, &Parameter).await;
 			},
 
-			// Batch 14: grammar config, external-URI open, security alert.
 			"set_language_configuration" => {
 				::Vine::Server::Notification::SetLanguageConfiguration::SetLanguageConfiguration(self, &Parameter)
 					.await;
