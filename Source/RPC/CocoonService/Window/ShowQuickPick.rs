@@ -7,13 +7,9 @@ use CommonLibrary::UserInterface::{
 	DTO::{QuickPickItemDTO::QuickPickItemDTO, QuickPickOptionsDTO::QuickPickOptionsDTO},
 	UserInterfaceProvider::UserInterfaceProvider,
 };
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{ShowQuickPickRequest, ShowQuickPickResponse};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

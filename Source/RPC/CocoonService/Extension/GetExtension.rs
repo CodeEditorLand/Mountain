@@ -3,13 +3,9 @@
 
 use tonic::{Response, Status};
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{ExtensionInfo, GetExtensionRequest, GetExtensionResponse};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

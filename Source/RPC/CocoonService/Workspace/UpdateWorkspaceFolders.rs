@@ -3,6 +3,7 @@
 //! set so existing indices stay stable.
 
 use tonic::{Response, Status};
+use ::Vine::Generated::{Empty, UpdateWorkspaceFoldersRequest};
 
 use crate::{
 	ApplicationState::{
@@ -12,8 +13,6 @@ use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
 	dev_log,
 };
-
-use ::Vine::Generated::{Empty, UpdateWorkspaceFoldersRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateWorkspaceFoldersRequest) -> Result<Response<Empty>, Status> {
 	dev_log!(

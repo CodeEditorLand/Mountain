@@ -3,13 +3,9 @@
 //! prefixed with `stderr: ` so the extension can differentiate.
 
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{GitExecRequest, GitExecResponse};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<Response<GitExecResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] git_exec: {}", Request.args.join(" "));

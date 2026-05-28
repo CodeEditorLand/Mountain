@@ -2,13 +2,9 @@
 
 use tonic::{Response, Status};
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{Empty, TerminalInputRequest};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalInputRequest) -> Result<Response<Empty>, Status> {
 	let TerminalIdentifier = Request.terminal_id as u64;

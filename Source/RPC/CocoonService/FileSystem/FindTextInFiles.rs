@@ -3,13 +3,9 @@
 //! `tokio::task::spawn_blocking` so the event loop stays responsive.
 
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{FindTextInFilesRequest, FindTextInFilesResponse, Position, Range, TextMatch, Uri};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

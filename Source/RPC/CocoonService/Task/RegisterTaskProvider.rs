@@ -5,14 +5,13 @@
 use serde_json::json;
 use tonic::{Response, Status};
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
+use ::Vine::Generated::{Empty, RegisterTaskProviderRequest};
 
 use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	RPC::CocoonService::CocoonServiceImpl,
 	dev_log,
 };
-
-use ::Vine::Generated::{Empty, RegisterTaskProviderRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterTaskProviderRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Registering Task Provider: type={}", Request.r#type);

@@ -17,13 +17,9 @@ use std::{
 
 use CommonLibrary::FileSystem::FileWatcherProvider::FileWatcherProvider;
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{Empty, WatchFileRequest};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 static WATCH_SEQ:AtomicU64 = AtomicU64::new(1);
 

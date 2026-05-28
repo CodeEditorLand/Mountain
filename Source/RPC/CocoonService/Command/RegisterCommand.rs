@@ -3,13 +3,9 @@
 
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{Empty, RegisterCommandRequest};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterCommandRequest) -> Result<Response<Empty>, Status> {
 	dev_log!(

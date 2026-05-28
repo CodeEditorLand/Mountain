@@ -2,13 +2,9 @@
 
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{Empty, UnregisterCommandRequest};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:UnregisterCommandRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Unregistering command '{}'", Request.command_id);

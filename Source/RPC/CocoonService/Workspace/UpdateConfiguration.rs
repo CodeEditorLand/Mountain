@@ -4,13 +4,9 @@
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{Empty, UpdateConfigurationRequest};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateConfigurationRequest) -> Result<Response<Empty>, Status> {
 	dev_log!(

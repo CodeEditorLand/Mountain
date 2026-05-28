@@ -4,13 +4,9 @@
 //! to open a browser window, so for now we return an empty session.
 
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{GetAuthenticationSessionRequest, GetAuthenticationSessionResponse};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(
 	_Service:&CocoonServiceImpl,

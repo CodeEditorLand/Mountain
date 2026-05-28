@@ -3,13 +3,10 @@
 //! Typed gRPC RPCs: participate_in_save.
 
 use tonic::{Response, Status};
+use ::Vine::Generated::{ParticipateInSaveRequest, ParticipateInSaveResponse};
 
 use super::CocoonServiceImpl;
-use crate::{
-	dev_log,
-};
-
-use ::Vine::Generated::{ParticipateInSaveRequest, ParticipateInSaveResponse};
+use crate::dev_log;
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

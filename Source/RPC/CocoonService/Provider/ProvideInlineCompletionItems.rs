@@ -16,13 +16,9 @@ use CommonLibrary::LanguageFeature::{
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
 use serde_json::json;
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{InlineCompletionItem, ProvideInlineCompletionRequest, ProvideInlineCompletionResponse};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

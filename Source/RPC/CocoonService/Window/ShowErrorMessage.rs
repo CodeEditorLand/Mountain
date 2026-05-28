@@ -5,13 +5,9 @@ use CommonLibrary::UserInterface::{
 	DTO::MessageSeverity::MessageSeverity,
 	UserInterfaceProvider::UserInterfaceProvider,
 };
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{ShowMessageRequest, ShowMessageResponse};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

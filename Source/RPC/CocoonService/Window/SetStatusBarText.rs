@@ -6,13 +6,9 @@ use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};
 use CommonLibrary::StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{Empty, SetStatusBarTextRequest};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:SetStatusBarTextRequest) -> Result<Response<Empty>, Status> {
 	dev_log!(

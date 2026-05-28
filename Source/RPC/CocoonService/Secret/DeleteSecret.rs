@@ -2,13 +2,9 @@
 
 use tonic::{Response, Status};
 use CommonLibrary::Secret::SecretProvider::SecretProvider;
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{DeleteSecretRequest, Empty};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:DeleteSecretRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] delete_secret: key={}", Request.key);

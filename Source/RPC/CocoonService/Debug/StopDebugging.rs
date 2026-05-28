@@ -5,13 +5,9 @@
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{Empty, StopDebuggingRequest};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:StopDebuggingRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] stop_debugging: session={}", Request.session_id);

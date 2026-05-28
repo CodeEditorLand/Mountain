@@ -3,13 +3,9 @@
 
 use tonic::{Response, Status};
 use CommonLibrary::Secret::SecretProvider::SecretProvider;
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{GetSecretRequest, GetSecretResponse};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:GetSecretRequest) -> Result<Response<GetSecretResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] get_secret: key={}", Request.key);

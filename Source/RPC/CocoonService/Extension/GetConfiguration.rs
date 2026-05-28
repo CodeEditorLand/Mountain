@@ -7,13 +7,9 @@ use CommonLibrary::Configuration::{
 	ConfigurationProvider::ConfigurationProvider,
 	DTO::ConfigurationOverridesDTO::ConfigurationOverridesDTO,
 };
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{GetConfigurationRequest, GetConfigurationResponse};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

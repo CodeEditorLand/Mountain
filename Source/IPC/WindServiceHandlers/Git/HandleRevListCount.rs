@@ -5,10 +5,7 @@
 
 use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::{
-	Git::Shared::{RunGit::Fn as RunGit},
-	Utilities::JsonValueHelpers::arg_string,
-};
+use crate::IPC::WindServiceHandlers::{Git::Shared::RunGit::Fn as RunGit, Utilities::JsonValueHelpers::arg_string};
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let RepoPath = arg_string(&Arguments, 0);

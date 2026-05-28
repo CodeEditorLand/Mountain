@@ -1,13 +1,9 @@
 //! Rename a file or directory, creating any missing target parents first.
 
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{Empty, RenameFileRequest};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:RenameFileRequest) -> Result<Response<Empty>, Status> {
 	let OldPath = CocoonServiceImpl::UriToPath(Request.source.as_ref())

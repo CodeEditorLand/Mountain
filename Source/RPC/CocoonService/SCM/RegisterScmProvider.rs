@@ -12,14 +12,13 @@ use CommonLibrary::{
 	LanguageFeature::DTO::ProviderType::ProviderType,
 	SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider,
 };
+use ::Vine::Generated::{Empty, RegisterScmProviderRequest};
 
 use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	RPC::CocoonService::CocoonServiceImpl,
 	dev_log,
 };
-
-use ::Vine::Generated::{Empty, RegisterScmProviderRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterScmProviderRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Registering SCM provider: {}", Request.scm_id);

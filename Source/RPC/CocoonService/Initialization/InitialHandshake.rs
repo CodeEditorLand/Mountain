@@ -2,10 +2,9 @@
 //! init-extension-host data via `InitExtensionHost::Fn`.
 
 use tonic::{Response, Status};
+use ::Vine::Generated::Empty;
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
-
-use ::Vine::Generated::Empty;
 
 pub async fn Fn(_Service:&CocoonServiceImpl, _Request:Empty) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Initial handshake received from Cocoon");

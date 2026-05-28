@@ -2,13 +2,9 @@
 //! up the cancellation token in `Service.ActiveOperations` and fires it.
 
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{CancelOperationRequest, Empty};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:CancelOperationRequest) -> Result<Response<Empty>, Status> {
 	dev_log!(

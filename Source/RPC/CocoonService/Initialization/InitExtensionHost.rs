@@ -3,14 +3,13 @@
 //! so the rest of the boot path sees them.
 
 use tonic::{Response, Status};
+use ::Vine::Generated::{Empty, InitExtensionHostRequest};
 
 use crate::{
 	ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
 	RPC::CocoonService::CocoonServiceImpl,
 	dev_log,
 };
-
-use ::Vine::Generated::{Empty, InitExtensionHostRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:InitExtensionHostRequest) -> Result<Response<Empty>, Status> {
 	dev_log!(

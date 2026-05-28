@@ -6,13 +6,9 @@ use CommonLibrary::UserInterface::{
 	DTO::InputBoxOptionsDTO::InputBoxOptionsDTO,
 	UserInterfaceProvider::UserInterfaceProvider,
 };
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{ShowInputBoxRequest, ShowInputBoxResponse};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

@@ -4,13 +4,9 @@
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{Empty, TerminateTaskRequest};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminateTaskRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] terminate_task: id={}", Request.task_id);

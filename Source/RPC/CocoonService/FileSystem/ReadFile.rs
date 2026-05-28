@@ -2,13 +2,9 @@
 //! the encoding negotiation lives in Cocoon).
 
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{ReadFileRequest, ReadFileResponse};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:ReadFileRequest) -> Result<Response<ReadFileResponse>, Status> {
 	let Path = CocoonServiceImpl::UriToPath(Request.uri.as_ref())

@@ -7,13 +7,9 @@ use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};
 use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-	dev_log,
-};
-
 use ::Vine::Generated::{Empty, ResizeTerminalRequest};
+
+use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:ResizeTerminalRequest) -> Result<Response<Empty>, Status> {
 	let TerminalId = Request.terminal_id;

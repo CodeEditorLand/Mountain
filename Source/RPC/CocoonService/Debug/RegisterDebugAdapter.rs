@@ -5,14 +5,13 @@ use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
+use ::Vine::Generated::{Empty, RegisterDebugAdapterRequest};
 
 use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	RPC::CocoonService::CocoonServiceImpl,
 	dev_log,
 };
-
-use ::Vine::Generated::{Empty, RegisterDebugAdapterRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterDebugAdapterRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Registering debug adapter: {}", Request.debug_type);

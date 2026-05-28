@@ -3,12 +3,9 @@
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};
-
-use crate::{
-	RPC::CocoonService::CocoonServiceImpl,
-};
-
 use ::Vine::Generated::{AppendOutputRequest, Empty};
+
+use crate::RPC::CocoonService::CocoonServiceImpl;
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:AppendOutputRequest) -> Result<Response<Empty>, Status> {
 	let _ = Service.environment.ApplicationHandle.emit(
