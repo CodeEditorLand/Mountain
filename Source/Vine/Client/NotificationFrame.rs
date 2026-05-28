@@ -3,18 +3,5 @@
 //! `Multiplexer`). Subscribers consume frames from the broadcast channel
 //! managed by `Shared::NOTIFICATION_BROADCAST`.
 
-use serde_json::Value;
-
-#[derive(Debug, Clone)]
-pub struct Struct {
-	pub SideCarIdentifier:String,
-
-	pub Method:String,
-
-	pub Parameters:Value,
-
-	/// Monotonic process-relative nanosecond timestamp at fan-out time.
-	/// Useful for OTel span correlation without burning a
-	/// `SystemTime::now()` per frame.
-	pub TimestampNanos:u64,
-}
+/// Canonical frame shape. See [`::Vine::Client::NotificationFrame::Struct`].
+pub type Struct = ::Vine::Client::NotificationFrame::Struct;

@@ -4,6 +4,4 @@
 //! SIGKILL window returns silently with `Ok(())` instead of logging a
 //! `Connection refused` error.
 
-use crate::Vine::Client::Shared;
-
-pub fn Fn() { Shared::ShutdownFlagStore(true); }
+pub fn Fn() { ::Vine::Client::MarkShutdown::Fn() }

@@ -1,10 +1,3 @@
 //! Information about a downloaded file.
 
-#[derive(Debug, Clone)]
-pub struct Struct {
-	pub file_path:String,
-
-	pub file_size:u64,
-
-	pub checksum:String,
-}
+pub type Struct = ::Air::Client::AirClient::FileInfo::Struct;

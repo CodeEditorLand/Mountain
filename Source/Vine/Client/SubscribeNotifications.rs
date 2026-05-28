@@ -3,8 +3,8 @@
 //! subscribe time (broadcast semantics; no historical replay). Drop the
 //! receiver to unsubscribe.
 
-use crate::Vine::Client::{NotificationFrame, Shared};
+use crate::Vine::Client::NotificationFrame;
 
 pub fn Fn() -> tokio::sync::broadcast::Receiver<NotificationFrame::Struct> {
-	Shared::NOTIFICATION_BROADCAST.subscribe()
+	::Vine::Client::SubscribeNotifications::Fn()
 }

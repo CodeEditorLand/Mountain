@@ -41,8 +41,9 @@ colored = { workspace = true }
 Common = { workspace = true }
 dirs = { workspace = true }
 Echo = { workspace = true }
-Air = { workspace = true, optional = true }
+Air = { workspace = true }
 Mist = { workspace = true }
+Vine = { workspace = true, features = ["multiplexer"] }
 env_logger = { workspace = true }
 futures = { workspace = true }
 futures-util = { workspace = true, features = ["sink", "std"] }
@@ -119,7 +120,7 @@ MistNative = []
 
 Debug = []
 
-AirIntegration = ["Air"]
+AirIntegration = []
 
 # Feature flags for conditional compilation
 terminals = []

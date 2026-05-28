@@ -1,8 +1,3 @@
 //! Information about file indexing.
 
-#[derive(Debug, Clone)]
-pub struct Struct {
-	pub files_indexed:u32,
-
-	pub total_size:u64,
-}
+pub type Struct = ::Air::Client::AirClient::IndexInfo::Struct;
