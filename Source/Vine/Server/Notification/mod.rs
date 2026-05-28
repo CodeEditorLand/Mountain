@@ -42,22 +42,13 @@
 // --- Shared support utilities ---
 pub mod Support;
 
-// --- Batch 8: provider-unregister cleanup ---
-pub mod UnregisterAuthenticationProvider;
-
-pub mod UnregisterDebugAdapter;
-
-pub mod UnregisterDebugConfigurationProvider;
-
+// --- Provider unregistration with non-trivial logic (scheme log, handle
+// computation, sky relay). Pure variants call
+// ::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle
+// directly from the dispatcher - no intermediate file needed.
 pub mod UnregisterFileSystemProvider;
 
 pub mod UnregisterScmProvider;
-
-pub mod UnregisterTaskProvider;
-
-pub mod UnregisterExternalUriOpener;
-
-pub mod UnregisterRemoteAuthorityResolver;
 
 pub mod UnregisterUriHandler;
 

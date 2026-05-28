@@ -684,49 +684,69 @@ impl MountainService for MountainVinegRPCService {
 			// its own `Notification/<Name>.rs` atom - the arm is a pure
 			// delegation so adding a variant stays a one-line change here
 			// plus one new file.
+			// Pure provider-unregistration atoms: read handle, call VineHost,
+			// log. No intermediate file needed - call Vine's support helper
+			// directly. Atoms with extra logic (scheme log, handle computation,
+			// sky relay) go through a named Vine atom.
 			"unregister_authentication_provider" => {
-				super::Notification::UnregisterAuthenticationProvider::UnregisterAuthenticationProvider(
-					self, &Parameter,
-				)
-				.await;
+				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
+					self,
+					&Parameter,
+					"authentication",
+				);
 			},
 
 			"unregister_debug_adapter" => {
-				super::Notification::UnregisterDebugAdapter::UnregisterDebugAdapter(self, &Parameter).await;
+				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
+					self,
+					&Parameter,
+					"debug_adapter",
+				);
 			},
 
 			"unregister_debug_configuration_provider" => {
-				super::Notification::UnregisterDebugConfigurationProvider::UnregisterDebugConfigurationProvider(
-					self, &Parameter,
-				)
-				.await;
-			},
-
-			"unregister_file_system_provider" => {
-				super::Notification::UnregisterFileSystemProvider::UnregisterFileSystemProvider(self, &Parameter).await;
-			},
-
-			"unregister_scm_provider" => {
-				super::Notification::UnregisterScmProvider::UnregisterScmProvider(self, &Parameter).await;
-			},
-
-			"unregister_task_provider" => {
-				super::Notification::UnregisterTaskProvider::UnregisterTaskProvider(self, &Parameter).await;
+				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
+					self,
+					&Parameter,
+					"debug_configuration",
+				);
 			},
 
 			"unregister_external_uri_opener" => {
-				super::Notification::UnregisterExternalUriOpener::UnregisterExternalUriOpener(self, &Parameter).await;
+				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
+					self,
+					&Parameter,
+					"external_uri_opener",
+				);
 			},
 
 			"unregister_remote_authority_resolver" => {
-				super::Notification::UnregisterRemoteAuthorityResolver::UnregisterRemoteAuthorityResolver(
+				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
+					self,
+					&Parameter,
+					"remote_authority_resolver",
+				);
+			},
+
+			"unregister_task_provider" => {
+				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(self, &Parameter, "task");
+			},
+
+			// These three have extra logic in their Vine atoms (scheme log,
+			// scmId handle computation + sky relay, URI scheme log).
+			"unregister_file_system_provider" => {
+				::Vine::Server::Notification::UnregisterFileSystemProvider::UnregisterFileSystemProvider(
 					self, &Parameter,
 				)
 				.await;
 			},
 
+			"unregister_scm_provider" => {
+				::Vine::Server::Notification::UnregisterScmProvider::UnregisterScmProvider(self, &Parameter).await;
+			},
+
 			"unregister_uri_handler" => {
-				super::Notification::UnregisterUriHandler::UnregisterUriHandler(self, &Parameter).await;
+				::Vine::Server::Notification::UnregisterUriHandler::UnregisterUriHandler(self, &Parameter).await;
 			},
 
 			"update_scm_group" => {
