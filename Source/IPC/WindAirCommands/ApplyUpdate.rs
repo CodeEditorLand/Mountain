@@ -22,7 +22,7 @@ pub async fn ApplyUpdate(update_id:String, update_path:String) -> Result<bool, S
 	let request_id = uuid::Uuid::new_v4().to_string();
 
 	client
-		.apply_update(request_id, update_id, update_path)
+		.ApplyUpdate(request_id, update_id, update_path)
 		.await
 		.map_err(|e| format!("Update application failed: {:?}", e))?;
 

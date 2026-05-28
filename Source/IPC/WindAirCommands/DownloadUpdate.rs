@@ -23,7 +23,7 @@ pub async fn DownloadUpdate(
 	let request_id = uuid::Uuid::new_v4().to_string();
 
 	let file_info = client
-		.download_update(
+		.DownloadUpdate(
 			request_id,
 			url,
 			destination,

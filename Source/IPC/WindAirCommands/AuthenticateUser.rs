@@ -29,7 +29,7 @@ pub async fn AuthenticateUser(
 	let request_id = uuid::Uuid::new_v4().to_string();
 
 	let token = client
-		.authenticate(request_id, username, password, provider)
+		.Authenticate(request_id, username, password, provider)
 		.await
 		.map_err(|e| format!("Authentication failed: {:?}", e))?;
 

@@ -30,7 +30,7 @@ pub async fn SearchFiles(
 	let max_results_count = max_results.unwrap_or(100);
 
 	let search_results = client
-		.search_files(
+		.SearchFiles(
 			request_id,
 			query,
 			file_patterns.first().map(|s| s.as_str()).unwrap_or("").to_string(),

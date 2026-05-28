@@ -31,7 +31,7 @@ pub async fn IndexFiles(
 	let request_id = uuid::Uuid::new_v4().to_string();
 
 	let index_info = client
-		.index_files(
+		.IndexFiles(
 			request_id,
 			path,
 			patterns,

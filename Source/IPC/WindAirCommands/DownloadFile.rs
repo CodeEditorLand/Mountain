@@ -17,7 +17,7 @@ pub async fn DownloadFile(url:String, destination:String) -> Result<DownloadResu
 	let request_id = uuid::Uuid::new_v4().to_string();
 
 	let file_info = client
-		.download_file(request_id, url, destination, String::new(), std::collections::HashMap::new())
+		.DownloadFile(request_id, url, destination, String::new(), std::collections::HashMap::new())
 		.await
 		.map_err(|e| format!("File download failed: {:?}", e))?;
 

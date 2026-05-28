@@ -18,7 +18,7 @@ pub async fn GetAirMetrics(metric_type:Option<String>) -> Result<AirMetricsDTO::
 	let request_id = uuid::Uuid::new_v4().to_string();
 
 	let metrics = client
-		.get_metrics(request_id, metric_type)
+		.GetMetrics(request_id, metric_type)
 		.await
 		.map_err(|e| format!("Failed to get Air metrics: {:?}", e))?;
 

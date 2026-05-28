@@ -31,7 +31,7 @@ pub async fn CheckForUpdates(
 	let channel = channel.unwrap_or_else(|| "stable".to_string());
 
 	let update_info = client
-		.check_for_updates(request_id, current_version, channel)
+		.CheckForUpdates(request_id, current_version, channel)
 		.await
 		.map_err(|e| format!("Update check failed: {:?}", e))?;
 

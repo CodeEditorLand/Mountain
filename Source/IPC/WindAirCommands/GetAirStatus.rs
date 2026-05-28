@@ -18,11 +18,11 @@ pub async fn GetAirStatus() -> Result<AirServiceStatusDTO::Struct, String> {
 	let request_id = uuid::Uuid::new_v4().to_string();
 
 	let status = client
-		.get_status(request_id)
+		.GetStatus(request_id)
 		.await
 		.map_err(|e| format!("Failed to get Air status: {:?}", e))?;
 
-	let healthy = client.health_check().await.unwrap_or(false);
+	let healthy = client.HealthCheck().await.unwrap_or(false);
 
 	let result = AirServiceStatusDTO::Struct {
 		version:status.version,
