@@ -6,7 +6,7 @@
 use serde_json::{Value, json};
 
 use crate::IPC::WindServiceHandlers::{
-	Git::Shared::{Generated::Fn as Generated, RunGit::Fn as RunGit},
+	Git::Shared::{RunGit::Fn as RunGit},
 	Utilities::JsonValueHelpers::arg_string,
 };
 
@@ -24,7 +24,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Range = format!("{}..{}", FromRef, ToRef);
 
 	let (ExitCode, Stdout, Stderr) = RunGit(
-		&Generated(),
+		&uuid::Uuid::new_v4().to_string(),
 		&["rev-list".to_string(), "--count".to_string(), Range],
 		Some(&RepoPath),
 	)

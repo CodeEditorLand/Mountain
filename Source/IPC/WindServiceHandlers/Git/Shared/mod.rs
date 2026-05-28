@@ -15,8 +15,6 @@ pub mod AsStringArray;
 
 pub mod ClearPid;
 
-pub mod Generated;
-
 pub mod RegisterPid;
 
 pub mod ResolveCwd;

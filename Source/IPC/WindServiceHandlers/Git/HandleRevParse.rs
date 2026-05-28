@@ -6,7 +6,7 @@
 use serde_json::{Value, json};
 
 use crate::IPC::WindServiceHandlers::{
-	Git::Shared::{Generated::Fn as Generated, RunGit::Fn as RunGit},
+	Git::Shared::{RunGit::Fn as RunGit},
 	Utilities::JsonValueHelpers::{arg_string, arg_string_or},
 };
 
@@ -20,7 +20,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	}
 
 	let (ExitCode, Stdout, Stderr) =
-		RunGit(&Generated(), &["rev-parse".to_string(), Reference], Some(&RepoPath)).await?;
+		RunGit(&uuid::Uuid::new_v4().to_string(), &["rev-parse".to_string(), Reference], Some(&RepoPath)).await?;
 
 	if ExitCode != 0 {
 		return Err(format!("git rev-parse failed: {}", Stderr));

@@ -7,7 +7,7 @@
 use serde_json::{Value, json};
 
 use crate::IPC::WindServiceHandlers::{
-	Git::Shared::{AsStringArray::Fn as AsStringArray, Generated::Fn as Generated, RunGit::Fn as RunGit},
+	Git::Shared::{AsStringArray::Fn as AsStringArray, RunGit::Fn as RunGit},
 	Utilities::JsonValueHelpers::arg_string,
 };
 
@@ -40,7 +40,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 		return Err("git:exec requires non-empty Arguments".to_string());
 	}
 
-	let OperationIdRef = if OperationId.is_empty() { Generated() } else { OperationId };
+	let OperationIdRef = if OperationId.is_empty() { uuid::Uuid::new_v4().to_string() } else { OperationId };
 
 	let CwdOpt = if Cwd.is_empty() { None } else { Some(Cwd.as_str()) };
 

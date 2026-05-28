@@ -98,18 +98,11 @@ pub mod RunTime;
 /// Inter-process communication primitives.
 pub mod IPC;
 
-/// Client for the Air background daemon (updates and crypto signing).
-pub mod Air;
-
 /// gRPC server and client for Cocoon extension host communication.
 pub mod Vine;
 
 /// Remote procedure call service implementations.
 pub mod RPC;
-
-/// MemoryMap asset cache, path-canonicalisation cache, and future entries.
-/// See `Cache` module index for the full entry list.
-pub mod Cache;
 
 // Services
 
