@@ -69,9 +69,4 @@
 //! - Re-exports: `AirClient`, `AirServiceProvider`, response types, and helper
 //!   functions
 
-// Module sub-modules
-pub mod AirClient;
-
-pub mod AirServiceProvider;
-
-// Stub types for Air integration when AirLibrary is not available (legacy)
+// Callers use ::AirLibrary::Client::* directly.

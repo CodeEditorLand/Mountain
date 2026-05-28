@@ -84,11 +84,6 @@
 // --- Sub-modules ---
 pub mod Client;
 
-pub mod Error;
-
 pub mod Generated;
 
 pub mod Server;
-
-// LAND-PATCH B7-S6 P14.1: bidirectional streaming multiplexer.
-pub mod Multiplexer;

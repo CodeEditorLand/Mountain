@@ -1,19 +1,19 @@
-//! gRPC client wrapper around `Air::AirClient::AirClient` -
-//! adds reconnect support and PascalCase logging consistent
-//! with the WindAirCommands surface.
+//! gRPC client wrapper - adds reconnect support and PascalCase logging.
 
-use crate::{Air::AirClient as AirClientModule, dev_log};
+use crate::dev_log;
+
+use ::AirLibrary::Client::AirClient::AirClient;
 
 #[derive(Debug, Clone)]
 pub struct Struct {
-	pub(super) client:AirClientModule::AirClient,
+	pub(super) client:AirClient,
 }
 
 impl Struct {
 	pub async fn new(address:String) -> Result<Self, String> {
 		dev_log!("grpc", "[WindAirCommands] Connecting to Air daemon at: {}", address);
 
-		let client = AirClientModule::AirClient::new(&address)
+		let client = AirClient::new(&address)
 			.await
 			.map_err(|e| format!("Failed to connect to Air daemon: {:?}", e))?;
 
@@ -25,7 +25,7 @@ impl Struct {
 	pub async fn reconnect(&mut self, address:String) -> Result<(), String> {
 		dev_log!("grpc", "[WindAirCommands] Reconnecting to Air daemon at: {}", address);
 
-		let client = AirClientModule::AirClient::new(&address)
+		let client = AirClient::new(&address)
 			.await
 			.map_err(|e| format!("Failed to reconnect to Air daemon: {:?}", e))?;
 
