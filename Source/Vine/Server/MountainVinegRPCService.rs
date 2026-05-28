@@ -573,7 +573,10 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"languages.setDocumentLanguage" => {
-				::Vine::Server::Notification::LanguagesSetDocumentLanguage::LanguagesSetDocumentLanguage(self, &Parameter).await;
+				::Vine::Server::Notification::LanguagesSetDocumentLanguage::LanguagesSetDocumentLanguage(
+					self, &Parameter,
+				)
+				.await;
 			},
 
 			"workspace.applyEdit" => {
@@ -633,15 +636,20 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"window.createTextEditorDecorationType" | "window.disposeTextEditorDecorationType" => {
-				::Vine::Server::Notification::DecorationTypeLifecycle::DecorationTypeLifecycle(self, &MethodName, &Parameter)
-					.await;
+				::Vine::Server::Notification::DecorationTypeLifecycle::DecorationTypeLifecycle(
+					self,
+					&MethodName,
+					&Parameter,
+				)
+				.await;
 			},
 
 			// Extension called `editor.setDecorations(type, ranges)`.
 			// Batched and emitted as `sky://decoration/set-ranges` so Sky can
 			// apply the ranges to the Monaco editor for the matching URI.
 			"window.setTextEditorDecorations" => {
-				::Vine::Server::Notification::SetTextEditorDecorations::SetTextEditorDecorations(self, &Parameter).await;
+				::Vine::Server::Notification::SetTextEditorDecorations::SetTextEditorDecorations(self, &Parameter)
+					.await;
 			},
 
 			// Extension called `editor.edit(cb)` - an in-place text mutation.
@@ -656,7 +664,8 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"statusBar.update" | "statusBar.dispose" => {
-				::Vine::Server::Notification::StatusBarLifecycle::StatusBarLifecycle(self, &MethodName, &Parameter).await;
+				::Vine::Server::Notification::StatusBarLifecycle::StatusBarLifecycle(self, &MethodName, &Parameter)
+					.await;
 			},
 
 			"statusBar.message" => {
@@ -732,21 +741,35 @@ impl MountainService for MountainVinegRPCService {
 				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(self, &Parameter, "task");
 			},
 
-			// These three have extra logic in their Vine atoms (scheme log,
-			// scmId handle computation + sky relay, URI scheme log).
 			"unregister_file_system_provider" => {
-				::Vine::Server::Notification::UnregisterFileSystemProvider::UnregisterFileSystemProvider(
-					self, &Parameter,
-				)
-				.await;
+				dev_log!(
+					"provider-register",
+					"[ProviderUnregister] file_system scheme={}",
+					Parameter.get("scheme").and_then(Value::as_str).unwrap_or("")
+				);
+				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
+					self,
+					&Parameter,
+					"file_system",
+				);
 			},
 
+			// scmId handle computation + UnregisterProvider + sky relay - keeps its Vine atom.
 			"unregister_scm_provider" => {
 				::Vine::Server::Notification::UnregisterScmProvider::UnregisterScmProvider(self, &Parameter).await;
 			},
 
 			"unregister_uri_handler" => {
-				::Vine::Server::Notification::UnregisterUriHandler::UnregisterUriHandler(self, &Parameter).await;
+				dev_log!(
+					"provider-register",
+					"[ProviderUnregister] uri_handler scheme={}",
+					Parameter.get("scheme").and_then(Value::as_str).unwrap_or("")
+				);
+				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
+					self,
+					&Parameter,
+					"uri_handler",
+				);
 			},
 
 			"update_scm_group" => {
@@ -768,7 +791,8 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"register_scm_resource_group" => {
-				::Vine::Server::Notification::RegisterScmResourceGroup::RegisterScmResourceGroup(self, &Parameter).await;
+				::Vine::Server::Notification::RegisterScmResourceGroup::RegisterScmResourceGroup(self, &Parameter)
+					.await;
 			},
 
 			// Batch 11: progress lifecycle name alignment.
@@ -860,7 +884,8 @@ impl MountainService for MountainVinegRPCService {
 
 			// Batch 14: grammar config, external-URI open, security alert.
 			"set_language_configuration" => {
-				::Vine::Server::Notification::SetLanguageConfiguration::SetLanguageConfiguration(self, &Parameter).await;
+				::Vine::Server::Notification::SetLanguageConfiguration::SetLanguageConfiguration(self, &Parameter)
+					.await;
 			},
 
 			"openExternal" => {
