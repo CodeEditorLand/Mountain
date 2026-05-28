@@ -21,13 +21,14 @@ impl ApplicationStateAccess for MountainApplicationStateAccess {
 	fn EmbedderName(&self) -> &'static str { "Mountain" }
 }
 
-static MOUNTAIN_APP_STATE: MountainApplicationStateAccess = MountainApplicationStateAccess;
+static MOUNTAIN_APP_STATE:MountainApplicationStateAccess = MountainApplicationStateAccess;
 
-/// Cheap-to-clone renderer event sink. Internally just holds a
+/// Cheap-to-clone renderer event sink. Internally holds a
 /// [`tauri::AppHandle`], which is itself a thin `Arc` wrapper - cloning
 /// is a ref-count bump. Used by Vine handlers with long-lived flushers
-/// (`ProgressReport`, `DecorationTypeLifecycle`,
-/// `OutputChannelCoalesce`) that need to emit from a background task.
+/// (`ProgressReport`, `DecorationTypeLifecycle`, `OutputChannelCoalesce`,
+/// `SetTextEditorDecorations`, `RegisterCommand`) that emit from a
+/// background task.
 pub struct TauriRendererEmitter {
 	Handle:AppHandle,
 }
@@ -44,25 +45,33 @@ impl RendererEmitter for TauriRendererEmitter {
 	}
 }
 
-/// No-op IPC bridge. Vine handlers reach the real Mountain IPC bus
-/// through a dedicated bridge in a follow-up port slice; today's
-/// notification handlers do not re-enter the bus, so an inert provider
-/// is enough to satisfy the trait surface.
-struct InertIPCProvider;
+/// IPC bridge that routes `SendNotification` calls to the Vine gRPC client
+/// so breakpoint fan-backs and similar cross-extension notifications reach
+/// Cocoon. `SendRequest` is left as a no-op until a handler needs it.
+struct MountainIPCProvider;
 
-impl IPCProvider for InertIPCProvider {
-	fn SendRequest(&self, Channel:&str, _Payload:Value) -> futures::future::BoxFuture<'_, ::Vine::Error::Result<Value>> {
+impl IPCProvider for MountainIPCProvider {
+	fn SendRequest(
+		&self,
+		Channel:&str,
+		_Payload:Value,
+	) -> futures::future::BoxFuture<'_, ::Vine::Error::Result<Value>> {
 		let Channel = Channel.to_string();
 
 		Box::pin(async move {
-			dev_log!("grpc", "warn: [VineHost] InertIPCProvider::SendRequest channel={} swallowed", Channel);
+			dev_log!("grpc", "warn: [VineHost] IPCProvider::SendRequest channel={} - not wired", Channel);
 
 			Ok(Value::Null)
 		})
 	}
 
-	fn SendNotification(&self, Channel:&str, _Payload:Value) {
-		dev_log!("grpc", "warn: [VineHost] InertIPCProvider::SendNotification channel={} swallowed", Channel);
+	fn SendNotification(&self, Channel:&str, Method:&str, Payload:Value) {
+		let Ch = Channel.to_string();
+		let M = Method.to_string();
+
+		tauri::async_runtime::spawn(async move {
+			let _ = crate::Vine::Client::SendNotification::Fn(Ch, M, Payload).await;
+		});
 	}
 }
 
@@ -79,5 +88,50 @@ impl VineHost for MountainVinegRPCService {
 		Arc::new(TauriRendererEmitter::New(self.ApplicationHandle().clone()))
 	}
 
-	fn IPCProvider(&self) -> Arc<dyn IPCProvider> { Arc::new(InertIPCProvider) }
+	fn IPCProvider(&self) -> Arc<dyn IPCProvider> { Arc::new(MountainIPCProvider) }
+
+	fn UnregisterProvider(&self, Handle:u32) {
+		self.RunTime()
+			.Environment
+			.ApplicationState
+			.Extension
+			.ProviderRegistration
+			.UnregisterProvider(Handle);
+	}
+
+	fn RegisterCommandInRegistry(&self, CommandId:&str, SideCarIdentifier:&str) {
+		use crate::Environment::CommandProvider::CommandHandler;
+
+		if let Ok(mut Registry) = self
+			.RunTime()
+			.Environment
+			.ApplicationState
+			.Extension
+			.Registry
+			.CommandRegistry
+			.lock()
+		{
+			Registry.insert(
+				CommandId.to_string(),
+				CommandHandler::Proxied {
+					SideCarIdentifier:SideCarIdentifier.to_string(),
+					CommandIdentifier:CommandId.to_string(),
+				},
+			);
+		}
+	}
+
+	fn UnregisterCommandInRegistry(&self, CommandId:&str) {
+		if let Ok(mut Registry) = self
+			.RunTime()
+			.Environment
+			.ApplicationState
+			.Extension
+			.Registry
+			.CommandRegistry
+			.lock()
+		{
+			Registry.remove(CommandId);
+		}
+	}
 }
