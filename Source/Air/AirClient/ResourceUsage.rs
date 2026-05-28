@@ -1,3 +1,3 @@
 //! Resource usage information from the Air daemon.
 
-pub type Struct = ::Air::Client::AirClient::ResourceUsage::Struct;
+pub type Struct = ::AirLibrary::Client::AirClient::ResourceUsage::Struct;

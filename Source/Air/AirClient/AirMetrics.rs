@@ -1,3 +1,3 @@
 //! Metrics from the Air daemon.
 
-pub type Struct = ::Air::Client::AirClient::AirMetrics::Struct;
+pub type Struct = ::AirLibrary::Client::AirClient::AirMetrics::Struct;

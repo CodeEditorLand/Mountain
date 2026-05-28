@@ -1,3 +1,3 @@
 //! Information about an available update.
 
-pub type Struct = ::Air::Client::AirClient::UpdateInfo::Struct;
+pub type Struct = ::AirLibrary::Client::AirClient::UpdateInfo::Struct;

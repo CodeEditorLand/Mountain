@@ -2,4 +2,4 @@
 //! streaming API into a `next().await` iterator that yields
 //! `DownloadStreamChunk::Struct` items.
 
-pub type Struct = ::Air::Client::AirClient::DownloadStream::Struct;
+pub type Struct = ::AirLibrary::Client::AirClient::DownloadStream::Struct;

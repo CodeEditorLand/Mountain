@@ -1,3 +1,3 @@
 //! Information about a downloaded file.
 
-pub type Struct = ::Air::Client::AirClient::FileInfo::Struct;
+pub type Struct = ::AirLibrary::Client::AirClient::FileInfo::Struct;
