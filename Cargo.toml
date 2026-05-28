@@ -42,6 +42,7 @@ Common = { workspace = true }
 dirs = { workspace = true }
 Echo = { workspace = true }
 Air = { workspace = true }
+Cache = { workspace = true }
 Mist = { workspace = true }
 Vine = { workspace = true, features = ["multiplexer"] }
 env_logger = { workspace = true }
@@ -220,3 +221,6 @@ targets = [
 	"x86_64-apple-darwin",
 	"aarch64-apple-darwin",
 ]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(no_node_host)"] }
