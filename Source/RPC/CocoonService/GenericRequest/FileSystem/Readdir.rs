@@ -1,7 +1,6 @@
 use serde_json::{Value, json};
 use tonic::Response;
-
-use crate::Vine::Generated::GenericResponse;
+use ::Vine::Generated::GenericResponse;
 
 pub async fn Fn(RequestId:u64, Params:Value) -> Response<GenericResponse> {
 	let Path = Params

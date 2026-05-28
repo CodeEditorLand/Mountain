@@ -6,9 +6,10 @@ use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, RegisterSemanticTokensProviderRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, RegisterSemanticTokensProviderRequest};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

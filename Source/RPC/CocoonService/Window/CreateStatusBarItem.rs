@@ -12,9 +12,10 @@ use CommonLibrary::StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, Status
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{CreateStatusBarItemRequest, CreateStatusBarItemResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{CreateStatusBarItemRequest, CreateStatusBarItemResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

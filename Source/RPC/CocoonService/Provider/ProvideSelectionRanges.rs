@@ -10,9 +10,10 @@ use CommonLibrary::LanguageFeature::{
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ProvideSelectionRangesRequest, ProvideSelectionRangesResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ProvideSelectionRangesRequest, ProvideSelectionRangesResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

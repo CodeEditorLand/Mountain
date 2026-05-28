@@ -10,9 +10,10 @@ use crate::{
 		State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify,
 	},
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, UpdateWorkspaceFoldersRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, UpdateWorkspaceFoldersRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateWorkspaceFoldersRequest) -> Result<Response<Empty>, Status> {
 	dev_log!(

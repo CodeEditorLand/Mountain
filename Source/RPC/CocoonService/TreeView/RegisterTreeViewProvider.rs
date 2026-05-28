@@ -8,9 +8,10 @@ use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	RPC::CocoonService::{CocoonServiceImpl, TreeView::EnqueueTreeViewEmit},
-	Vine::Generated::{Empty, RegisterTreeViewProviderRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, RegisterTreeViewProviderRequest};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

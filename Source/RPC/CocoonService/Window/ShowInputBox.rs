@@ -9,9 +9,10 @@ use CommonLibrary::UserInterface::{
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ShowInputBoxRequest, ShowInputBoxResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ShowInputBoxRequest, ShowInputBoxResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

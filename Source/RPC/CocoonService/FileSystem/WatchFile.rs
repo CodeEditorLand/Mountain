@@ -20,9 +20,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, WatchFileRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, WatchFileRequest};
 
 static WATCH_SEQ:AtomicU64 = AtomicU64::new(1);
 

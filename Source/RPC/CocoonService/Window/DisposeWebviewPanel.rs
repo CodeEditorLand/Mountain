@@ -10,9 +10,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{DisposeWebviewPanelRequest, Empty},
 	dev_log,
 };
+
+use ::Vine::Generated::{DisposeWebviewPanelRequest, Empty};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:DisposeWebviewPanelRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] dispose_webview_panel: handle={}", Request.handle);

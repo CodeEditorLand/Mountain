@@ -6,8 +6,9 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{DisposeOutputRequest, Empty},
 };
+
+use ::Vine::Generated::{DisposeOutputRequest, Empty};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:DisposeOutputRequest) -> Result<Response<Empty>, Status> {
 	let _ = Service

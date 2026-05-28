@@ -6,9 +6,10 @@ use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFea
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ProvideFoldingRangesRequest, ProvideFoldingRangesResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ProvideFoldingRangesRequest, ProvideFoldingRangesResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

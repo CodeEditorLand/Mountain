@@ -6,9 +6,10 @@ use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionMan
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ExtensionInfo, GetExtensionRequest, GetExtensionResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ExtensionInfo, GetExtensionRequest, GetExtensionResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

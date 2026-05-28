@@ -84,6 +84,4 @@
 // --- Sub-modules ---
 pub mod Client;
 
-pub mod Generated;
-
 pub mod Server;

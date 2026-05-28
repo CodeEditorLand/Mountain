@@ -6,9 +6,10 @@ use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFea
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ProvideCodeLensesRequest, ProvideCodeLensesResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ProvideCodeLensesRequest, ProvideCodeLensesResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

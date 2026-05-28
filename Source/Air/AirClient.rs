@@ -7,9 +7,7 @@ pub fn MapAirError(Error:AirError) -> CommonError {
 	match Error {
 		AirError::Authentication(Reason) => CommonError::AccessDenied { Reason },
 
-		AirError::Validation(Reason) => {
-			CommonError::InvalidArgument { ArgumentName:"AirRequest".to_string(), Reason }
-		},
+		AirError::Validation(Reason) => CommonError::InvalidArgument { ArgumentName:"AirRequest".to_string(), Reason },
 
 		AirError::Serialization(Description) => CommonError::SerializationError { Description },
 

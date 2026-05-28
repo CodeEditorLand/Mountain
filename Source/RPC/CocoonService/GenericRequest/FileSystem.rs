@@ -6,8 +6,7 @@ use std::time::UNIX_EPOCH;
 
 use serde_json::{Value, json};
 use tonic::Response;
-
-use crate::Vine::Generated::{GenericResponse, RpcError};
+use ::Vine::Generated::{GenericResponse, RpcError};
 
 /// Build a successful `GenericResponse` with JSON-serialised value.
 pub fn OkResponse(RequestId:u64, Value:&impl serde::Serialize) -> Response<GenericResponse> {

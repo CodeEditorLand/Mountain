@@ -8,9 +8,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, OpenExternalRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, OpenExternalRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:OpenExternalRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] open_external: {}", Request.uri);

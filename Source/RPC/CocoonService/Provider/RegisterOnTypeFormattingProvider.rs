@@ -6,9 +6,10 @@ use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, RegisterOnTypeFormattingProviderRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, RegisterOnTypeFormattingProviderRequest};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

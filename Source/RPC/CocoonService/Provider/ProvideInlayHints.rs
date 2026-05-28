@@ -7,9 +7,10 @@ use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFea
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ProvideInlayHintsRequest, ProvideInlayHintsResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ProvideInlayHintsRequest, ProvideInlayHintsResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

@@ -7,9 +7,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{SaveAllRequest, SaveAllResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{SaveAllRequest, SaveAllResponse};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:SaveAllRequest) -> Result<Response<SaveAllResponse>, Status> {
 	dev_log!(

@@ -10,9 +10,10 @@ use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider:
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, ResizeTerminalRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, ResizeTerminalRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:ResizeTerminalRequest) -> Result<Response<Empty>, Status> {
 	let TerminalId = Request.terminal_id;

@@ -6,9 +6,10 @@ use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFea
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ProvideDocumentSymbolsRequest, ProvideDocumentSymbolsResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ProvideDocumentSymbolsRequest, ProvideDocumentSymbolsResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

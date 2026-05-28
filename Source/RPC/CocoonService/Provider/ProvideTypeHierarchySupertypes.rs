@@ -6,9 +6,10 @@ use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFea
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ProvideTypeHierarchyRequest, ProvideTypeHierarchyResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ProvideTypeHierarchyRequest, ProvideTypeHierarchyResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

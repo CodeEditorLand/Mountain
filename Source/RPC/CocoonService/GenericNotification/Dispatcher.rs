@@ -16,9 +16,10 @@ use CommonLibrary::{
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, GenericNotification as GenericNotificationMsg},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, GenericNotification as GenericNotificationMsg};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

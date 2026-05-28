@@ -6,9 +6,10 @@ use tonic::{Response, Status};
 
 use super::CocoonServiceImpl;
 use crate::{
-	Vine::Generated::{ParticipateInSaveRequest, ParticipateInSaveResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ParticipateInSaveRequest, ParticipateInSaveResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

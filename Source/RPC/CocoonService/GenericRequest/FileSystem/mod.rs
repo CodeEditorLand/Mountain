@@ -3,8 +3,7 @@
 
 use serde_json::Value;
 use tonic::Response;
-
-use crate::Vine::Generated::{GenericResponse, RpcError};
+use ::Vine::Generated::{GenericResponse, RpcError};
 
 pub(super) fn OkResponse(RequestId:u64, Value:&impl serde::Serialize) -> Response<GenericResponse> {
 	let Bytes = serde_json::to_vec(Value).unwrap_or_default();

@@ -9,9 +9,10 @@ use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, RegisterDebugAdapterRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, RegisterDebugAdapterRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterDebugAdapterRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Registering debug adapter: {}", Request.debug_type);

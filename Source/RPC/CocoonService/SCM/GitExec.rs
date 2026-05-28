@@ -6,9 +6,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{GitExecRequest, GitExecResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{GitExecRequest, GitExecResponse};
 
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<Response<GitExecResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] git_exec: {}", Request.args.join(" "));

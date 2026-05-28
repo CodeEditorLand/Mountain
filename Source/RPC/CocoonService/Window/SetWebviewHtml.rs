@@ -8,9 +8,10 @@ use CommonLibrary::Webview::WebviewProvider::WebviewProvider;
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, SetWebviewHtmlRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, SetWebviewHtmlRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:SetWebviewHtmlRequest) -> Result<Response<Empty>, Status> {
 	dev_log!(

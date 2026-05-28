@@ -6,8 +6,9 @@ use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionMan
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, ExtensionInfo, GetAllExtensionsResponse},
 };
+
+use ::Vine::Generated::{Empty, ExtensionInfo, GetAllExtensionsResponse};
 
 pub async fn Fn(Service:&CocoonServiceImpl, _Request:Empty) -> Result<Response<GetAllExtensionsResponse>, Status> {
 	let Extensions = Service.environment.GetExtensions().await.unwrap_or_default();

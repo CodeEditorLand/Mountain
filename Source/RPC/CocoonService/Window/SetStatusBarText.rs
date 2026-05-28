@@ -9,9 +9,10 @@ use CommonLibrary::StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, Status
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, SetStatusBarTextRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, SetStatusBarTextRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:SetStatusBarTextRequest) -> Result<Response<Empty>, Status> {
 	dev_log!(

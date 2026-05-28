@@ -6,9 +6,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{CreateOutputChannelRequest, CreateOutputChannelResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{CreateOutputChannelRequest, CreateOutputChannelResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

@@ -6,9 +6,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{OpenDocumentRequest, OpenDocumentResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{OpenDocumentRequest, OpenDocumentResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

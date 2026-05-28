@@ -9,9 +9,10 @@ use CommonLibrary::LanguageFeature::{
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ProvideDocumentHighlightsRequest, ProvideDocumentHighlightsResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ProvideDocumentHighlightsRequest, ProvideDocumentHighlightsResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

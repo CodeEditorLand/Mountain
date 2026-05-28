@@ -6,9 +6,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{FindTextInFilesRequest, FindTextInFilesResponse, Position, Range, TextMatch, Uri},
 	dev_log,
 };
+
+use ::Vine::Generated::{FindTextInFilesRequest, FindTextInFilesResponse, Position, Range, TextMatch, Uri};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

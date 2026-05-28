@@ -20,9 +20,10 @@ use CommonLibrary::{
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{GenericRequest as GenericRequestMsg, GenericResponse, RpcError},
 	dev_log,
 };
+
+use ::Vine::Generated::{GenericRequest as GenericRequestMsg, GenericResponse, RpcError};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

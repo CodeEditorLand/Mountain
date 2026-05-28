@@ -6,9 +6,10 @@ use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFea
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ProvideSemanticTokensRequest, ProvideSemanticTokensResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ProvideSemanticTokensRequest, ProvideSemanticTokensResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

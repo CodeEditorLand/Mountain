@@ -13,9 +13,10 @@ use CommonLibrary::LanguageFeature::{
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{CompletionItem, ProvideCompletionItemsRequest, ProvideCompletionItemsResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{CompletionItem, ProvideCompletionItemsRequest, ProvideCompletionItemsResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

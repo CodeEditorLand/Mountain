@@ -1,8 +1,8 @@
 //! gRPC client wrapper - adds reconnect support and PascalCase logging.
 
-use crate::dev_log;
-
 use ::AirLibrary::Client::AirClient::AirClient;
+
+use crate::dev_log;
 
 #[derive(Debug, Clone)]
 pub struct Struct {

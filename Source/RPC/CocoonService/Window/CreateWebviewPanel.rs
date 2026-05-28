@@ -13,9 +13,10 @@ use CommonLibrary::Webview::WebviewProvider::WebviewProvider;
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{CreateWebviewPanelRequest, CreateWebviewPanelResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{CreateWebviewPanelRequest, CreateWebviewPanelResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

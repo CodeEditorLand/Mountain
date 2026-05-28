@@ -1,1 +1,2 @@
-//! Callers use `::Cache::AssetMemoryMap::*` and `::Cache::PathCanon::*` directly.
+//! Callers use `::Cache::AssetMemoryMap::*` and `::Cache::PathCanon::*`
+//! directly.

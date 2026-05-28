@@ -8,9 +8,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, StopDebuggingRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, StopDebuggingRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:StopDebuggingRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] stop_debugging: session={}", Request.session_id);

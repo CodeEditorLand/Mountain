@@ -7,9 +7,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{GetAuthenticationSessionRequest, GetAuthenticationSessionResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{GetAuthenticationSessionRequest, GetAuthenticationSessionResponse};
 
 pub async fn Fn(
 	_Service:&CocoonServiceImpl,

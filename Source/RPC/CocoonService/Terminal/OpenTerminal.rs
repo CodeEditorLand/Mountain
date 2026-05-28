@@ -8,9 +8,10 @@ use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, OpenTerminalRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, OpenTerminalRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:OpenTerminalRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Opening terminal: {}", Request.name);

@@ -8,9 +8,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ShowTextDocumentRequest, ShowTextDocumentResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ShowTextDocumentRequest, ShowTextDocumentResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

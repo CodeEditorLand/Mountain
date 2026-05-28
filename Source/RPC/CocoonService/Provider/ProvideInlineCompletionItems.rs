@@ -19,9 +19,10 @@ use serde_json::json;
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{InlineCompletionItem, ProvideInlineCompletionRequest, ProvideInlineCompletionResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{InlineCompletionItem, ProvideInlineCompletionRequest, ProvideInlineCompletionResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

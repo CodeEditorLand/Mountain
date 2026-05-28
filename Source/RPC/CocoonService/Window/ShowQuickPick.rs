@@ -10,9 +10,10 @@ use CommonLibrary::UserInterface::{
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ShowQuickPickRequest, ShowQuickPickResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ShowQuickPickRequest, ShowQuickPickResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

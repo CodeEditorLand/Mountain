@@ -9,9 +9,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, TerminalOpenedNotification},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, TerminalOpenedNotification};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalOpenedNotification) -> Result<Response<Empty>, Status> {
 	dev_log!(

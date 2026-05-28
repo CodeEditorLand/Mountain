@@ -7,9 +7,10 @@ use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFea
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ProvideDocumentFormattingRequest, ProvideDocumentFormattingResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ProvideDocumentFormattingRequest, ProvideDocumentFormattingResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

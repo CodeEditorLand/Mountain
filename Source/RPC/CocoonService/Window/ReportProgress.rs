@@ -6,9 +6,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, ReportProgressRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, ReportProgressRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:ReportProgressRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] report_progress: handle={}", Request.handle);

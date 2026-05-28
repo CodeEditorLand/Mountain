@@ -39,16 +39,16 @@ use std::{net::SocketAddr, sync::Arc};
 
 use tauri::{AppHandle, Manager};
 use tonic::transport::Server;
+use ::Vine::Error::VineError;
 
 use super::MountainVinegRPCService::MountainVinegRPCService;
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Vine::Generated::{cocoon_service_server::CocoonServiceServer, mountain_service_server::MountainServiceServer},
 	dev_log,
 };
 
-use ::Vine::Error::VineError;
+use ::Vine::Generated::{cocoon_service_server::CocoonServiceServer, mountain_service_server::MountainServiceServer};
 
 /// Server configuration constants
 mod ServerConfig {

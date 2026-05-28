@@ -7,9 +7,10 @@ use tonic::{Response, Status};
 use crate::{
 	ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, InitExtensionHostRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, InitExtensionHostRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:InitExtensionHostRequest) -> Result<Response<Empty>, Status> {
 	dev_log!(

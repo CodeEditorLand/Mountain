@@ -71,17 +71,7 @@ use tokio::sync::RwLock;
 use tonic::{Request, Response, Status};
 use url::Url;
 use ::Vine::Generated::cocoon_service_server::CocoonService;
-
-use crate::{
-	ApplicationState::DTO::{
-		ProviderRegistrationDTO::ProviderRegistrationDTO,
-		WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
-	},
-	Environment::MountainEnvironment::MountainEnvironment,
-};
-// Import generated protobuf types
-use crate::dev_log;
-use crate::Vine::Generated::{
+use ::Vine::Generated::{
 	// Service trait
 	// Extended Language + Window + FS + Output + Task + Auth + Debug + Extension types
 	AppendOutputRequest,
@@ -280,6 +270,16 @@ use crate::Vine::Generated::{
 	post_webview_message_request,
 };
 
+use crate::{
+	ApplicationState::DTO::{
+		ProviderRegistrationDTO::ProviderRegistrationDTO,
+		WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
+	},
+	Environment::MountainEnvironment::MountainEnvironment,
+};
+// Import generated protobuf types
+use crate::dev_log;
+
 /// Implementation of the CocoonService gRPC server
 ///
 /// This struct handles all incoming requests from the Cocoon extension host
@@ -415,7 +415,7 @@ impl CocoonService for CocoonServiceImpl {
 	// methods.
 	type OpenChannelFromMountainStream = std::pin::Pin<
 		Box<
-			dyn tonic::codegen::tokio_stream::Stream<Item = Result<crate::Vine::Generated::Envelope, tonic::Status>>
+			dyn tonic::codegen::tokio_stream::Stream<Item = Result<::Vine::Generated::Envelope, tonic::Status>>
 				+ Send
 				+ 'static,
 		>,
@@ -424,7 +424,7 @@ impl CocoonService for CocoonServiceImpl {
 	async fn open_channel_from_mountain(
 		&self,
 
-		_request:tonic::Request<tonic::Streaming<crate::Vine::Generated::Envelope>>,
+		_request:tonic::Request<tonic::Streaming<::Vine::Generated::Envelope>>,
 	) -> Result<tonic::Response<Self::OpenChannelFromMountainStream>, tonic::Status> {
 		Err(tonic::Status::unimplemented(
 			"OpenChannelFromMountain: streaming multiplexer not yet wired (Patch 14); use unary endpoints",

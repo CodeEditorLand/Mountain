@@ -7,9 +7,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, UpdateConfigurationRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, UpdateConfigurationRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateConfigurationRequest) -> Result<Response<Empty>, Status> {
 	dev_log!(

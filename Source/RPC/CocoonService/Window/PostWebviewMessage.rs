@@ -8,9 +8,10 @@ use tonic::{Response, Status};
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, PostWebviewMessageRequest, post_webview_message_request},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, PostWebviewMessageRequest, post_webview_message_request};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:PostWebviewMessageRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] post_webview_message: handle={}", Request.handle);

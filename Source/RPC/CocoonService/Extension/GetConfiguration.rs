@@ -10,9 +10,10 @@ use CommonLibrary::Configuration::{
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{GetConfigurationRequest, GetConfigurationResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{GetConfigurationRequest, GetConfigurationResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

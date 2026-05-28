@@ -9,9 +9,10 @@ use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, RegisterAuthenticationProviderRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, RegisterAuthenticationProviderRequest};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

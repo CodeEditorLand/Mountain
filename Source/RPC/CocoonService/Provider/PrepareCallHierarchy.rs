@@ -15,9 +15,10 @@ use CommonLibrary::LanguageFeature::{
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ProvideCallHierarchyRequest, ProvideCallHierarchyResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ProvideCallHierarchyRequest, ProvideCallHierarchyResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

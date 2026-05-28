@@ -8,9 +8,10 @@ use CommonLibrary::UserInterface::{
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{ShowMessageRequest, ShowMessageResponse},
 	dev_log,
 };
+
+use ::Vine::Generated::{ShowMessageRequest, ShowMessageResponse};
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,

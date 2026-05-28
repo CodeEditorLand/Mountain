@@ -5,9 +5,10 @@ use CommonLibrary::Secret::SecretProvider::SecretProvider;
 
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
-	Vine::Generated::{Empty, StoreSecretRequest},
 	dev_log,
 };
+
+use ::Vine::Generated::{Empty, StoreSecretRequest};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:StoreSecretRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] store_secret: key={}", Request.key);
