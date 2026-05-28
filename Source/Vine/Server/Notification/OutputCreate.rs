@@ -1,8 +1,7 @@
 use serde_json::Value;
 
-use super::Support::RelayToSky::RelayToSky;
 use crate::Vine::Server::MountainVinegRPCService::MountainVinegRPCService;
 
 pub async fn OutputCreate(Service:&MountainVinegRPCService, Parameter:&Value) {
-	RelayToSky(Service, "sky://output/create", Parameter, "grpc", "[Output] create");
+	::Vine::Server::Notification::OutputCreate::OutputCreate(Service, Parameter).await;
 }

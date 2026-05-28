@@ -1,8 +1,7 @@
 use serde_json::Value;
 
-use super::Support::RelayToSky::RelayToSky;
 use crate::Vine::Server::MountainVinegRPCService::MountainVinegRPCService;
 
 pub async fn OutputDispose(Service:&MountainVinegRPCService, Parameter:&Value) {
-	RelayToSky(Service, "sky://output/dispose", Parameter, "grpc", "[Output] dispose");
+	::Vine::Server::Notification::OutputDispose::OutputDispose(Service, Parameter).await;
 }
