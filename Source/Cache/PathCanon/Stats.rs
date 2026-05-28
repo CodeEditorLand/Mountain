@@ -1,11 +1,3 @@
-//! Capture a diagnostic snapshot of the cache.
+use crate::Cache::PathCanon::CacheStats;
 
-use crate::Cache::PathCanon::{Cache::CACHE, CacheStats};
-
-pub fn Fn() -> CacheStats::Struct {
-	CacheStats::Struct {
-		Entries:CACHE.entry_count() as usize,
-
-		WeightedSize:CACHE.weighted_size() as usize,
-	}
-}
+pub fn Fn() -> CacheStats::Struct { ::Cache::PathCanon::Stats::Fn() }
