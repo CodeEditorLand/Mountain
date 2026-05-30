@@ -70,8 +70,8 @@ async fn test_multiple_server_certificates() {
 	let hostnames = vec![
 		"code.land.playform.cloud",
 		"api.land.playform.cloud",
-		"cdn.land.playform.cloud",
-		"test.land.playform.cloud",
+		"cdn.editor.land",
+		"test.editor.land",
 	];
 
 	for hostname in hostnames {
@@ -98,7 +98,7 @@ async fn test_certificate_renewal() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate initial certificate
-	let hostname = "renew.land.playform.cloud";
+	let hostname = "renew.editor.land";
 
 	let server_config1 = manager.get_server_cert(hostname).await.expect("Failed to generate server cert");
 
@@ -133,7 +133,7 @@ async fn test_certificate_caching() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate certificate
-	let hostname = "cache.land.playform.cloud";
+	let hostname = "cache.editor.land";
 
 	let server_config1 = manager.get_server_cert(hostname).await.expect("Failed to generate server cert");
 
@@ -161,7 +161,7 @@ async fn test_certificate_info_extraction() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate certificate
-	let hostname = "info.land.playform.cloud";
+	let hostname = "info.editor.land";
 
 	manager.get_server_cert(hostname).await.expect("Failed to generate server cert");
 
@@ -206,11 +206,7 @@ async fn test_get_all_certificates() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate multiple certificates
-	let hostnames = vec![
-		"all1.land.playform.cloud",
-		"all2.land.playform.cloud",
-		"all3.land.playform.cloud",
-	];
+	let hostnames = vec!["all1.editor.land", "all2.editor.land", "all3.editor.land"];
 
 	for hostname in &hostnames {
 		manager
@@ -244,7 +240,7 @@ async fn test_build_server_config() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Build server config using convenience method
-	let hostname = "config.land.playform.cloud";
+	let hostname = "config.editor.land";
 
 	let server_config = manager
 		.build_server_config(hostname)
@@ -268,7 +264,7 @@ async fn test_certificate_validity_checking() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate certificate
-	let hostname = "validity.land.playform.cloud";
+	let hostname = "validity.editor.land";
 
 	manager.get_server_cert(hostname).await.expect("Failed to generate server cert");
 
@@ -292,7 +288,7 @@ async fn test_server_certificate_sans() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate certificate
-	let hostname = "sans.land.playform.cloud";
+	let hostname = "sans.editor.land";
 
 	manager.get_server_cert(hostname).await.expect("Failed to generate server cert");
 
@@ -321,7 +317,7 @@ async fn test_alpn_configuration() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate certificate
-	let hostname = "alpn.land.playform.cloud";
+	let hostname = "alpn.editor.land";
 
 	let server_config = manager.get_server_cert(hostname).await.expect("Failed to generate server cert");
 
@@ -342,7 +338,7 @@ async fn test_certificate_chain() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate certificate
-	let hostname = "chain.land.playform.cloud";
+	let hostname = "chain.editor.land";
 
 	manager.get_server_cert(hostname).await.expect("Failed to generate server cert");
 
@@ -363,7 +359,7 @@ async fn test_ecdsa_p256_algorithm() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate certificate
-	let hostname = "ecdsa.land.playform.cloud";
+	let hostname = "ecdsa.editor.land";
 
 	manager.get_server_cert(hostname).await.expect("Failed to generate server cert");
 
@@ -386,7 +382,7 @@ async fn test_certificate_manager_without_ca() {
 		.expect("Failed to create certificate manager");
 
 	// Try to get server cert without initializing CA
-	let hostname = "noca.land.playform.cloud";
+	let hostname = "noca.editor.land";
 
 	let result = manager.get_server_cert(hostname).await;
 
@@ -415,7 +411,7 @@ async fn test_concurrent_certificate_generation() {
 	for i in 0..5 {
 		let manager_ref = &manager;
 
-		let hostname = format!("concurrent{}.land.playform.cloud", i);
+		let hostname = format!("concurrent{}.editor.land", i);
 
 		let handle = tokio::spawn(async move { manager_ref.get_server_cert(&hostname).await });
 
@@ -448,7 +444,7 @@ async fn test_certificate_expiry_calculation() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate certificate
-	let hostname = "expiry.land.playform.cloud";
+	let hostname = "expiry.editor.land";
 
 	manager.get_server_cert(hostname).await.expect("Failed to generate server cert");
 

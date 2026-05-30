@@ -463,14 +463,14 @@ fn test_large_number_of_services() {
 
 	// Register 100 services
 	for i in 0..100 {
-		let name = format!("service{}.land.playform.cloud", i);
+		let name = format!("service{}.editor.land", i);
 
 		registry.register(name, 8080 + i, None);
 	}
 
 	// Verify all services are registered
 	for i in 0..100 {
-		let name = format!("service{}.land.playform.cloud", i);
+		let name = format!("service{}.editor.land", i);
 
 		assert!(registry.lookup(&name).is_some(), "{} should be registered", name);
 	}

@@ -15,7 +15,7 @@ pub fn dns_resolve(domain:String, dns_port:State<DnsPort>) -> Result<DnsResoluti
 		return Err("DNS server is not running".to_string());
 	}
 
-	if domain.ends_with("land.playform.cloud") || domain.ends_with("land.playform.cloud.") {
+	if domain.ends_with("land.playform.cloud") || domain.ends_with("editor.land.") {
 		return Ok(DnsResolutionResult {
 			domain:domain.clone(),
 			record_type:"A".to_string(),
@@ -26,7 +26,7 @@ pub fn dns_resolve(domain:String, dns_port:State<DnsPort>) -> Result<DnsResoluti
 		});
 	}
 
-	let allowlist = vec!["update.land.playform.cloud."];
+	let allowlist = vec!["update.editor.land."];
 
 	let is_allowed = allowlist.iter().any(|d| {
 		let test_domain = if domain.ends_with('.') { domain.clone() } else { format!("{}.", domain) };

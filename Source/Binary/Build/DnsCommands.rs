@@ -88,7 +88,7 @@ mod tests {
 
 	#[test]
 	fn ForwardAllowListSerialization() {
-		let allowlist = ForwardAllowList { domains:vec!["update.land.playform.cloud.".to_string()] };
+		let allowlist = ForwardAllowList { domains:vec!["update.editor.land.".to_string()] };
 
 		let json = serde_json::to_string(&allowlist).unwrap();
 
@@ -96,7 +96,7 @@ mod tests {
 
 		assert_eq!(deserialized.domains.len(), 1);
 
-		assert_eq!(deserialized.domains[0], "update.land.playform.cloud.");
+		assert_eq!(deserialized.domains[0], "update.editor.land.");
 	}
 
 	#[test]

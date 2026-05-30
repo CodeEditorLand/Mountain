@@ -513,7 +513,7 @@ pub fn Fn() {
 					register_land_service("api.land.playform.cloud", ServerPortForClosure);
 
 					// Register assets editor service (same port for now, can be separate later)
-					register_land_service("assets.land.playform.cloud", ServerPortForClosure);
+					register_land_service("assets.editor.land", ServerPortForClosure);
 
 					// Make the registry available as managed state for Tauri commands
 					app.manage(service_registry);
