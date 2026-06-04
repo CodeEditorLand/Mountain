@@ -75,7 +75,6 @@ use serde::{Deserialize, Serialize};
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TauriIPCMessage {
-
 	/// IPC channel identifier that determines which handler processes the
 	/// message
 	pub channel:String,
@@ -91,7 +90,6 @@ pub struct TauriIPCMessage {
 }
 
 impl TauriIPCMessage {
-
 	/// Create a new IPC message
 	///
 	/// ## Parameters
@@ -158,13 +156,11 @@ impl TauriIPCMessage {
 /// and Mountain, enabling the frontend to display connection state to users.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimpleConnectionStatus {
-
 	/// Whether the IPC connection is currently active
 	pub connected:bool,
 }
 
 impl SimpleConnectionStatus {
-
 	/// Create a new connection status
 	pub fn new(connected:bool) -> Self { Self { connected } }
 
@@ -209,9 +205,7 @@ mod tests {
 	fn test_message_creation() {
 		let message = TauriIPCMessage::new(
 			"test_channel".to_string(),
-
 			serde_json::json!({ "key": "value" }),
-
 			Some("test_sender".to_string()),
 		);
 

@@ -11,7 +11,6 @@ use crate::IPC::Enhanced::SecureMessageChannel::EncryptedMessage;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct<T> {
-
 	pub encrypted:EncryptedMessage::Struct,
 
 	pub headers:HashMap<String, String>,

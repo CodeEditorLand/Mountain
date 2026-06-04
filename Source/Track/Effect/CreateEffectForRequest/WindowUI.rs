@@ -30,7 +30,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Res
 
 				let AppHandle = run_time.Environment.ApplicationHandle.clone();
 
-				let Payload = array_unwrap(Parameters);
+				let Payload = array_unwrap(&Parameters);
 
 				let Message = Payload.get("message").and_then(Value::as_str).unwrap_or("").to_string();
 

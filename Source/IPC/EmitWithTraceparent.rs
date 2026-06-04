@@ -10,7 +10,6 @@
 //! coexist - the bridge tolerates payloads without `_traceparent`.
 
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, Emitter};
 
 /// Emit a Tauri event with a `_traceparent` field merged into its
@@ -21,7 +20,6 @@ use tauri::{AppHandle, Emitter};
 /// Release builds: `cfg!(debug_assertions)` short-circuits to a plain
 /// `app_handle.emit(...)` so no traceparent bytes ship to production.
 pub fn Fn<R:tauri::Runtime>(ApplicationHandle:&AppHandle<R>, EventName:&str, Payload:Value) -> tauri::Result<()> {
-
 	if !cfg!(debug_assertions) {
 		return ApplicationHandle.emit(EventName, Payload);
 	}
@@ -51,7 +49,6 @@ pub fn FnMap<R:tauri::Runtime>(
 
 	mut Map:serde_json::Map<String, Value>,
 ) -> tauri::Result<()> {
-
 	if cfg!(debug_assertions) {
 		let Header = CommonLibrary::Telemetry::Traceparent::Build();
 

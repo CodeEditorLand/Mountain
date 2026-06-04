@@ -9,7 +9,6 @@ use crate::{
 
 #[tauri::command]
 pub async fn GetAirStatus() -> Result<AirServiceStatusDTO::Struct, String> {
-
 	dev_log!("grpc", "[WindAirCommands] GetAirStatus called");
 
 	let air_address = GetAirAddress::Fn()?;

@@ -8,7 +8,6 @@ use serde_json::{Value, json};
 use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string;
 
 pub async fn NativeReadClipboardText(_Arguments:Vec<Value>) -> Result<Value, String> {
-
 	match arboard::Clipboard::new() {
 		Ok(mut Cb) => Ok(json!(Cb.get_text().unwrap_or_default())),
 
@@ -17,7 +16,6 @@ pub async fn NativeReadClipboardText(_Arguments:Vec<Value>) -> Result<Value, Str
 }
 
 pub async fn NativeWriteClipboardText(Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let Text = arg_string(&Arguments, 0);
 
 	if let Ok(mut Cb) = arboard::Clipboard::new() {
@@ -30,7 +28,6 @@ pub async fn NativeWriteClipboardText(Arguments:Vec<Value>) -> Result<Value, Str
 /// macOS has a separate find pasteboard; reuse the general clipboard for
 /// parity with VS Code on Linux/Windows.
 pub async fn NativeReadClipboardFindText(_Arguments:Vec<Value>) -> Result<Value, String> {
-
 	match arboard::Clipboard::new() {
 		Ok(mut Cb) => Ok(json!(Cb.get_text().unwrap_or_default())),
 
@@ -39,7 +36,6 @@ pub async fn NativeReadClipboardFindText(_Arguments:Vec<Value>) -> Result<Value,
 }
 
 pub async fn NativeWriteClipboardFindText(Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let Text = arg_string(&Arguments, 0);
 
 	if let Ok(mut Cb) = arboard::Clipboard::new() {

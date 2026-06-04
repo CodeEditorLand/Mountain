@@ -8,9 +8,7 @@ use crate::Workspace::WorkspaceFileService::WorkspaceFolderEntry;
 
 #[derive(Deserialize, Debug)]
 pub(super) struct Struct {
-
 	pub(super) folders:Vec<WorkspaceFolderEntry::Struct>,
-
 	// `.code-workspace` may also contain `settings`, `extensions`, etc. -
 	// not yet consumed by Mountain.
 }

@@ -8,7 +8,6 @@ use crate::Telemetry::Metrics::MetricValue;
 
 #[derive(Debug, Clone)]
 pub struct Struct {
-
 	pub Name:String,
 
 	pub Value:MetricValue::Enum,

@@ -18,6 +18,5 @@ pub async fn Fn(
 
 	TimeoutMilliseconds:u64,
 ) -> Result<Value, VineError> {
-
 	::Vine::Client::SendRequest::Fn(SideCarIdentifier, Method, Parameters, TimeoutMilliseconds).await
 }

@@ -8,14 +8,10 @@ use crate::{
 
 #[tauri::command]
 pub async fn ApplyUpdate(update_id:String, update_path:String) -> Result<bool, String> {
-
 	dev_log!(
 		"grpc",
-
 		"[WindAirCommands] ApplyUpdate called: id={}, path={}",
-
 		update_id,
-
 		update_path
 	);
 

@@ -37,11 +37,9 @@ use ring::{
 	hmac,
 	rand::{SecureRandom, SystemRandom},
 };
-
 use serde::{Deserialize, Serialize};
 
 use super::super::Message::Types::TauriIPCMessage;
-
 use crate::dev_log;
 
 /// Encrypted message structure
@@ -70,7 +68,6 @@ use crate::dev_log;
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptedMessage {
-
 	/// Nonce used for encryption (12 bytes for AES-256-GCM)
 	pub nonce:Vec<u8>,
 
@@ -82,7 +79,6 @@ pub struct EncryptedMessage {
 }
 
 impl EncryptedMessage {
-
 	/// Create a new encrypted message
 	pub fn new(nonce:Vec<u8>, ciphertext:Vec<u8>, hmac_tag:Vec<u8>) -> Self { Self { nonce, ciphertext, hmac_tag } }
 
@@ -159,7 +155,6 @@ impl EncryptedMessage {
 /// secure_channel.rotate_keys()?;
 /// ```
 pub struct SecureMessageChannel {
-
 	/// AES-256-GCM encryption key
 	encryption_key:LessSafeKey,
 
@@ -168,7 +163,6 @@ pub struct SecureMessageChannel {
 }
 
 impl SecureMessageChannel {
-
 	/// Create a new secure channel with randomly generated keys
 	///
 	/// This method generates cryptographically secure random keys for
@@ -230,9 +224,7 @@ impl SecureMessageChannel {
 	pub fn encrypt_message(&self, message:&TauriIPCMessage) -> Result<EncryptedMessage, String> {
 		dev_log!(
 			"encryption",
-
 			"[SecureMessageChannel] Encrypting message on channel: {}",
-
 			message.channel
 		);
 
@@ -264,11 +256,8 @@ impl SecureMessageChannel {
 
 		dev_log!(
 			"encryption",
-
 			"[SecureMessageChannel] Message encrypted: {} bytes -> {} bytes",
-
 			serialized_message.len(),
-
 			encrypted_message.ciphertext.len()
 		);
 
@@ -328,9 +317,7 @@ impl SecureMessageChannel {
 
 		dev_log!(
 			"encryption",
-
 			"[SecureMessageChannel] Message decrypted successfully on channel: {}",
-
 			message.channel
 		);
 
@@ -388,12 +375,10 @@ mod tests {
 	fn create_test_message() -> TauriIPCMessage {
 		TauriIPCMessage::new(
 			"test_channel".to_string(),
-
 			serde_json::json!({
 				"data": "sensitive information that should be encrypted",
 				"id": 12345
 			}),
-
 			Some("test_sender".to_string()),
 		)
 	}

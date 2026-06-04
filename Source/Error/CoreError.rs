@@ -23,7 +23,6 @@ use serde::{Deserialize, Serialize};
 /// an error from informational to critical.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ErrorSeverity {
-
 	/// Informational: no action required.
 	Info = 0,
 
@@ -38,7 +37,6 @@ pub enum ErrorSeverity {
 }
 
 impl fmt::Display for ErrorSeverity {
-
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
 			ErrorSeverity::Info => write!(f, "Info"),
@@ -56,7 +54,6 @@ impl fmt::Display for ErrorSeverity {
 /// time. Used for routing, filtering, and aggregation in log sinks.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ErrorKind {
-
 	/// Inter-process or inter-service communication failure.
 	IPC,
 
@@ -77,7 +74,6 @@ pub enum ErrorKind {
 }
 
 impl fmt::Display for ErrorKind {
-
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
 			ErrorKind::IPC => write!(f, "IPC"),
@@ -101,7 +97,6 @@ impl fmt::Display for ErrorKind {
 /// log aggregation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorContext {
-
 	/// Human-readable description of what went wrong.
 	pub message:String,
 
@@ -119,7 +114,6 @@ pub struct ErrorContext {
 }
 
 impl ErrorContext {
-
 	/// Creates a new context with default kind and severity.
 	pub fn new(message:impl Into<String>) -> Self {
 		Self {
@@ -161,7 +155,6 @@ impl ErrorContext {
 }
 
 impl fmt::Display for ErrorContext {
-
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "[{}][{}] {}", self.kind, self.severity, self.message)
 	}
@@ -171,7 +164,6 @@ impl fmt::Display for ErrorContext {
 /// optional raw source text and an optional stack trace snapshot.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MountainError {
-
 	/// Categorization, severity, and human-readable message.
 	pub context:ErrorContext,
 
@@ -183,7 +175,6 @@ pub struct MountainError {
 }
 
 impl MountainError {
-
 	/// Creates a new error from the given context.
 	pub fn new(context:ErrorContext) -> Self { Self { context, source:None, stack_trace:None } }
 
@@ -216,7 +207,6 @@ impl MountainError {
 }
 
 impl fmt::Display for MountainError {
-
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.context)?;
 
@@ -231,7 +221,6 @@ impl fmt::Display for MountainError {
 impl StdError for MountainError {}
 
 impl From<ErrorContext> for MountainError {
-
 	fn from(context:ErrorContext) -> Self { Self::new(context) }
 }
 

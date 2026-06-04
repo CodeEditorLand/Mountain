@@ -7,7 +7,6 @@ use std::{collections::HashSet, sync::OnceLock};
 pub(crate) static GATES:OnceLock<HashSet<String>> = OnceLock::new();
 
 pub(crate) fn Initialise() -> &'static HashSet<String> {
-
 	GATES.get_or_init(|| {
 		let mut Gates = HashSet::new();
 

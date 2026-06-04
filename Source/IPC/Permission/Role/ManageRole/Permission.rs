@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
-
 	pub Name:String,
 
 	pub Description:String,
@@ -19,7 +18,6 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn New(Name:String, Description:String, Category:String) -> Self {
 		Self { Name, Description, Category, IsSensitive:false }
 	}

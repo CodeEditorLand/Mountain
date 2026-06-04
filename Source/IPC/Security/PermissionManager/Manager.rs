@@ -22,7 +22,6 @@ use crate::{
 };
 
 pub struct Struct {
-
 	pub(super) roles:Arc<RwLock<HashMap<String, Role>>>,
 
 	pub(super) permissions:Arc<RwLock<HashMap<String, Permission>>>,
@@ -31,7 +30,6 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn new() -> Self {
 		dev_log!("ipc", "[PermissionManager] Creating new PermissionManager instance");
 
@@ -50,9 +48,7 @@ impl Struct {
 		if required_permissions.is_empty() {
 			dev_log!(
 				"ipc",
-
 				"[PermissionManager] Operation '{}' requires no special permissions",
-
 				operation
 			);
 
@@ -73,13 +69,9 @@ impl Struct {
 
 				dev_log!(
 					"ipc",
-
 					"[PermissionManager] Permission denied for user '{}' on operation '{}': {}",
-
 					context.user_id,
-
 					operation,
-
 					error
 				);
 
@@ -107,11 +99,8 @@ impl Struct {
 
 		dev_log!(
 			"ipc",
-
 			"[PermissionManager] Access granted for user '{}' on operation '{}'",
-
 			context.user_id,
-
 			operation
 		);
 
@@ -151,13 +140,9 @@ impl Struct {
 			SecurityEventType::PermissionDenied => {
 				dev_log!(
 					"ipc",
-
 					"warn: [SecurityEvent] Permission denied - User: {}, Operation: {}, Details: {:?}",
-
 					event.user_id,
-
 					event.operation,
-
 					event.details
 				);
 			},
@@ -165,13 +150,9 @@ impl Struct {
 			SecurityEventType::SecurityViolation => {
 				dev_log!(
 					"ipc",
-
 					"error: [SecurityEvent] Security violation - User: {}, Operation: {}, Details: {:?}",
-
 					event.user_id,
-
 					event.operation,
-
 					event.details
 				);
 			},
@@ -179,11 +160,8 @@ impl Struct {
 			SecurityEventType::AccessGranted => {
 				dev_log!(
 					"ipc",
-
 					"[SecurityEvent] Access granted - User: {}, Operation: {}",
-
 					event.user_id,
-
 					event.operation
 				);
 			},
@@ -191,13 +169,9 @@ impl Struct {
 			_ => {
 				dev_log!(
 					"ipc",
-
 					"[SecurityEvent] {:?} - User: {}, Operation: {}",
-
 					event.event_type,
-
 					event.user_id,
-
 					event.operation
 				);
 			},
@@ -219,24 +193,17 @@ impl Struct {
 
 		let standard_permissions = vec![
 			("file.read", "Read file operations"),
-
 			("file.write", "Write file operations"),
-
 			("config.read", "Read configuration"),
-
 			("config.update", "Update configuration"),
-
 			("storage.read", "Read storage"),
-
 			("storage.write", "Write storage"),
-
 			("system.external", "Access external system resources"),
 		];
 
 		for (name, description) in standard_permissions {
 			permissions.insert(
 				name.to_string(),
-
 				Permission {
 					name:name.to_string(),
 					description:description.to_string(),
@@ -247,29 +214,19 @@ impl Struct {
 
 		let standard_roles = vec![
 			("user", vec!["file.read", "config.read", "storage.read"]),
-
 			(
 				"developer",
-
 				vec!["file.read", "file.write", "config.read", "storage.read", "storage.write"],
 			),
-
 			(
 				"admin",
-
 				vec![
 					"file.read",
-
 					"file.write",
-
 					"config.read",
-
 					"config.update",
-
 					"storage.read",
-
 					"storage.write",
-
 					"system.external",
 				],
 			),
@@ -278,7 +235,6 @@ impl Struct {
 		for (name, role_permissions) in standard_roles {
 			roles.insert(
 				name.to_string(),
-
 				Role {
 					name:name.to_string(),
 					permissions:role_permissions.iter().map(|p| p.to_string()).collect(),
@@ -289,11 +245,8 @@ impl Struct {
 
 		dev_log!(
 			"ipc",
-
 			"[PermissionManager] Initialized {} permissions and {} roles",
-
 			permissions.len(),
-
 			roles.len()
 		);
 	}
@@ -331,13 +284,9 @@ impl Struct {
 
 		let mut type_counts:Vec<(&'static str, usize)> = vec![
 			("PermissionDenied", 0),
-
 			("AccessGranted", 0),
-
 			("ConfigurationChange", 0),
-
 			("SecurityViolation", 0),
-
 			("PerformanceAnomaly", 0),
 		];
 

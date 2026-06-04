@@ -85,7 +85,7 @@ pub async fn DispatchSideCarRequest<R:Runtime>(
 		MethodName
 	);
 
-	match CreateEffectForRequest(&ApplicationHandle, &MethodName, Parameters) {
+	match CreateEffectForRequest(&ApplicationHandle, &MethodName, &Parameters) {
 		Ok(EffectFn) => EffectFn(RunTime).await,
 
 		Err(Error) => {

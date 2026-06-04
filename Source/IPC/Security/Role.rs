@@ -60,7 +60,6 @@ use serde::{Deserialize, Serialize};
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Role {
-
 	/// Unique role identifier
 	pub name:String,
 
@@ -72,7 +71,6 @@ pub struct Role {
 }
 
 impl Role {
-
 	/// Create a new role
 	pub fn new(name:String, permissions:Vec<String>, description:String) -> Self {
 		Self { name, permissions, description }
@@ -104,9 +102,7 @@ mod tests {
 	fn test_role_creation() {
 		let role = Role::new(
 			"test".to_string(),
-
 			vec!["permission1".to_string(), "permission2".to_string()],
-
 			"Test role".to_string(),
 		);
 
@@ -119,9 +115,7 @@ mod tests {
 	fn test_has_permission() {
 		let role = Role::new(
 			"test".to_string(),
-
 			vec!["permission1".to_string(), "permission2".to_string()],
-
 			"Test role".to_string(),
 		);
 
@@ -148,9 +142,7 @@ mod tests {
 	fn test_remove_permission() {
 		let mut role = Role::new(
 			"test".to_string(),
-
 			vec!["permission1".to_string(), "permission2".to_string()],
-
 			"Test role".to_string(),
 		);
 

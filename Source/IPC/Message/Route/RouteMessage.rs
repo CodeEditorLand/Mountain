@@ -80,7 +80,6 @@ use std::{
 };
 
 use super::super::Define::DefineMessage::{ListenerCallback, TauriIPCMessage};
-
 use crate::dev_log;
 
 /// Maximum listeners per channel to prevent resource exhaustion
@@ -91,13 +90,11 @@ const MAX_LISTENERS_PER_CHANNEL:usize = 100;
 /// This router implements a publish-subscribe pattern where listeners can
 /// register to receive messages on specific channels.
 pub struct Router {
-
 	/// Map from channel names to their registered listeners
 	listeners:Arc<Mutex<HashMap<String, Vec<ListenerCallback>>>>,
 }
 
 impl Router {
-
 	/// Create a new message router
 	///
 	/// # Returns
@@ -126,7 +123,6 @@ impl Router {
 		if channel_listeners.len() >= MAX_LISTENERS_PER_CHANNEL {
 			return Err(format!(
 				"Maximum listeners ({}) reached for channel: {}",
-
 				MAX_LISTENERS_PER_CHANNEL, Channel
 			));
 		}
@@ -135,11 +131,8 @@ impl Router {
 
 		dev_log!(
 			"ipc",
-
 			"[Router] Listener registered for channel: {} (total: {})",
-
 			Channel,
-
 			channel_listeners.len()
 		);
 
@@ -173,21 +166,15 @@ impl Router {
 
 				dev_log!(
 					"ipc",
-
 					"[Router] Channel cleaned up: {} (removed {} listeners)",
-
 					Channel,
-
 					removed_count
 				);
 			} else {
 				dev_log!(
 					"ipc",
-
 					"[Router] Listener removed from channel: {}, remaining: {}",
-
 					Channel,
-
 					channel_listeners.len()
 				);
 			}
@@ -238,13 +225,9 @@ impl Router {
 					Err(e) => {
 						dev_log!(
 							"ipc",
-
 							"error: [Router] Error in listener {} for channel {}: {}",
-
 							index,
-
 							Message.channel,
-
 							e
 						);
 
@@ -255,24 +238,17 @@ impl Router {
 
 			dev_log!(
 				"ipc",
-
 				"[Router] Message routed to channel {}: {}/{} listeners succeeded",
-
 				Message.channel,
-
 				success_count,
-
 				listener_count
 			);
 
 			if error_count > 0 {
 				dev_log!(
 					"ipc",
-
 					"warn: [Router] {} listener(s) failed on channel {}",
-
 					error_count,
-
 					Message.channel
 				);
 			}
@@ -352,11 +328,8 @@ impl Router {
 
 		dev_log!(
 			"ipc",
-
 			"[Router] Cleared {} listeners from {} channels",
-
 			total_listeners,
-
 			listeners.len()
 		);
 
@@ -379,7 +352,6 @@ impl Router {
 		if !Channel.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == ':') {
 			return Err(format!(
 				"Channel contains invalid characters: '{}' (only alphanumeric, -, _, : allowed)",
-
 				Channel
 			));
 		}

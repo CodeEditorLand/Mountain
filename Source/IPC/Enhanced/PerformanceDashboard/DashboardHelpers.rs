@@ -24,7 +24,6 @@ pub fn generate_alert_id() -> String { uuid::Uuid::new_v4().to_string() }
 
 /// Human-readable display name for a `MetricType` variant.
 pub fn metric_type_name(metric_type:&MetricType) -> &'static str {
-
 	match metric_type {
 		MetricType::MessageProcessingTime => "Message Processing Time",
 

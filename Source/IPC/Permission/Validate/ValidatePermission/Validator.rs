@@ -22,7 +22,6 @@ use crate::{
 };
 
 pub struct Struct {
-
 	pub(super) Roles:Arc<RwLock<HashMap<String, Role>>>,
 
 	pub(super) Permissions:Arc<RwLock<HashMap<String, Permission>>>,
@@ -33,7 +32,6 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn New(ValidationTimeoutMillis:u64) -> Self {
 		Self {
 			Roles:Arc::new(RwLock::new(HashMap::new())),
@@ -112,9 +110,7 @@ impl Struct {
 			Err(_) => {
 				dev_log!(
 					"ipc",
-
 					"error: [PermissionValidator] Permission validation timed out for operation: {}",
-
 					Operation
 				);
 
@@ -190,11 +186,8 @@ impl Struct {
 			if !permissions_read.contains_key(PermissionName) {
 				dev_log!(
 					"ipc",
-
 					"warn: [PermissionValidator] Permission '{}' referenced by role '{}' does not exist",
-
 					PermissionName,
-
 					Role.Name
 				);
 			}
@@ -268,7 +261,6 @@ impl Struct {
 
 				IsSensitive:false,
 			},
-
 			Permission {
 				Name:"file.write".to_string(),
 
@@ -278,7 +270,6 @@ impl Struct {
 
 				IsSensitive:false,
 			},
-
 			Permission {
 				Name:"config.read".to_string(),
 
@@ -288,7 +279,6 @@ impl Struct {
 
 				IsSensitive:false,
 			},
-
 			Permission {
 				Name:"config.update".to_string(),
 
@@ -298,7 +288,6 @@ impl Struct {
 
 				IsSensitive:false,
 			},
-
 			Permission {
 				Name:"storage.read".to_string(),
 
@@ -308,7 +297,6 @@ impl Struct {
 
 				IsSensitive:false,
 			},
-
 			Permission {
 				Name:"storage.write".to_string(),
 
@@ -318,7 +306,6 @@ impl Struct {
 
 				IsSensitive:false,
 			},
-
 			Permission {
 				Name:"system.external".to_string(),
 
@@ -328,7 +315,6 @@ impl Struct {
 
 				IsSensitive:true,
 			},
-
 			Permission {
 				Name:"system.execute".to_string(),
 
@@ -338,7 +324,6 @@ impl Struct {
 
 				IsSensitive:true,
 			},
-
 			Permission {
 				Name:"admin.manage".to_string(),
 
@@ -366,19 +351,14 @@ impl Struct {
 
 				Priority:0,
 			},
-
 			Role {
 				Name:"developer".to_string(),
 
 				Permissions:vec![
 					"file.read".to_string(),
-
 					"file.write".to_string(),
-
 					"config.read".to_string(),
-
 					"storage.read".to_string(),
-
 					"storage.write".to_string(),
 				],
 
@@ -388,27 +368,18 @@ impl Struct {
 
 				Priority:1,
 			},
-
 			Role {
 				Name:"admin".to_string(),
 
 				Permissions:vec![
 					"file.read".to_string(),
-
 					"file.write".to_string(),
-
 					"config.read".to_string(),
-
 					"config.update".to_string(),
-
 					"storage.read".to_string(),
-
 					"storage.write".to_string(),
-
 					"system.external".to_string(),
-
 					"system.execute".to_string(),
-
 					"admin.manage".to_string(),
 				],
 
@@ -426,7 +397,6 @@ impl Struct {
 
 		dev_log!(
 			"ipc",
-
 			"[PermissionValidator] Default roles and permissions initialized successfully"
 		);
 

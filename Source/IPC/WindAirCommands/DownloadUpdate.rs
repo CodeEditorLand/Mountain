@@ -14,7 +14,6 @@ pub async fn DownloadUpdate(
 
 	checksum:Option<String>,
 ) -> Result<DownloadResultDTO::Struct, String> {
-
 	dev_log!("grpc", "[WindAirCommands] DownloadUpdate called: {} -> {}", url, destination);
 
 	let air_address = GetAirAddress::Fn()?;
@@ -26,13 +25,9 @@ pub async fn DownloadUpdate(
 	let file_info = client
 		.DownloadUpdate(
 			request_id,
-
 			url,
-
 			destination,
-
 			checksum.unwrap_or_default(),
-
 			std::collections::HashMap::new(),
 		)
 		.await
@@ -50,9 +45,7 @@ pub async fn DownloadUpdate(
 
 	dev_log!(
 		"grpc",
-
 		"[WindAirCommands] Update download completed: success={}",
-
 		result.success
 	);
 

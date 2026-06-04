@@ -4,7 +4,6 @@
 
 #[cfg(feature = "Telemetry")]
 pub fn Fn() -> Result<(), Box<dyn std::error::Error>> {
-
 	use crate::dev_log;
 
 	dev_log!("metrics", "metrics system initialized");

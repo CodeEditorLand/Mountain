@@ -7,12 +7,10 @@ use std::sync::Arc;
 use crate::RPC::EchoAction::ExtensionHostRegistry;
 
 pub struct Struct {
-
 	Registry:Arc<ExtensionHostRegistry::Struct>,
 }
 
 impl Struct {
-
 	pub fn new(Registry:Arc<ExtensionHostRegistry::Struct>) -> Self { Self { Registry } }
 
 	pub async fn HostFor(&self, ExtensionIdentifier:&str) -> Option<String> {

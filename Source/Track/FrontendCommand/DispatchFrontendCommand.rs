@@ -75,7 +75,7 @@ pub async fn DispatchFrontendCommand<R:Runtime>(
 ) -> Result<Value, String> {
 	dev_log!("ipc", "[Track/FrontendCommand] Dispatching frontend command: {}", Command);
 
-	match CreateEffectForRequest(&ApplicationHandle, &Command, Argument) {
+	match CreateEffectForRequest(&ApplicationHandle, &Command, &Argument) {
 		Ok(EffectFn) => {
 			let runtime_clone = RunTime.inner().clone();
 

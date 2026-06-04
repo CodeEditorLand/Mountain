@@ -1,11 +1,9 @@
 use ::AirLibrary::AirError;
-
 use CommonLibrary::Error::CommonError::CommonError;
 
 pub type AirClient = ::AirLibrary::Client::AirClient::AirClient;
 
 pub fn MapAirError(Error:AirError) -> CommonError {
-
 	match Error {
 		AirError::Authentication(Reason) => CommonError::AccessDenied { Reason },
 
@@ -18,27 +16,16 @@ pub fn MapAirError(Error:AirError) -> CommonError {
 		},
 
 		AirError::Network(Description)
-
 		| AirError::gRPC(Description)
-
 		| AirError::Configuration(Description)
-
 		| AirError::FileSystem(Description)
-
 		| AirError::Internal(Description)
-
 		| AirError::ResourceLimit(Description)
-
 		| AirError::Timeout(Description)
-
 		| AirError::Plugin(Description)
-
 		| AirError::HotReload(Description)
-
 		| AirError::Connection(Description)
-
 		| AirError::RateLimit(Description)
-
 		| AirError::CircuitBreaker(Description) => CommonError::IPCError { Description },
 	}
 }

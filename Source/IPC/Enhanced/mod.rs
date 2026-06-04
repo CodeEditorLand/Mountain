@@ -24,7 +24,6 @@ use crate::IPC::Enhanced::MessageCompressor::{
 	CompressionAlgorithm::Enum as CompressionAlgorithm,
 	CompressionLevel::Enum as CompressionLevel,
 };
-
 use crate::{
 	IPC::Enhanced::{
 		ConnectionPool::{PoolConfig::Struct as PoolConfig, PoolStats::Struct as PoolStats},
@@ -44,7 +43,6 @@ use crate::{
 
 /// Enhanced IPC manager that combines all advanced features
 pub struct EnhancedIPCManager {
-
 	pub compressor:MessageCompressor::Compressor::Struct,
 
 	pub connection_pool:ConnectionPool::Pool::Struct,
@@ -55,7 +53,6 @@ pub struct EnhancedIPCManager {
 }
 
 impl EnhancedIPCManager {
-
 	/// Create a new enhanced IPC manager
 	pub fn new() -> Result<Self, String> {
 		let compressor_config = BatchConfig::default();
@@ -139,11 +136,8 @@ impl EnhancedIPCManager {
 
 		let metric = PerformanceDashboard::Dashboard::Struct::create_metric(
 			MetricType::MessageProcessingTime,
-
 			duration,
-
 			Some(channel.to_string()),
-
 			HashMap::new(),
 		);
 
@@ -202,7 +196,6 @@ impl EnhancedIPCManager {
 /// Enhanced IPC statistics
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct EnhancedIPCStats {
-
 	pub connection_pool:PoolStats,
 
 	pub security:SecurityStats,
@@ -214,7 +207,6 @@ pub struct EnhancedIPCStats {
 
 /// Initialize enhanced IPC features
 pub async fn initialize_enhanced_ipc() -> Result<EnhancedIPCManager, String> {
-
 	let manager = EnhancedIPCManager::new()?;
 
 	manager.start().await?;
@@ -226,7 +218,6 @@ pub async fn initialize_enhanced_ipc() -> Result<EnhancedIPCManager, String> {
 
 /// Utility functions for enhanced IPC
 impl EnhancedIPCManager {
-
 	/// Create a high-performance configuration
 	pub fn high_performance_config() -> Self {
 		let compressor_config = BatchConfig {
@@ -346,7 +337,6 @@ impl EnhancedIPCManager {
 
 /// Integration with existing Mountain IPC system
 impl EnhancedIPCManager {
-
 	/// Integrate with Tauri IPCServer
 	pub async fn integrate_with_tauri_ipc(
 		&self,

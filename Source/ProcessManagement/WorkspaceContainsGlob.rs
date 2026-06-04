@@ -13,7 +13,6 @@
 /// Return the subset of `Patterns` for which at least one workspace folder
 /// contains a matching file or directory.
 pub fn FindMatchingWorkspaceContainsPatterns(Folders:&[std::path::PathBuf], Patterns:&[String]) -> Vec<String> {
-
 	use std::collections::HashSet;
 
 	const MAX_DEPTH:usize = 3;
@@ -83,7 +82,6 @@ pub fn FindMatchingWorkspaceContainsPatterns(Folders:&[std::path::PathBuf], Patt
 /// Supports literal paths, `*` (one segment), and `**` (any segments).
 /// Case-sensitive per the VS Code spec.
 pub fn PatternMatchesAnyEntry(Pattern:&str, Entries:&[String]) -> bool {
-
 	let HasWildcard = Pattern.contains('*') || Pattern.contains('?');
 
 	if !HasWildcard {
@@ -100,7 +98,6 @@ pub fn PatternMatchesAnyEntry(Pattern:&str, Entries:&[String]) -> bool {
 /// Recursive segment-by-segment glob match. `**` consumes zero or more
 /// path segments; `*` matches exactly one segment via `SingleSegmentMatch`.
 pub fn SegmentMatch(Pattern:&[&str], Entry:&[&str]) -> bool {
-
 	if Pattern.is_empty() {
 		return Entry.is_empty();
 	}
@@ -132,7 +129,6 @@ pub fn SegmentMatch(Pattern:&[&str], Entry:&[&str]) -> bool {
 /// `?` is not supported (rare in workspaceContains patterns) and falls
 /// through to literal equality.
 pub fn SingleSegmentMatch(Pattern:&str, Segment:&str) -> bool {
-
 	if Pattern == "*" {
 		return true;
 	}
@@ -168,9 +164,7 @@ pub fn SingleSegmentMatch(Pattern:&str, Segment:&str) -> bool {
 	}
 
 	if let Some(Last) = Fragments.last()
-
 		&& !Last.is_empty()
-
 	{
 		return Segment.ends_with(Last);
 	}

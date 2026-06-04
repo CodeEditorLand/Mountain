@@ -14,7 +14,6 @@ use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 /// Service operation error types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ServiceError {
-
 	/// Service not found.
 	ServiceNotFound { context:ErrorContext, service_name:String },
 
@@ -41,7 +40,6 @@ pub enum ServiceError {
 }
 
 impl ServiceError {
-
 	/// Get the error context.
 	pub fn context(&self) -> &ErrorContext {
 		match self {
@@ -141,7 +139,6 @@ impl ServiceError {
 		Self::Timeout {
 			context:ErrorContext::new(format!(
 				"Service timeout: {} operation timed out after {}ms",
-
 				service_name_str, timeout_ms
 			))
 			.with_kind(ErrorKind::Service)
@@ -165,7 +162,6 @@ impl ServiceError {
 		Self::DependencyError {
 			context:ErrorContext::new(format!(
 				"Service dependency error: {} depends on {}",
-
 				service_name_str, dependency_str
 			))
 			.with_kind(ErrorKind::Service)
@@ -179,13 +175,11 @@ impl ServiceError {
 }
 
 impl fmt::Display for ServiceError {
-
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{}", self.context()) }
 }
 
 impl StdError for ServiceError {}
 
 impl From<ServiceError> for MountainError {
-
 	fn from(err:ServiceError) -> Self { MountainError::new(err.context().clone()).with_source(err.to_string()) }
 }

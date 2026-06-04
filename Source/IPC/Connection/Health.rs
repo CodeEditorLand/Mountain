@@ -32,7 +32,6 @@
 // - Support multiple health check types
 
 use super::Types::ConnectionHandle;
-
 use crate::dev_log;
 
 /// Connection health checker
@@ -68,13 +67,11 @@ use crate::dev_log;
 /// let is_healthy = checker.check_connection_health(&mut handle).await;
 /// ```
 pub struct HealthChecker {
-
 	/// Maximum allowed response time for a connection to be considered healthy
 	ping_timeout:std::time::Duration,
 }
 
 impl HealthChecker {
-
 	/// Create a new health checker with default settings
 	///
 	/// Default ping timeout is 5 seconds.
@@ -128,23 +125,16 @@ impl HealthChecker {
 		if is_healthy {
 			dev_log!(
 				"ipc",
-
 				"[HealthChecker] Connection {} is healthy (response time: {:?})",
-
 				handle.id,
-
 				response_time
 			);
 		} else {
 			dev_log!(
 				"ipc",
-
 				"[HealthChecker] Connection {} is unhealthy (response time: {:?}, timeout: {:?})",
-
 				handle.id,
-
 				response_time,
-
 				self.ping_timeout
 			);
 		}
@@ -164,7 +154,6 @@ impl HealthChecker {
 }
 
 impl Default for HealthChecker {
-
 	fn default() -> Self { Self::new() }
 }
 

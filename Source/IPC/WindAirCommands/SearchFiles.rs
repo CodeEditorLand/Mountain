@@ -14,14 +14,10 @@ pub async fn SearchFiles(
 
 	max_results:Option<u32>,
 ) -> Result<SearchResultsDTO::Struct, String> {
-
 	dev_log!(
 		"grpc",
-
 		"[WindAirCommands] SearchFiles called: query={}, patterns={:?}",
-
 		query,
-
 		file_patterns
 	);
 
@@ -36,11 +32,8 @@ pub async fn SearchFiles(
 	let search_results = client
 		.SearchFiles(
 			request_id,
-
 			query,
-
 			file_patterns.first().map(|s| s.as_str()).unwrap_or("").to_string(),
-
 			max_results_count,
 		)
 		.await
@@ -64,9 +57,7 @@ pub async fn SearchFiles(
 
 	dev_log!(
 		"grpc",
-
 		"[WindAirCommands] File search completed: {} results",
-
 		result.total_results
 	);
 

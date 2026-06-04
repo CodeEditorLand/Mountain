@@ -7,7 +7,6 @@
 //! extension manifests.
 
 use CommonLibrary::Error::CommonError::CommonError;
-
 use serde_json::{Map, Value};
 
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, Environment::Utility};
@@ -16,7 +15,6 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, Environ
 /// flat `{key → defaultValue}` JSON object. Keys use dot-notation
 /// (e.g. `editor.fontSize`). Sub-`properties` objects are recursed into.
 pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, CommonError> {
-
 	let mut MergedDefaults = Map::new();
 
 	let Extensions = State
@@ -53,7 +51,6 @@ pub fn process_configuration_properties(
 
 	visited_keys:&mut Vec<String>,
 ) -> Result<(), CommonError> {
-
 	for (key, value) in properties {
 		let full_path = if current_path.is_empty() {
 			key.clone()

@@ -2,7 +2,6 @@
 
 #[derive(Debug, Clone)]
 pub struct Struct {
-
 	pub update_available:bool,
 
 	pub version:String,

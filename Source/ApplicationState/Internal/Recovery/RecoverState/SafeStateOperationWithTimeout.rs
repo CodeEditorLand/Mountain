@@ -10,9 +10,7 @@ use crate::dev_log;
 pub fn Fn<T, F>(Operation:F, TimeoutMs:u64, OperationName:&str) -> Result<T, CommonError>
 where
 	F: FnOnce() -> Result<T, CommonError> + Send + 'static,
-
 	T: Send + 'static, {
-
 	let (Sender, Receiver) = std::sync::mpsc::channel();
 
 	std::thread::spawn(move || {
@@ -25,11 +23,8 @@ where
 		Err(_) => {
 			dev_log!(
 				"lifecycle",
-
 				"error: [RecoverState] Operation '{}' timed out after {}ms",
-
 				OperationName,
-
 				TimeoutMs
 			);
 

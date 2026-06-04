@@ -8,7 +8,6 @@
 #[cfg(feature = "Telemetry")]
 #[macro_export]
 macro_rules! measure_time {
-
 	($name:expr, $block:block) => {{
 		let __Start = std::time::Instant::now();
 
@@ -25,6 +24,5 @@ macro_rules! measure_time {
 #[cfg(not(feature = "Telemetry"))]
 #[macro_export]
 macro_rules! measure_time {
-
 	($name:expr, $block:block) => {{ $block }};
 }

@@ -8,7 +8,6 @@
 
 #[cfg(feature = "Telemetry")]
 pub fn Fn() -> Result<(), Box<dyn std::error::Error>> {
-
 	crate::Telemetry::Tracing::InitializeTracing::Fn()?;
 
 	crate::Telemetry::Metrics::Initialize::Fn()?;

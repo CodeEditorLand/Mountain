@@ -2,7 +2,6 @@
 
 #[derive(Debug, Clone)]
 pub struct Struct {
-
 	pub version:String,
 
 	pub uptime_seconds:u64,

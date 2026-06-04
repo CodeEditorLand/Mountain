@@ -9,7 +9,6 @@ use super::{
 	Health::HealthChecker,
 	Types::{ConnectionHandle, ConnectionStats},
 };
-
 use crate::dev_log;
 
 /// Connection manager (alias for ConnectionPool)
@@ -69,7 +68,6 @@ pub type ConnectionManager = ConnectionPool;
 /// let stats = pool.GetStats().await;
 /// ```
 pub struct ConnectionPool {
-
 	/// Maximum number of concurrent connections allowed
 	MaxConnections:usize,
 
@@ -87,7 +85,6 @@ pub struct ConnectionPool {
 }
 
 impl ConnectionPool {
-
 	/// Create a new connection pool with specified parameters
 	///
 	/// ## Parameters
@@ -102,11 +99,8 @@ impl ConnectionPool {
 	pub fn new(MaxConnections:usize, ConnectionTimeout:Duration) -> Self {
 		dev_log!(
 			"ipc",
-
 			"[ConnectionPool] Creating pool with max: {}, timeout: {:?}",
-
 			MaxConnections,
-
 			ConnectionTimeout
 		);
 
@@ -164,9 +158,7 @@ impl ConnectionPool {
 
 		dev_log!(
 			"ipc",
-
 			"[ConnectionPool] Connection {} acquired (permit released on drop)",
-
 			Handle.id
 		);
 
@@ -326,13 +318,9 @@ impl ConnectionPool {
 					if !Handle.is_healthy() {
 						dev_log!(
 							"ipc",
-
 							"[ConnectionPool] Connection {} marked as unhealthy (score: {:.1}, errors: {})",
-
 							Handle.id,
-
 							Handle.health_score,
-
 							Handle.error_count
 						);
 					}
@@ -340,9 +328,7 @@ impl ConnectionPool {
 					// Connection removed from pool, stop monitoring
 					dev_log!(
 						"ipc",
-
 						"[ConnectionPool] Connection {} removed from pool, stopping health monitoring",
-
 						connection_id
 					);
 

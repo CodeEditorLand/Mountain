@@ -83,19 +83,16 @@
 use std::array::TryFromSliceError;
 
 use base64::{Engine, engine::general_purpose};
-
 use ring::{
 	aead,
 	hmac,
 	rand::{SecureRandom, SystemRandom},
 };
-
 use serde::{Deserialize, Serialize};
 
 /// Encrypted message structure containing ciphertext and authentication data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptedMessage {
-
 	/// Unique nonce for GCM (12 bytes)
 	pub nonce:Vec<u8>,
 
@@ -107,7 +104,6 @@ pub struct EncryptedMessage {
 }
 
 impl EncryptedMessage {
-
 	/// Validate encrypted message structure
 	pub fn validate(&self) -> Result<(), String> {
 		// Validate nonce length (must be 12 bytes for GCM)
@@ -137,7 +133,6 @@ impl EncryptedMessage {
 /// using AES-256-GCM along with HMAC-SHA256 for additional integrity
 /// verification.
 pub struct SecureMessageChannel {
-
 	/// AES-GCM encryption key
 	encryption_key:aead::LessSafeKey,
 
@@ -146,7 +141,6 @@ pub struct SecureMessageChannel {
 }
 
 impl SecureMessageChannel {
-
 	/// Create a new secure channel with randomly generated keys
 	///
 	/// # Returns
@@ -191,7 +185,6 @@ impl SecureMessageChannel {
 		if encryption_key_bytes.len() != 32 {
 			return Err(format!(
 				"Invalid encryption key length: {} (expected 32)",
-
 				encryption_key_bytes.len()
 			));
 		}
