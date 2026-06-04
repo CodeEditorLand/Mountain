@@ -123,19 +123,31 @@ impl ApplicationState {
 		self.Feature.GetNextSourceControlManagementProviderHandle()
 	}
 
-	/// Gets the workspace identifier for the current application instance.
-	/// This is used to differentiate between different workspace instances
-	/// when running multiple instances of the application.
+	/// Gets a stable identifier for the current workspace instance.
+	/// Derived from the workspace configuration path or the first
+	/// workspace folder URI so it remains constant across callers for
+	/// the same workspace, enabling deduplication in recently-opened
+	/// lists, per-workspace storage paths, and window-title derivation.
 	pub fn GetWorkspaceIdentifier(&self) -> Result<String, CommonError> {
-		// For now, generate a simple identifier based on the current timestamp
-		// In a proper implementation, this would be stored and persisted
-		use std::time::{SystemTime, UNIX_EPOCH};
+		// Prefer the configuration file path when present; otherwise hash
+		// the first workspace folder URI. Falling back to a fixed sentinel
+		// keeps the result deterministic across restarts with no workspace.
+		let key = if let Some(Path) = self.Workspace.GetConfigurationPath() {
+			Path.to_string_lossy().to_string()
+		} else if let Some(First) = self.Workspace.GetWorkspaceFolders().first() {
+			First.URI.to_string()
+		} else {
+			return Ok("NO_WORKSPACE".to_string());
+		};
 
-		let timestamp = SystemTime::now()
-			.duration_since(UNIX_EPOCH)
-			.map_err(|e| CommonError::Unknown { Description:format!("Failed to get system time: {}", e) })?;
+		use std::{
+			collections::hash_map::DefaultHasher,
+			hash::{Hash, Hasher},
+		};
 
-		Ok(format!("workspace-{:x}", timestamp.as_millis()))
+		let mut Hasher = DefaultHasher::new();
+		key.hash(&mut Hasher);
+		Ok(format!("{:016x}", Hasher.finish()))
 	}
 }
 

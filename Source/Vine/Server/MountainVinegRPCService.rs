@@ -373,7 +373,7 @@ impl MountainService for MountainVinegRPCService {
 			self.ApplicationHandle.clone(),
 			self.RunTime.clone(),
 			// In the future, this could come from connection metadata
-			"cocoon-main".to_string(),
+			"cocoon-main",
 			MethodName.clone(),
 			ParametersValue,
 		)

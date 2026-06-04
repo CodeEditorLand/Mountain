@@ -8,6 +8,9 @@
 # over 100MB CANNOT be pushed. Use GitHub Releases for distribution.
 # =============================================================================
 
+# Prevent accidental commits of editor/refactor backup files
+*.backup
+
 # Ignore everything in Target by default
 /Target/*
 
