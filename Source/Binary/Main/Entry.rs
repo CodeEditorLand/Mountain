@@ -67,7 +67,7 @@ use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
 use crate::dev_log;
 use crate::{
 	// Crate root imports
-	ApplicationState::State::ApplicationState::ApplicationState,
+	ApplicationState::State::ApplicationState::{ApplicationState, SharedApplicationState},
 	Binary::Build::DnsCommands::{
 		StartupTime::init_dns_startup_time,
 		dns_get_forward_allowlist::dns_get_forward_allowlist,
