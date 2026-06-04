@@ -50,6 +50,7 @@ use super::{
 	Webviews::WebviewState::WebviewState,
 	WorkingCopy::WorkingCopyState::WorkingCopyState,
 };
+use std::sync::atomic::{AtomicU32, Ordering as AtomicOrdering};
 use crate::dev_log;
 
 /// Feature state combining all feature-related components.
@@ -93,6 +94,10 @@ pub struct State {
 
 	/// Working-copy (dirty) state - drives the dirty dot in editor tabs.
 	pub WorkingCopy:WorkingCopyState,
+
+	/// Source-control provider handle counter, owned here
+	/// (not delegated to MarkerState) so the domain boundary is explicit.
+	pub SCMHandleCounter:Arc<AtomicU32>,
 }
 
 impl Default for State {
