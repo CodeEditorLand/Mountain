@@ -111,7 +111,7 @@ pub fn Fn<R:Runtime>(
 	macro_rules! Try {
 		($Module:ident) => {
 			if $Module::Matches(MethodName) {
-				if let Some(Result) = $Module::CreateEffect::<R>(MethodName, Parameters) {
+				if let Some(Result) = $Module::CreateEffect::<R>(MethodName, &Parameters) {
 					return Result;
 				}
 			}

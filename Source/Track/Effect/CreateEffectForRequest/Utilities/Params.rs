@@ -47,19 +47,19 @@ pub fn str_obj_or_pos<'a>(p:&'a Value, key:&str, n:usize) -> &'a str {
 /// Unwrap one level of outer array: `[payload]` → `payload`, else identity.
 /// Handles callers that always wrap in an array vs those that send the value
 /// directly.
-pub fn array_unwrap(p:Value) -> Value { if p.is_array() { p.get(0).cloned().unwrap_or_default() } else { p } }
+pub fn array_unwrap(p:&Value) -> Value { if p.is_array() { p.get(0).cloned().unwrap_or_default() } else { p.clone() } }
 
 /// Extract a URI parameter that may arrive as `[uri]`, `{uri:…}`, or bare.
-pub fn uri_from_params(p:Value) -> Value {
+pub fn uri_from_params(p:&Value) -> Value {
 	if p.is_array() {
 		p.get(0).cloned().unwrap_or_default()
 	} else {
-		p.get("uri").cloned().unwrap_or(p)
+		p.get("uri").cloned().unwrap_or(p.clone())
 	}
 }
 
 /// Ensure the value is a JSON array; wraps non-arrays in `[value]`.
-pub fn ensure_array(p:Value) -> Value { if p.is_array() { p } else { json!([p]) } }
+pub fn ensure_array(p:&Value) -> Value { if p.is_array() { p.clone() } else { json!([p.clone()]) } }
 
 /// Strip a leading `file://` or `file:///` scheme. Handles the
 /// `file://localhost/...` form by removing the host segment.
