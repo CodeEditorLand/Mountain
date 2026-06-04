@@ -1,8 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
-	match MethodName {
-		 => true,
-		_ => false,
-	}
+	// WindowUI handles Window.ShowMessage, Window.ShowQuickPick, etc.
+	MethodName.starts_with("Window.")
 }
 
 //! Window-namespace UI commands from Cocoon's window shim.

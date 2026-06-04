@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	MethodName.starts_with("register_") && MethodName.ends_with("_provider")
-}}
+}
 
 //! # LanguageFeatures Effect (CreateEffectForRequest)
 //!
