@@ -1,21 +1,9 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		applyEdit, showTextDocument, $updateWorkspaceFolders, Workspace.RequestResourceTrust, Workspace.IsResourceTrusted, window.revealRange => true,
+		"applyEdit" | "showTextDocument" | "$updateWorkspaceFolders" => true,
 		_ => false,
 	}
 }
-
-//! # Workspace Effect (CreateEffectForRequest)
-//!
-//! Effect constructors for workspace-level RPC methods. Handles:
-//! - `applyEdit` and `showTextDocument` via round-trip to Sky through
-//!   `UserInterfaceProvider::SendUserInterfaceRequest` (resolves when Sky has
-//!   actually applied the edit or shown the document).
-//! - `Workspace.RequestResourceTrust` and `Workspace.IsResourceTrusted` return
-//!   a permissive `true` heuristic so `vscode.git` proceeds; single- window dev
-//!   runtime stays trust-by-default.
-//! - `$updateWorkspaceFolders` applies workspace folder additions/removals to
-//!   `ApplicationState.Workspace` and broadcasts the delta.
 
 use std::sync::Arc;
 
@@ -42,7 +30,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Res
 				let Payload = if Parameters.is_array() {
 					Parameters.get(0).cloned().unwrap_or_default()
 				} else {
-					Parameters
+					Parameters.clone()
 				};
 
 				crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(

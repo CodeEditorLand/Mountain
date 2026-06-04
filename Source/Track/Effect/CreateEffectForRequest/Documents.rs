@@ -5,18 +5,6 @@ pub fn Matches(MethodName:&str) -> bool {
 	}
 }
 
-//! # Documents Effect (CreateEffectForRequest)
-//!
-//! Effect constructors for the `Document.*` RPC family. Delegates to the
-//! `DocumentProvider` trait on `MountainEnvironment` for save operations.
-//!
-//! ## Methods handled
-//!
-//! | Method | Description |
-//! |---|---|
-//! | `Document.Save` | Save the document at the given URI to disk |
-//! | `Document.SaveAs` | Save the document to a new location specified by the caller |
-
 use std::sync::Arc;
 
 use CommonLibrary::{Document::DocumentProvider::DocumentProvider, Environment::Requires::Requires};

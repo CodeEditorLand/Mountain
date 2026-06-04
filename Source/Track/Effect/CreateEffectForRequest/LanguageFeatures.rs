@@ -2,21 +2,6 @@ pub fn Matches(MethodName:&str) -> bool {
 	MethodName.starts_with("register_") && MethodName.ends_with("_provider")
 }
 
-//! # LanguageFeatures Effect (CreateEffectForRequest)
-//!
-//! Effect constructors for LSP-like language feature provider registration.
-//! Each method maps to a `ProviderType` variant and delegates to the
-//! `LanguageFeatureProviderRegistry::RegisterProvider` trait method.
-//!
-//! ## Provider types covered
-//!
-//! Hover, Completion, Definition, References, CodeAction, DocumentHighlight,
-//! DocumentSymbol, WorkspaceSymbol, Rename, DocumentFormatting,
-//! DocumentRangeFormatting, OnTypeFormatting, SignatureHelp, CodeLens,
-//! FoldingRange, SelectionRange, SemanticTokens, InlayHint, TypeHierarchy,
-//! CallHierarchy, LinkedEditingRange, DocumentLink, Color, Implementation,
-//! TypeDefinition, Declaration, EvaluatableExpression, InlineValues.
-
 use std::sync::Arc;
 
 use CommonLibrary::{
@@ -34,17 +19,17 @@ use crate::Track::Effect::{
 	MappedEffectType::MappedEffect,
 };
 
-fn CreateProviderEffect(Parameters:Value, ProviderKind:ProviderType) -> Option<Result<MappedEffect, String>> {
+fn CreateProviderEffect(Parameters:&Value, ProviderKind:ProviderType) -> Option<Result<MappedEffect, String>> {
+	let id = obj_str(Parameters, "handle").to_string();
+
+	let selector = obj_val(Parameters, "language_selector");
+
+	let extension_id = obj_val(Parameters, "extension_id");
+
+	let options = Parameters.get("options").cloned();
+
 	crate::effect!(run_time, {
 		let provider:Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
-
-		let id = obj_str(&Parameters, "handle").to_string();
-
-		let selector = obj_val(&Parameters, "language_selector");
-
-		let extension_id = obj_val(&Parameters, "extension_id");
-
-		let options = Parameters.get("options").cloned();
 
 		provider
 			.RegisterProvider(id, ProviderKind, selector, extension_id, options)

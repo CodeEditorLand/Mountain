@@ -5,23 +5,6 @@ pub fn Matches(MethodName:&str) -> bool {
 	}
 }
 
-//! # Search Effect (CreateEffectForRequest)
-//!
-//! Effect constructors for workspace search RPC methods. Handles file and
-//! text search by delegating to `SearchProvider` and `WorkspaceProvider`
-//! traits on `MountainEnvironment`.
-//!
-//! ## Methods handled
-//!
-//! | Method | Description |
-//! |---|---|
-//! | `findFiles` | Glob-based file search using `ignore`-aware walker |
-//! | `findTextInFiles` | Full-text search delegating to `SearchProvider::TextSearch` |
-//! | `Search.TextSearch` | Alternative text search RPC (separate method name) |
-//!
-//! `findFiles` reuses `WorkspaceProvider::FindFilesInWorkspace` to get the
-//! same `ignore`-aware glob walker used by `search:fileSearch`.
-
 use std::sync::Arc;
 
 use serde_json::{Value, json};

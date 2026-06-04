@@ -3,11 +3,6 @@ pub fn Matches(MethodName:&str) -> bool {
 	MethodName.starts_with("Window.")
 }
 
-//! Window-namespace UI commands from Cocoon's window shim.
-//! ShowMessage is fire-and-forget (no selection reply needed).
-//! ShowQuickPick / ShowInputBox / ShowOpenDialog / ShowSaveDialog block on
-//! a oneshot channel that is resolved by the frontend via ResolveUIRequest.
-
 use std::sync::Arc;
 
 use serde_json::{Value, json};

@@ -5,11 +5,6 @@ pub fn Matches(MethodName:&str) -> bool {
 	}
 }
 
-//! Cocoon legacy aliases: `openDocument`, `readFile`, `stat` - short-hand
-//! routes used by Cocoon's Effect-TS Workspace + FileSystem services before
-//! the canonical `FileSystem.*` naming was established. Backed by the same
-//! `FileSystemReader` provider.
-
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, FileSystem::FileSystemReader::FileSystemReader};

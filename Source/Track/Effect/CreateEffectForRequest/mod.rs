@@ -1,39 +1,3 @@
-//! # CreateEffectForRequest (Track)
-//!
-//! Central routing table that maps string-based commands/RPC methods to typed
-//! effects ([`MappedEffect`]). Each domain module handles its own match arms
-//! and returns `None` for unrecognised methods, enabling the chain-of-
-//! responsibility pattern below.
-//!
-//! ## Domain modules
-//!
-//! | Module            | Commands handled                                         |
-//! |-------------------|----------------------------------------------------------|
-//! | Authentication    | `Authentication.GetSession`, `Authentication.GetAccounts`|
-//! | Clipboard         | `Clipboard.Read`, `Clipboard.Write`                      |
-//! | Commands          | `executeCommand`, `Command.Execute`, `Command.GetAll`    |
-//! | Configuration     | `config.get`, `config.update`, `Configuration.*`        |
-//! | Debug             | `Debug.Start`, `Debug.RegisterConfigurationProvider`, `Debug.Stop` |
-//! | Diagnostics       | `Diagnostic.Set`, `Diagnostic.Clear`                    |
-//! | Documents         | `Document.Save`, `Document.SaveAs`                      |
-//! | FileSystem        | `FileSystem.*`, `FileWatcher.*`, `openDocument` aliases  |
-//! | Git               | `$gitExec`                                               |
-//! | Keybinding        | `Keybinding.GetResolved`                                 |
-//! | LanguageFeatures  | `register_*_provider` (one arm per provider type)        |
-//! | Languages         | `Languages.GetAll`                                       |
-//! | NativeHost        | `NativeHost.OpenExternal`                                |
-//! | SCM               | `$scm:*`, `vscode.diff`, `$scm:openDiff`                 |
-//! | Search            | `findFiles`, `findTextInFiles`, `Search.TextSearch`      |
-//! | Secrets           | `secrets.get`, `secrets.store`, `secrets.delete`        |
-//! | StatusBar         | `$statusBar:*`, `$setStatusBarMessage`, `$disposeStatusBarMessage` |
-//! | Storage           | `Storage.Get`, `Storage.Set`                             |
-//! | Task              | `Task.Fetch`, `Task.Execute`                             |
-//! | Terminal          | `$terminal:*`, `Terminal.*`                              |
-//! | TreeView          | `$tree:register`, `tree.*`                               |
-//! | UserInterface     | `UserInterface.*`, `Window.*`                            |
-//! | Webview           | `$webview:*`, `webview.*`, `$resolveCustomEditor`        |
-//! | Workspace         | `applyEdit`, `showTextDocument`, `$updateWorkspaceFolders` |
-
 pub mod Utilities;
 
 pub mod Authentication;

@@ -1,20 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
-	MethodName.starts_with("$gitExec")
+	MethodName == "$gitExec"
 }
-//! # Git Effect (CreateEffectForRequest)
-//!
-//! Effect constructor for the `$gitExec` command. Executes `git` as a
-//! subprocess with the provided arguments and working directory, returning
-//! the exit code, stdout, and stderr as a JSON object.
-//!
-//! ## Execution model
-//!
-//! - Command is spawned via `tokio::process::Command::new("git")`.
-//! - 30-second timeout prevents hung git operations from blocking.
-//! - Accepts both object-style params `{ args, repository/cwd }` and
-//!   array-style params `[args, cwd]` for backward compatibility with different
-//!   Cocoon shim versions.
-
 use std::time::Duration;
 
 use serde_json::{Value, json};

@@ -1,20 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	MethodName.starts_with("$statusBar:") || MethodName == "$setStatusBarMessage" || MethodName == "$disposeStatusBarMessage"
 }
-//! # StatusBar Effect (CreateEffectForRequest)
-//!
-//! Effect constructors for status bar RPC methods from the Cocoon extension
-//! host. Delegates to the `StatusBarProvider` trait on `MountainEnvironment`.
-//!
-//! ## Methods handled
-//!
-//! | Method | Description |
-//! |---|---|
-//! | `$statusBar:set` | Create or update a status bar entry |
-//! | `$statusBar:dispose` | Remove a status bar entry by ID |
-//! | `$setStatusBarMessage` | Set a simple text message in the status bar |
-//! | `$disposeStatusBarMessage` | Remove a status bar message by ID |
-
 use std::sync::Arc;
 
 use CommonLibrary::{
