@@ -31,7 +31,6 @@
 //!
 //! - Parameter validation before processing
 //! - Message size limits enforced
-//! - Method name sanitization
 //! - Safe error messages (no sensitive data)
 
 use std::{collections::HashMap, sync::Arc};
@@ -77,8 +76,10 @@ pub struct MountainVinegRPCService {
 	/// Application runtime containing core dependencies
 	RunTime:Arc<ApplicationRunTime>,
 
-	/// Registry of active operations with their cancellation tokens
-	/// Maps request ID to cancellation token for operation cancellation
+	/// Registry of active operations with their cancellation tokens.
+	/// Only populated for operations that explicitly opt into cancellation
+	/// by calling RegisterOperation from within their handler body.
+	/// Handlers MUST call UnregisterOperation on completion (success or error).
 	ActiveOperations:Arc<RwLock<HashMap<u64, tokio_util::sync::CancellationToken>>>,
 }
 
@@ -118,7 +119,9 @@ impl MountainVinegRPCService {
 		}
 	}
 
-	/// Registers an operation for potential cancellation
+	/// Registers an operation for potential cancellation.
+	/// Call this only from handlers that will also call UnregisterOperation
+	/// on both the success and error completion paths.
 	///
 	/// # Parameters
 	/// - `request_id`: The request identifier for the operation
@@ -139,7 +142,9 @@ impl MountainVinegRPCService {
 		token
 	}
 
-	/// Unregisters an operation after completion
+	/// Unregisters an operation after completion.
+	/// Must be called on both success and error paths for any operation
+	/// that called RegisterOperation.
 	///
 	/// # Parameters
 	/// - `request_id`: The request identifier to unregister
@@ -158,7 +163,6 @@ impl MountainVinegRPCService {
 	/// - `Ok(())`: Request is valid
 	/// - `Err(Status)`: Validation failed with appropriate gRPC status
 	fn ValidateRequest(&self, request:&GenericRequest) -> Result<(), Status> {
-		// Validate method name
 		if request.method.is_empty() {
 			return Err(Status::invalid_argument("Method name cannot be empty"));
 		}
@@ -170,7 +174,6 @@ impl MountainVinegRPCService {
 			)));
 		}
 
-		// Validate parameter size (rough estimate using JSON bytes)
 		if request.parameter.len() > 4 * 1024 * 1024 {
 			return Err(Status::resource_exhausted("Request parameter size exceeds limit"));
 		}
@@ -179,15 +182,6 @@ impl MountainVinegRPCService {
 	}
 
 	/// Creates a JSON-RPC compliant error response.
-	///
-	/// # Parameters
-	/// - `RequestIdentifier`: The request ID to echo back
-	/// - `code`: JSON-RPC error code
-	/// - `message`: Error message
-	/// - `data`: Optional error data (serialized)
-	///
-	/// # Returns
-	/// GenericResponse with error populated
 	fn CreateErrorResponse(RequestIdentifier:u64, code:i32, message:String, data:Option<Vec<u8>>) -> GenericResponse {
 		GenericResponse {
 			request_identifier:RequestIdentifier,
@@ -199,13 +193,6 @@ impl MountainVinegRPCService {
 	}
 
 	/// Creates a successful JSON-RPC response.
-	///
-	/// # Parameters
-	/// - `RequestIdentifier`: The request ID to echo back
-	/// - `result`: Result value to serialize
-	///
-	/// # Returns
-	/// GenericResponse with result populated, or error if serialization fails
 	fn CreateSuccessResponse(RequestIdentifier:u64, result:&Value) -> GenericResponse {
 		let result_bytes = match serde_json::to_vec(result) {
 			Ok(bytes) => bytes,
@@ -213,10 +200,9 @@ impl MountainVinegRPCService {
 			Err(e) => {
 				dev_log!("grpc", "error: [MountainVinegRPCService] Failed to serialize result: {}", e);
 
-				// Return error response instead
 				return Self::CreateErrorResponse(
 					RequestIdentifier,
-					-32603, // Internal error
+					-32603,
 					"Failed to serialize response".to_string(),
 					None,
 				);
@@ -229,11 +215,6 @@ impl MountainVinegRPCService {
 
 #[tonic::async_trait]
 impl MountainService for MountainVinegRPCService {
-	// LAND-PATCH B7-S6 P2: bidirectional streaming channel.
-	// Stub for now - the multiplexer that drains incoming Envelopes
-	// and dispatches to the unary handler tree is implemented in a
-	// follow-up patch (Patch 14). Until then this returns
-	// `Unimplemented` so callers fall back to the unary path.
 	type OpenChannelFromCocoonStream = std::pin::Pin<
 		Box<
 			dyn tonic::codegen::tokio_stream::Stream<Item = Result<::Vine::Generated::Envelope, tonic::Status>>
@@ -254,18 +235,10 @@ impl MountainService for MountainVinegRPCService {
 
 	/// Handles generic request-response RPCs from Cocoon.
 	///
-	/// This is the main entry point for Cocoon to request operations from
-	/// Mountain. It validates the request, deserializes parameters, dispatches
-	/// to the Track module, and returns the result or error in JSON-RPC
-	/// format.
-	///
-	/// # Parameters
-	/// - `request`: GenericRequest containing method name and serialized
-	///   parameters
-	///
-	/// # Returns
-	/// - `Ok(Response<GenericResponse>)`: Response with result or error
-	/// - `Err(Status)`: gRPC status error (only for critical failures)
+	/// Operations that require cancellation support must call RegisterOperation
+	/// from within their handler and UnregisterOperation on completion.
+	/// process_cocoon_request itself does NOT register operations unconditionally
+	/// to avoid an unbounded ActiveOperations map (one leaked entry per RPC).
 	async fn process_cocoon_request(
 		&self,
 
@@ -279,14 +252,6 @@ impl MountainService for MountainVinegRPCService {
 
 		let ReceiveInstant = std::time::Instant::now();
 
-		// Single consolidated receive line - replaces the previous
-		// three-line burst (`Received…` + `Params for…` + `Dispatching…`)
-		// that fired per RPC × thousands of RPCs per session. One log
-		// statement is enough to reconstruct the request lifecycle from
-		// the file: method, id, payload size in bytes. Gated under
-		// `grpc-verbose` so the default `short` trace stays quiet;
-		// failures still flow through the `grpc` (non-verbose) tag in
-		// the validate / dispatch error paths below.
 		dev_log!(
 			"grpc-verbose",
 			"[MountainVinegRPCService] recv id={} method={} size={}B",
@@ -295,14 +260,6 @@ impl MountainService for MountainVinegRPCService {
 			RequestData.parameter.len()
 		);
 
-		// Hot-path instrumentation (BATCH-16). Every RPC that shows up with
-		// uniform 700 ms latency (tree.register, Configuration.Inspect,
-		// Command.Execute) emits a `[LandFix:RPC]` marker here so p50/p95 can
-		// be derived from the log without patching every handler. The
-		// monotonic `t_ns` is a `SystemTime::UNIX_EPOCH` offset so Cocoon's
-		// `process.hrtime.bigint()` wire-send stamp can be diffed into three
-		// hops: wire → grpc-recv (transit), grpc-recv → dispatch-enter
-		// (Track resolve), dispatch-enter → registered (handler body).
 		let IsHotRpc = matches!(
 			MethodName.as_str(),
 			"$tree:register" | "tree.register" | "Configuration.Inspect" | "Command.Execute"
@@ -314,9 +271,6 @@ impl MountainService for MountainVinegRPCService {
 				.map(|D| D.as_nanos())
 				.unwrap_or(0);
 
-			// Per-call receive timestamp for latency diagnosis - only
-			// useful when actively profiling. Gate under `rpc-latency`
-			// so `short` / `grpc` don't print it.
 			dev_log!(
 				"rpc-latency",
 				"[LandFix:RPC] grpc-recv method={} id={} size={} t_ns={}",
@@ -327,21 +281,17 @@ impl MountainService for MountainVinegRPCService {
 			);
 		}
 
-		// Validate request before processing
 		if let Err(status) = self.ValidateRequest(&RequestData) {
 			dev_log!("grpc", "warn: [MountainVinegRPCService] Request validation failed: {}", status);
 
 			return Ok(Response::new(Self::CreateErrorResponse(
 				RequestIdentifier,
-				-32602, // Invalid params
+				-32602,
 				status.message().to_string(),
 				None,
 			)));
 		}
 
-		// Deserialize JSON parameters. The byte-count + method are
-		// already captured in the consolidated `recv id=…` line above;
-		// no additional `Params for [ID: …]` emit is needed.
 		let ParametersValue:Value = match serde_json::from_slice(&RequestData.parameter) {
 			Ok(v) => v,
 
@@ -352,22 +302,16 @@ impl MountainService for MountainVinegRPCService {
 
 				return Ok(Response::new(Self::CreateErrorResponse(
 					RequestIdentifier,
-					-32700, // Parse error
+					-32700,
 					msg,
 					None,
 				)));
 			},
 		};
 
-		// Dispatch line removed - the `recv id=… method=…` line above
-		// is the single source of truth for "this RPC started"; the
-		// completion path emits its own line on success / error.
-
-		// Dispatch request to Track module for processing
 		let DispatchResult = Track::SideCarRequest::DispatchSideCarRequest::DispatchSideCarRequest(
 			self.ApplicationHandle.clone(),
 			self.RunTime.clone(),
-			// In the future, this could come from connection metadata
 			"cocoon-main",
 			MethodName.clone(),
 			ParametersValue,
@@ -377,9 +321,6 @@ impl MountainService for MountainVinegRPCService {
 		match DispatchResult {
 			Ok(SuccessfulResult) => {
 				if IsHotRpc {
-					// Hot-RPC dispatched latency line - already narrow
-					// (~50 tagged RPCs per session). Route to `rpc-latency`
-					// so the profiling context stays opt-in.
 					dev_log!(
 						"rpc-latency",
 						"[LandFix:RPC] dispatched method={} id={} elapsed={}ms",
@@ -389,10 +330,6 @@ impl MountainService for MountainVinegRPCService {
 					);
 				}
 
-				// Success completion fires per request (14k+ in long sessions).
-				// Failures still log under the unconditional `error:` path
-				// below, so routing this to `grpc-verbose` doesn't hide real
-				// problems.
 				dev_log!(
 					"grpc-verbose",
 					"[MountainVinegRPCService] Request [ID: {}] completed successfully",
@@ -403,29 +340,8 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			Err(ErrorString) => {
-				// Routine 404s - extensions probe for optional workspace
-				// files on activate:
-				//   - `FileSystem.ReadFile` → missing cache files (terminal-suggest, JSON
-				//     schema associations, composer.json, Gemfile.lock, Drupal.php).
-				//   - `FileSystem.Stat` → optional config probes.
-				// Both surface as "resource not found" / "not found" /
-				// "ENOENT". Downgrade to `grpc-verbose` so the default
-				// log reflects genuine failures only. The response still
-				// returns -32000 so Cocoon's shim can convert it to a
-				// proper `vscode.FileSystemError.FileNotFound`.
 				let LowerError = ErrorString.to_lowercase();
 
-				// "Path is outside of the registered workspace folders" /
-				// "Permission denied" responses come from the path-security
-				// guard in `Environment/Utility/PathSecurity.rs` when an
-				// extension probes a directory outside the open workspace
-				// (Svelte's `enableContextMenu` walks every `package.json`
-				// in the entire workspace tree, including out-of-root
-				// submodule dependencies). From the extension's perspective
-				// these are equivalent to "file not present" and must NOT
-				// count against Cocoon's circuit breaker - a workspace with
-				// many sibling submodules trips the breaker open within the
-				// first few hundred ms of activation otherwise.
 				let LooksLike404 = (MethodName == "FileSystem.ReadFile"
 					|| MethodName == "FileSystem.Stat"
 					|| MethodName == "FileSystem.ReadDirectory")
@@ -456,9 +372,6 @@ impl MountainService for MountainVinegRPCService {
 					);
 				}
 
-				// Distinct code -32004 for benign 404s lets the Cocoon shim
-				// classify them without a string-regex round-trip. -32000
-				// stays the catch-all for genuine failures.
 				let ErrorCode = if LooksLike404 { -32004 } else { -32000 };
 
 				Ok(Response::new(Self::CreateErrorResponse(
@@ -471,40 +384,17 @@ impl MountainService for MountainVinegRPCService {
 		}
 	}
 
-	/// Handles generic fire-and-forget notifications from Cocoon.
-	///
-	/// Notifications do not expect a response beyond acknowledgment.
-	/// They are used for status updates, events, and other asynchronous
-	/// notifications.
-	///
-	/// # Parameters
-	/// - `request`: GenericNotification with method name and parameters
-	///
-	/// # Returns
-	/// - `Ok(Response<Empty>)`: Notification was received and logged
-	/// - `Err(Status)`: Critical error during processing
-	///
-	/// # TODO
-	/// Future implementation should route notifications to dedicated handlers:
-	/// ```rust,ignore
-	/// let Parameter: Value = serde_json::from_slice(&notification.parameter)?;
-	/// NotificationHandler::Handle(MethodName, Parameter).await?;
-	/// ```
 	async fn send_cocoon_notification(&self, request:Request<GenericNotification>) -> Result<Response<Empty>, Status> {
 		let NotificationData = request.into_inner();
 
 		let MethodName = NotificationData.method;
 
-		// Notifications are even higher-volume than requests
-		// (progress.report alone fires 2500+ times per long activation).
-		// Move under `grpc-verbose` alongside the request-side banner.
 		dev_log!(
 			"grpc-verbose",
 			"[MountainVinegRPCService] Received gRPC Notification: Method='{}'",
 			MethodName
 		);
 
-		// Validate notification method name
 		if MethodName.is_empty() {
 			dev_log!(
 				"grpc",
@@ -514,16 +404,6 @@ impl MountainService for MountainVinegRPCService {
 			return Err(Status::invalid_argument("Method name cannot be empty"));
 		}
 
-		// Route notifications to appropriate handlers based on MethodName. Currently
-		// only logs known notification types and acknowledges all others. A complete
-		// implementation would maintain a registry of notification handlers per method,
-		// route notifications to registered handlers asynchronously, allow handlers
-		// to perform side effects (state updates, UI updates), support cancellation
-		// and timeouts for long-running handlers, and log unhandled notifications
-		// at debug level for diagnostics. Known notifications include:
-		// ExtensionActivated, ExtensionDeactivated, WebviewReady.
-
-		// Parse parameters for handlers that need them
 		let Parameter:Value = if NotificationData.parameter.is_empty() {
 			Value::Null
 		} else {
@@ -531,8 +411,6 @@ impl MountainService for MountainVinegRPCService {
 		};
 
 		match MethodName.as_str() {
-			// Batch 15: extension-host + progress + languages arms now live
-			// as atoms under `Vine::Server::Notification::*`. Each match arm
 			"extensionHostMessage" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
@@ -611,11 +489,6 @@ impl MountainService for MountainVinegRPCService {
 				);
 			},
 
-			// Batch 16: the remaining Cocoon-notification arms, now pure
-			// atom delegations. Each wire method lives in its own file
-			// under `Vine::Server::Notification::*`. "Group atoms"
-			// (TerminalLifecycle, DebugLifecycle, WebviewLifecycle, etc.)
-			// handle 3-4 wire methods that share the same relay pattern.
 			"webview.setTitle"
 			| "webview.setIconPath"
 			| "webview.setHtml"
@@ -633,9 +506,6 @@ impl MountainService for MountainVinegRPCService {
 				::Vine::Server::Notification::TerminalLifecycle::TerminalLifecycle(self, &MethodName, &Parameter).await;
 			},
 
-			// Tree view refresh - extension fired its `onDidChangeTreeData`
-			// event. Relay to Sky which calls `ITreeView.refresh()` to
-			// trigger a fresh getChildren() round-trip.
 			"tree.refresh" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
@@ -646,10 +516,6 @@ impl MountainService for MountainVinegRPCService {
 				);
 			},
 
-			// EnvironmentVariableCollection mutations - applied to every
-			// PTY spawn that follows. The variant dispatch lives in the
-			// notification module since each op writes to the same global
-			// registry.
 			"terminal.envCollection.replace"
 			| "terminal.envCollection.append"
 			| "terminal.envCollection.prepend"
@@ -674,17 +540,11 @@ impl MountainService for MountainVinegRPCService {
 				.await;
 			},
 
-			// Extension called `editor.setDecorations(type, ranges)`.
-			// Batched and emitted as `sky://decoration/set-ranges` so Sky can
-			// apply the ranges to the Monaco editor for the matching URI.
 			"window.setTextEditorDecorations" => {
 				::Vine::Server::Notification::SetTextEditorDecorations::SetTextEditorDecorations(self, &Parameter)
 					.await;
 			},
 
-			// Extension called `editor.edit(cb)` - an in-place text mutation.
-			// Payload: `{ uri, edits: [{range, text}] }`.
-			// Sky applies via `ICodeEditorService` → `editor.executeEdits`.
 			"window.applyTextEdits" => {
 				::Vine::Server::Notification::ApplyTextEdits::ApplyTextEdits(self, &Parameter).await;
 			},
@@ -714,19 +574,6 @@ impl MountainService for MountainVinegRPCService {
 				::Vine::Server::Notification::UnregisterCommand::UnregisterCommand(self, &Parameter).await;
 			},
 
-			// NOTE: `outputChannel.*` arms were previously here fanning to
-			// the wrong `sky://output-channel/*` channel. Batch 9 atoms
-			// below correctly route to `sky://output/*`; the legacy arm
-			// was removed to stop it from shadowing the atoms.
-
-			// Batch 8: provider unregister atoms. Each wire method lives in
-			// its own `Notification/<Name>.rs` atom - the arm is a pure
-			// delegation so adding a variant stays a one-line change here
-			// plus one new file.
-			// Pure provider-unregistration atoms: read handle, call VineHost,
-			// log. No intermediate file needed - call Vine's support helper
-			// directly. Atoms with extra logic (scheme log, handle computation,
-			// sky relay) go through a named Vine atom.
 			"unregister_authentication_provider" => {
 				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
 					self,
@@ -785,7 +632,6 @@ impl MountainService for MountainVinegRPCService {
 				);
 			},
 
-			// scmId handle computation + UnregisterProvider + sky relay - keeps its Vine atom.
 			"unregister_scm_provider" => {
 				::Vine::Server::Notification::UnregisterScmProvider::UnregisterScmProvider(self, &Parameter).await;
 			},
@@ -808,16 +654,6 @@ impl MountainService for MountainVinegRPCService {
 				::Vine::Server::Notification::UpdateScmGroup::UpdateScmGroup(self, &Parameter).await;
 			},
 
-			// SCM register pair: explicit arms BEFORE the language-providers
-			// OR-block below. Without these, both `register_scm_provider` and
-			// `register_scm_resource_group` fell into the catch-all language-
-			// providers branch which only writes to
-			// `Extension::ProviderRegistration` - never to
-			// `ApplicationState::Feature::Markers::SourceControlManagement*`,
-			// so the SCM viewlet stayed empty even after vscode.git's
-			// `createSourceControl(...)` round-tripped successfully. The new
-			// atoms write the markers + emit the `sky://scm/*` events the
-			// renderer subscribes to.
 			"register_scm_provider" => {
 				::Vine::Server::Notification::RegisterScmProvider::RegisterScmProvider(self, &Parameter).await;
 			},
@@ -855,8 +691,6 @@ impl MountainService for MountainVinegRPCService {
 				::Vine::Server::Notification::DisposeStatusBarItem::DisposeStatusBarItem(self, &Parameter).await;
 			},
 
-			// output.* and outputChannel.* both forward to sky://output/* channels.
-			// Pure relay arms are inlined; atoms with coalescer or payload reshape keep their Vine impl.
 			"output.create" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
@@ -994,12 +828,6 @@ impl MountainService for MountainVinegRPCService {
 				::Vine::Server::Notification::SecurityIncident::SecurityIncident(self, &Parameter).await;
 			},
 
-			// Cocoon → Mountain: language-feature provider registration.
-			// All 46+ `register_*` / `register_*_provider` variants delegate
-			// to `Vine::Server::Notification::RegisterLanguageProvider` which
-			// strips the prefix/suffix, logs, then calls
-			// `VineHost::RegisterLanguageProvider` (Mountain's impl does the
-			// type-name → ProviderType enum mapping and DTO construction).
 			"register_authentication_provider"
 			| "register_call_hierarchy_provider"
 			| "register_code_actions_provider"
@@ -1060,24 +888,12 @@ impl MountainService for MountainVinegRPCService {
 			_ => {
 				dev_log!("grpc", "[MountainVinegRPCService] Cocoon notification: {}", MethodName);
 
-				// No typed match arm exists for this notification - it hits
-				// the default path and becomes a `cocoon:<method>` Tauri
-				// event that Wind may or may not listen for. The
-				// `notif-drop` tag surfaces every fall-through so we can
-				// tell at a glance which notifications Cocoon emits that
-				// Mountain has no first-class handler for. The large OR
-				// match above covers every `register_*` / `register_*_provider`
-				// variant the Cocoon vscode-API shim is known to emit;
-				// anything reaching here is either a new upstream addition or
-				// an `unregister_*` / generic notification without a typed
-				// handler. Payload preview included so diagnosis doesn't need
-				// a second run.
 				let PayloadPreview = if NotificationData.parameter.len() <= 160 {
 					String::from_utf8_lossy(&NotificationData.parameter).into_owned()
 				} else {
 					let Slice = &NotificationData.parameter[..160];
 
-					format!("{}…", String::from_utf8_lossy(Slice))
+					format!("{}...", String::from_utf8_lossy(Slice))
 				};
 
 				dev_log!(
@@ -1089,11 +905,6 @@ impl MountainService for MountainVinegRPCService {
 					MethodName
 				);
 
-				// Forward all unknown notifications as Tauri events so Wind
-				// can subscribe to any Cocoon-originated event.
-				// Sanitize: Tauri only allows [a-zA-Z0-9\-/:_] in event names.
-				// Dots → slashes (e.g. "webview.setOptions" → "webview/setOptions");
-				// any other invalid char → "-".
 				let SanitizedMethod:String = MethodName
 					.chars()
 					.map(|C| {
@@ -1121,17 +932,6 @@ impl MountainService for MountainVinegRPCService {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Handles a request from Cocoon to cancel a long-running operation.
-	///
-	/// This method is called when Cocoon wants to cancel an operation that
-	/// was previously initiated via process_cocoon_request.
-	///
-	/// # Parameters
-	/// - `request`: CancelOperationRequest with the request ID to cancel
-	///
-	/// # Returns
-	/// - `Ok(Response<Empty>)`: Cancellation was initiated
-	/// - `Err(Status)`: Critical error during cancellation
 	async fn cancel_operation(&self, request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
 		let cancel_request = request.into_inner();
 
@@ -1143,7 +943,6 @@ impl MountainService for MountainVinegRPCService {
 			RequestIdentifierToCancel
 		);
 
-		// Look up the operation in the active operations registry
 		let cancel_token = {
 			let operations = self.ActiveOperations.read().await;
 
@@ -1152,13 +951,8 @@ impl MountainService for MountainVinegRPCService {
 
 		match cancel_token {
 			Some(token) => {
-				// Trigger cancellation token to signal the operation to abort
 				token.cancel();
 
-				// Remove the operation from the active operations registry
-				// immediately after cancelling. The operation may still be
-				// running, but the cancel signal has been sent; keeping a
-				// stale entry would leak one CancellationToken per RPC.
 				self.ActiveOperations.write().await.remove(&RequestIdentifierToCancel);
 
 				dev_log!(
@@ -1171,15 +965,12 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			None => {
-				// Operation not found - it may have already completed
 				dev_log!(
 					"grpc",
-					"warn: [MountainVinegRPCService] Cannot cancel operation {}: operation not found (may have \
-					 already completed)",
+					"warn: [MountainVinegRPCService] Cannot cancel operation {}: operation not found (may have already completed)",
 					RequestIdentifierToCancel
 				);
 
-				// Return success anyway - the operation is not running
 				Ok(Response::new(Empty {}))
 			},
 		}
