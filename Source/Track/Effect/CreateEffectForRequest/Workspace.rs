@@ -20,7 +20,7 @@ use crate::{
 	dev_log,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"applyEdit" => {
 			crate::effect!(run_time, {
@@ -122,7 +122,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Res
 
 		"$updateWorkspaceFolders" => {
 			crate::effect!(run_time, {
-				let Payload = array_unwrap(Parameters);
+				let Payload = array_unwrap(&Parameters);
 
 				let Additions:Vec<(String, String)> = Payload
 					.get("additions")
@@ -195,7 +195,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Res
 		// Returns the URI on success so the caller can confirm the file was saved.
 		"Workspace.Save" => {
 			crate::effect!(run_time, {
-				let UriVal = uri_from_params(Parameters);
+				let UriVal = uri_from_params(&Parameters);
 
 				// Fire `document.willSave` to Cocoon BEFORE writing to disk.
 				// This gives `onWillSaveTextDocument` listeners a chance to
@@ -257,7 +257,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Res
 		// can drive the dialog independently.
 		"Workspace.SaveAs" => {
 			crate::effect!(run_time, {
-				let UriVal = uri_from_params(Parameters);
+				let UriVal = uri_from_params(&Parameters);
 
 				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
 					&run_time.Environment,

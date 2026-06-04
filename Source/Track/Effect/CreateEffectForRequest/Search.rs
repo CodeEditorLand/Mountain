@@ -18,7 +18,7 @@ use CommonLibrary::{
 
 use crate::Track::Effect::{CreateEffectForRequest::Utilities::Params::val_at, MappedEffectType::MappedEffect};
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"findFiles" | "findTextInFiles" => {
 			let MethodNameOwned = MethodName.to_string();
