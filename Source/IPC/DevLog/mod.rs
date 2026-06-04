@@ -53,7 +53,7 @@ macro_rules! dev_log {
 
 		if cfg!(debug_assertions) && $crate::IPC::DevLog::IsEnabled::Fn($Tag) {
 
-			let RawMessage = format!($($Arg)*);
+			let RawMessage = format!("{}", format_args!($($Arg)*));
 
 			let TagUpper = $Tag.to_uppercase();
 
