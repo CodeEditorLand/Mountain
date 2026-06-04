@@ -44,12 +44,10 @@
 //! - Minimal locking to avoid blocking
 //! - Async operations for non-blocking dispatch
 //!
-//! ## TODO
+//! ## FUTURE
 //!
-//! - [ ] Add request timeout handling
-//! - [ ] Implement request cancellation support (VS Code compatibility)
-//! - [ ] Add request metrics and telemetry
-//! - [ ] Add sidecar authentication/authorization
+//! - `SideCarIdentifier` is passed for **future multi-sidecar routing**.
+//!   Tracked via planned follow-up; see post-launch work items.
 
 use std::sync::Arc;
 
@@ -69,7 +67,7 @@ pub async fn DispatchSideCarRequest<R:Runtime>(
 
 	RunTime:Arc<ApplicationRunTime>,
 
-	SideCarIdentifier:String,
+	SideCarIdentifier:&str,
 
 	MethodName:String,
 
@@ -92,7 +90,7 @@ pub async fn DispatchSideCarRequest<R:Runtime>(
 
 		Err(Error) => {
 			dev_log!(
-				"ipc",
+				"grpc",
 				"error: [Track/SideCarRequest] Failed to create effect for sidecar method '{}': {}",
 				MethodName,
 				Error
