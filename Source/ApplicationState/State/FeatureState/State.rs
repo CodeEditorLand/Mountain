@@ -50,7 +50,10 @@ use super::{
 	Webviews::WebviewState::WebviewState,
 	WorkingCopy::WorkingCopyState::WorkingCopyState,
 };
-use std::sync::atomic::{AtomicU32, Ordering as AtomicOrdering};
+use std::sync::{
+	Arc,
+	atomic::{AtomicU32, Ordering as AtomicOrdering},
+};
 use crate::dev_log;
 
 /// Feature state combining all feature-related components.

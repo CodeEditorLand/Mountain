@@ -79,19 +79,57 @@ impl Default for Registry {
 
 impl Registry {
 	/// Gets the next available unique identifier for a provider registration.
-	pub fn GetNextProviderHandle(&self) -> u32 { self.NextProviderHandle.fetch_add(1, AtomicOrdering::Relaxed) }
+	pub fn GetNextProviderHandle(&self) -> u32 {
+		let current = self.NextProviderHandle.load(AtomicOrdering::Relaxed);
+
+		if current > std::u32::MAX / 2 {
+			dev_log!(
+				"extensions",
+				"warn: [ExtensionRegistry] GetNextProviderHandle near overflow ({}); wrap is about to degenerate IDs",
+				current
+			);
+		}
+
+		self.NextProviderHandle.fetch_add(1, AtomicOrdering::Relaxed)
+	}
+
+	/// Executes a closure with exclusive access to the command registry,
+	/// recovering from poison without silently discarding mutations.
+	pub fn WithCommands<F, T>(&self, f: F) -> T
+	where
+		F: FnOnce(&HashMap<String, CommandHandler<Wry>>) -> T,
+	{
+		let guard = self
+			.CommandRegistry
+			.lock()
+			.unwrap_or_else(|e| {
+				dev_log!(
+					"extensions",
+					"warn: [ExtensionRegistry] CommandRegistry poisoned: {}",
+					e
+				);
+				e.into_inner()
+			});
+		f(&*guard)
+	}
 
 	/// Gets all registered commands.
 	pub fn GetCommands(&self) -> HashMap<String, CommandHandler<Wry>> {
-		self.CommandRegistry.lock().ok().map(|guard| guard.clone()).unwrap_or_default()
+		self.WithCommands(|commands| commands.clone())
 	}
 
 	/// Registers a command.
 	pub fn RegisterCommand(&self, name:String, handler:CommandHandler<Wry>) {
+		let name_for_log = name.clone();
+
 		if let Ok(mut guard) = self.CommandRegistry.lock() {
 			guard.insert(name, handler);
 
-			dev_log!("extensions", "[ExtensionRegistry] Command registered");
+			dev_log!(
+				"extensions",
+				"[ExtensionRegistry] Command registered: {}",
+				name_for_log
+			);
 		}
 	}
 
@@ -108,9 +146,15 @@ impl Registry {
 	pub fn GetExtensionScanPaths(&self) -> Vec<PathBuf> {
 		self.ExtensionScanPaths
 			.lock()
-			.ok()
-			.map(|guard| guard.clone())
-			.unwrap_or_default()
+			.unwrap_or_else(|e| {
+				dev_log!(
+					"extensions",
+					"warn: [ExtensionRegistry] ExtensionScanPaths poisoned: {}",
+					e
+				);
+				e.into_inner()
+			})
+			.clone()
 	}
 
 	/// Sets the extension scan paths.
@@ -138,9 +182,15 @@ impl Registry {
 	pub fn GetEnabledProposedAPIs(&self) -> HashMap<String, Vec<String>> {
 		self.EnabledProposedAPIs
 			.lock()
-			.ok()
-			.map(|guard| guard.clone())
-			.unwrap_or_default()
+			.unwrap_or_else(|e| {
+				dev_log!(
+					"extensions",
+					"warn: [ExtensionRegistry] EnabledProposedAPIs poisoned: {}",
+					e
+				);
+				e.into_inner()
+			})
+			.clone()
 	}
 
 	/// Sets the enabled proposed APIs.
