@@ -85,7 +85,7 @@ async fn UpdateConfigurationValueAndNotify(
 	result.map(|_| json!(null)).map_err(|e| e.to_string())
 }
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"config.get" => {
 			crate::effect!(run_time, {

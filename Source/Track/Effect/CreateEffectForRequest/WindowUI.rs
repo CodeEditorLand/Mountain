@@ -18,7 +18,7 @@ use crate::{
 	dev_log,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Window.ShowMessage" => {
 			crate::effect!(run_time, {
@@ -102,7 +102,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Res
 			crate::effect!(run_time, {
 				use tauri::Emitter;
 
-				let Args = ensure_array(Parameters);
+				let Args = ensure_array(&Parameters);
 
 				let Channel = match MethodNameOwned.as_str() {
 					"Window.ShowQuickPick" => "sky://quickpick/show",

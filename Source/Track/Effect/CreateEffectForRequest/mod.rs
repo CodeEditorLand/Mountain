@@ -70,7 +70,7 @@ pub fn Fn<R:Runtime>(
 
 	MethodName:&str,
 
-	Parameters:&Value,
+	Parameters:Value,
 ) -> Result<MappedEffect, String> {
 	macro_rules! Try {
 		($Module:ident) => {

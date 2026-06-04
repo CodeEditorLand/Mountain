@@ -46,7 +46,7 @@ fn CreateProviderEffect(Parameters:&Value, ProviderKind:ProviderType) -> Option<
 	})
 }
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"register_hover_provider" => CreateProviderEffect(Parameters, ProviderType::Hover),
 

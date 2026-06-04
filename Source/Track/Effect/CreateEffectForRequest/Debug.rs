@@ -18,7 +18,7 @@ use crate::Track::Effect::{
 	MappedEffectType::MappedEffect,
 };
 
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		// Cocoon's `Debug/Namespace.ts:63` sends `debug.dap-response` as a
 		// fire-and-forget notification carrying a DAP response message
