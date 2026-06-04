@@ -175,11 +175,6 @@ impl MountainVinegRPCService {
 			return Err(Status::resource_exhausted("Request parameter size exceeds limit"));
 		}
 
-		// Check for potentially malicious method names
-		if request.method.contains("../") || request.method.contains("::") {
-			return Err(Status::permission_denied("Invalid method name format"));
-		}
-
 		Ok(())
 	}
 
@@ -1160,15 +1155,17 @@ impl MountainService for MountainVinegRPCService {
 				// Trigger cancellation token to signal the operation to abort
 				token.cancel();
 
+				// Remove the operation from the active operations registry
+				// immediately after cancelling. The operation may still be
+				// running, but the cancel signal has been sent; keeping a
+				// stale entry would leak one CancellationToken per RPC.
+				self.ActiveOperations.write().await.remove(&RequestIdentifierToCancel);
+
 				dev_log!(
 					"grpc",
 					"[MountainVinegRPCService] Successfully initiated cancellation for operation {}",
 					RequestIdentifierToCancel
 				);
-
-				// Note: We don't remove the token here - the operation itself should
-				// call UnregisterOperation when it completes. This allows the
-				// operation to detect the cancellation and clean up properly.
 
 				Ok(Response::new(Empty {}))
 			},
