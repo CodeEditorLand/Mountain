@@ -75,7 +75,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"register_on_type_formatting_provider" => CreateProviderEffect(&Parameters, ProviderType::OnTypeFormatting),
 
 		"register_signature_help_provider" => CreateProviderEffect(&Parameters, ProviderType::SignatureHelp),
+
 		"register_code_lens_provider" => CreateProviderEffect(&Parameters, ProviderType::CodeLens),
+
 		"register_folding_range_provider" => CreateProviderEffect(&Parameters, ProviderType::FoldingRange),
 
 		"register_selection_range_provider" => CreateProviderEffect(&Parameters, ProviderType::SelectionRange),
