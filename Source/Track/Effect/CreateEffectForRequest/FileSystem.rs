@@ -7,7 +7,11 @@ pub fn Matches(MethodName:&str) -> bool {
 		| "FileSystem.CreateDirectory"
 		| "FileSystem.Delete"
 		| "FileSystem.Rename"
-		| "FileSystem.Copy" => true,
+		| "FileSystem.Copy"
+		// Aliases folded from FileReadAlias to eliminate duplicate cold-path checks.
+		| "openDocument"
+		| "readFile"
+		| "stat" => true,
 
 		_ => false,
 	}

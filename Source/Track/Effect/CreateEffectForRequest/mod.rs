@@ -14,8 +14,6 @@ pub mod Diagnostics;
 
 pub mod Documents;
 
-pub mod FileReadAlias;
-
 pub mod FileSystem;
 
 pub mod FileWatcher;
@@ -75,9 +73,8 @@ pub fn Fn<R:Runtime>(
 	macro_rules! Try {
 		($Module:ident) => {
 			if $Module::Matches(MethodName) {
-				if let Some(Result) = $Module::CreateEffect::<R>(MethodName, Parameters.clone()) {
-					return Result;
-				}
+				if let Some(Result) = $Module::CreateEffect::<R>(MethodName, Parameters.clone()) { return Result; }
+				return Err(format!("{}: {} matched method but did not return a handler", MethodName, stringify!($Module)));
 			}
 		};
 	}
@@ -96,7 +93,8 @@ pub fn Fn<R:Runtime>(
 
 	Try!(Documents);
 
-	Try!(FileReadAlias);
+	// NOTE: FileReadAlias folded into FileSystem; keep this line only if the alias
+	// module is restored and updated to call into FileSystem for `openDocument`/`readFile`/`stat`.
 
 	Try!(FileWatcher);
 
