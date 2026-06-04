@@ -69,15 +69,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"register_document_formatting_provider" => CreateProviderEffect(&Parameters, ProviderType::DocumentFormatting),
 
 		"register_document_range_formatting_provider" => {
-			CreateProviderEffect(Parameters, ProviderType::DocumentRangeFormatting)
+			CreateProviderEffect(&Parameters, ProviderType::DocumentRangeFormatting)
 		},
 
 		"register_on_type_formatting_provider" => CreateProviderEffect(&Parameters, ProviderType::OnTypeFormatting),
 
 		"register_signature_help_provider" => CreateProviderEffect(&Parameters, ProviderType::SignatureHelp),
-
 		"register_code_lens_provider" => CreateProviderEffect(&Parameters, ProviderType::CodeLens),
-
 		"register_folding_range_provider" => CreateProviderEffect(&Parameters, ProviderType::FoldingRange),
 
 		"register_selection_range_provider" => CreateProviderEffect(&Parameters, ProviderType::SelectionRange),
@@ -103,7 +101,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"register_declaration_provider" => CreateProviderEffect(&Parameters, ProviderType::Declaration),
 
 		"register_evaluatable_expression_provider" => {
-			CreateProviderEffect(Parameters, ProviderType::EvaluatableExpression)
+			CreateProviderEffect(&Parameters, ProviderType::EvaluatableExpression)
 		},
 
 		"register_inline_values_provider" => CreateProviderEffect(&Parameters, ProviderType::InlineValues),
@@ -116,7 +114,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"register_inline_edit_provider" => CreateProviderEffect(&Parameters, ProviderType::InlineEdit),
 
 		"register_multi_document_highlight_provider" => {
-			CreateProviderEffect(Parameters, ProviderType::MultiDocumentHighlight)
+			CreateProviderEffect(&Parameters, ProviderType::MultiDocumentHighlight)
 		},
 
 		"register_mapped_edits_provider" => CreateProviderEffect(&Parameters, ProviderType::MappedEdits),
