@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		FileSystem.ReadFile, FileSystem.WriteFile, FileSystem.ReadDirectory, FileSystem.Stat, FileSystem.CreateDirectory, FileSystem.Delete, FileSystem.Rename, FileSystem.Copy => true,
+		_ => false,
+	}
+}
+
 //! # FileSystem Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for the `FileSystem.*` RPC family. Each handler
@@ -37,8 +44,7 @@ use crate::Track::Effect::{
 	CreateEffectForRequest::Utilities::Params::{bool_at, str_at, strip_file_uri},
 	MappedEffectType::MappedEffect,
 };
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"FileSystem.ReadFile" => {
 			crate::effect!(run_time, {

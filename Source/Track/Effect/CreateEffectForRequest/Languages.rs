@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		Languages.GetAll => true,
+		_ => false,
+	}
+}
+
 //! # Languages Effect (CreateEffectForRequest)
 //!
 //! Effect constructor for the `Languages.GetAll` RPC method. Aggregates
@@ -20,8 +27,7 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::{Track::Effect::MappedEffectType::MappedEffect, dev_log};
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Languages.GetAll" => {
 			crate::effect!(run_time, {

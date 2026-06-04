@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		 => true,
+		_ => false,
+	}
+}
+
 //! Window-namespace UI commands from Cocoon's window shim.
 //! ShowMessage is fire-and-forget (no selection reply needed).
 //! ShowQuickPick / ShowInputBox / ShowOpenDialog / ShowSaveDialog block on
@@ -17,8 +24,7 @@ use crate::{
 	},
 	dev_log,
 };
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Window.ShowMessage" => {
 			crate::effect!(run_time, {

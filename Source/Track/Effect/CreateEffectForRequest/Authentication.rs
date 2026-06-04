@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		Authentication.GetSession, Authentication.GetAccounts => true,
+		_ => false,
+	}
+}
+
 use CommonLibrary::IPC::DTO::ProxyTarget::ProxyTarget;
 use serde_json::{Value, json};
 use tauri::Runtime;
@@ -9,8 +16,7 @@ use crate::{
 	},
 	dev_log,
 };
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Authentication.GetSession" => {
 			crate::effect!(run_time, {

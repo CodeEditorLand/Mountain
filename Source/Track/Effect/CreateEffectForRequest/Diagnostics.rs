@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		Diagnostic.Set, Diagnostic.Clear => true,
+		_ => false,
+	}
+}
+
 use std::sync::Arc;
 
 use CommonLibrary::{Diagnostic::DiagnosticManager::DiagnosticManager, Environment::Requires::Requires};
@@ -8,8 +15,7 @@ use crate::Track::Effect::{
 	CreateEffectForRequest::Utilities::Params::{string_at, val_at},
 	MappedEffectType::MappedEffect,
 };
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Diagnostic.Set" => {
 			crate::effect!(run_time, {

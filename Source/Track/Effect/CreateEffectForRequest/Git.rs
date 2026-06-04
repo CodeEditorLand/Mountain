@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		$gitExec => true,
+		_ => false,
+	}
+}
+
 //! # Git Effect (CreateEffectForRequest)
 //!
 //! Effect constructor for the `$gitExec` command. Executes `git` as a
@@ -18,8 +25,7 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::{Track::Effect::MappedEffectType::MappedEffect, dev_log};
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$gitExec" => {
 			crate::effect!(_run_time, {

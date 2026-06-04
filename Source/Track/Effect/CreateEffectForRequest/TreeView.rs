@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		$tree:register, tree.register, tree.unregister, tree.dispose, tree.reveal => true,
+		_ => false,
+	}
+}
+
 //! Effect constructors for tree-view registration and disposal from the
 //! Cocoon extension host. Delegates to `TreeViewProvider` on
 //! `MountainEnvironment` and emits `SkyEvent` notifications to keep the
@@ -22,8 +29,7 @@ use crate::{
 	},
 	dev_log,
 };
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$tree:register" | "tree.register" => {
 			crate::effect!(run_time, {

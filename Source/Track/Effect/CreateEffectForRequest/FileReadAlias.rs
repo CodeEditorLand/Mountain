@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		openDocument, readFile, stat => true,
+		_ => false,
+	}
+}
+
 //! Cocoon legacy aliases: `openDocument`, `readFile`, `stat` - short-hand
 //! routes used by Cocoon's Effect-TS Workspace + FileSystem services before
 //! the canonical `FileSystem.*` naming was established. Backed by the same
@@ -13,8 +20,7 @@ use crate::Track::Effect::{
 	CreateEffectForRequest::Utilities::Params::{str_obj_or_pos, strip_file_uri},
 	MappedEffectType::MappedEffect,
 };
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"openDocument" | "readFile" | "stat" => {
 			let MethodNameOwned = MethodName.to_string();

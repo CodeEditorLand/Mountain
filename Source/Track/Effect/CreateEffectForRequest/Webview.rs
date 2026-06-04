@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		$webview:*, webview.*, $resolveCustomEditor, webview.setTitle, webview.setIconPath, webview.setHtml, webview.setOptions, webview.updateView, webview.reveal, webview.postMessage, webview.dispose => true,
+		_ => false,
+	}
+}
+
 //! # Webview Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for webview-related RPC methods from the Cocoon
@@ -37,8 +44,7 @@ use crate::{
 	},
 	dev_log,
 };
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$webview:create"
 		| "webview.create"

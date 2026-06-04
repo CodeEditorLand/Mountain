@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		applyEdit, showTextDocument, $updateWorkspaceFolders, Workspace.RequestResourceTrust, Workspace.IsResourceTrusted, window.revealRange => true,
+		_ => false,
+	}
+}
+
 //! # Workspace Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for workspace-level RPC methods. Handles:
@@ -23,8 +30,7 @@ use crate::{
 	},
 	dev_log,
 };
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"applyEdit" => {
 			crate::effect!(run_time, {

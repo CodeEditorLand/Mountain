@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		$statusBar:*, $setStatusBarMessage, $disposeStatusBarMessage => true,
+		_ => false,
+	}
+}
+
 //! # StatusBar Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for status bar RPC methods from the Cocoon extension
@@ -25,8 +32,7 @@ use crate::Track::Effect::{
 	CreateEffectForRequest::Utilities::Params::{obj_bool, obj_f64, obj_str, string_at},
 	MappedEffectType::MappedEffect,
 };
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$statusBar:set" => {
 			crate::effect!(run_time, {

@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		secrets.get, secrets.store, secrets.delete => true,
+		_ => false,
+	}
+}
+
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, Secret::SecretProvider::SecretProvider};
@@ -32,8 +39,7 @@ fn ExtractSecretKey(Parameters:&Value) -> (String, String) {
 		(Key, ExtensionId)
 	}
 }
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"secrets.get" => {
 			crate::effect!(run_time, {

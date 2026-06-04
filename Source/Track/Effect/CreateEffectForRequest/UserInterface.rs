@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		UserInterface.*, Window.* => true,
+		_ => false,
+	}
+}
+
 //! # UserInterface Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for user-interface dialog methods. Delegates to the
@@ -31,8 +38,7 @@ use crate::{
 	},
 	dev_log,
 };
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"UserInterface.ShowMessage" => {
 			crate::effect!(run_time, {

@@ -110,23 +110,29 @@ pub fn Fn<R:Runtime>(
 ) -> Result<MappedEffect, String> {
 	macro_rules! Try {
 		($Module:ident) => {
-			if let Some(Result) = $Module::CreateEffect::<R>(MethodName, Parameters.clone()) {
-				return Result;
+			if $Module::Matches(MethodName) {
+				if let Some(Result) = $Module::CreateEffect::<R>(MethodName, Parameters) {
+					return Result;
+				}
 			}
 		};
 	}
 
-	Try!(Commands);
+	Try!(FileSystem);
 
 	Try!(Configuration);
+
+	Try!(TreeView);
+
+	Try!(Commands);
+
+	Try!(Terminal);
 
 	Try!(Diagnostics);
 
 	Try!(Documents);
 
 	Try!(FileReadAlias);
-
-	Try!(FileSystem);
 
 	Try!(FileWatcher);
 
@@ -141,10 +147,6 @@ pub fn Fn<R:Runtime>(
 	Try!(Storage);
 
 	Try!(StatusBar);
-
-	Try!(Terminal);
-
-	Try!(TreeView);
 
 	Try!(UserInterface);
 

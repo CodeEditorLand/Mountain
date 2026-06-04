@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		debug.dap-response, Debug.Start, Debug.RegisterConfigurationProvider, Debug.Stop => true,
+		_ => false,
+	}
+}
+
 use std::sync::Arc;
 
 use CommonLibrary::{Debug::DebugService::DebugService, Environment::Requires::Requires};
@@ -9,8 +16,7 @@ use crate::Track::Effect::{
 	CreateEffectForRequest::Utilities::Params::{i64_at_or, str_at, string_at, string_at_or},
 	MappedEffectType::MappedEffect,
 };
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		// Cocoon's `Debug/Namespace.ts:63` sends `debug.dap-response` as a
 		// fire-and-forget notification carrying a DAP response message

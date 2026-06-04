@@ -1,3 +1,10 @@
+pub fn Matches(MethodName:&str) -> bool {
+	match MethodName {
+		$terminal:create, $terminal:sendText, $terminal:dispose, Terminal.Resize, $terminal:resize, Terminal.GetProcessId, $terminal:show, Terminal.Show, $terminal:hide, Terminal.Hide => true,
+		_ => false,
+	}
+}
+
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
@@ -11,8 +18,7 @@ use crate::{
 	},
 	dev_log,
 };
-
-pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$terminal:create" => {
 			crate::effect!(run_time, {
