@@ -48,6 +48,7 @@ use crate::dev_log;
 ///   `{AppData}/User/workspaceStorage/{sanitized-id}/storage.json`
 /// - Sanitizes workspace identifier (alphanumeric, hyphens, underscores only)
 pub fn Fn(ApplicationDataDirectory:&Path, IsGlobalScope:bool, WorkspaceIdentifier:&str) -> std::path::PathBuf {
+
 	let user_storage_base_path = ApplicationDataDirectory.join("User");
 
 	if IsGlobalScope {
@@ -55,7 +56,9 @@ pub fn Fn(ApplicationDataDirectory:&Path, IsGlobalScope:bool, WorkspaceIdentifie
 
 		dev_log!(
 			"storage",
+
 			"[ResolveMementoStorageFilePath] Resolved global memento path: {}",
+
 			path.display()
 		);
 
@@ -71,7 +74,9 @@ pub fn Fn(ApplicationDataDirectory:&Path, IsGlobalScope:bool, WorkspaceIdentifie
 
 		dev_log!(
 			"storage",
+
 			"[ResolveMementoStorageFilePath] Resolved workspace memento path: {}",
+
 			path.display()
 		);
 

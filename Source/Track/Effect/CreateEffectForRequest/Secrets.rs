@@ -1,6 +1,7 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"secrets.get" | "secrets.store" | "secrets.delete" => true,
+
 		_ => false,
 	}
 }
@@ -39,6 +40,7 @@ fn ExtractSecretKey(Parameters:&Value) -> (String, String) {
 		(Key, ExtensionId)
 	}
 }
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"secrets.get" => {

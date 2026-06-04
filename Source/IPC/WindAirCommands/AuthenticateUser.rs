@@ -15,10 +15,14 @@ pub async fn AuthenticateUser(
 
 	provider:String,
 ) -> Result<AuthResponseDTO::Struct, String> {
+
 	dev_log!(
 		"grpc",
+
 		"[WindAirCommands] AuthenticateUser called: {} via {}",
+
 		username,
+
 		provider
 	);
 

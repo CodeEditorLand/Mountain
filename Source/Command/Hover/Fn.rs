@@ -21,7 +21,9 @@
 //! - Returns standardized response
 
 use serde_json::Value;
+
 use tauri::{AppHandle, Wry};
+
 use url::Url;
 
 use crate::{
@@ -35,6 +37,7 @@ use crate::{
 
 /// Validates a hover request
 fn ValidateRequest(uri:&str, position:&Value) -> Result<HoverRequest, String> {
+
 	// Parse URI
 	let document_uri = Url::parse(uri).map_err(|e| format!("Invalid URI: {}", e))?;
 
@@ -60,6 +63,7 @@ fn ValidateRequest(uri:&str, position:&Value) -> Result<HoverRequest, String> {
 ///
 /// Returns a `HoverResponse` containing the hover contents, or an error string.
 pub async fn Hover(application_handle:AppHandle<Wry>, uri:String, position:Value) -> Result<HoverResponse, String> {
+
 	dev_log!("commands", "[Hover] Providing hover for: {} at {:?}", uri, position);
 
 	// Validate request
@@ -83,6 +87,7 @@ pub async fn Hover(application_handle:AppHandle<Wry>, uri:String, position:Value
 /// This would typically invoke the language feature provider registry
 /// to find an appropriate provider for the document.
 async fn ProvideHover(_uri:Url, _position:Position) -> Result<HoverResponse, String> {
+
 	// DEPENDENCY: Provider invocation requires:
 	// 1. Provider registry lookup in ApplicationState by document URI
 	// 2. RPC call to language server via CocoonService

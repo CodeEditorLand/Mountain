@@ -6,5 +6,6 @@
 use crate::Vine::Client::NotificationFrame;
 
 pub fn Fn() -> tokio::sync::broadcast::Receiver<NotificationFrame::Struct> {
+
 	::Vine::Client::SubscribeNotifications::Fn()
 }

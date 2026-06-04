@@ -9,6 +9,7 @@ use crate::{
 
 #[tauri::command]
 pub async fn GetAirMetrics(metric_type:Option<String>) -> Result<AirMetricsDTO::Struct, String> {
+
 	dev_log!("grpc", "[WindAirCommands] GetAirMetrics called with type: {:?}", metric_type);
 
 	let air_address = GetAirAddress::Fn()?;

@@ -10,7 +10,9 @@
 use std::path::Path;
 
 use CommonLibrary::Error::CommonError::CommonError;
+
 use url::Url;
+
 use ::Cache::PathCanon::Canonicalize;
 
 use crate::{
@@ -19,6 +21,7 @@ use crate::{
 };
 
 pub fn Fn(WorkspaceFilePath:&Path, FileContent:&str) -> Result<Vec<WorkspaceFolderStateDTO>, CommonError> {
+
 	let Parsed:WorkspaceFile::Struct = serde_json::from_str(FileContent)
 		.map_err(|Error| CommonError::SerializationError { Description:Error.to_string() })?;
 

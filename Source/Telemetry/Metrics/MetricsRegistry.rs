@@ -10,12 +10,14 @@ use crate::Telemetry::Metrics::{Metric, MetricValue};
 
 #[derive(Debug)]
 pub struct Struct {
+
 	Metrics:Arc<RwLock<Vec<Metric::Struct>>>,
 
 	MaxEntries:usize,
 }
 
 impl Struct {
+
 	pub fn new(MaxEntries:usize) -> Self {
 		Self { Metrics:Arc::new(RwLock::new(Vec::with_capacity(MaxEntries))), MaxEntries }
 	}

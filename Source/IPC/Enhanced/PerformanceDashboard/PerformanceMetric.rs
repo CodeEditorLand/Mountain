@@ -9,6 +9,7 @@ use crate::IPC::Enhanced::PerformanceDashboard::MetricType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
+
 	pub metric_type:MetricType::Enum,
 
 	pub value:f64,

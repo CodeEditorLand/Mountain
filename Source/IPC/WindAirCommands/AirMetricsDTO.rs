@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
+
 	pub memory_usage_mb:f64,
 
 	pub cpu_usage_percent:f64,

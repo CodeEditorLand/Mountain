@@ -1,6 +1,9 @@
 pub fn Matches(MethodName:&str) -> bool {
-	MethodName.starts_with("$statusBar:") || MethodName == "$setStatusBarMessage" || MethodName == "$disposeStatusBarMessage"
+	MethodName.starts_with("$statusBar:")
+		|| MethodName == "$setStatusBarMessage"
+		|| MethodName == "$disposeStatusBarMessage"
 }
+
 use std::sync::Arc;
 
 use CommonLibrary::{
@@ -14,6 +17,7 @@ use crate::Track::Effect::{
 	CreateEffectForRequest::Utilities::Params::{obj_bool, obj_f64, obj_str, string_at},
 	MappedEffectType::MappedEffect,
 };
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$statusBar:set" => {
@@ -22,6 +26,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Res
 
 				// The extension host serialises this as an object with named fields,
 				// matching the shape used by the RPC layer (EntryIdentifier = id).
+				let Parameters = Parameters.clone();
+
 				let entry_id = Parameters
 					.get("id")
 					.and_then(Value::as_str)

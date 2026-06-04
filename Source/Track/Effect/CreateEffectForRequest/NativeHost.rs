@@ -1,6 +1,7 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"NativeHost.OpenExternal" => true,
+
 		_ => false,
 	}
 }
@@ -12,6 +13,7 @@ use crate::{
 	Track::Effect::{CreateEffectForRequest::Utilities::Params::string_at, MappedEffectType::MappedEffect},
 	dev_log,
 };
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"NativeHost.OpenExternal" => {

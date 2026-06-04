@@ -4,6 +4,7 @@
 use ::AirLibrary::Client::AirClient::AirClient;
 
 pub(super) async fn Fn(address:String) -> Result<AirClient, String> {
+
 	AirClient::new(&address)
 		.await
 		.map_err(|e| format!("Failed to create Air client: {:?}", e))

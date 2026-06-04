@@ -146,7 +146,9 @@ impl ApplicationState {
 		};
 
 		let mut Hasher = DefaultHasher::new();
+
 		key.hash(&mut Hasher);
+
 		Ok(format!("{:016x}", Hasher.finish()))
 	}
 }

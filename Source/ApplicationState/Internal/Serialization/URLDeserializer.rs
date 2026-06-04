@@ -26,6 +26,7 @@
 //! - [ ] Add performance metrics
 
 use serde::{Deserializer, de::Deserialize};
+
 use url::Url;
 
 use crate::dev_log;
@@ -45,6 +46,7 @@ use crate::dev_log;
 pub fn Fn<'de, D>(DeserializerInstance:D) -> Result<Url, D::Error>
 where
 	D: Deserializer<'de>, {
+
 	let string_value = String::deserialize(DeserializerInstance)?;
 
 	dev_log!("ipc", "[URLDeserializer] Deserializing URL: {}", string_value);

@@ -1,6 +1,7 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"applyEdit" | "showTextDocument" | "$updateWorkspaceFolders" => true,
+
 		_ => false,
 	}
 }
@@ -18,6 +19,7 @@ use crate::{
 	},
 	dev_log,
 };
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"applyEdit" => {
@@ -48,6 +50,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Res
 		},
 
 		"showTextDocument" => {
+			// Pre-clone the payload so it can be moved into the async closure.
+			let ShowDocumentPayload = if Parameters.is_array() {
+				Parameters.get(0).cloned().unwrap_or_default()
+			} else {
+				Parameters.clone()
+			};
+
 			crate::effect!(run_time, {
 				// Atom T1: same round-trip as applyEdit. The canonical vscode
 				// return shape is a `TextEditor` - today Sky resolves with a
@@ -57,7 +66,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Res
 				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
 					&run_time.Environment,
 					"sky://window/showTextDocument",
-					Parameters,
+					ShowDocumentPayload,
 				)
 				.await
 				{

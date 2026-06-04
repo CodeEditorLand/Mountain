@@ -1,6 +1,7 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"FileWatcher.Watch" | "FileWatcher.Unwatch" | "FileWatcher.WatchStatus" => true,
+
 		_ => false,
 	}
 }
@@ -15,6 +16,7 @@ use crate::Track::Effect::{
 	CreateEffectForRequest::Utilities::Params::{bool_at_true, string_at},
 	MappedEffectType::MappedEffect,
 };
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"FileWatcher.Register" => {

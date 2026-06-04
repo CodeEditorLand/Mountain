@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
+
 	pub user_id:String,
 
 	pub roles:Vec<String>,
@@ -19,6 +20,7 @@ pub struct Struct {
 }
 
 impl Struct {
+
 	pub fn new(user_id:String, roles:Vec<String>, permissions:Vec<String>, ip_address:String) -> Self {
 		Self { user_id, roles, permissions, ip_address, timestamp:std::time::SystemTime::now() }
 	}

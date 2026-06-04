@@ -3,6 +3,7 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
+
 use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
 	ConfigurationTarget as ConfigurationTargetModule,
@@ -18,6 +19,7 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Handler for configuration get requests
 pub async fn ConfigurationGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let key = Arguments
 		.get(0)
 		.ok_or("Missing configuration key".to_string())?
@@ -38,6 +40,7 @@ pub async fn ConfigurationGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Val
 
 /// Handler for configuration update requests
 pub async fn ConfigurationUpdate(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let key = Arguments
 		.get(0)
 		.ok_or("Missing configuration key".to_string())?
@@ -51,9 +54,13 @@ pub async fn ConfigurationUpdate(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<
 	provider
 		.UpdateConfigurationValue(
 			key.to_string(),
+
 			value,
+
 			ConfigurationTarget::User,
+
 			ConfigurationOverridesDTO::default(),
+
 			None,
 		)
 		.await
@@ -66,6 +73,7 @@ pub async fn ConfigurationUpdate(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<
 
 /// Handler for workbench configuration requests
 pub async fn WorkbenchConfiguration(RunTime:Arc<ApplicationRunTime>, _Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let provider:Arc<dyn ConfigurationProvider> = RunTime.Environment.Require();
 
 	let config = provider
@@ -80,6 +88,7 @@ pub async fn WorkbenchConfiguration(RunTime:Arc<ApplicationRunTime>, _Arguments:
 
 /// Handler for environment get requests
 pub async fn EnvironmentGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let key = Arguments
 		.get(0)
 		.ok_or("Missing environment key".to_string())?

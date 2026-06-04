@@ -5,6 +5,7 @@
 use crate::Telemetry::Gates::GetRuntimeGates;
 
 pub fn Fn(FeatureName:&str, RequiredGates:&[&str]) -> Result<(), String> {
+
 	let Enabled = GetRuntimeGates::Fn();
 
 	let Missing:Vec<_> = RequiredGates.iter().filter(|Gate| !Enabled.contains(**Gate)).collect();

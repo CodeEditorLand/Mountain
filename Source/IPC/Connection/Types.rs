@@ -40,6 +40,7 @@ use serde::{Deserialize, Serialize};
 /// the system to track and report connection health.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ConnectionStatus {
+
 	/// Connection is active and healthy
 	Connected,
 
@@ -54,6 +55,7 @@ pub enum ConnectionStatus {
 }
 
 impl ConnectionStatus {
+
 	/// Check if connection is active
 	pub fn is_connected(&self) -> bool { matches!(self, ConnectionStatus::Connected) }
 
@@ -88,6 +90,7 @@ impl ConnectionStatus {
 }
 
 impl From<bool> for ConnectionStatus {
+
 	fn from(connected:bool) -> Self {
 		if connected {
 			ConnectionStatus::Connected
@@ -130,6 +133,7 @@ impl From<bool> for ConnectionStatus {
 /// ```
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ConnectionHandle {
+
 	/// Unique connection identifier (UUID)
 	pub id:String,
 
@@ -147,6 +151,7 @@ pub struct ConnectionHandle {
 }
 
 impl ConnectionHandle {
+
 	/// Create a new connection handle with health monitoring
 	pub fn new() -> Self {
 		let now = std::time::SystemTime::now();
@@ -239,17 +244,20 @@ impl ConnectionHandle {
 
 /// Helper trait to get duration since UNIX epoch for SystemTime
 trait SystemTimeExt {
+
 	/// Get the duration since UNIX epoch in seconds
 	fn duration_since_epoch_secs(&self) -> Result<u64, std::time::SystemTimeError>;
 }
 
 impl SystemTimeExt for std::time::SystemTime {
+
 	fn duration_since_epoch_secs(&self) -> Result<u64, std::time::SystemTimeError> {
 		self.duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs())
 	}
 }
 
 impl std::fmt::Debug for ConnectionHandle {
+
 	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let created_age = self
 			.created_at
@@ -290,6 +298,7 @@ impl std::fmt::Debug for ConnectionHandle {
 /// ```
 #[derive(Debug, Clone, Default)]
 pub struct ConnectionStats {
+
 	/// Total number of active connections
 	pub total_connections:usize,
 
@@ -307,6 +316,7 @@ pub struct ConnectionStats {
 }
 
 impl ConnectionStats {
+
 	/// Calculate connection pool utilization percentage
 	///
 	/// ## Returns
@@ -348,10 +358,15 @@ impl ConnectionStats {
 	pub fn summary(&self) -> String {
 		format!(
 			"Connections: {}/{} ({}%), Healthy: {}%, Utilization: {}%",
+
 			self.total_connections,
+
 			self.max_connections,
+
 			self.health_percentage(),
+
 			self.health_percentage(),
+
 			self.utilization()
 		)
 	}

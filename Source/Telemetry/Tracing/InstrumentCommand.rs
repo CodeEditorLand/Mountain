@@ -11,6 +11,7 @@ use crate::dev_log;
 pub async fn Fn<F, T>(CommandName:&str, Operation:F) -> Result<T, CommonError>
 where
 	F: std::future::Future<Output = Result<T, CommonError>>, {
+
 	let Span = tracing::span!(
 		tracing::Level::INFO,
 
@@ -29,8 +30,11 @@ where
 		Ok(Result) => {
 			dev_log!(
 				"lifecycle",
+
 				"Command executed successfully: {} (duration: {:?})",
+
 				CommandName,
+
 				Start.elapsed()
 			);
 
@@ -40,9 +44,13 @@ where
 		Err(Err) => {
 			dev_log!(
 				"lifecycle",
+
 				"error: Command execution failed: {} (duration: {:?}, error: {})",
+
 				CommandName,
+
 				Start.elapsed(),
+
 				Err
 			);
 
@@ -55,5 +63,6 @@ where
 pub async fn Fn<F, T>(_CommandName:&str, Operation:F) -> Result<T, CommonError>
 where
 	F: std::future::Future<Output = Result<T, CommonError>>, {
+
 	Operation.await
 }

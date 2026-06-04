@@ -1,6 +1,7 @@
 pub fn Matches(MethodName:&str) -> bool {
 	MethodName.starts_with("UserInterface.") || MethodName.starts_with("Window.")
 }
+
 use std::sync::Arc;
 
 use CommonLibrary::{
@@ -18,10 +19,13 @@ use crate::{
 	},
 	dev_log,
 };
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"UserInterface.ShowMessage" => {
 			crate::effect!(run_time, {
+				let Parameters = Parameters.clone();
+
 				let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
 
 				let severity_str = string_at_or(&Parameters, 0, "info");

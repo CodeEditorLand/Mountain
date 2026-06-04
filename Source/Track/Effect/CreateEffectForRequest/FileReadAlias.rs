@@ -1,6 +1,7 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"openDocument" | "readFile" | "stat" => true,
+
 		_ => false,
 	}
 }
@@ -15,6 +16,7 @@ use crate::Track::Effect::{
 	CreateEffectForRequest::Utilities::Params::{str_obj_or_pos, strip_file_uri},
 	MappedEffectType::MappedEffect,
 };
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"openDocument" | "readFile" | "stat" => {

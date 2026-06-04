@@ -27,6 +27,7 @@ use crate::{
 };
 
 pub struct Struct {
+
 	pub config:PoolConfig,
 
 	pub connections:Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
@@ -43,6 +44,7 @@ pub struct Struct {
 }
 
 impl Struct {
+
 	pub fn new(config:PoolConfig) -> Self {
 		let max_connections = config.max_connections;
 
@@ -138,6 +140,7 @@ impl Struct {
 
 		let _permit = timeout(
 			Duration::from_millis(self.config.connection_timeout_ms),
+
 			self.semaphore.acquire(),
 		)
 		.await
@@ -150,6 +153,7 @@ impl Struct {
 			let mut stats = self.stats.write().await;
 
 			stats.average_wait_time_ms = (stats.average_wait_time_ms * stats.total_operations as f64 + wait_time)
+
 				/ (stats.total_operations as f64 + 1.0);
 		}
 
@@ -370,6 +374,7 @@ impl Struct {
 }
 
 impl Clone for Struct {
+
 	fn clone(&self) -> Self {
 		Self {
 			config:self.config.clone(),

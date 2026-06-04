@@ -94,6 +94,7 @@ use serde::{Deserialize, Serialize};
 /// - Compact structure minimizes serialization overhead
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TauriIPCMessage {
+
 	/// Channel name for message routing (e.g., "configuration", "file-system")
 	pub channel:String,
 
@@ -108,6 +109,7 @@ pub struct TauriIPCMessage {
 }
 
 impl TauriIPCMessage {
+
 	/// Create a new TauriIPCMessage with current timestamp
 	///
 	/// # Arguments
@@ -147,6 +149,7 @@ impl TauriIPCMessage {
 			.channel
 			.chars()
 			.all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == ':')
+
 		{
 			return Err("Channel contains invalid characters".to_string());
 		}
@@ -182,11 +185,13 @@ impl TauriIPCMessage {
 /// Simple boolean indicator of IPC connection health between Mountain and Wind.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionStatus {
+
 	/// True if IPC connection is active, false otherwise
 	pub connected:bool,
 }
 
 impl ConnectionStatus {
+
 	/// Create a new connection status
 	///
 	/// # Arguments

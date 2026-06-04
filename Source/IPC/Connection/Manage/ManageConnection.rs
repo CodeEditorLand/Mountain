@@ -29,10 +29,12 @@ use std::{
 };
 
 use tauri::{AppHandle, Emitter};
+
 use serde::Serialize;
 
 /// Connection state tracker for IPC server
 pub struct ConnectionState {
+
 	/// Current connection status (thread-safe atomic)
 	pub Connected:AtomicBool,
 
@@ -52,6 +54,7 @@ pub struct ConnectionState {
 /// Connection status event published to frontend
 #[derive(Debug, Clone, Serialize)]
 pub struct ConnectionStatusEvent {
+
 	pub connection_id:String,
 
 	pub connected:bool,
@@ -60,6 +63,7 @@ pub struct ConnectionStatusEvent {
 }
 
 impl ConnectionState {
+
 	/// Create a new connection state tracker
 	///
 	/// ## Parameters
@@ -216,6 +220,7 @@ impl ConnectionState {
 
 		format!(
 			"Connection[id: {}, connected: {}, timed_out: {}, last_activity: {}, timeout: {}s]",
+
 			self.ConnectionId, connected, timed_out, last_activity, self.TimeoutSeconds
 		)
 	}

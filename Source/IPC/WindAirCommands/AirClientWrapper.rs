@@ -6,10 +6,12 @@ use crate::dev_log;
 
 #[derive(Debug, Clone)]
 pub struct Struct {
+
 	pub(super) client:AirClient,
 }
 
 impl Struct {
+
 	pub async fn new(address:String) -> Result<Self, String> {
 		dev_log!("grpc", "[WindAirCommands] Connecting to Air daemon at: {}", address);
 

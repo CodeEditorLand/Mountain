@@ -114,6 +114,7 @@ const LOG_TIMEOUT_MS:u64 = 5000;
 /// Security event type categorization for audit trail classification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SecurityEventType {
+
 	/// Access was granted to a resource or operation
 	AccessGranted,
 
@@ -143,6 +144,7 @@ pub enum SecurityEventType {
 }
 
 impl SecurityEventType {
+
 	/// Get display name for event type
 	pub fn DisplayName(&self) -> String {
 		match self {

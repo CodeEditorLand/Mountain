@@ -2,6 +2,7 @@
 
 #[derive(Debug, Clone)]
 pub struct Struct {
+
 	pub path:String,
 
 	pub size:u64,

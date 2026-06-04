@@ -17,10 +17,13 @@ use crate::{
 	},
 	dev_log,
 };
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Window.ShowMessage" => {
 			crate::effect!(run_time, {
+				let Parameters = Parameters.clone();
+
 				use std::sync::atomic::{AtomicU64, Ordering as AO};
 
 				use tauri::Emitter;

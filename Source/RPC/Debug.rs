@@ -7,10 +7,12 @@ pub struct Struct;
 
 #[cfg(feature = "debug-protocol")]
 impl Struct {
+
 	pub fn new() -> Self { Struct }
 }
 
 #[cfg(feature = "debug-protocol")]
 impl Default for Struct {
+
 	fn default() -> Self { Self::new() }
 }

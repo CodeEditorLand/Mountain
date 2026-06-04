@@ -54,6 +54,7 @@ use serde::{Deserialize, Serialize};
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Permission {
+
 	/// Unique permission identifier (e.g., "file.read", "config.update")
 	pub name:String,
 
@@ -65,6 +66,7 @@ pub struct Permission {
 }
 
 impl Permission {
+
 	/// Create a new permission
 	pub fn new(name:String, description:String, category:String) -> Self { Self { name, description, category } }
 

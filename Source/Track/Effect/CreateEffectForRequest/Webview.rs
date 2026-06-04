@@ -1,6 +1,7 @@
 pub fn Matches(MethodName:&str) -> bool {
 	MethodName == "$resolveCustomEditor" || MethodName.starts_with("$webview:") || MethodName.starts_with("webview.")
 }
+
 use std::sync::Arc;
 
 use CommonLibrary::{CustomEditor::CustomEditorProvider::CustomEditorProvider, Environment::Requires::Requires};
@@ -17,6 +18,7 @@ use crate::{
 	},
 	dev_log,
 };
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$webview:create"
@@ -35,6 +37,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Res
 			let Method = MethodName.to_string();
 
 			crate::effect!(run_time, {
+				let Parameters = Parameters.clone();
+
 				let Method = Method.clone();
 
 				let RawSuffix = Method.trim_start_matches("$webview:").trim_start_matches("webview.");

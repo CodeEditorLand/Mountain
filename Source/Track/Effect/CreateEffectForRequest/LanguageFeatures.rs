@@ -1,6 +1,4 @@
-pub fn Matches(MethodName:&str) -> bool {
-	MethodName.starts_with("register_") && MethodName.ends_with("_provider")
-}
+pub fn Matches(MethodName:&str) -> bool { MethodName.starts_with("register_") && MethodName.ends_with("_provider") }
 
 use std::sync::Arc;
 
@@ -20,16 +18,25 @@ use crate::Track::Effect::{
 };
 
 fn CreateProviderEffect(Parameters:&Value, ProviderKind:ProviderType) -> Option<Result<MappedEffect, String>> {
-	let id = obj_str(Parameters, "handle").to_string();
+	// Defer registration into the async effect so we clone once here.
+	let id_need = Parameters.get("handle").and_then(Value::as_str).unwrap_or("").to_string();
 
-	let selector = obj_val(Parameters, "language_selector");
+	let selector_need = Parameters.get("language_selector").cloned().unwrap_or(Value::Null);
 
-	let extension_id = obj_val(Parameters, "extension_id");
+	let extension_id_need = Parameters.get("extension_id").cloned().unwrap_or(Value::Null);
 
-	let options = Parameters.get("options").cloned();
+	let options_need = Parameters.get("options").cloned();
 
 	crate::effect!(run_time, {
 		let provider:Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
+
+		let id = id_need;
+
+		let selector = selector_need;
+
+		let extension_id = extension_id_need;
+
+		let options = options_need;
 
 		provider
 			.RegisterProvider(id, ProviderKind, selector, extension_id, options)
@@ -38,6 +45,7 @@ fn CreateProviderEffect(Parameters:&Value, ProviderKind:ProviderType) -> Option<
 			.map_err(|e| e.to_string())
 	})
 }
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"register_hover_provider" => CreateProviderEffect(Parameters, ProviderType::Hover),

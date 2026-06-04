@@ -1,6 +1,7 @@
 pub fn Matches(MethodName:&str) -> bool {
 	MethodName == "vscode.diff" || MethodName == "$scm:openDiff" || MethodName.starts_with("$scm:")
 }
+
 use std::sync::Arc;
 
 use CommonLibrary::{
@@ -17,6 +18,7 @@ use crate::{
 	},
 	dev_log,
 };
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	dev_log!("scm", "[SCM] CreateEffect method={}", MethodName);
 

@@ -39,6 +39,7 @@ const CLEANUP_INTERVAL_SECONDS:u64 = 300;
 /// Connection handle representing an active connection
 #[derive(Debug, Clone)]
 pub struct ConnectionHandle {
+
 	/// Unique connection identifier
 	pub ConnectionId:String,
 
@@ -61,6 +62,7 @@ pub struct ConnectionHandle {
 /// Health status of a connection
 #[derive(Debug, Clone, PartialEq)]
 pub enum ConnectionHealth {
+
 	Healthy,
 
 	Degraded,
@@ -71,6 +73,7 @@ pub enum ConnectionHealth {
 /// Statistics about the connection pool
 #[derive(Debug, Clone)]
 pub struct PoolStatistics {
+
 	pub total_connections:usize,
 
 	pub active_connections:usize,
@@ -86,6 +89,7 @@ pub struct PoolStatistics {
 
 /// Connection pool for managing reusable connections
 pub struct ConnectionPool {
+
 	/// Maximum number of connections allowed
 	pub MaxConnection:usize,
 
@@ -106,6 +110,7 @@ pub struct ConnectionPool {
 }
 
 impl ConnectionPool {
+
 	/// Create a new connection pool
 	///
 	/// ## Parameters
@@ -172,6 +177,7 @@ impl ConnectionPool {
 		if ActiveCount + IdleCount >= self.MaxConnection {
 			return Err(format!(
 				"Connection pool exhausted: Active: {}, Idle: {}, Max: {}",
+
 				ActiveCount, IdleCount, self.MaxConnection
 			));
 		}
@@ -184,6 +190,7 @@ impl ConnectionPool {
 				.iter()
 				.find(|(_, h)| h.Channel == Channel && h.Health == ConnectionHealth::Healthy)
 				.map(|(k, v)| (k.clone(), v.clone()))
+
 			{
 				IdleConnection.remove(&Key);
 

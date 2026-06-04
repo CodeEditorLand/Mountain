@@ -9,8 +9,11 @@ use CommonLibrary::{
 	FileSystem::WriteFileBytes::WriteFileBytes,
 	IPC::IPCProvider::IPCProvider,
 };
+
 use serde_json::{Value, json};
+
 use tauri::Manager;
+
 use url::Url;
 
 use crate::{
@@ -28,6 +31,7 @@ pub(super) async fn get_matching_provider(
 
 	feature_type:ProviderType,
 ) -> Result<Option<ProviderRegistrationDTO>, CommonError> {
+
 	let providers = environment
 		.ApplicationState
 		.Extension
@@ -55,8 +59,11 @@ pub(super) async fn get_matching_provider(
 							if lang == doc.LanguageIdentifier {
 								dev_log!(
 									"extensions",
+
 									"Found provider with handle {} for document {}",
+
 									provider.Handle,
+
 									document_uri
 								);
 
@@ -71,8 +78,11 @@ pub(super) async fn get_matching_provider(
 
 	dev_log!(
 		"extensions",
+
 		"warn: No provider found for {:?} on document {}",
+
 		feature_type,
+
 		document_uri
 	);
 
@@ -90,6 +100,7 @@ pub(super) async fn invoke_provider<TResponse:serde::de::DeserializeOwned>(
 
 	mut provider_arguments:Value,
 ) -> Result<Option<TResponse>, CommonError> {
+
 	if let Some(provider) = get_matching_provider(environment, document_uri, provider_type).await? {
 		let rpc_method = format!("$provide{}", provider.ProviderType.to_string());
 

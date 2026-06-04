@@ -1,6 +1,7 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"Storage.Get" | "Storage.Set" => true,
+
 		_ => false,
 	}
 }
@@ -12,6 +13,7 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 
 use crate::Track::Effect::{CreateEffectForRequest::Utilities::Params::string_at, MappedEffectType::MappedEffect};
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Storage.Get" => {

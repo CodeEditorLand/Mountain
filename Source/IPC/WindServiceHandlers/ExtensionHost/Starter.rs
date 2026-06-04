@@ -6,12 +6,14 @@
 use serde_json::{Value, json};
 
 pub async fn ExtensionHostStarterCreate(_Arguments:Vec<Value>) -> Result<Value, String> {
+
 	crate::dev_log!("exthost", "extensionHostStarter:createExtensionHost");
 
 	Ok(json!({ "id": "1" }))
 }
 
 pub async fn ExtensionHostStarterStart(_Arguments:Vec<Value>) -> Result<Value, String> {
+
 	// The renderer uses this PID to correlate extension-host debug adapters
 	// with the actual Node.js process. That process is Cocoon, not Mountain -
 	// returning `std::process::id()` here would point the debugger at
@@ -25,18 +27,21 @@ pub async fn ExtensionHostStarterStart(_Arguments:Vec<Value>) -> Result<Value, S
 }
 
 pub async fn ExtensionHostStarterKill(_Arguments:Vec<Value>) -> Result<Value, String> {
+
 	crate::dev_log!("exthost", "extensionHostStarter:kill");
 
 	Ok(Value::Null)
 }
 
 pub async fn ExtensionHostStarterGetExitInfo(_Arguments:Vec<Value>) -> Result<Value, String> {
+
 	crate::dev_log!("exthost", "extensionHostStarter:getExitInfo");
 
 	Ok(json!({ "code": null, "signal": null }))
 }
 
 pub async fn ExtensionHostStarterWaitForExit(_Arguments:Vec<Value>) -> Result<Value, String> {
+
 	// Resolves when the extension host exits. Cocoon runs indefinitely while
 	// Mountain is alive; return a stub exit-info shape so callers don't hang.
 	crate::dev_log!("exthost", "extensionHostStarter:waitForExit");

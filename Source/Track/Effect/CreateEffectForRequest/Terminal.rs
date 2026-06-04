@@ -1,6 +1,5 @@
-pub fn Matches(MethodName:&str) -> bool {
-	MethodName.starts_with("$terminal:") || MethodName.starts_with("Terminal.")
-}
+pub fn Matches(MethodName:&str) -> bool { MethodName.starts_with("$terminal:") || MethodName.starts_with("Terminal.") }
+
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
@@ -14,6 +13,7 @@ use crate::{
 	},
 	dev_log,
 };
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$terminal:create" => {

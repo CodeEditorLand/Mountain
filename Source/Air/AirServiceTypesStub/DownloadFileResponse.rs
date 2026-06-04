@@ -2,6 +2,7 @@
 
 #[derive(Debug, Clone)]
 pub struct Struct {
+
 	pub success:bool,
 
 	pub file_path:String,

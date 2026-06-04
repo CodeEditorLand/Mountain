@@ -13,10 +13,14 @@ pub async fn CheckForUpdates(
 
 	channel:Option<String>,
 ) -> Result<UpdateInfoDTO::Struct, String> {
+
 	dev_log!(
 		"grpc",
+
 		"[WindAirCommands] CheckForUpdates called with version: {:?}, channel: {:?}",
+
 		current_version,
+
 		channel
 	);
 
@@ -47,7 +51,9 @@ pub async fn CheckForUpdates(
 
 	dev_log!(
 		"grpc",
+
 		"[WindAirCommands] Update check completed: available={}",
+
 		result.update_available
 	);
 

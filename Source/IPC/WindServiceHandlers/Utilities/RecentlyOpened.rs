@@ -10,6 +10,7 @@ use crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot;
 pub fn RecentlyOpenedPath() -> std::path::PathBuf { FiddeeRoot().join("workspaces").join("RecentlyOpened.json") }
 
 pub fn ReadRecentlyOpened() -> Result<Value, String> {
+
 	let Path = RecentlyOpenedPath();
 
 	match std::fs::read_to_string(&Path) {
@@ -26,6 +27,7 @@ pub fn ReadRecentlyOpened() -> Result<Value, String> {
 }
 
 pub fn MutateRecentlyOpened<F:FnOnce(&mut serde_json::Map<String, Value>)>(Apply:F) {
+
 	let Path = RecentlyOpenedPath();
 
 	let mut Parsed:serde_json::Map<String, Value> = std::fs::read_to_string(&Path)

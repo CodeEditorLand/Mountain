@@ -1,6 +1,5 @@
-pub fn Matches(MethodName:&str) -> bool {
-	MethodName.starts_with("$tree:") || MethodName.starts_with("tree.")
-}
+pub fn Matches(MethodName:&str) -> bool { MethodName.starts_with("$tree:") || MethodName.starts_with("tree.") }
+
 use std::sync::Arc;
 
 use CommonLibrary::{
@@ -20,10 +19,13 @@ use crate::{
 	},
 	dev_log,
 };
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$tree:register" | "tree.register" => {
 			crate::effect!(run_time, {
+				let Parameters = Parameters.clone();
+
 				let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
 
 				let first = str_at(&Parameters, 0);

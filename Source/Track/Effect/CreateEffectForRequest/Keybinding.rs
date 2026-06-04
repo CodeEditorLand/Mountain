@@ -1,6 +1,7 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"Keybinding.GetResolved" => true,
+
 		_ => false,
 	}
 }
@@ -12,6 +13,7 @@ use serde_json::Value;
 use tauri::Runtime;
 
 use crate::Track::Effect::MappedEffectType::MappedEffect;
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Keybinding.GetResolved" => {

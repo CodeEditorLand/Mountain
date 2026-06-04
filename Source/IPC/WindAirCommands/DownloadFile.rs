@@ -8,6 +8,7 @@ use crate::{
 
 #[tauri::command]
 pub async fn DownloadFile(url:String, destination:String) -> Result<DownloadResultDTO::Struct, String> {
+
 	dev_log!("grpc", "[WindAirCommands] DownloadFile called: {} -> {}", url, destination);
 
 	let air_address = GetAirAddress::Fn()?;

@@ -17,10 +17,14 @@ pub async fn IndexFiles(
 
 	max_depth:Option<u32>,
 ) -> Result<IndexResultDTO::Struct, String> {
+
 	dev_log!(
 		"grpc",
+
 		"[WindAirCommands] IndexFiles called: {} with patterns: {:?}",
+
 		path,
+
 		patterns
 	);
 
@@ -33,9 +37,13 @@ pub async fn IndexFiles(
 	let index_info = client
 		.IndexFiles(
 			request_id,
+
 			path,
+
 			patterns,
+
 			exclude_patterns.unwrap_or_default(),
+
 			max_depth.unwrap_or(100),
 		)
 		.await
@@ -51,7 +59,9 @@ pub async fn IndexFiles(
 
 	dev_log!(
 		"grpc",
+
 		"[WindAirCommands] File indexing completed: {} files",
+
 		result.files_indexed
 	);
 

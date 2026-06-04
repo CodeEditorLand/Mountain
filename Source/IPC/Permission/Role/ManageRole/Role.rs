@@ -12,6 +12,7 @@ use crate::dev_log;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
+
 	pub Name:String,
 
 	pub Permissions:Vec<String>,
@@ -24,6 +25,7 @@ pub struct Struct {
 }
 
 impl Struct {
+
 	pub fn New(Name:String, Permissions:Vec<String>, Description:String) -> Self {
 		let UniquePermissions:Vec<String> = Permissions.into_iter().collect::<HashSet<String>>().into_iter().collect();
 
@@ -103,6 +105,7 @@ impl Struct {
 			if !Permission.contains('.') {
 				return Err(format!(
 					"Permission '{}' must contain a dot separating category and action",
+
 					Permission
 				));
 			}

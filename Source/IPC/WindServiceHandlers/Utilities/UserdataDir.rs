@@ -15,6 +15,7 @@ static USERDATA_INITIALIZED:std::sync::atomic::AtomicBool = std::sync::atomic::A
 pub fn set_userdata_base_dir(Path:String) { let _ = USERDATA_BASE_DIR.set(Path); }
 
 pub fn get_userdata_base_dir() -> String {
+
 	if let Some(Dir) = USERDATA_BASE_DIR.get() {
 		return Dir.clone();
 	}
@@ -31,6 +32,7 @@ pub fn get_userdata_base_dir() -> String {
 }
 
 pub fn ensure_userdata_dirs() {
+
 	if USERDATA_INITIALIZED.swap(true, std::sync::atomic::Ordering::Relaxed) {
 		return;
 	}
@@ -39,15 +41,24 @@ pub fn ensure_userdata_dirs() {
 
 	let Dirs = [
 		format!("{}/User", Base),
+
 		format!("{}/User/globalStorage", Base),
+
 		format!("{}/User/profiles/__default__profile__", Base),
+
 		format!("{}/User/snippets", Base),
+
 		format!("{}/User/prompts", Base),
+
 		format!("{}/User/cacheHome", Base),
+
 		format!("{}/logs", Base),
+
 		format!("{}/User/workspaceStorage", Base),
+
 		format!(
 			"{}/CachedConfigurations/defaults/__default__profile__-configurationDefaultsOverrides",
+
 			Base
 		),
 	];
@@ -60,9 +71,13 @@ pub fn ensure_userdata_dirs() {
 
 	let DefaultFiles = [
 		(format!("{}/User/settings.json", Base), "{}"),
+
 		(format!("{}/User/keybindings.json", Base), "[]"),
+
 		(format!("{}/User/tasks.json", Base), "{}"),
+
 		(format!("{}/User/extensions.json", Base), "[]"),
+
 		(format!("{}/User/mcp.json", Base), "{}"),
 	];
 

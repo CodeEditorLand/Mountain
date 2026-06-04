@@ -14,6 +14,7 @@ use crate::{
 
 #[tauri::command]
 pub async fn tls_check_cert_status(app_handle:AppHandle, hostname:String) -> Result<CertificateStatus, String> {
+
 	dev_log!("security", "checking certificate status for {}", hostname);
 
 	let state = app_handle

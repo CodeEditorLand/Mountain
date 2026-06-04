@@ -8,6 +8,7 @@ use crate::IPC::Enhanced::MessageCompressor::{CompressionAlgorithm, CompressionL
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
+
 	pub MaxBatchSize:usize,
 
 	pub MaxBatchDelayMs:u64,
@@ -20,6 +21,7 @@ pub struct Struct {
 }
 
 impl Default for Struct {
+
 	fn default() -> Self {
 		Self {
 			MaxBatchSize:100,

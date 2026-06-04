@@ -10,15 +10,18 @@ use crate::Telemetry::FeatureFlags::{FeatureFlag, FeatureFlagError, FlagCategory
 
 #[derive(Debug)]
 pub struct Struct {
+
 	Flags:Arc<RwLock<HashMap<String, FeatureFlag::Struct>>>,
 }
 
 impl Struct {
+
 	pub fn new() -> Self {
 		let mut Flags = HashMap::new();
 
 		Flags.insert(
 			"ipc-compression".to_string(),
+
 			FeatureFlag::Struct {
 				Name:"ipc-compression".to_string(),
 				Enabled:true,
@@ -30,6 +33,7 @@ impl Struct {
 
 		Flags.insert(
 			"experimental-webgl".to_string(),
+
 			FeatureFlag::Struct {
 				Name:"experimental-webgl".to_string(),
 				Enabled:false,
@@ -41,6 +45,7 @@ impl Struct {
 
 		Flags.insert(
 			"extension-hot-reload".to_string(),
+
 			FeatureFlag::Struct {
 				Name:"extension-hot-reload".to_string(),
 				Enabled:false,
@@ -52,6 +57,7 @@ impl Struct {
 
 		Flags.insert(
 			"debug-diagnostics".to_string(),
+
 			FeatureFlag::Struct {
 				Name:"debug-diagnostics".to_string(),
 				Enabled:false,

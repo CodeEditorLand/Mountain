@@ -37,6 +37,7 @@ use std::io::{Read, Write};
 use flate2::{Compression, read::GzDecoder, write::GzEncoder};
 
 use super::super::Message::Types::TauriIPCMessage;
+
 use crate::dev_log;
 
 /// Message compression utility for optimizing IPC message transfer
@@ -105,6 +106,7 @@ use crate::dev_log;
 /// let decompressed = compressor.decompress_messages(&compressed)?;
 /// ```
 pub struct MessageCompressor {
+
 	/// Gzip compression level (0-9, where 0 is no compression)
 	CompressionLevel:u32,
 
@@ -113,6 +115,7 @@ pub struct MessageCompressor {
 }
 
 impl MessageCompressor {
+
 	/// Create a new message compressor with specified parameters
 	///
 	/// ## Parameters
@@ -127,8 +130,11 @@ impl MessageCompressor {
 	pub fn new(CompressionLevel:u32, BatchSize:usize) -> Self {
 		dev_log!(
 			"encryption",
+
 			"[MessageCompressor] Created with level: {}, batch size: {}",
+
 			CompressionLevel,
+
 			BatchSize
 		);
 
@@ -181,9 +187,13 @@ impl MessageCompressor {
 
 		dev_log!(
 			"encryption",
+
 			"[MessageCompressor] Compression complete: {} -> {} bytes ({:.1}%)",
+
 			original_size,
+
 			compressed_size,
+
 			ratio
 		);
 
@@ -229,9 +239,13 @@ impl MessageCompressor {
 
 		dev_log!(
 			"encryption",
+
 			"[MessageCompressor] Decompression complete: {} -> {} bytes, {} messages",
+
 			compressed_size,
+
 			decompressed_size,
+
 			messages.len()
 		);
 
@@ -264,9 +278,13 @@ impl MessageCompressor {
 
 		dev_log!(
 			"encryption",
+
 			"[MessageCompressor] Batch check: {} >= {} = {}",
+
 			MessagesCount,
+
 			self.BatchSize,
+
 			should_batch
 		);
 
@@ -297,10 +315,12 @@ mod tests {
 	fn create_test_message(id:u32) -> TauriIPCMessage {
 		TauriIPCMessage::new(
 			format!("test_channel_{}", id),
+
 			serde_json::json!({
 				"id": id,
 				"data": "test data that should compress well when repeated many times across multiple messages".repeat(10)
 			}),
+
 			Some("test_sender".to_string()),
 		)
 	}

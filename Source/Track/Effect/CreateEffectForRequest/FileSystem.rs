@@ -1,6 +1,14 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		"FileSystem.ReadFile" | "FileSystem.WriteFile" | "FileSystem.ReadDirectory" | "FileSystem.Stat" | "FileSystem.CreateDirectory" | "FileSystem.Delete" | "FileSystem.Rename" | "FileSystem.Copy" => true,
+		"FileSystem.ReadFile"
+		| "FileSystem.WriteFile"
+		| "FileSystem.ReadDirectory"
+		| "FileSystem.Stat"
+		| "FileSystem.CreateDirectory"
+		| "FileSystem.Delete"
+		| "FileSystem.Rename"
+		| "FileSystem.Copy" => true,
+
 		_ => false,
 	}
 }
@@ -19,6 +27,7 @@ use crate::Track::Effect::{
 	CreateEffectForRequest::Utilities::Params::{bool_at, str_at, strip_file_uri},
 	MappedEffectType::MappedEffect,
 };
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:&Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"FileSystem.ReadFile" => {

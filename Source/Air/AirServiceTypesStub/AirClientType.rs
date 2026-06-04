@@ -28,6 +28,7 @@ use crate::Air::AirServiceTypesStub::{
 pub struct Struct;
 
 impl Struct {
+
 	pub async fn new(_Address:&str) -> Result<Self, String> {
 		Err("AirIntegration feature is not implemented yet".to_string())
 	}
