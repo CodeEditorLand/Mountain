@@ -70,12 +70,12 @@ pub fn Fn<R:Runtime>(
 
 	MethodName:&str,
 
-	Parameters:Value,
+	Parameters:&Value,
 ) -> Result<MappedEffect, String> {
 	macro_rules! Try {
 		($Module:ident) => {
 			if $Module::Matches(MethodName) {
-				if let Some(Result) = $Module::CreateEffect::<R>(MethodName, Parameters) {
+				if let Some(Result) = $Module::CreateEffect::<R>(MethodName, &Parameters) {
 					return Result;
 				}
 			}
