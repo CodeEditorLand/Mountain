@@ -39,7 +39,6 @@ use super::{ExtensionRegistry, ProviderRegistration, ScannedExtensions};
 use crate::dev_log;
 
 /// Extension state combining all extension-related components.
-#[derive(Clone)]
 pub struct State {
 	/// Extension registry containing command registry and provider state.
 	pub Registry:ExtensionRegistry::ExtensionRegistry::Registry,

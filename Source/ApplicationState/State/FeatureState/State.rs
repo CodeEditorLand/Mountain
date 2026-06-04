@@ -53,7 +53,6 @@ use super::{
 use crate::dev_log;
 
 /// Feature state combining all feature-related components.
-#[derive(Clone)]
 pub struct State {
 	/// Debug provider state.
 	pub Debug:DebugState,

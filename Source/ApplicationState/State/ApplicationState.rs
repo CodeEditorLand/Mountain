@@ -60,7 +60,8 @@ use super::{
 use crate::{Environment::TestProvider::TestProviderState::Struct as TestProviderState, dev_log};
 
 /// The central, shared, thread-safe state for the entire Mountain application.
-#[derive(Clone)]
+pub type SharedApplicationState = Arc<ApplicationState>;
+
 pub struct ApplicationState {
 	/// Workspace state containing workspace folders, trust, and active
 	/// document.
