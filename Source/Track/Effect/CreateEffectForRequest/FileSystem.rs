@@ -28,26 +28,30 @@ use crate::Track::Effect::{
 	MappedEffectType::MappedEffect,
 };
 
+/// Returns Err with a "resource not found" message for an empty path.
+/// Consistent with VS Code's FileSystemProvider contract for empty-path probes.
+/// Validated before Environment.Require() in all four read/write handlers.
+#[inline]
+fn require_non_empty_path(method:&str, path:&str) -> Result<(), String> {
+	if path.is_empty() {
+		Err(format!("{}: empty path (resource not found)", method))
+	} else {
+		Ok(())
+	}
+}
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"FileSystem.ReadFile" => {
 			crate::effect!(run_time, {
 				let path_str = str_at(&Parameters, 0);
 
-				// Empty-path guard: extensions occasionally
-				// pass `""` to `vscode.workspace.fs.readFile`
-				// when probing optional config files. Stock VS
-				// Code's FileSystemProvider would return
-				// `FileNotFound`; replicating that contract
-				// here avoids a panic in `PathBuf::from("")`-
-				// rooted FS calls (which can confuse Mountain's
-				// path-security guard into emitting a "path
-				// outside workspace" rejection that trips the
-				// breaker cascade).
-				if path_str.is_empty() {
-					return Err("FileSystem.ReadFile: empty path (resource not found)".to_string());
-				}
+				require_non_empty_path("FileSystem.ReadFile", path_str)?;
 
+				// vscode://schemas-associations/ is a synthetic URI emitted by VS Code's
+				// JSON language server to request schema associations from the host.
+				// Mountain has no disk-backed file for this; return an empty schema list
+				// so the language server does not spin retrying.
 				if path_str.starts_with("vscode://schemas-associations/") {
 					let payload =
 						serde_json::to_vec(&json!({ "schemas": [] })).unwrap_or_else(|_| b"{\"schemas\":[]}".to_vec());
@@ -69,23 +73,32 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 		"FileSystem.WriteFile" => {
 			crate::effect!(run_time, {
-				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
-
 				let path_str = str_at(&Parameters, 0);
 
-				if path_str.is_empty() {
-					return Err("FileSystem.WriteFile: empty path (resource not found)".to_string());
-				}
+				require_non_empty_path("FileSystem.WriteFile", path_str)?;
 
 				let path = std::path::PathBuf::from(strip_file_uri(path_str));
 
 				let content = Parameters.get(1).cloned();
 
+				// Only base64-encoded strings are accepted.
+				// The Value::Array path (per-byte u64 iteration) was removed:
+				//   - O(N) enum-match per byte (200k matches for a 200 KB file)
+				//   - filter_map silently drops bytes >127 from signed Int8Array
+				//     serializers, causing silent data corruption
 				let content_bytes = match content {
-					Some(Value::Array(arr)) => arr.into_iter().filter_map(|v| v.as_u64().map(|n| n as u8)).collect(),
-					Some(Value::String(s)) => STANDARD.decode(&s).unwrap_or_default(),
+					Some(Value::String(s)) => {
+						STANDARD.decode(&s).map_err(|e| format!("FileSystem.WriteFile: base64 decode failed: {}", e))?
+					},
+					Some(Value::Array(_)) => {
+						return Err(
+							"FileSystem.WriteFile: content must be base64-encoded string, not byte array".to_string(),
+						);
+					},
 					_ => vec![],
 				};
+
+				let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
 
 				fs_writer
 					.WriteFile(&path, content_bytes, true, true)
@@ -99,16 +112,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			crate::effect!(run_time, {
 				let path_str = str_at(&Parameters, 0);
 
-				// Empty-path guard: same contract as ReadFile and
-				// Stat. An empty string from an extension probe
-				// must return "resource not found" so the
-				// LooksLike404 classifier in
-				// MountainVinegRPCService downgrades the log level
-				// and uses error code -32004 instead of tripping
-				// the circuit breaker with a -32000.
-				if path_str.is_empty() {
-					return Err("FileSystem.ReadDirectory: empty path (resource not found)".to_string());
-				}
+				require_non_empty_path("FileSystem.ReadDirectory", path_str)?;
 
 				let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
 
@@ -124,19 +128,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 		"FileSystem.Stat" => {
 			crate::effect!(run_time, {
-				let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
-
 				let path_str = str_at(&Parameters, 0);
 
-				// Empty-path guard: same rationale as
-				// `FileSystem.ReadFile` above. Returning
-				// `not found` matches VS Code's
-				// `FileSystemProvider.stat()` contract for
-				// probes of paths the extension hasn't
-				// validated upstream.
-				if path_str.is_empty() {
-					return Err("FileSystem.Stat: empty path (resource not found)".to_string());
-				}
+				// Validate path before Environment.Require() - consistent with
+				// ReadFile, WriteFile, ReadDirectory ordering.
+				require_non_empty_path("FileSystem.Stat", path_str)?;
+
+				let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
 
 				let path = std::path::PathBuf::from(strip_file_uri(path_str));
 
