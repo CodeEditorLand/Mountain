@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		secrets.get, secrets.store, secrets.delete => true,
+		"secrets.get" | "secrets.store" | "secrets.delete" => true,
 		_ => false,
 	}
 }

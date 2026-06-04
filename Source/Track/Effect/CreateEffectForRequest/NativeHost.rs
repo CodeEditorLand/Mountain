@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		NativeHost.OpenExternal => true,
+		"NativeHost.OpenExternal" => true,
 		_ => false,
 	}
 }

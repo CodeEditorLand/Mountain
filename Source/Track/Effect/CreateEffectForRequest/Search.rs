@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		findFiles, findTextInFiles, Search.TextSearch => true,
+		"findFiles" | "findTextInFiles" | "Search.TextSearch" => true,
 		_ => false,
 	}
 }

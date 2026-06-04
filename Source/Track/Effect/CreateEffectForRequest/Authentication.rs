@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		Authentication.GetSession, Authentication.GetAccounts => true,
+		"Authentication.GetSession" | "Authentication.GetAccounts" => true,
 		_ => false,
 	}
 }

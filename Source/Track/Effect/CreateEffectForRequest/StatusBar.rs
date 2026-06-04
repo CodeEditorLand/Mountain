@@ -1,10 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
-	match MethodName {
-		$statusBar:*, $setStatusBarMessage, $disposeStatusBarMessage => true,
-		_ => false,
-	}
+	MethodName.starts_with("$statusBar:") || MethodName == "$setStatusBarMessage" || MethodName == "$disposeStatusBarMessage"
 }
-
 //! # StatusBar Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for status bar RPC methods from the Cocoon extension

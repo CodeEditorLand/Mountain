@@ -1,10 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
-	match MethodName {
-		$scm:*, vscode.diff, $scm:openDiff => true,
-		_ => false,
-	}
+	MethodName == "vscode.diff" || MethodName == "$scm:openDiff" || MethodName.starts_with("$scm:")
 }
-
 use std::sync::Arc;
 
 use CommonLibrary::{

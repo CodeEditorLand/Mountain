@@ -1,10 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
-	match MethodName {
-		$webview:*, webview.*, $resolveCustomEditor, webview.setTitle, webview.setIconPath, webview.setHtml, webview.setOptions, webview.updateView, webview.reveal, webview.postMessage, webview.dispose => true,
-		_ => false,
-	}
+	MethodName == "$resolveCustomEditor" || MethodName.starts_with("$webview:") || MethodName.starts_with("webview.")
 }
-
 //! # Webview Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for webview-related RPC methods from the Cocoon

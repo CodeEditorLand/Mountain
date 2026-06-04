@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		executeCommand, Command.Execute, Command.GetAll => true,
+		"executeCommand" | "Command.Execute" | "Command.GetAll" => true,
 		_ => false,
 	}
 }

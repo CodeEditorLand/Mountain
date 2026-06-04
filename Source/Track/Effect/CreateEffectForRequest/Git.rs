@@ -1,10 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
-	match MethodName {
-		$gitExec => true,
-		_ => false,
-	}
+	MethodName.starts_with("$gitExec")
 }
-
 //! # Git Effect (CreateEffectForRequest)
 //!
 //! Effect constructor for the `$gitExec` command. Executes `git` as a

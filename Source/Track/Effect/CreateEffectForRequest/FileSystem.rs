@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		FileSystem.ReadFile, FileSystem.WriteFile, FileSystem.ReadDirectory, FileSystem.Stat, FileSystem.CreateDirectory, FileSystem.Delete, FileSystem.Rename, FileSystem.Copy => true,
+		"FileSystem.ReadFile" | "FileSystem.WriteFile" | "FileSystem.ReadDirectory" | "FileSystem.Stat" | "FileSystem.CreateDirectory" | "FileSystem.Delete" | "FileSystem.Rename" | "FileSystem.Copy" => true,
 		_ => false,
 	}
 }

@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		Clipboard.Read, Clipboard.Write => true,
+		"Clipboard.Read" | "Clipboard.Write" => true,
 		_ => false,
 	}
 }

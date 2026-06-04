@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		Diagnostic.Set, Diagnostic.Clear => true,
+		"Diagnostic.Set" | "Diagnostic.Clear" => true,
 		_ => false,
 	}
 }

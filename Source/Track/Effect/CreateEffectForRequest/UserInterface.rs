@@ -1,10 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
-	match MethodName {
-		UserInterface.*, Window.* => true,
-		_ => false,
-	}
+	MethodName.starts_with("UserInterface.") || MethodName.starts_with("Window.")
 }
-
 //! # UserInterface Effect (CreateEffectForRequest)
 //!
 //! Effect constructors for user-interface dialog methods. Delegates to the

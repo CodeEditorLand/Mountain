@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		debug.dap-response, Debug.Start, Debug.RegisterConfigurationProvider, Debug.Stop => true,
+		"debug.dap-response" | "Debug.Start" | "Debug.RegisterConfigurationProvider" | "Debug.Stop" => true,
 		_ => false,
 	}
 }

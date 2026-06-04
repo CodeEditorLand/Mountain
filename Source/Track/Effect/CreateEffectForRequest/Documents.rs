@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		Document.Save, Document.SaveAs => true,
+		"Document.Save" | "Document.SaveAs" => true,
 		_ => false,
 	}
 }

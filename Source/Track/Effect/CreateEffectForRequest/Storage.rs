@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		Storage.Get, Storage.Set => true,
+		"Storage.Get" | "Storage.Set" => true,
 		_ => false,
 	}
 }

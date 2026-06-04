@@ -1,10 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
-	match MethodName {
-		$tree:register, tree.register, tree.unregister, tree.dispose, tree.reveal => true,
-		_ => false,
-	}
+	MethodName.starts_with("$tree:") || MethodName.starts_with("tree.")
 }
-
 //! Effect constructors for tree-view registration and disposal from the
 //! Cocoon extension host. Delegates to `TreeViewProvider` on
 //! `MountainEnvironment` and emits `SkyEvent` notifications to keep the

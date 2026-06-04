@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		config.get, config.update, Configuration.Inspect, Configuration.Update => true,
+		"config.get" | "config.update" | "Configuration.Inspect" | "Configuration.Update" => true,
 		_ => false,
 	}
 }

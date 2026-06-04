@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		Keybinding.GetResolved => true,
+		"Keybinding.GetResolved" => true,
 		_ => false,
 	}
 }

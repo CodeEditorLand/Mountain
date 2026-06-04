@@ -1,10 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
-	match MethodName {
-		$terminal:create, $terminal:sendText, $terminal:dispose, Terminal.Resize, $terminal:resize, Terminal.GetProcessId, $terminal:show, Terminal.Show, $terminal:hide, Terminal.Hide => true,
-		_ => false,
-	}
+	MethodName.starts_with("$terminal:") || MethodName.starts_with("Terminal.")
 }
-
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};

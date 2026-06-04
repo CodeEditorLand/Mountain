@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		Languages.GetAll => true,
+		"Languages.GetAll" => true,
 		_ => false,
 	}
 }

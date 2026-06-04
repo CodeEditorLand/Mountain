@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		FileWatcher.Watch, FileWatcher.Unwatch, FileWatcher.WatchStatus => true,
+		"FileWatcher.Watch" | "FileWatcher.Unwatch" | "FileWatcher.WatchStatus" => true,
 		_ => false,
 	}
 }

@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		openDocument, readFile, stat => true,
+		"openDocument" | "readFile" | "stat" => true,
 		_ => false,
 	}
 }
