@@ -130,7 +130,9 @@ impl Default for State {
 			Webviews:Default::default(),
 
 			WorkingCopy:Default::default(),
-		}
+
+			SCMHandleCounter:Arc::new(AtomicU32::new(1)),
+			}
 	}
 }
 
@@ -140,6 +142,6 @@ impl State {
 
 	/// Gets the next available unique identifier for an SCM provider.
 	pub fn GetNextSourceControlManagementProviderHandle(&self) -> u32 {
-		self.Markers.GetNextSourceControlManagementProviderHandle()
+		self.SCMHandleCounter.fetch_add(1, AtomicOrdering::Relaxed)
 	}
 }
