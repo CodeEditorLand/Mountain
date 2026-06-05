@@ -32,8 +32,10 @@
 
 use std::{
 	collections::HashMap,
-	sync::{Arc, Mutex as StandardMutex},
+	sync::Arc,
 };
+
+use parking_lot::Mutex;
 
 use crate::{ApplicationState::DTO::OutputChannelStateDTO::OutputChannelStateDTO, dev_log};
 
@@ -41,64 +43,57 @@ use crate::{ApplicationState::DTO::OutputChannelStateDTO::OutputChannelStateDTO,
 #[derive(Clone)]
 pub struct OutputChannelState {
 	/// Output channels organized by ID.
-	pub OutputChannels:Arc<StandardMutex<HashMap<String, OutputChannelStateDTO>>>,
+	pub OutputChannels:Arc<Mutex<HashMap<String, OutputChannelStateDTO>>>,
 }
 
 impl Default for OutputChannelState {
 	fn default() -> Self {
 		dev_log!("output", "[OutputChannelState] Initializing default output channel state...");
 
-		Self { OutputChannels:Arc::new(StandardMutex::new(HashMap::new())) }
+		Self { OutputChannels:Arc::new(Mutex::new(HashMap::new())) }
 	}
 }
 
 impl OutputChannelState {
 	/// Gets all output channels.
 	pub fn GetAll(&self) -> HashMap<String, OutputChannelStateDTO> {
-		self.OutputChannels.lock().ok().map(|guard| guard.clone()).unwrap_or_default()
+		self.OutputChannels.lock().clone()
 	}
 
 	/// Gets an output channel by its ID.
 	pub fn Get(&self, id:&str) -> Option<OutputChannelStateDTO> {
-		self.OutputChannels.lock().ok().and_then(|guard| guard.get(id).cloned())
+		self.OutputChannels.lock().get(id).cloned()
 	}
 
 	/// Adds or updates an output channel.
 	pub fn AddOrUpdate(&self, id:String, channel:OutputChannelStateDTO) {
-		if let Ok(mut guard) = self.OutputChannels.lock() {
-			guard.insert(id, channel);
+		let mut guard = self.OutputChannels.lock();
+		guard.insert(id, channel);
 
-			dev_log!("output", "[OutputChannelState] Output channel added/updated");
-		}
+		dev_log!("output", "[OutputChannelState] Output channel added/updated");
 	}
 
 	/// Removes an output channel by its ID.
 	pub fn Remove(&self, id:&str) {
-		if let Ok(mut guard) = self.OutputChannels.lock() {
-			guard.remove(id);
+		let mut guard = self.OutputChannels.lock();
+		guard.remove(id);
 
-			dev_log!("output", "[OutputChannelState] Output channel removed: {}", id);
-		}
+		dev_log!("output", "[OutputChannelState] Output channel removed: {}", id);
 	}
 
 	/// Clears all output channels.
 	pub fn Clear(&self) {
-		if let Ok(mut guard) = self.OutputChannels.lock() {
-			guard.clear();
+		let mut guard = self.OutputChannels.lock();
+		guard.clear();
 
-			dev_log!("output", "[OutputChannelState] All output channels cleared");
-		}
+		dev_log!("output", "[OutputChannelState] All output channels cleared");
 	}
 
 	/// Gets the count of output channels.
-	pub fn Count(&self) -> usize { self.OutputChannels.lock().ok().map(|guard| guard.len()).unwrap_or(0) }
+	pub fn Count(&self) -> usize { self.OutputChannels.lock().len() }
 
 	/// Checks if an output channel exists.
 	pub fn Contains(&self, id:&str) -> bool {
-		self.OutputChannels
-			.lock()
-			.ok()
-			.map(|guard| guard.contains_key(id))
-			.unwrap_or(false)
+		self.OutputChannels.lock().contains_key(id)
 	}
 }

@@ -8,7 +8,7 @@ use serde_json::{Value, json};
 use tauri::{State, command};
 
 use crate::{
-	ApplicationState::State::ApplicationState::{ApplicationState, MapLockError},
+	ApplicationState::State::ApplicationState::ApplicationState,
 	dev_log,
 };
 
@@ -21,8 +21,6 @@ pub async fn GetAllSourceControlManagementState(State:State<'_, Arc<ApplicationS
 		.Markers
 		.SourceControlManagementProviders
 		.lock()
-		.map_err(MapLockError)
-		.map_err(|Error| Error.to_string())?
 		.clone();
 
 	let Groups = State
@@ -30,8 +28,6 @@ pub async fn GetAllSourceControlManagementState(State:State<'_, Arc<ApplicationS
 		.Markers
 		.SourceControlManagementGroups
 		.lock()
-		.map_err(MapLockError)
-		.map_err(|Error| Error.to_string())?
 		.clone();
 
 	let Resources = State
@@ -39,8 +35,6 @@ pub async fn GetAllSourceControlManagementState(State:State<'_, Arc<ApplicationS
 		.Markers
 		.SourceControlManagementResources
 		.lock()
-		.map_err(MapLockError)
-		.map_err(|Error| Error.to_string())?
 		.clone();
 
 	Ok(json!({

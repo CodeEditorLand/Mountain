@@ -1,6 +1,8 @@
-use std::sync::{Arc, Mutex as StandardMutex};
+use std::sync::Arc;
 
+use parking_lot::Mutex;
 use tokio::sync::Notify;
+
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 use crate::{IPC::SkyEmit::LogSkyEmit, dev_log};
@@ -14,7 +16,7 @@ pub type Phase = u8;
 /// can await it instead of polling at 100 ms intervals.
 #[derive(Clone)]
 pub struct LifecyclePhaseState {
-	CurrentPhase:Arc<StandardMutex<Phase>>,
+	CurrentPhase:Arc<Mutex<Phase>>,
 
 	/// Fired (notify_waiters) on every forward phase transition.
 	pub PhaseNotify:Arc<Notify>,
@@ -28,7 +30,7 @@ impl Default for LifecyclePhaseState {
 		);
 
 		Self {
-			CurrentPhase:Arc::new(StandardMutex::new(1)),
+			CurrentPhase:Arc::new(Mutex::new(1)),
 
 			PhaseNotify:Arc::new(Notify::new()),
 		}
@@ -37,19 +39,18 @@ impl Default for LifecyclePhaseState {
 
 impl LifecyclePhaseState {
 	/// Return the current lifecycle phase.
-	pub fn GetPhase(&self) -> Phase { self.CurrentPhase.lock().ok().map(|Guard| *Guard).unwrap_or(1) }
+	pub fn GetPhase(&self) -> Phase { *self.CurrentPhase.lock() }
 
 	/// Advance the lifecycle phase. Only advances forward - never backwards.
 	pub fn SetPhase(&self, NewPhase:Phase) {
-		if let Ok(mut Guard) = self.CurrentPhase.lock() {
-			if NewPhase > *Guard {
-				dev_log!("lifecycle", "[LifecyclePhaseState] Phase advanced: {} → {}", *Guard, NewPhase);
+		let mut Guard = self.CurrentPhase.lock();
+		if NewPhase > *Guard {
+			dev_log!("lifecycle", "[LifecyclePhaseState] Phase advanced: {} → {}", *Guard, NewPhase);
 
-				*Guard = NewPhase;
+			*Guard = NewPhase;
 
-				// Wake all `LifecycleWhenPhase` waiters immediately.
-				self.PhaseNotify.notify_waiters();
-			}
+			// Wake all `LifecycleWhenPhase` waiters immediately.
+			self.PhaseNotify.notify_waiters();
 		}
 	}
 

@@ -14,15 +14,13 @@ impl ApplicationRunTime {
 			.ApplicationState
 			.Configuration
 			.MementoGlobalStorage
-			.lock()
-			.map_err(|E| CommonError::StateLockPoisoned { Context:E.to_string() })?;
+			.lock();
 
 		let GlobalMementoPath = self
 			.Environment
 			.ApplicationState
 			.GlobalMementoPath
 			.lock()
-			.map_err(|E| CommonError::StateLockPoisoned { Context:E.to_string() })?
 			.clone();
 
 		if let Some(Parent) = GlobalMementoPath.parent() {

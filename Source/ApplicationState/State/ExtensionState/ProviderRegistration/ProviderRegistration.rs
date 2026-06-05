@@ -32,8 +32,10 @@
 
 use std::{
 	collections::HashMap,
-	sync::{Arc, Mutex as StandardMutex},
+	sync::Arc,
 };
+
+use parking_lot::Mutex;
 
 use crate::{ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO, dev_log};
 
@@ -41,7 +43,7 @@ use crate::{ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistration
 #[derive(Clone)]
 pub struct Registration {
 	/// Registered language providers by handle.
-	pub LanguageProviders:Arc<StandardMutex<HashMap<u32, ProviderRegistrationDTO>>>,
+	pub LanguageProviders:Arc<Mutex<HashMap<u32, ProviderRegistrationDTO>>>,
 }
 
 impl Default for Registration {
@@ -51,63 +53,58 @@ impl Default for Registration {
 			"[ProviderRegistration] Initializing default provider registration..."
 		);
 
-		Self { LanguageProviders:Arc::new(StandardMutex::new(HashMap::new())) }
+		Self { LanguageProviders:Arc::new(Mutex::new(HashMap::new())) }
 	}
 }
 
 impl Registration {
 	/// Gets all registered language providers.
 	pub fn GetProviders(&self) -> HashMap<u32, ProviderRegistrationDTO> {
-		self.LanguageProviders
-			.lock()
-			.ok()
-			.map(|guard| guard.clone())
-			.unwrap_or_default()
+		self.LanguageProviders.lock().clone()
 	}
 
 	/// Gets a provider by its handle.
 	pub fn GetProvider(&self, handle:u32) -> Option<ProviderRegistrationDTO> {
-		self.LanguageProviders.lock().ok().and_then(|guard| guard.get(&handle).cloned())
+		self.LanguageProviders.lock().get(&handle).cloned()
 	}
 
 	/// Registers a language provider.
 	pub fn RegisterProvider(&self, handle:u32, provider:ProviderRegistrationDTO) {
-		if let Ok(mut guard) = self.LanguageProviders.lock() {
-			guard.insert(handle, provider);
+		let mut guard = self.LanguageProviders.lock();
+		guard.insert(handle, provider);
 
-			// Duplicate of the `provider-register` log line emitted by
-			// `MountainVinegRPCService`'s OR match - both fire per
-			// provider registration. Route this one to
-			// `provider-register` too (now short-muted) so the
-			// `extensions` tag stays signal-only (scan start/end,
-			// classification changes, install events).
-			dev_log!(
-				"provider-register",
-				"[ProviderRegistration] Provider registered with handle: {}",
-				handle
-			);
-		}
+		// Duplicate of the `provider-register` log line emitted by
+		// `MountainVinegRPCService`'s OR match - both fire per
+		// provider registration. Route this one to
+		// `provider-register` too (now short-muted) so the
+		// `extensions` tag stays signal-only (scan start/end,
+		// classification changes, install events).
+		dev_log!(
+			"provider-register",
+			"[ProviderRegistration] Provider registered with handle: {}",
+			handle
+		);
 	}
 
 	/// Unregisters a language provider.
 	pub fn UnregisterProvider(&self, handle:u32) {
-		if let Ok(mut guard) = self.LanguageProviders.lock() {
-			guard.remove(&handle);
+		let mut guard = self.LanguageProviders.lock();
+		guard.remove(&handle);
 
-			dev_log!(
-				"extensions",
-				"[ProviderRegistration] Provider unregistered with handle: {}",
-				handle
-			);
-		}
+		dev_log!(
+			"extensions",
+			"[ProviderRegistration] Provider unregistered with handle: {}",
+			handle
+		);
 	}
 
 	/// Gets all providers for a specific language.
 	pub fn GetProvidersForLanguage(&self, language:&str) -> Vec<ProviderRegistrationDTO> {
 		self.LanguageProviders
 			.lock()
-			.ok()
-			.map(|guard| guard.values().filter(|p| p.MatchesSelector("", language)).cloned().collect())
-			.unwrap_or_default()
+			.values()
+			.filter(|p| p.MatchesSelector("", language))
+			.cloned()
+			.collect()
 	}
 }

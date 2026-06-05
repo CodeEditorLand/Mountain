@@ -46,7 +46,8 @@
 //! - [ ] Implement state metrics collection
 //! - [ ] Add state diffing for debugging
 
-use std::sync::{Arc, Mutex as StandardMutex, PoisonError};
+use std::sync::Arc;
+use parking_lot::{Mutex, RwLock};
 
 use CommonLibrary::Error::CommonError::CommonError;
 
@@ -80,12 +81,12 @@ pub struct ApplicationState {
 	pub UI:UIState,
 
 	/// Test provider state.
-	pub TestProviderState:Arc<tokio::sync::RwLock<TestProviderState>>,
+	pub TestProviderState:Arc<RwLock<TestProviderState>>,
 
 	/// Memento storage paths.
-	pub GlobalMementoPath:Arc<StandardMutex<std::path::PathBuf>>,
+	pub GlobalMementoPath:Arc<Mutex<std::path::PathBuf>>,
 
-	pub WorkspaceMementoPath:Arc<StandardMutex<Option<std::path::PathBuf>>>,
+	pub WorkspaceMementoPath:Arc<Mutex<Option<std::path::PathBuf>>>,
 }
 
 impl Default for ApplicationState {
@@ -103,11 +104,11 @@ impl Default for ApplicationState {
 
 			UI:Default::default(),
 
-			TestProviderState:Arc::new(tokio::sync::RwLock::new(TestProviderState::new())),
+			TestProviderState:Arc::new(RwLock::new(TestProviderState::new())),
 
-			GlobalMementoPath:Arc::new(StandardMutex::new(Default::default())),
+			GlobalMementoPath:Arc::new(Mutex::new(Default::default())),
 
-			WorkspaceMementoPath:Arc::new(StandardMutex::new(None)),
+			WorkspaceMementoPath:Arc::new(Mutex::new(None)),
 		}
 	}
 }
@@ -152,32 +153,4 @@ impl ApplicationState {
 
 		Ok(format!("{:016x}", Hasher.finish()))
 	}
-}
-
-/// A helper to map a mutex poison error into a CommonError.
-pub fn MapLockError<T>(Error:PoisonError<T>) -> CommonError {
-	CommonError::StateLockPoisoned { Context:Error.to_string() }
-}
-
-/// A helper to map a mutex poison error with recovery attempt.
-pub fn MapLockErrorWithRecovery<T>(Error:PoisonError<T>, RecoveryContext:&str) -> CommonError {
-	dev_log!(
-		"lifecycle",
-		"warn: [ApplicationState] Attempting recovery from poisoned lock in context: {}",
-		RecoveryContext
-	);
-
-	CommonError::StateLockPoisoned {
-		Context:format!("{} - Recovery attempted: {}", Error.to_string(), RecoveryContext),
-	}
-}
-
-/// Error handling result with recovery information.
-#[derive(Debug)]
-pub struct StateOperationResult<T> {
-	pub result:Result<T, CommonError>,
-
-	pub recovery_attempted:bool,
-
-	pub recovery_successful:bool,
 }

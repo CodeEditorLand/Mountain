@@ -463,12 +463,11 @@ pub fn AppLifecycleSetup(
 		}
 
 		// Set GlobalMementoPath now that we know the real Tauri app data dir
-		let GlobalMementoFile = AppDataDir.join("User/globalStorage/global.json");
+			let GlobalMementoFile = AppDataDir.join("User/globalStorage/global.json");
 
-		if let Ok(mut Path) = app_state.GlobalMementoPath.lock() {
+			let mut Path = app_state.GlobalMementoPath.lock();
 			*Path = GlobalMementoFile.clone();
 			dev_log!("lifecycle", "[Lifecycle] [Dirs] GlobalMementoPath: {}", Path.display());
-		}
 
 		// Boot-time memento hydration: use the crash-safe best-effort loader.
 		// A corrupted global.json (partial write during a previous crash, disk

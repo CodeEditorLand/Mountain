@@ -5,7 +5,7 @@
 use std::path::PathBuf;
 
 use crate::{
-	ApplicationState::State::ApplicationState::{ApplicationState, MapLockError},
+	ApplicationState::State::ApplicationState::ApplicationState,
 	dev_log,
 };
 
@@ -36,9 +36,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 		.Extension
 		.Registry
 		.ExtensionScanPaths
-		.lock()
-		.map_err(MapLockError)
-		.map_err(|e| format!("Failed to lock ExtensionScanPaths: {}", e))?;
+		.lock();
 
 	// Skip all built-in extensions when either the legacy
 	// `Skip` or the `.env.Land.Extensions` flag

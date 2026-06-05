@@ -1,33 +1,35 @@
 //! # DebugState Module (ApplicationState)
-
+//!
 //! ## RESPONSIBILITIES
 //! Manages debug provider state including debug configuration providers and
 //! adapter descriptor factories.
-
+//!
 //! ## ARCHITECTURAL ROLE
 //! DebugState is part of the **FeatureState** module, storing debug provider
 //! registrations keyed by debug type.
-
+//!
 //! ## KEY COMPONENTS
 //! - DebugState: Main struct containing debug provider registrations
 //! - Default: Initialization implementation
 //! - Helper methods: Debug registration management
-
+//!
 //! ## ERROR HANDLING
-//! - Thread-safe access via `Arc<tokio::sync::RwLock<...>>`
-//! - Proper lock error handling
-
+//! - Thread-safe access via `Arc<Mutex<...>>`
+//!
 //! ## LOGGING
 //! State changes are logged at appropriate levels (debug, info, warn, error).
-
+//!
 //! ## PERFORMANCE CONSIDERATIONS
 //! - Lock mutexes briefly and release immediately
 //! - Use Arc for shared ownership across threads
+//!
 
 use std::{
 	collections::HashMap,
-	sync::{Arc, Mutex as StandardMutex},
+	sync::Arc,
 };
+
+use parking_lot::Mutex;
 
 use crate::dev_log;
 
@@ -66,7 +68,7 @@ pub struct DebugSessionEntry {
 	/// Session ID assigned at `StartDebugging` time.
 	pub SessionId:String,
 
-	/// Debug type (e.g. `"node"`, `"chrome"`) - mirrors the configuration
+	/// Debug type (e.g. `node`, `chrome`) - mirrors the configuration
 	/// `type` field, used for diagnostics and routing.
 	pub DebugType:String,
 
@@ -91,17 +93,17 @@ pub struct DebugSessionEntry {
 #[derive(Clone)]
 pub struct DebugState {
 	/// Debug configuration providers organized by debug type.
-	pub DebugConfigurationProviders:Arc<StandardMutex<HashMap<String, DebugConfigurationProviderRegistration>>>,
+	pub DebugConfigurationProviders:Arc<Mutex<HashMap<String, DebugConfigurationProviderRegistration>>>,
 
 	/// Debug adapter descriptor factories organized by debug type.
-	pub DebugAdapterDescriptorFactories:Arc<StandardMutex<HashMap<String, DebugAdapterDescriptorFactoryRegistration>>>,
+	pub DebugAdapterDescriptorFactories:Arc<Mutex<HashMap<String, DebugAdapterDescriptorFactoryRegistration>>>,
 
 	/// Active debug sessions indexed by session-id. Populated by
 	/// `DebugProvider::StartDebugging` after the adapter is resolved
 	/// (and optionally spawned); removed by `DebugProvider::StopDebugging`
 	/// or when the adapter exits. `SendCommand` reads this map to find
 	/// the writer for the targeted session.
-	pub DebugSessions:Arc<StandardMutex<HashMap<String, DebugSessionEntry>>>,
+	pub DebugSessions:Arc<Mutex<HashMap<String, DebugSessionEntry>>>,
 }
 
 impl Default for DebugState {
@@ -109,11 +111,11 @@ impl Default for DebugState {
 		dev_log!("exthost", "[DebugState] Initializing default debug state...");
 
 		Self {
-			DebugConfigurationProviders:Arc::new(StandardMutex::new(HashMap::new())),
+			DebugConfigurationProviders:Arc::new(Mutex::new(HashMap::new())),
 
-			DebugAdapterDescriptorFactories:Arc::new(StandardMutex::new(HashMap::new())),
+			DebugAdapterDescriptorFactories:Arc::new(Mutex::new(HashMap::new())),
 
-			DebugSessions:Arc::new(StandardMutex::new(HashMap::new())),
+			DebugSessions:Arc::new(Mutex::new(HashMap::new())),
 		}
 	}
 }
@@ -129,10 +131,7 @@ impl DebugState {
 
 		sidecar_identifier:String,
 	) -> Result<(), String> {
-		let mut guard = self
-			.DebugConfigurationProviders
-			.lock()
-			.map_err(|e| format!("Failed to lock debug configuration providers: {}", e))?;
+		let mut guard = self.DebugConfigurationProviders.lock();
 
 		guard.insert(
 			debug_type,
@@ -147,10 +146,7 @@ impl DebugState {
 
 	/// Gets a debug configuration provider registration by debug type.
 	pub fn GetDebugConfigurationProvider(&self, debug_type:&str) -> Option<DebugConfigurationProviderRegistration> {
-		self.DebugConfigurationProviders
-			.lock()
-			.ok()
-			.and_then(|guard| guard.get(debug_type).cloned())
+		self.DebugConfigurationProviders.lock().get(debug_type).cloned()
 	}
 
 	/// Registers a debug adapter descriptor factory.
@@ -163,10 +159,7 @@ impl DebugState {
 
 		sidecar_identifier:String,
 	) -> Result<(), String> {
-		let mut guard = self
-			.DebugAdapterDescriptorFactories
-			.lock()
-			.map_err(|e| format!("Failed to lock debug adapter descriptor factories: {}", e))?;
+		let mut guard = self.DebugAdapterDescriptorFactories.lock();
 
 		guard.insert(
 			debug_type,
@@ -185,37 +178,23 @@ impl DebugState {
 
 		debug_type:&str,
 	) -> Option<DebugAdapterDescriptorFactoryRegistration> {
-		self.DebugAdapterDescriptorFactories
-			.lock()
-			.ok()
-			.and_then(|guard| guard.get(debug_type).cloned())
+		self.DebugAdapterDescriptorFactories.lock().get(debug_type).cloned()
 	}
 
 	/// Gets all registered debug configuration providers.
 	pub fn GetAllDebugConfigurationProviders(&self) -> HashMap<String, DebugConfigurationProviderRegistration> {
-		self.DebugConfigurationProviders
-			.lock()
-			.ok()
-			.map(|guard| guard.clone())
-			.unwrap_or_default()
+		self.DebugConfigurationProviders.lock().clone()
 	}
 
 	/// Gets all registered debug adapter descriptor factories.
 	pub fn GetAllDebugAdapterDescriptorFactories(&self) -> HashMap<String, DebugAdapterDescriptorFactoryRegistration> {
-		self.DebugAdapterDescriptorFactories
-			.lock()
-			.ok()
-			.map(|guard| guard.clone())
-			.unwrap_or_default()
+		self.DebugAdapterDescriptorFactories.lock().clone()
 	}
 
 	/// Records an active debug session. Replaces any prior entry under the
 	/// same `SessionId` (defensive: shouldn't happen since IDs are uuids).
 	pub fn RegisterDebugSession(&self, Entry:DebugSessionEntry) -> Result<(), String> {
-		let mut Guard = self
-			.DebugSessions
-			.lock()
-			.map_err(|Error| format!("Failed to lock DebugSessions: {}", Error))?;
+		let mut Guard = self.DebugSessions.lock();
 
 		Guard.insert(Entry.SessionId.clone(), Entry);
 
@@ -225,7 +204,7 @@ impl DebugState {
 	/// Resolves an active session by id. Returns a `Clone` so the caller
 	/// can drop the lock before doing IO with the entry's `StdinSender`.
 	pub fn GetDebugSession(&self, SessionId:&str) -> Option<DebugSessionEntry> {
-		self.DebugSessions.lock().ok().and_then(|Guard| Guard.get(SessionId).cloned())
+		self.DebugSessions.lock().get(SessionId).cloned()
 	}
 
 	/// Removes a session from the registry. Dropping the returned entry's
@@ -233,12 +212,13 @@ impl DebugState {
 	/// (their `recv()` returns `None`) which closes the adapter stdin and
 	/// the adapter shuts itself down.
 	pub fn UnregisterDebugSession(&self, SessionId:&str) -> Option<DebugSessionEntry> {
-		self.DebugSessions.lock().ok().and_then(|mut Guard| Guard.remove(SessionId))
+		let mut Guard = self.DebugSessions.lock();
+		Guard.remove(SessionId)
 	}
 
 	/// Snapshot of all active sessions. Used by diagnostic dev_log surfaces
 	/// and the reverse-RPC dispatch when no session-id is supplied.
 	pub fn GetAllDebugSessions(&self) -> HashMap<String, DebugSessionEntry> {
-		self.DebugSessions.lock().ok().map(|Guard| Guard.clone()).unwrap_or_default()
+		self.DebugSessions.lock().clone()
 	}
 }

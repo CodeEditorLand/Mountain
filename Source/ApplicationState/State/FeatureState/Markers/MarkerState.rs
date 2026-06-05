@@ -19,7 +19,6 @@
 //!
 //! ## ERROR HANDLING
 //! - Thread-safe access via `Arc<Mutex<...>>`
-//! - Proper lock error handling with `MapLockError` helpers
 //!
 //! ## LOGGING
 //! State changes are logged at appropriate levels (debug, info, warn, error).
@@ -39,10 +38,11 @@ use std::{
 	collections::HashMap,
 	sync::{
 		Arc,
-		Mutex as StandardMutex,
 		atomic::{AtomicU32, Ordering as AtomicOrdering},
 	},
 };
+
+use parking_lot::Mutex;
 
 use CommonLibrary::{
 	SourceControlManagement::DTO::{
@@ -59,21 +59,21 @@ use crate::{ApplicationState::DTO::CustomDocumentStateDTO::CustomDocumentStateDT
 #[derive(Clone)]
 pub struct MarkerState {
 	/// Active custom documents organized by ID.
-	pub ActiveCustomDocuments:Arc<StandardMutex<HashMap<String, CustomDocumentStateDTO>>>,
+	pub ActiveCustomDocuments:Arc<Mutex<HashMap<String, CustomDocumentStateDTO>>>,
 
 	/// Active status bar items organized by ID.
-	pub ActiveStatusBarItems:Arc<StandardMutex<HashMap<String, StatusBarEntryDTO>>>,
+	pub ActiveStatusBarItems:Arc<Mutex<HashMap<String, StatusBarEntryDTO>>>,
 
 	/// SCM providers organized by handle.
-	pub SourceControlManagementProviders:Arc<StandardMutex<HashMap<u32, SourceControlManagementProviderDTO>>>,
+	pub SourceControlManagementProviders:Arc<Mutex<HashMap<u32, SourceControlManagementProviderDTO>>>,
 
 	/// SCM groups organized by provider handle and group ID.
 	pub SourceControlManagementGroups:
-		Arc<StandardMutex<HashMap<u32, HashMap<String, SourceControlManagementGroupDTO>>>>,
+		Arc<Mutex<HashMap<u32, HashMap<String, SourceControlManagementGroupDTO>>>>,
 
 	/// SCM resources organized by provider handle and group ID.
 	pub SourceControlManagementResources:
-		Arc<StandardMutex<HashMap<u32, HashMap<String, Vec<SourceControlManagementResourceDTO>>>>>,
+		Arc<Mutex<HashMap<u32, HashMap<String, Vec<SourceControlManagementResourceDTO>>>>>,
 
 	/// Counter for generating unique SCM provider handles.
 	pub NextSourceControlManagementProviderHandle:Arc<AtomicU32>,
@@ -84,15 +84,15 @@ impl Default for MarkerState {
 		dev_log!("extensions", "[MarkerState] Initializing default marker state...");
 
 		Self {
-			ActiveCustomDocuments:Arc::new(StandardMutex::new(HashMap::new())),
+			ActiveCustomDocuments:Arc::new(Mutex::new(HashMap::new())),
 
-			ActiveStatusBarItems:Arc::new(StandardMutex::new(HashMap::new())),
+			ActiveStatusBarItems:Arc::new(Mutex::new(HashMap::new())),
 
-			SourceControlManagementProviders:Arc::new(StandardMutex::new(HashMap::new())),
+			SourceControlManagementProviders:Arc::new(Mutex::new(HashMap::new())),
 
-			SourceControlManagementGroups:Arc::new(StandardMutex::new(HashMap::new())),
+			SourceControlManagementGroups:Arc::new(Mutex::new(HashMap::new())),
 
-			SourceControlManagementResources:Arc::new(StandardMutex::new(HashMap::new())),
+			SourceControlManagementResources:Arc::new(Mutex::new(HashMap::new())),
 
 			NextSourceControlManagementProviderHandle:Arc::new(AtomicU32::new(1)),
 		}
@@ -108,55 +108,43 @@ impl MarkerState {
 
 	/// Gets all active custom documents.
 	pub fn GetCustomDocuments(&self) -> HashMap<String, CustomDocumentStateDTO> {
-		self.ActiveCustomDocuments
-			.lock()
-			.ok()
-			.map(|guard| guard.clone())
-			.unwrap_or_default()
+		self.ActiveCustomDocuments.lock().clone()
 	}
 
 	/// Adds or updates a custom document.
 	pub fn AddOrUpdateCustomDocument(&self, id:String, document:CustomDocumentStateDTO) {
-		if let Ok(mut guard) = self.ActiveCustomDocuments.lock() {
-			guard.insert(id, document);
+		let mut guard = self.ActiveCustomDocuments.lock();
+		guard.insert(id, document);
 
-			dev_log!("extensions", "[MarkerState] Custom document added/updated");
-		}
+		dev_log!("extensions", "[MarkerState] Custom document added/updated");
 	}
 
 	/// Removes a custom document by its ID.
 	pub fn RemoveCustomDocument(&self, id:&str) {
-		if let Ok(mut guard) = self.ActiveCustomDocuments.lock() {
-			guard.remove(id);
+		let mut guard = self.ActiveCustomDocuments.lock();
+		guard.remove(id);
 
-			dev_log!("extensions", "[MarkerState] Custom document removed: {}", id);
-		}
+		dev_log!("extensions", "[MarkerState] Custom document removed: {}", id);
 	}
 
 	/// Gets all active status bar items.
 	pub fn GetStatusBarItems(&self) -> HashMap<String, StatusBarEntryDTO> {
-		self.ActiveStatusBarItems
-			.lock()
-			.ok()
-			.map(|guard| guard.clone())
-			.unwrap_or_default()
+		self.ActiveStatusBarItems.lock().clone()
 	}
 
 	/// Adds or updates a status bar item.
 	pub fn AddOrUpdateStatusBarItem(&self, id:String, item:StatusBarEntryDTO) {
-		if let Ok(mut guard) = self.ActiveStatusBarItems.lock() {
-			guard.insert(id, item);
+		let mut guard = self.ActiveStatusBarItems.lock();
+		guard.insert(id, item);
 
-			dev_log!("extensions", "[MarkerState] Status bar item added/updated");
-		}
+		dev_log!("extensions", "[MarkerState] Status bar item added/updated");
 	}
 
 	/// Removes a status bar item by its ID.
 	pub fn RemoveStatusBarItem(&self, id:&str) {
-		if let Ok(mut guard) = self.ActiveStatusBarItems.lock() {
-			guard.remove(id);
+		let mut guard = self.ActiveStatusBarItems.lock();
+		guard.remove(id);
 
-			dev_log!("extensions", "[MarkerState] Status bar item removed: {}", id);
-		}
+		dev_log!("extensions", "[MarkerState] Status bar item removed: {}", id);
 	}
 }

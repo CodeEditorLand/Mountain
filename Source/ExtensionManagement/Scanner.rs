@@ -119,6 +119,7 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	FileSystem::{DTO::FileTypeDTO::FileTypeDTO, ReadDirectory::ReadDirectory, ReadFile::ReadFile},
 };
+use futures::future::join_all;
 use serde_json::{Map, Value};
 use tauri::Manager;
 
@@ -633,8 +634,7 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 		.Extension
 		.ScannedExtensions
 		.ScannedExtensions
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		.lock();
 
 	for Extension in Extensions.values() {
 		if let Some(contributes) = Extension.Contributes.as_ref().and_then(|v| v.as_object()) {

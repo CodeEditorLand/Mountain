@@ -34,8 +34,10 @@
 
 use std::{
 	collections::HashMap,
-	sync::{Arc, Mutex as StandardMutex},
+	sync::Arc,
 };
+
+use parking_lot::Mutex;
 
 use CommonLibrary::Error::CommonError::CommonError;
 
@@ -47,15 +49,14 @@ pub struct State {
 	/// Pending user interface request organized by request ID.
 	///
 	/// Each request has a oneshot sender for sending the response back.
-	pub PendingUserInterfaceRequest:
-		Arc<StandardMutex<HashMap<String, tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>>>>,
+	pub PendingUserInterfaceRequest:Arc<Mutex<HashMap<String, tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>>>>,
 }
 
 impl Default for State {
 	fn default() -> Self {
 		dev_log!("window", "[UIState] Initializing default UI state...");
 
-		Self { PendingUserInterfaceRequest:Arc::new(StandardMutex::new(HashMap::new())) }
+		Self { PendingUserInterfaceRequest:Arc::new(Mutex::new(HashMap::new())) }
 	}
 }
 
@@ -63,11 +64,7 @@ impl State {
 	/// Gets all pending user interface request IDs.
 	/// Note: Returns only the IDs since oneshot::Sender cannot be cloned.
 	pub fn GetPendingRequests(&self) -> Vec<String> {
-		self.PendingUserInterfaceRequest
-			.lock()
-			.ok()
-			.map(|guard| guard.keys().cloned().collect())
-			.unwrap_or_default()
+		self.PendingUserInterfaceRequest.lock().keys().cloned().collect()
 	}
 
 	/// Adds a pending user interface request.
@@ -78,11 +75,10 @@ impl State {
 
 		sender:tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>,
 	) {
-		if let Ok(mut guard) = self.PendingUserInterfaceRequest.lock() {
-			guard.insert(id, sender);
+		let mut guard = self.PendingUserInterfaceRequest.lock();
+		guard.insert(id, sender);
 
-			dev_log!("window", "[UIState] Pending UI request added");
-		}
+		dev_log!("window", "[UIState] Pending UI request added");
 	}
 
 	/// Removes a pending user interface request by its ID.
@@ -91,41 +87,29 @@ impl State {
 
 		id:&str,
 	) -> Option<tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>> {
-		if let Ok(mut guard) = self.PendingUserInterfaceRequest.lock() {
-			let sender = guard.remove(id);
+		let mut guard = self.PendingUserInterfaceRequest.lock();
+		let sender = guard.remove(id);
 
-			dev_log!("window", "[UIState] Pending UI request removed: {}", id);
+		dev_log!("window", "[UIState] Pending UI request removed: {}", id);
 
-			sender
-		} else {
-			None
-		}
+		sender
 	}
 
 	/// Clears all pending user interface requests.
 	pub fn ClearAll(&self) {
-		if let Ok(mut guard) = self.PendingUserInterfaceRequest.lock() {
-			guard.clear();
+		let mut guard = self.PendingUserInterfaceRequest.lock();
+		guard.clear();
 
-			dev_log!("window", "[UIState] All pending UI requests cleared");
-		}
+		dev_log!("window", "[UIState] All pending UI requests cleared");
 	}
 
 	/// Gets the count of pending user interface requests.
 	pub fn Count(&self) -> usize {
-		self.PendingUserInterfaceRequest
-			.lock()
-			.ok()
-			.map(|guard| guard.len())
-			.unwrap_or(0)
+		self.PendingUserInterfaceRequest.lock().len()
 	}
 
 	/// Checks if a pending user interface request exists.
 	pub fn Contains(&self, id:&str) -> bool {
-		self.PendingUserInterfaceRequest
-			.lock()
-			.ok()
-			.map(|guard| guard.contains_key(id))
-			.unwrap_or(false)
+		self.PendingUserInterfaceRequest.lock().contains_key(id)
 	}
 }

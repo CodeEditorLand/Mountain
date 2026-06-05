@@ -1,7 +1,9 @@
 use std::{
 	collections::HashMap,
-	sync::{Arc, Mutex as StandardMutex},
+	sync::Arc,
 };
+
+use parking_lot::Mutex;
 
 use serde_json::Value;
 
@@ -28,43 +30,41 @@ pub struct DecorationData {
 /// badges).
 #[derive(Clone)]
 pub struct DecorationsState {
-	Entries:Arc<StandardMutex<HashMap<String, Value>>>,
+	Entries:Arc<Mutex<HashMap<String, Value>>>,
 }
 
 impl Default for DecorationsState {
 	fn default() -> Self {
 		dev_log!("decorations", "[DecorationsState] Initializing default decorations state...");
 
-		Self { Entries:Arc::new(StandardMutex::new(HashMap::new())) }
+		Self { Entries:Arc::new(Mutex::new(HashMap::new())) }
 	}
 }
 
 impl DecorationsState {
 	/// Return the JSON decoration value for a URI, or `None` when not set.
 	pub fn GetDecoration(&self, Uri:&str) -> Option<Value> {
-		self.Entries.lock().ok().and_then(|Guard| Guard.get(Uri).cloned())
+		self.Entries.lock().get(Uri).cloned()
 	}
 
 	/// Store or overwrite the decoration for a URI.
 	pub fn SetDecoration(&self, Uri:&str, Decoration:Value) {
-		if let Ok(mut Guard) = self.Entries.lock() {
-			Guard.insert(Uri.to_owned(), Decoration);
+		let mut Guard = self.Entries.lock();
+		Guard.insert(Uri.to_owned(), Decoration);
 
-			dev_log!("decorations", "[DecorationsState] Decoration set for: {}", Uri);
-		}
+		dev_log!("decorations", "[DecorationsState] Decoration set for: {}", Uri);
 	}
 
 	/// Remove the decoration for a URI.
 	pub fn ClearDecoration(&self, Uri:&str) {
-		if let Ok(mut Guard) = self.Entries.lock() {
-			Guard.remove(Uri);
+		let mut Guard = self.Entries.lock();
+		Guard.remove(Uri);
 
-			dev_log!("decorations", "[DecorationsState] Decoration cleared for: {}", Uri);
-		}
+		dev_log!("decorations", "[DecorationsState] Decoration cleared for: {}", Uri);
 	}
 
 	/// Return all stored decorations as a cloned map.
 	pub fn GetAll(&self) -> HashMap<String, Value> {
-		self.Entries.lock().ok().map(|Guard| Guard.clone()).unwrap_or_default()
+		self.Entries.lock().clone()
 	}
 }

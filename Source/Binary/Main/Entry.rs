@@ -437,10 +437,10 @@ pub fn Fn() {
 		}
 
 		dev_log!(
-			"lifecycle",
-			"[Boot] [State] ApplicationState created with {} workspace folders.",
-			AppState.Workspace.WorkspaceFolders.lock().map(|f| f.len()).unwrap_or(0)
-		);
+				"lifecycle",
+				"[Boot] [State] ApplicationState created with {} workspace folders.",
+				AppState.Workspace.WorkspaceFolders.lock().len()
+			);
 
 		// Create Arc for application state to be managed by Tauri
 		let AppStateArcForClosure:SharedApplicationState = Arc::new(AppState);

@@ -32,8 +32,10 @@
 
 use std::{
 	collections::HashMap,
-	sync::{Arc, Mutex as StandardMutex},
+	sync::Arc,
 };
+
+use parking_lot::Mutex;
 
 use crate::{ApplicationState::DTO::WebviewStateDTO::WebviewStateDTO, dev_log};
 
@@ -41,64 +43,57 @@ use crate::{ApplicationState::DTO::WebviewStateDTO::WebviewStateDTO, dev_log};
 #[derive(Clone)]
 pub struct WebviewState {
 	/// Active webviews organized by ID.
-	pub ActiveWebviews:Arc<StandardMutex<HashMap<String, WebviewStateDTO>>>,
+	pub ActiveWebviews:Arc<Mutex<HashMap<String, WebviewStateDTO>>>,
 }
 
 impl Default for WebviewState {
 	fn default() -> Self {
 		dev_log!("extensions", "[WebviewState] Initializing default webview state...");
 
-		Self { ActiveWebviews:Arc::new(StandardMutex::new(HashMap::new())) }
+		Self { ActiveWebviews:Arc::new(Mutex::new(HashMap::new())) }
 	}
 }
 
 impl WebviewState {
 	/// Gets all active webviews.
 	pub fn GetAll(&self) -> HashMap<String, WebviewStateDTO> {
-		self.ActiveWebviews.lock().ok().map(|guard| guard.clone()).unwrap_or_default()
+		self.ActiveWebviews.lock().clone()
 	}
 
 	/// Gets a webview by its ID.
 	pub fn Get(&self, id:&str) -> Option<WebviewStateDTO> {
-		self.ActiveWebviews.lock().ok().and_then(|guard| guard.get(id).cloned())
+		self.ActiveWebviews.lock().get(id).cloned()
 	}
 
 	/// Adds or updates a webview.
 	pub fn AddOrUpdate(&self, id:String, webview:WebviewStateDTO) {
-		if let Ok(mut guard) = self.ActiveWebviews.lock() {
-			guard.insert(id, webview);
+		let mut guard = self.ActiveWebviews.lock();
+		guard.insert(id, webview);
 
-			dev_log!("extensions", "[WebviewState] Webview added/updated");
-		}
+		dev_log!("extensions", "[WebviewState] Webview added/updated");
 	}
 
 	/// Removes a webview by its ID.
 	pub fn Remove(&self, id:&str) {
-		if let Ok(mut guard) = self.ActiveWebviews.lock() {
-			guard.remove(id);
+		let mut guard = self.ActiveWebviews.lock();
+		guard.remove(id);
 
-			dev_log!("extensions", "[WebviewState] Webview removed: {}", id);
-		}
+		dev_log!("extensions", "[WebviewState] Webview removed: {}", id);
 	}
 
 	/// Clears all active webviews.
 	pub fn Clear(&self) {
-		if let Ok(mut guard) = self.ActiveWebviews.lock() {
-			guard.clear();
+		let mut guard = self.ActiveWebviews.lock();
+		guard.clear();
 
-			dev_log!("extensions", "[WebviewState] All webviews cleared");
-		}
+		dev_log!("extensions", "[WebviewState] All webviews cleared");
 	}
 
 	/// Gets the count of active webviews.
-	pub fn Count(&self) -> usize { self.ActiveWebviews.lock().ok().map(|guard| guard.len()).unwrap_or(0) }
+	pub fn Count(&self) -> usize { self.ActiveWebviews.lock().len() }
 
 	/// Checks if a webview exists.
 	pub fn Contains(&self, id:&str) -> bool {
-		self.ActiveWebviews
-			.lock()
-			.ok()
-			.map(|guard| guard.contains_key(id))
-			.unwrap_or(false)
+		self.ActiveWebviews.lock().contains_key(id)
 	}
 }

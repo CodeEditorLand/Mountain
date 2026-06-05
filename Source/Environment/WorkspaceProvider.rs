@@ -474,9 +474,9 @@ impl WorkspaceProvider for MountainEnvironment {
 		let Cap = Cap;
 
 		for Root in WalkRoots {
-			if Results.lock().map(|G| G.len() >= Cap).unwrap_or(true) {
-				break;
-			}
+				if Results.lock().len() >= Cap {
+					break;
+				}
 
 			let RootForRel = Root.clone();
 
@@ -508,9 +508,9 @@ impl WorkspaceProvider for MountainEnvironment {
 				let ResultsArc = ResultsArc.clone();
 
 				Box::new(move |EntryResult| {
-					if ResultsArc.lock().map(|G| G.len() >= Cap).unwrap_or(true) {
-						return ignore::WalkState::Quit;
-					}
+							if ResultsArc.lock().len() >= Cap {
+								return ignore::WalkState::Quit;
+							}
 
 					let Entry = match EntryResult {
 						Ok(E) => E,

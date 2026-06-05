@@ -8,7 +8,7 @@ use serde_json::{Value, json};
 use tauri::{State, command};
 
 use crate::{
-	ApplicationState::State::ApplicationState::{ApplicationState, MapLockError},
+	ApplicationState::State::ApplicationState::ApplicationState,
 	dev_log,
 };
 
@@ -25,8 +25,6 @@ pub async fn GetSCMResourceChanges(
 		.Markers
 		.SourceControlManagementResources
 		.lock()
-		.map_err(MapLockError)
-		.map_err(|Error| Error.to_string())?
 		.clone();
 
 	let provider_handle_u32 = ProviderIdentifier.parse::<u32>().unwrap_or(0);

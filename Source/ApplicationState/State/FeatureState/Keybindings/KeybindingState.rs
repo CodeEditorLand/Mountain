@@ -1,4 +1,6 @@
-use std::sync::{Arc, Mutex as StandardMutex};
+use std::sync::Arc;
+
+use parking_lot::Mutex;
 
 use serde::{Deserialize, Serialize};
 
@@ -20,14 +22,14 @@ pub struct KeybindingEntry {
 /// Stores dynamically registered keyboard shortcuts.
 #[derive(Clone)]
 pub struct KeybindingState {
-	Entries:Arc<StandardMutex<Vec<KeybindingEntry>>>,
+	Entries:Arc<Mutex<Vec<KeybindingEntry>>>,
 }
 
 impl Default for KeybindingState {
 	fn default() -> Self {
 		dev_log!("keybinding", "[KeybindingState] Initializing default keybinding state...");
 
-		Self { Entries:Arc::new(StandardMutex::new(Vec::new())) }
+		Self { Entries:Arc::new(Mutex::new(Vec::new())) }
 	}
 }
 
@@ -35,34 +37,33 @@ impl KeybindingState {
 	/// Register a dynamic keybinding (replaces any existing entry for the same
 	/// command).
 	pub fn AddKeybinding(&self, CommandId:String, Keybinding:String, When:Option<String>) {
-		if let Ok(mut Guard) = self.Entries.lock() {
-			Guard.retain(|E| E.CommandId != CommandId);
+		let mut Guard = self.Entries.lock();
+		Guard.retain(|E| E.CommandId != CommandId);
 
-			Guard.push(KeybindingEntry { CommandId:CommandId.clone(), Keybinding, When });
+		Guard.push(KeybindingEntry { CommandId:CommandId.clone(), Keybinding, When });
 
-			dev_log!("keybinding", "[KeybindingState] Keybinding added for: {}", CommandId);
-		}
+		dev_log!("keybinding", "[KeybindingState] Keybinding added for: {}", CommandId);
 	}
 
 	/// Remove all dynamic keybindings for a command.
 	pub fn RemoveKeybinding(&self, CommandId:&str) {
-		if let Ok(mut Guard) = self.Entries.lock() {
-			Guard.retain(|E| E.CommandId != CommandId);
+		let mut Guard = self.Entries.lock();
+		Guard.retain(|E| E.CommandId != CommandId);
 
-			dev_log!("keybinding", "[KeybindingState] Keybinding removed for: {}", CommandId);
-		}
+		dev_log!("keybinding", "[KeybindingState] Keybinding removed for: {}", CommandId);
 	}
 
 	/// Return the resolved keybinding string for a command, or `None`.
 	pub fn LookupKeybinding(&self, CommandId:&str) -> Option<String> {
 		self.Entries
 			.lock()
-			.ok()
-			.and_then(|Guard| Guard.iter().find(|E| E.CommandId == CommandId).map(|E| E.Keybinding.clone()))
+			.iter()
+			.find(|E| E.CommandId == CommandId)
+			.map(|E| E.Keybinding.clone())
 	}
 
 	/// Return all registered dynamic keybinding entries.
 	pub fn GetAllKeybindings(&self) -> Vec<KeybindingEntry> {
-		self.Entries.lock().ok().map(|Guard| Guard.clone()).unwrap_or_default()
+		self.Entries.lock().clone()
 	}
 }

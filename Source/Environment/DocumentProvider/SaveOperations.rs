@@ -41,7 +41,6 @@ use url::Url;
 
 use crate::{
 	ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO,
-	Environment::Utility,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
@@ -60,8 +59,7 @@ pub(super) async fn save_document(
 			.Feature
 			.Documents
 			.OpenDocuments
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			.lock();
 
 		if let Some(document) = open_documents_guard.get_mut(uri.as_str()) {
 			// For non-file URIs, use temporary file location
@@ -142,8 +140,7 @@ pub(super) async fn save_document_as(
 			.Feature
 			.Documents
 			.OpenDocuments
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			.lock();
 
 		guard
 			.get(original_uri.as_str())
@@ -161,8 +158,7 @@ pub(super) async fn save_document_as(
 			.Feature
 			.Documents
 			.OpenDocuments
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			.lock();
 
 		let old_document = guard.remove(original_uri.as_str());
 
@@ -212,8 +208,7 @@ pub(super) async fn save_all_documents(
 			.Feature
 			.Documents
 			.OpenDocuments
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			.lock();
 
 		open_documents_guard
 			.values()

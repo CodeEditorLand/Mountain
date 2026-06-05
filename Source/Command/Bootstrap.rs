@@ -131,7 +131,7 @@ use url::Url;
 use crate::{
 	ApplicationState::{
 		DTO::TreeViewStateDTO::TreeViewStateDTO,
-		State::ApplicationState::{ApplicationState, MapLockError},
+		State::ApplicationState::ApplicationState,
 	},
 	Environment::CommandProvider::CommandHandler,
 	FileSystem::FileExplorerViewProvider::Struct as FileExplorerViewProvider,
@@ -207,8 +207,6 @@ fn CommandFormatDocument(
 			.Workspace
 			.ActiveDocumentURI
 			.lock()
-			.map_err(MapLockError)
-			.map_err(|Error| Error.to_string())?
 			.clone()
 			.ok_or("No active document URI found in state".to_string())?;
 
@@ -278,8 +276,6 @@ fn CommandSaveDocument(
 			.Workspace
 			.ActiveDocumentURI
 			.lock()
-			.map_err(MapLockError)
-			.map_err(|Error| Error.to_string())?
 			.clone()
 			.ok_or("No active document URI found in state".to_string())?;
 
@@ -316,8 +312,6 @@ fn CommandCloseDocument(
 			.Workspace
 			.ActiveDocumentURI
 			.lock()
-			.map_err(MapLockError)
-			.map_err(|Error| Error.to_string())?
 			.clone()
 			.ok_or("No active document URI found in state".to_string())?;
 
@@ -549,8 +543,7 @@ pub fn RegisterNativeCommands(
 		.Extension
 		.Registry
 		.CommandRegistry
-		.lock()
-		.map_err(MapLockError)?;
+		.lock();
 
 	dev_log!("commands", "[Bootstrap] Registering native commands...");
 
@@ -631,8 +624,7 @@ pub fn RegisterNativeCommands(
 		.Feature
 		.TreeViews
 		.ActiveTreeViews
-		.lock()
-		.map_err(MapLockError)?;
+		.lock();
 
 	dev_log!("commands", "[Bootstrap] Registering native tree view providers...");
 

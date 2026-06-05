@@ -1,4 +1,6 @@
-use std::sync::{Arc, Mutex as StandardMutex};
+use std::sync::Arc;
+
+use parking_lot::Mutex;
 
 use crate::dev_log;
 
@@ -10,10 +12,10 @@ use crate::dev_log;
 #[derive(Clone)]
 pub struct NavigationHistoryState {
 	/// The ordered list of visited URIs (oldest first).
-	Stack:Arc<StandardMutex<Vec<String>>>,
+	Stack:Arc<Mutex<Vec<String>>>,
 
 	/// Current position in the stack (0-based). Points to the active entry.
-	Index:Arc<StandardMutex<usize>>,
+	Index:Arc<Mutex<usize>>,
 }
 
 impl Default for NavigationHistoryState {
@@ -24,9 +26,9 @@ impl Default for NavigationHistoryState {
 		);
 
 		Self {
-			Stack:Arc::new(StandardMutex::new(Vec::new())),
+			Stack:Arc::new(Mutex::new(Vec::new())),
 
-			Index:Arc::new(StandardMutex::new(0)),
+			Index:Arc::new(Mutex::new(0)),
 		}
 	}
 }
@@ -34,18 +36,18 @@ impl Default for NavigationHistoryState {
 impl NavigationHistoryState {
 	/// Returns `true` if there is a previous location to navigate to.
 	pub fn CanGoBack(&self) -> bool {
-		let Stack = self.Stack.lock().ok().map(|G| G.len()).unwrap_or(0);
+		let Stack = self.Stack.lock().len();
 
-		let Index = self.Index.lock().ok().as_deref().copied().unwrap_or(0);
+		let Index = *self.Index.lock();
 
 		Stack > 0 && Index > 0
 	}
 
 	/// Returns `true` if there is a next location to navigate to.
 	pub fn CanGoForward(&self) -> bool {
-		let Stack = self.Stack.lock().ok().map(|G| G.len()).unwrap_or(0);
+		let Stack = self.Stack.lock().len();
 
-		let Index = self.Index.lock().ok().as_deref().copied().unwrap_or(0);
+		let Index = *self.Index.lock();
 
 		Stack > 0 && Index + 1 < Stack
 	}
@@ -53,13 +55,13 @@ impl NavigationHistoryState {
 	/// Decrement the history index (go back). Returns the URI now active, or
 	/// `None` if already at the beginning.
 	pub fn GoBack(&self) -> Option<String> {
-		let Stack = self.Stack.lock().ok()?;
+		let Stack = self.Stack.lock();
 
 		if Stack.is_empty() {
 			return None;
 		}
 
-		let mut Index = self.Index.lock().ok()?;
+		let mut Index = self.Index.lock();
 
 		if *Index == 0 {
 			return None;
@@ -76,13 +78,13 @@ impl NavigationHistoryState {
 	/// Increment the history index (go forward). Returns the URI now active,
 	/// or `None` if already at the end.
 	pub fn GoForward(&self) -> Option<String> {
-		let Stack = self.Stack.lock().ok()?;
+		let Stack = self.Stack.lock();
 
 		if Stack.is_empty() {
 			return None;
 		}
 
-		let mut Index = self.Index.lock().ok()?;
+		let mut Index = self.Index.lock();
 
 		if *Index + 1 >= Stack.len() {
 			return None;
@@ -99,29 +101,31 @@ impl NavigationHistoryState {
 	/// Push a URI onto the navigation stack. Truncates any forward history
 	/// beyond the current index.
 	pub fn Push(&self, Uri:String) {
-		if let (Ok(mut Stack), Ok(mut Index)) = (self.Stack.lock(), self.Index.lock()) {
-			// Truncate forward history
-			let NewIndex = if Stack.is_empty() { 0 } else { *Index + 1 };
+		let mut Stack = self.Stack.lock();
+		let mut Index = self.Index.lock();
 
-			Stack.truncate(NewIndex);
+		// Truncate forward history
+		let NewIndex = if Stack.is_empty() { 0 } else { *Index + 1 };
 
-			Stack.push(Uri.clone());
+		Stack.truncate(NewIndex);
 
-			*Index = Stack.len() - 1;
-			dev_log!("history", "[NavigationHistoryState] Push uri={} index={}", Uri, *Index);
-		}
+		Stack.push(Uri.clone());
+
+		*Index = Stack.len() - 1;
+		dev_log!("history", "[NavigationHistoryState] Push uri={} index={}", Uri, *Index);
 	}
 
 	/// Clear the entire navigation stack.
 	pub fn Clear(&self) {
-		if let (Ok(mut Stack), Ok(mut Index)) = (self.Stack.lock(), self.Index.lock()) {
-			Stack.clear();
+		let mut Stack = self.Stack.lock();
+		let mut Index = self.Index.lock();
 
-			*Index = 0;
-			dev_log!("history", "[NavigationHistoryState] Stack cleared");
-		}
+		Stack.clear();
+
+		*Index = 0;
+		dev_log!("history", "[NavigationHistoryState] Stack cleared");
 	}
 
 	/// Return all URIs in the stack (oldest first).
-	pub fn GetStack(&self) -> Vec<String> { self.Stack.lock().ok().map(|G| G.clone()).unwrap_or_default() }
+	pub fn GetStack(&self) -> Vec<String> { self.Stack.lock().clone() }
 }

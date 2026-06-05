@@ -28,15 +28,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					.clone();
 
 				let Snapshot = {
-					let Guard = match scanned.lock() {
-						Ok(g) => g,
-						Err(error) => {
-							return Err(format!("Languages.GetAll: scanned-extensions lock poisoned: {}", error));
-						},
-					};
+							let Guard = scanned.lock();
 
-					Guard.clone()
-				};
+							Guard.clone()
+						};
 
 				let mut merged:HashMap<String, serde_json::Map<String, Value>> = HashMap::new();
 
