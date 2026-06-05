@@ -113,6 +113,13 @@ default = [
 	"scm-support",
 	"child-processes",
 	"Development",
+	# Experimental tier flags (Task 02 - High Priority)
+	"TierExtensionScanParallel",
+	"TierFileWatcherLayer4",
+	"TierFindFilesLayer4",
+	"TierGlobNative",
+	"TierFileSystemLayer4",
+	"TierRemoteProcedureCallSharedMemory",
 ]
 
 ExtensionHostCocoon = []
