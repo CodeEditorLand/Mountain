@@ -30,10 +30,7 @@
 //! - [ ] Implement webview lifecycle events
 //! - [ ] Add webview metrics collection
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
 
@@ -56,18 +53,15 @@ impl Default for WebviewState {
 
 impl WebviewState {
 	/// Gets all active webviews.
-	pub fn GetAll(&self) -> HashMap<String, WebviewStateDTO> {
-		self.ActiveWebviews.lock().clone()
-	}
+	pub fn GetAll(&self) -> HashMap<String, WebviewStateDTO> { self.ActiveWebviews.lock().clone() }
 
 	/// Gets a webview by its ID.
-	pub fn Get(&self, id:&str) -> Option<WebviewStateDTO> {
-		self.ActiveWebviews.lock().get(id).cloned()
-	}
+	pub fn Get(&self, id:&str) -> Option<WebviewStateDTO> { self.ActiveWebviews.lock().get(id).cloned() }
 
 	/// Adds or updates a webview.
 	pub fn AddOrUpdate(&self, id:String, webview:WebviewStateDTO) {
 		let mut guard = self.ActiveWebviews.lock();
+
 		guard.insert(id, webview);
 
 		dev_log!("extensions", "[WebviewState] Webview added/updated");
@@ -76,6 +70,7 @@ impl WebviewState {
 	/// Removes a webview by its ID.
 	pub fn Remove(&self, id:&str) {
 		let mut guard = self.ActiveWebviews.lock();
+
 		guard.remove(id);
 
 		dev_log!("extensions", "[WebviewState] Webview removed: {}", id);
@@ -84,6 +79,7 @@ impl WebviewState {
 	/// Clears all active webviews.
 	pub fn Clear(&self) {
 		let mut guard = self.ActiveWebviews.lock();
+
 		guard.clear();
 
 		dev_log!("extensions", "[WebviewState] All webviews cleared");
@@ -93,7 +89,5 @@ impl WebviewState {
 	pub fn Count(&self) -> usize { self.ActiveWebviews.lock().len() }
 
 	/// Checks if a webview exists.
-	pub fn Contains(&self, id:&str) -> bool {
-		self.ActiveWebviews.lock().contains_key(id)
-	}
+	pub fn Contains(&self, id:&str) -> bool { self.ActiveWebviews.lock().contains_key(id) }
 }

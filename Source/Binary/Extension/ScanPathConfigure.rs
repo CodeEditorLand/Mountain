@@ -4,10 +4,7 @@
 
 use std::path::PathBuf;
 
-use crate::{
-	ApplicationState::State::ApplicationState::ApplicationState,
-	dev_log,
-};
+use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
 
 /// Configures extension scan paths by resolving paths from the executable
 /// directory.
@@ -32,11 +29,7 @@ use crate::{
 pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<Vec<PathBuf>, String> {
 	dev_log!("extensions", "[Extensions] [ScanPaths] Locking ExtensionScanPaths...");
 
-	let mut ScanPathsGuard = AppState
-		.Extension
-		.Registry
-		.ExtensionScanPaths
-		.lock();
+	let mut ScanPathsGuard = AppState.Extension.Registry.ExtensionScanPaths.lock();
 
 	// Skip all built-in extensions when either the legacy
 	// `Skip` or the `.env.Land.Extensions` flag

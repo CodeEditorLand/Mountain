@@ -29,10 +29,7 @@
 //! - [ ] Implement document lifecycle events
 //! - [ ] Add document metrics collection
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
 
@@ -55,18 +52,15 @@ impl Default for DocumentState {
 
 impl DocumentState {
 	/// Gets all open documents.
-	pub fn GetAll(&self) -> HashMap<String, DocumentStateDTO> {
-		self.OpenDocuments.lock().clone()
-	}
+	pub fn GetAll(&self) -> HashMap<String, DocumentStateDTO> { self.OpenDocuments.lock().clone() }
 
 	/// Gets a document by its URI.
-	pub fn Get(&self, uri:&str) -> Option<DocumentStateDTO> {
-		self.OpenDocuments.lock().get(uri).cloned()
-	}
+	pub fn Get(&self, uri:&str) -> Option<DocumentStateDTO> { self.OpenDocuments.lock().get(uri).cloned() }
 
 	/// Adds or updates a document.
 	pub fn AddOrUpdate(&self, uri:String, document:DocumentStateDTO) {
 		let mut guard = self.OpenDocuments.lock();
+
 		guard.insert(uri, document);
 
 		dev_log!("model", "[DocumentState] Document added/updated");
@@ -75,6 +69,7 @@ impl DocumentState {
 	/// Removes a document by its URI.
 	pub fn Remove(&self, uri:&str) {
 		let mut guard = self.OpenDocuments.lock();
+
 		guard.remove(uri);
 
 		dev_log!("model", "[DocumentState] Document removed: {}", uri);
@@ -83,23 +78,18 @@ impl DocumentState {
 	/// Clears all open documents.
 	pub fn Clear(&self) {
 		let mut guard = self.OpenDocuments.lock();
+
 		guard.clear();
 
 		dev_log!("model", "[DocumentState] All documents cleared");
 	}
 
 	/// Gets the count of open documents.
-	pub fn Count(&self) -> usize {
-		self.OpenDocuments.lock().len()
-	}
+	pub fn Count(&self) -> usize { self.OpenDocuments.lock().len() }
 
 	/// Checks if a document exists.
-	pub fn Contains(&self, uri:&str) -> bool {
-		self.OpenDocuments.lock().contains_key(uri)
-	}
+	pub fn Contains(&self, uri:&str) -> bool { self.OpenDocuments.lock().contains_key(uri) }
 
 	/// Gets all document URIs.
-	pub fn GetURIs(&self) -> Vec<String> {
-		self.OpenDocuments.lock().keys().cloned().collect()
-	}
+	pub fn GetURIs(&self) -> Vec<String> { self.OpenDocuments.lock().keys().cloned().collect() }
 }

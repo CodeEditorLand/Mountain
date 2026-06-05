@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use parking_lot::Mutex;
 use tokio::sync::Notify;
-
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 use crate::{IPC::SkyEmit::LogSkyEmit, dev_log};
@@ -29,11 +28,7 @@ impl Default for LifecyclePhaseState {
 			"[LifecyclePhaseState] Initializing default lifecycle state (phase 1: Starting)..."
 		);
 
-		Self {
-			CurrentPhase:Arc::new(Mutex::new(1)),
-
-			PhaseNotify:Arc::new(Notify::new()),
-		}
+		Self { CurrentPhase:Arc::new(Mutex::new(1)), PhaseNotify:Arc::new(Notify::new()) }
 	}
 }
 
@@ -44,6 +39,7 @@ impl LifecyclePhaseState {
 	/// Advance the lifecycle phase. Only advances forward - never backwards.
 	pub fn SetPhase(&self, NewPhase:Phase) {
 		let mut Guard = self.CurrentPhase.lock();
+
 		if NewPhase > *Guard {
 			dev_log!("lifecycle", "[LifecyclePhaseState] Phase advanced: {} → {}", *Guard, NewPhase);
 

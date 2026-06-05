@@ -30,10 +30,7 @@
 //! - [ ] Implement provider lifecycle events
 //! - [ ] Add provider metrics collection
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
 
@@ -59,9 +56,7 @@ impl Default for Registration {
 
 impl Registration {
 	/// Gets all registered language providers.
-	pub fn GetProviders(&self) -> HashMap<u32, ProviderRegistrationDTO> {
-		self.LanguageProviders.lock().clone()
-	}
+	pub fn GetProviders(&self) -> HashMap<u32, ProviderRegistrationDTO> { self.LanguageProviders.lock().clone() }
 
 	/// Gets a provider by its handle.
 	pub fn GetProvider(&self, handle:u32) -> Option<ProviderRegistrationDTO> {
@@ -71,6 +66,7 @@ impl Registration {
 	/// Registers a language provider.
 	pub fn RegisterProvider(&self, handle:u32, provider:ProviderRegistrationDTO) {
 		let mut guard = self.LanguageProviders.lock();
+
 		guard.insert(handle, provider);
 
 		// Duplicate of the `provider-register` log line emitted by
@@ -89,6 +85,7 @@ impl Registration {
 	/// Unregisters a language provider.
 	pub fn UnregisterProvider(&self, handle:u32) {
 		let mut guard = self.LanguageProviders.lock();
+
 		guard.remove(&handle);
 
 		dev_log!(

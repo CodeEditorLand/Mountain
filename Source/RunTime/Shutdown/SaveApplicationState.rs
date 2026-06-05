@@ -9,19 +9,9 @@ impl ApplicationRunTime {
 	pub async fn SaveApplicationState(&self) -> Result<(), CommonError> {
 		dev_log!("lifecycle", "[ApplicationRunTime] Saving application state...");
 
-		let GlobalMementoGuard = self
-			.Environment
-			.ApplicationState
-			.Configuration
-			.MementoGlobalStorage
-			.lock();
+		let GlobalMementoGuard = self.Environment.ApplicationState.Configuration.MementoGlobalStorage.lock();
 
-		let GlobalMementoPath = self
-			.Environment
-			.ApplicationState
-			.GlobalMementoPath
-			.lock()
-			.clone();
+		let GlobalMementoPath = self.Environment.ApplicationState.GlobalMementoPath.lock().clone();
 
 		if let Some(Parent) = GlobalMementoPath.parent() {
 			if !Parent.exists() {

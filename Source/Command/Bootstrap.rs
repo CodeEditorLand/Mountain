@@ -129,10 +129,7 @@ use tauri::{AppHandle, WebviewWindow, Wry};
 use url::Url;
 
 use crate::{
-	ApplicationState::{
-		DTO::TreeViewStateDTO::TreeViewStateDTO,
-		State::ApplicationState::ApplicationState,
-	},
+	ApplicationState::{DTO::TreeViewStateDTO::TreeViewStateDTO, State::ApplicationState::ApplicationState},
 	Environment::CommandProvider::CommandHandler,
 	FileSystem::FileExplorerViewProvider::Struct as FileExplorerViewProvider,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
@@ -539,11 +536,7 @@ pub fn RegisterNativeCommands(
 	ApplicationState:&Arc<ApplicationState>,
 ) -> Result<(), CommonError> {
 	// --- Command Registration ---
-	let mut CommandRegistry = ApplicationState
-		.Extension
-		.Registry
-		.CommandRegistry
-		.lock();
+	let mut CommandRegistry = ApplicationState.Extension.Registry.CommandRegistry.lock();
 
 	dev_log!("commands", "[Bootstrap] Registering native commands...");
 
@@ -620,11 +613,7 @@ pub fn RegisterNativeCommands(
 	// Current implementation logs without performing actual validation checks.
 
 	// --- Tree View Provider Registration ---
-	let mut TreeViewRegistry = ApplicationState
-		.Feature
-		.TreeViews
-		.ActiveTreeViews
-		.lock();
+	let mut TreeViewRegistry = ApplicationState.Feature.TreeViews.ActiveTreeViews.lock();
 
 	dev_log!("commands", "[Bootstrap] Registering native tree view providers...");
 

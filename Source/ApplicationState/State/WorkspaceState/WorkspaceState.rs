@@ -36,11 +36,9 @@
 //! - [ ] Implement workspace change events
 //! - [ ] Add workspace metrics collection
 
-use std::{
-	sync::{
-		Arc,
-		atomic::{AtomicBool, Ordering as AtomicOrdering},
-	},
+use std::sync::{
+	Arc,
+	atomic::{AtomicBool, Ordering as AtomicOrdering},
 };
 
 use parking_lot::Mutex;
@@ -99,37 +97,34 @@ impl State {
 	}
 
 	/// Gets the workspace configuration path.
-	pub fn GetConfigurationPath(&self) -> Option<std::path::PathBuf> {
-		self.WorkspaceConfigurationPath.lock().clone()
-	}
+	pub fn GetConfigurationPath(&self) -> Option<std::path::PathBuf> { self.WorkspaceConfigurationPath.lock().clone() }
 
 	/// Sets the workspace configuration path.
 	pub fn SetConfigurationPath(&self, path:Option<std::path::PathBuf>) {
 		let mut guard = self.WorkspaceConfigurationPath.lock();
+
 		*guard = path.clone();
 		dev_log!("workspaces", "[WorkspaceState] Configuration path updated to: {:?}", path);
 	}
 
 	/// Gets the currently active document URI.
-	pub fn GetActiveDocumentURI(&self) -> Option<String> {
-		self.ActiveDocumentURI.lock().clone()
-	}
+	pub fn GetActiveDocumentURI(&self) -> Option<String> { self.ActiveDocumentURI.lock().clone() }
 
 	/// Sets the currently active document URI.
 	pub fn SetActiveDocumentURI(&self, uri:Option<String>) {
 		let mut guard = self.ActiveDocumentURI.lock();
+
 		*guard = uri.clone();
 		dev_log!("workspaces", "[WorkspaceState] Active document URI updated to: {:?}", uri);
 	}
 
 	/// Gets all workspace folders.
-	pub fn GetWorkspaceFolders(&self) -> Vec<WorkspaceFolderStateDTO> {
-		self.WorkspaceFolders.lock().clone()
-	}
+	pub fn GetWorkspaceFolders(&self) -> Vec<WorkspaceFolderStateDTO> { self.WorkspaceFolders.lock().clone() }
 
 	/// Sets the workspace folders.
 	pub fn SetWorkspaceFolders(&self, folders:Vec<WorkspaceFolderStateDTO>) {
 		let mut guard = self.WorkspaceFolders.lock();
+
 		*guard = folders;
 		dev_log!(
 			"workspaces",
@@ -153,6 +148,7 @@ impl State {
 		folders:Vec<WorkspaceFolderStateDTO>,
 	) -> (Vec<WorkspaceFolderStateDTO>, Vec<WorkspaceFolderStateDTO>) {
 		let mut guard = self.WorkspaceFolders.lock();
+
 		let Old = guard.clone();
 
 		let OldUris:std::collections::HashSet<String> = Old.iter().map(|F| F.URI.to_string()).collect();
@@ -181,13 +177,12 @@ impl State {
 	}
 
 	/// Gets the window state.
-	pub fn GetWindowState(&self) -> WindowStateDTO {
-		self.WindowState.lock().clone()
-	}
+	pub fn GetWindowState(&self) -> WindowStateDTO { self.WindowState.lock().clone() }
 
 	/// Sets the window state.
 	pub fn SetWindowState(&self, state:WindowStateDTO) {
 		let mut guard = self.WindowState.lock();
+
 		*guard = state;
 		dev_log!("workspaces", "[WorkspaceState] Window state updated");
 	}

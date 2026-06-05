@@ -17,11 +17,7 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, Environ
 pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, CommonError> {
 	let mut MergedDefaults = Map::new();
 
-	let Extensions = State
-		.Extension
-		.ScannedExtensions
-		.ScannedExtensions
-		.lock();
+	let Extensions = State.Extension.ScannedExtensions.ScannedExtensions.lock();
 
 	for Extension in Extensions.values() {
 		if let Some(contributes) = Extension.Contributes.as_ref().and_then(|v| v.as_object()) {

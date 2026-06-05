@@ -630,11 +630,7 @@ fn ResolveNLSPlaceholdersInner(Value:&mut Value, NLS:&Map<String, Value>, Replac
 pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, CommonError> {
 	let mut MergedDefaults = Map::new();
 
-	let Extensions = State
-		.Extension
-		.ScannedExtensions
-		.ScannedExtensions
-		.lock();
+	let Extensions = State.Extension.ScannedExtensions.ScannedExtensions.lock();
 
 	for Extension in Extensions.values() {
 		if let Some(contributes) = Extension.Contributes.as_ref().and_then(|v| v.as_object()) {

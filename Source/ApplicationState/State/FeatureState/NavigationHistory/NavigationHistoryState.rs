@@ -25,11 +25,7 @@ impl Default for NavigationHistoryState {
 			"[NavigationHistoryState] Initializing default navigation history state..."
 		);
 
-		Self {
-			Stack:Arc::new(Mutex::new(Vec::new())),
-
-			Index:Arc::new(Mutex::new(0)),
-		}
+		Self { Stack:Arc::new(Mutex::new(Vec::new())), Index:Arc::new(Mutex::new(0)) }
 	}
 }
 
@@ -102,6 +98,7 @@ impl NavigationHistoryState {
 	/// beyond the current index.
 	pub fn Push(&self, Uri:String) {
 		let mut Stack = self.Stack.lock();
+
 		let mut Index = self.Index.lock();
 
 		// Truncate forward history
@@ -118,6 +115,7 @@ impl NavigationHistoryState {
 	/// Clear the entire navigation stack.
 	pub fn Clear(&self) {
 		let mut Stack = self.Stack.lock();
+
 		let mut Index = self.Index.lock();
 
 		Stack.clear();

@@ -54,12 +54,7 @@ pub(super) async fn save_document(
 	dev_log!("model", "[DocumentProvider] Saving document: {}", uri);
 
 	let (content_bytes, file_path) = {
-		let mut open_documents_guard = environment
-			.ApplicationState
-			.Feature
-			.Documents
-			.OpenDocuments
-			.lock();
+		let mut open_documents_guard = environment.ApplicationState.Feature.Documents.OpenDocuments.lock();
 
 		if let Some(document) = open_documents_guard.get_mut(uri.as_str()) {
 			// For non-file URIs, use temporary file location
@@ -135,12 +130,7 @@ pub(super) async fn save_document_as(
 	})?;
 
 	let original_content = {
-		let guard = environment
-			.ApplicationState
-			.Feature
-			.Documents
-			.OpenDocuments
-			.lock();
+		let guard = environment.ApplicationState.Feature.Documents.OpenDocuments.lock();
 
 		guard
 			.get(original_uri.as_str())
@@ -153,12 +143,7 @@ pub(super) async fn save_document_as(
 		.await?;
 
 	let new_document_state = {
-		let mut guard = environment
-			.ApplicationState
-			.Feature
-			.Documents
-			.OpenDocuments
-			.lock();
+		let mut guard = environment.ApplicationState.Feature.Documents.OpenDocuments.lock();
 
 		let old_document = guard.remove(original_uri.as_str());
 
@@ -203,12 +188,7 @@ pub(super) async fn save_all_documents(
 	);
 
 	let uris_to_save:Vec<Url> = {
-		let open_documents_guard = environment
-			.ApplicationState
-			.Feature
-			.Documents
-			.OpenDocuments
-			.lock();
+		let open_documents_guard = environment.ApplicationState.Feature.Documents.OpenDocuments.lock();
 
 		open_documents_guard
 			.values()

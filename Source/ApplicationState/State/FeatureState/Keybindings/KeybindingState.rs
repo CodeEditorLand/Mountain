@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use parking_lot::Mutex;
-
 use serde::{Deserialize, Serialize};
 
 use crate::dev_log;
@@ -38,6 +37,7 @@ impl KeybindingState {
 	/// command).
 	pub fn AddKeybinding(&self, CommandId:String, Keybinding:String, When:Option<String>) {
 		let mut Guard = self.Entries.lock();
+
 		Guard.retain(|E| E.CommandId != CommandId);
 
 		Guard.push(KeybindingEntry { CommandId:CommandId.clone(), Keybinding, When });
@@ -48,6 +48,7 @@ impl KeybindingState {
 	/// Remove all dynamic keybindings for a command.
 	pub fn RemoveKeybinding(&self, CommandId:&str) {
 		let mut Guard = self.Entries.lock();
+
 		Guard.retain(|E| E.CommandId != CommandId);
 
 		dev_log!("keybinding", "[KeybindingState] Keybinding removed for: {}", CommandId);
@@ -63,7 +64,5 @@ impl KeybindingState {
 	}
 
 	/// Return all registered dynamic keybinding entries.
-	pub fn GetAllKeybindings(&self) -> Vec<KeybindingEntry> {
-		self.Entries.lock().clone()
-	}
+	pub fn GetAllKeybindings(&self) -> Vec<KeybindingEntry> { self.Entries.lock().clone() }
 }

@@ -41,7 +41,6 @@ use std::{
 };
 
 use parking_lot::Mutex;
-
 use tauri::Wry;
 
 use crate::{Environment::CommandProvider::CommandHandler, dev_log};
@@ -112,6 +111,7 @@ impl Registry {
 		let name_for_log = name.clone();
 
 		let mut guard = self.CommandRegistry.lock();
+
 		guard.insert(name, handler);
 
 		dev_log!("extensions", "[ExtensionRegistry] Command registered: {}", name_for_log);
@@ -120,19 +120,19 @@ impl Registry {
 	/// Unregisters a command.
 	pub fn UnregisterCommand(&self, name:&str) {
 		let mut guard = self.CommandRegistry.lock();
+
 		guard.remove(name);
 
 		dev_log!("extensions", "[ExtensionRegistry] Command unregistered: {}", name);
 	}
 
 	/// Gets all extension scan paths.
-	pub fn GetExtensionScanPaths(&self) -> Vec<PathBuf> {
-		self.ExtensionScanPaths.lock().clone()
-	}
+	pub fn GetExtensionScanPaths(&self) -> Vec<PathBuf> { self.ExtensionScanPaths.lock().clone() }
 
 	/// Sets the extension scan paths.
 	pub fn SetExtensionScanPaths(&self, paths:Vec<PathBuf>) {
 		let mut guard = self.ExtensionScanPaths.lock();
+
 		*guard = paths;
 		dev_log!(
 			"extensions",
@@ -144,19 +144,19 @@ impl Registry {
 	/// Adds an extension scan path.
 	pub fn AddExtensionScanPath(&self, path:PathBuf) {
 		let mut guard = self.ExtensionScanPaths.lock();
+
 		guard.push(path.clone());
 
 		dev_log!("extensions", "[ExtensionRegistry] Extension scan path added: {:?}", path);
 	}
 
 	/// Gets all enabled proposed APIs.
-	pub fn GetEnabledProposedAPIs(&self) -> HashMap<String, Vec<String>> {
-		self.EnabledProposedAPIs.lock().clone()
-	}
+	pub fn GetEnabledProposedAPIs(&self) -> HashMap<String, Vec<String>> { self.EnabledProposedAPIs.lock().clone() }
 
 	/// Sets the enabled proposed APIs.
 	pub fn SetEnabledProposedAPIs(&self, apis:HashMap<String, Vec<String>>) {
 		let mut guard = self.EnabledProposedAPIs.lock();
+
 		*guard = apis;
 		dev_log!(
 			"extensions",
@@ -168,6 +168,7 @@ impl Registry {
 	/// Enables a proposed API for an extension.
 	pub fn EnableProposedAPI(&self, extension_id:String, api_name:String) {
 		let mut guard = self.EnabledProposedAPIs.lock();
+
 		guard.entry(extension_id).or_insert_with(Vec::new).push(api_name);
 
 		dev_log!("extensions", "[ExtensionRegistry] Proposed API enabled");

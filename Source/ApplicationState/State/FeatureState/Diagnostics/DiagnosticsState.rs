@@ -31,10 +31,7 @@
 //! - [ ] Implement diagnostics change events
 //! - [ ] Add diagnostics metrics collection
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
 
@@ -59,9 +56,7 @@ impl Default for DiagnosticsState {
 
 impl DiagnosticsState {
 	/// Gets all diagnostics for all owners and resources.
-	pub fn GetAll(&self) -> HashMap<String, HashMap<String, Vec<MarkerDataDTO>>> {
-		self.DiagnosticsMap.lock().clone()
-	}
+	pub fn GetAll(&self) -> HashMap<String, HashMap<String, Vec<MarkerDataDTO>>> { self.DiagnosticsMap.lock().clone() }
 
 	/// Gets all diagnostics for a specific owner.
 	pub fn GetByOwner(&self, owner:&str) -> HashMap<String, Vec<MarkerDataDTO>> {
@@ -80,6 +75,7 @@ impl DiagnosticsState {
 	/// Sets all diagnostics for a specific owner.
 	pub fn SetByOwner(&self, owner:String, diagnostics:HashMap<String, Vec<MarkerDataDTO>>) {
 		let mut guard = self.DiagnosticsMap.lock();
+
 		guard.insert(owner, diagnostics);
 
 		dev_log!("extensions", "[DiagnosticsState] Diagnostics updated for owner");
@@ -88,6 +84,7 @@ impl DiagnosticsState {
 	/// Sets diagnostics for a specific owner and resource.
 	pub fn SetByOwnerAndResource(&self, owner:String, resource:String, markers:Vec<MarkerDataDTO>) {
 		let mut guard = self.DiagnosticsMap.lock();
+
 		guard.entry(owner).or_insert_with(HashMap::new).insert(resource, markers);
 
 		dev_log!("extensions", "[DiagnosticsState] Diagnostics updated for owner and resource");
@@ -96,6 +93,7 @@ impl DiagnosticsState {
 	/// Clears all diagnostics for a specific owner.
 	pub fn ClearByOwner(&self, owner:&str) {
 		let mut guard = self.DiagnosticsMap.lock();
+
 		guard.remove(owner);
 
 		dev_log!("extensions", "[DiagnosticsState] Diagnostics cleared for owner: {}", owner);
@@ -104,6 +102,7 @@ impl DiagnosticsState {
 	/// Clears diagnostics for a specific owner and resource.
 	pub fn ClearByOwnerAndResource(&self, owner:&str, resource:&str) {
 		let mut guard = self.DiagnosticsMap.lock();
+
 		if let Some(resources) = guard.get_mut(owner) {
 			resources.remove(resource);
 
@@ -114,6 +113,7 @@ impl DiagnosticsState {
 	/// Clears all diagnostics.
 	pub fn ClearAll(&self) {
 		let mut guard = self.DiagnosticsMap.lock();
+
 		guard.clear();
 
 		dev_log!("extensions", "[DiagnosticsState] All diagnostics cleared");

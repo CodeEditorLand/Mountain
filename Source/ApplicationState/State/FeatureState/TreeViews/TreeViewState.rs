@@ -29,10 +29,7 @@
 //! - [ ] Implement tree view lifecycle events
 //! - [ ] Add tree view metrics collection
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
 
@@ -55,18 +52,15 @@ impl Default for TreeViewState {
 
 impl TreeViewState {
 	/// Gets all active tree views.
-	pub fn GetAll(&self) -> HashMap<String, TreeViewStateDTO> {
-		self.ActiveTreeViews.lock().clone()
-	}
+	pub fn GetAll(&self) -> HashMap<String, TreeViewStateDTO> { self.ActiveTreeViews.lock().clone() }
 
 	/// Gets a tree view by its ID.
-	pub fn Get(&self, id:&str) -> Option<TreeViewStateDTO> {
-		self.ActiveTreeViews.lock().get(id).cloned()
-	}
+	pub fn Get(&self, id:&str) -> Option<TreeViewStateDTO> { self.ActiveTreeViews.lock().get(id).cloned() }
 
 	/// Adds or updates a tree view.
 	pub fn AddOrUpdate(&self, id:String, tree_view:TreeViewStateDTO) {
 		let mut guard = self.ActiveTreeViews.lock();
+
 		guard.insert(id, tree_view);
 
 		dev_log!("extensions", "[TreeViewState] Tree view added/updated");
@@ -75,6 +69,7 @@ impl TreeViewState {
 	/// Removes a tree view by its ID.
 	pub fn Remove(&self, id:&str) {
 		let mut guard = self.ActiveTreeViews.lock();
+
 		guard.remove(id);
 
 		dev_log!("extensions", "[TreeViewState] Tree view removed: {}", id);
@@ -83,18 +78,15 @@ impl TreeViewState {
 	/// Clears all active tree views.
 	pub fn Clear(&self) {
 		let mut guard = self.ActiveTreeViews.lock();
+
 		guard.clear();
 
 		dev_log!("extensions", "[TreeViewState] All tree views cleared");
 	}
 
 	/// Gets the count of active tree views.
-	pub fn Count(&self) -> usize {
-		self.ActiveTreeViews.lock().len()
-	}
+	pub fn Count(&self) -> usize { self.ActiveTreeViews.lock().len() }
 
 	/// Checks if a tree view exists.
-	pub fn Contains(&self, id:&str) -> bool {
-		self.ActiveTreeViews.lock().contains_key(id)
-	}
+	pub fn Contains(&self, id:&str) -> bool { self.ActiveTreeViews.lock().contains_key(id) }
 }

@@ -43,7 +43,6 @@ use std::{
 };
 
 use parking_lot::Mutex;
-
 use CommonLibrary::{
 	SourceControlManagement::DTO::{
 		SourceControlManagementGroupDTO::SourceControlManagementGroupDTO,
@@ -68,8 +67,7 @@ pub struct MarkerState {
 	pub SourceControlManagementProviders:Arc<Mutex<HashMap<u32, SourceControlManagementProviderDTO>>>,
 
 	/// SCM groups organized by provider handle and group ID.
-	pub SourceControlManagementGroups:
-		Arc<Mutex<HashMap<u32, HashMap<String, SourceControlManagementGroupDTO>>>>,
+	pub SourceControlManagementGroups:Arc<Mutex<HashMap<u32, HashMap<String, SourceControlManagementGroupDTO>>>>,
 
 	/// SCM resources organized by provider handle and group ID.
 	pub SourceControlManagementResources:
@@ -114,6 +112,7 @@ impl MarkerState {
 	/// Adds or updates a custom document.
 	pub fn AddOrUpdateCustomDocument(&self, id:String, document:CustomDocumentStateDTO) {
 		let mut guard = self.ActiveCustomDocuments.lock();
+
 		guard.insert(id, document);
 
 		dev_log!("extensions", "[MarkerState] Custom document added/updated");
@@ -122,19 +121,19 @@ impl MarkerState {
 	/// Removes a custom document by its ID.
 	pub fn RemoveCustomDocument(&self, id:&str) {
 		let mut guard = self.ActiveCustomDocuments.lock();
+
 		guard.remove(id);
 
 		dev_log!("extensions", "[MarkerState] Custom document removed: {}", id);
 	}
 
 	/// Gets all active status bar items.
-	pub fn GetStatusBarItems(&self) -> HashMap<String, StatusBarEntryDTO> {
-		self.ActiveStatusBarItems.lock().clone()
-	}
+	pub fn GetStatusBarItems(&self) -> HashMap<String, StatusBarEntryDTO> { self.ActiveStatusBarItems.lock().clone() }
 
 	/// Adds or updates a status bar item.
 	pub fn AddOrUpdateStatusBarItem(&self, id:String, item:StatusBarEntryDTO) {
 		let mut guard = self.ActiveStatusBarItems.lock();
+
 		guard.insert(id, item);
 
 		dev_log!("extensions", "[MarkerState] Status bar item added/updated");
@@ -143,6 +142,7 @@ impl MarkerState {
 	/// Removes a status bar item by its ID.
 	pub fn RemoveStatusBarItem(&self, id:&str) {
 		let mut guard = self.ActiveStatusBarItems.lock();
+
 		guard.remove(id);
 
 		dev_log!("extensions", "[MarkerState] Status bar item removed: {}", id);

@@ -40,10 +40,7 @@
 //! - [ ] Implement configuration change events
 //! - [ ] Add configuration diffing
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
 
@@ -83,25 +80,23 @@ impl Default for State {
 
 impl State {
 	/// Gets the global configuration.
-	pub fn GetGlobalConfiguration(&self) -> serde_json::Value {
-		self.GlobalConfiguration.lock().clone()
-	}
+	pub fn GetGlobalConfiguration(&self) -> serde_json::Value { self.GlobalConfiguration.lock().clone() }
 
 	/// Sets the global configuration.
 	pub fn SetGlobalConfiguration(&self, config:serde_json::Value) {
 		let mut guard = self.GlobalConfiguration.lock();
+
 		*guard = config;
 		dev_log!("config", "[ConfigurationState] Global configuration updated");
 	}
 
 	/// Gets the workspace configuration.
-	pub fn GetWorkspaceConfiguration(&self) -> serde_json::Value {
-		self.WorkspaceConfiguration.lock().clone()
-	}
+	pub fn GetWorkspaceConfiguration(&self) -> serde_json::Value { self.WorkspaceConfiguration.lock().clone() }
 
 	/// Sets the workspace configuration.
 	pub fn SetWorkspaceConfiguration(&self, config:serde_json::Value) {
 		let mut guard = self.WorkspaceConfiguration.lock();
+
 		*guard = config;
 		dev_log!("config", "[ConfigurationState] Workspace configuration updated");
 	}
@@ -117,6 +112,7 @@ impl State {
 	/// assignment.
 	pub fn SetGlobalValue(&self, path:&str, value:serde_json::Value) {
 		let mut config_guard = self.GlobalConfiguration.lock();
+
 		// Clone the current config for manipulation
 		let current_config = (*config_guard).clone();
 
@@ -142,13 +138,12 @@ impl State {
 	}
 
 	/// Gets all global memento storage.
-	pub fn GetGlobalMemento(&self) -> HashMap<String, serde_json::Value> {
-		self.MementoGlobalStorage.lock().clone()
-	}
+	pub fn GetGlobalMemento(&self) -> HashMap<String, serde_json::Value> { self.MementoGlobalStorage.lock().clone() }
 
 	/// Sets all global memento storage.
 	pub fn SetGlobalMemento(&self, storage:HashMap<String, serde_json::Value>) {
 		let mut guard = self.MementoGlobalStorage.lock();
+
 		*guard = storage;
 		dev_log!(
 			"config",
@@ -165,6 +160,7 @@ impl State {
 	/// Sets a value in global memento storage.
 	pub fn SetGlobalMementoValue(&self, key:String, value:serde_json::Value) {
 		let mut guard = self.MementoGlobalStorage.lock();
+
 		guard.insert(key.clone(), value);
 
 		dev_log!("config", "[ConfigurationState] Global memento value updated for key: {}", key);
@@ -178,6 +174,7 @@ impl State {
 	/// Sets all workspace memento storage.
 	pub fn SetWorkspaceMemento(&self, storage:HashMap<String, serde_json::Value>) {
 		let mut guard = self.MementoWorkspaceStorage.lock();
+
 		*guard = storage;
 		dev_log!(
 			"config",
@@ -194,6 +191,7 @@ impl State {
 	/// Sets a value in workspace memento storage.
 	pub fn SetWorkspaceMementoValue(&self, key:String, value:serde_json::Value) {
 		let mut guard = self.MementoWorkspaceStorage.lock();
+
 		guard.insert(key.clone(), value);
 
 		dev_log!(
@@ -206,6 +204,7 @@ impl State {
 	/// Clears a value from workspace memento storage.
 	pub fn ClearWorkspaceMementoValue(&self, key:&str) {
 		let mut guard = self.MementoWorkspaceStorage.lock();
+
 		guard.remove(key);
 
 		dev_log!(
@@ -218,6 +217,7 @@ impl State {
 	/// Clears global memento storage.
 	pub fn ClearGlobalMemento(&self) {
 		let mut guard = self.MementoGlobalStorage.lock();
+
 		guard.clear();
 
 		dev_log!("config", "[ConfigurationState] Global memento storage cleared");
@@ -226,6 +226,7 @@ impl State {
 	/// Clears workspace memento storage.
 	pub fn ClearWorkspaceMemento(&self) {
 		let mut guard = self.MementoWorkspaceStorage.lock();
+
 		guard.clear();
 
 		dev_log!("config", "[ConfigurationState] Workspace memento storage cleared");

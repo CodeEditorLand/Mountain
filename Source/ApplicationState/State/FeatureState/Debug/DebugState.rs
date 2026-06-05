@@ -22,12 +22,8 @@
 //! ## PERFORMANCE CONSIDERATIONS
 //! - Lock mutexes briefly and release immediately
 //! - Use Arc for shared ownership across threads
-//!
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
 
@@ -213,12 +209,11 @@ impl DebugState {
 	/// the adapter shuts itself down.
 	pub fn UnregisterDebugSession(&self, SessionId:&str) -> Option<DebugSessionEntry> {
 		let mut Guard = self.DebugSessions.lock();
+
 		Guard.remove(SessionId)
 	}
 
 	/// Snapshot of all active sessions. Used by diagnostic dev_log surfaces
 	/// and the reverse-RPC dispatch when no session-id is supplied.
-	pub fn GetAllDebugSessions(&self) -> HashMap<String, DebugSessionEntry> {
-		self.DebugSessions.lock().clone()
-	}
+	pub fn GetAllDebugSessions(&self) -> HashMap<String, DebugSessionEntry> { self.DebugSessions.lock().clone() }
 }

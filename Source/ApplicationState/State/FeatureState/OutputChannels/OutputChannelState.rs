@@ -30,10 +30,7 @@
 //! - [ ] Implement output channel lifecycle events
 //! - [ ] Add output channel metrics collection
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
 
@@ -56,18 +53,15 @@ impl Default for OutputChannelState {
 
 impl OutputChannelState {
 	/// Gets all output channels.
-	pub fn GetAll(&self) -> HashMap<String, OutputChannelStateDTO> {
-		self.OutputChannels.lock().clone()
-	}
+	pub fn GetAll(&self) -> HashMap<String, OutputChannelStateDTO> { self.OutputChannels.lock().clone() }
 
 	/// Gets an output channel by its ID.
-	pub fn Get(&self, id:&str) -> Option<OutputChannelStateDTO> {
-		self.OutputChannels.lock().get(id).cloned()
-	}
+	pub fn Get(&self, id:&str) -> Option<OutputChannelStateDTO> { self.OutputChannels.lock().get(id).cloned() }
 
 	/// Adds or updates an output channel.
 	pub fn AddOrUpdate(&self, id:String, channel:OutputChannelStateDTO) {
 		let mut guard = self.OutputChannels.lock();
+
 		guard.insert(id, channel);
 
 		dev_log!("output", "[OutputChannelState] Output channel added/updated");
@@ -76,6 +70,7 @@ impl OutputChannelState {
 	/// Removes an output channel by its ID.
 	pub fn Remove(&self, id:&str) {
 		let mut guard = self.OutputChannels.lock();
+
 		guard.remove(id);
 
 		dev_log!("output", "[OutputChannelState] Output channel removed: {}", id);
@@ -84,6 +79,7 @@ impl OutputChannelState {
 	/// Clears all output channels.
 	pub fn Clear(&self) {
 		let mut guard = self.OutputChannels.lock();
+
 		guard.clear();
 
 		dev_log!("output", "[OutputChannelState] All output channels cleared");
@@ -93,7 +89,5 @@ impl OutputChannelState {
 	pub fn Count(&self) -> usize { self.OutputChannels.lock().len() }
 
 	/// Checks if an output channel exists.
-	pub fn Contains(&self, id:&str) -> bool {
-		self.OutputChannels.lock().contains_key(id)
-	}
+	pub fn Contains(&self, id:&str) -> bool { self.OutputChannels.lock().contains_key(id) }
 }

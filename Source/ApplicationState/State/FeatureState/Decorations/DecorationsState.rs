@@ -1,10 +1,6 @@
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
-
 use serde_json::Value;
 
 use crate::dev_log;
@@ -43,13 +39,12 @@ impl Default for DecorationsState {
 
 impl DecorationsState {
 	/// Return the JSON decoration value for a URI, or `None` when not set.
-	pub fn GetDecoration(&self, Uri:&str) -> Option<Value> {
-		self.Entries.lock().get(Uri).cloned()
-	}
+	pub fn GetDecoration(&self, Uri:&str) -> Option<Value> { self.Entries.lock().get(Uri).cloned() }
 
 	/// Store or overwrite the decoration for a URI.
 	pub fn SetDecoration(&self, Uri:&str, Decoration:Value) {
 		let mut Guard = self.Entries.lock();
+
 		Guard.insert(Uri.to_owned(), Decoration);
 
 		dev_log!("decorations", "[DecorationsState] Decoration set for: {}", Uri);
@@ -58,13 +53,12 @@ impl DecorationsState {
 	/// Remove the decoration for a URI.
 	pub fn ClearDecoration(&self, Uri:&str) {
 		let mut Guard = self.Entries.lock();
+
 		Guard.remove(Uri);
 
 		dev_log!("decorations", "[DecorationsState] Decoration cleared for: {}", Uri);
 	}
 
 	/// Return all stored decorations as a cloned map.
-	pub fn GetAll(&self) -> HashMap<String, Value> {
-		self.Entries.lock().clone()
-	}
+	pub fn GetAll(&self) -> HashMap<String, Value> { self.Entries.lock().clone() }
 }

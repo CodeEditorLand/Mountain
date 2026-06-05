@@ -32,13 +32,9 @@
 //! - [ ] Implement UI request timeout handling
 //! - [ ] Add UI request metrics collection
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
-
 use CommonLibrary::Error::CommonError::CommonError;
 
 use crate::dev_log;
@@ -49,7 +45,8 @@ pub struct State {
 	/// Pending user interface request organized by request ID.
 	///
 	/// Each request has a oneshot sender for sending the response back.
-	pub PendingUserInterfaceRequest:Arc<Mutex<HashMap<String, tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>>>>,
+	pub PendingUserInterfaceRequest:
+		Arc<Mutex<HashMap<String, tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>>>>,
 }
 
 impl Default for State {
@@ -76,6 +73,7 @@ impl State {
 		sender:tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>,
 	) {
 		let mut guard = self.PendingUserInterfaceRequest.lock();
+
 		guard.insert(id, sender);
 
 		dev_log!("window", "[UIState] Pending UI request added");
@@ -88,6 +86,7 @@ impl State {
 		id:&str,
 	) -> Option<tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>> {
 		let mut guard = self.PendingUserInterfaceRequest.lock();
+
 		let sender = guard.remove(id);
 
 		dev_log!("window", "[UIState] Pending UI request removed: {}", id);
@@ -98,18 +97,15 @@ impl State {
 	/// Clears all pending user interface requests.
 	pub fn ClearAll(&self) {
 		let mut guard = self.PendingUserInterfaceRequest.lock();
+
 		guard.clear();
 
 		dev_log!("window", "[UIState] All pending UI requests cleared");
 	}
 
 	/// Gets the count of pending user interface requests.
-	pub fn Count(&self) -> usize {
-		self.PendingUserInterfaceRequest.lock().len()
-	}
+	pub fn Count(&self) -> usize { self.PendingUserInterfaceRequest.lock().len() }
 
 	/// Checks if a pending user interface request exists.
-	pub fn Contains(&self, id:&str) -> bool {
-		self.PendingUserInterfaceRequest.lock().contains_key(id)
-	}
+	pub fn Contains(&self, id:&str) -> bool { self.PendingUserInterfaceRequest.lock().contains_key(id) }
 }

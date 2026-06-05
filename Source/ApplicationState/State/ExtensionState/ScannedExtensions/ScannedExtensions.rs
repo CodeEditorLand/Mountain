@@ -30,10 +30,7 @@
 //! - [ ] Implement extension discovery events
 //! - [ ] Add extension metrics collection
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
 
@@ -56,9 +53,7 @@ impl Default for ScannedExtensionCollection {
 
 impl ScannedExtensionCollection {
 	/// Gets all scanned extensions.
-	pub fn GetAll(&self) -> HashMap<String, ExtensionDescriptionStateDTO> {
-		self.ScannedExtensions.lock().clone()
-	}
+	pub fn GetAll(&self) -> HashMap<String, ExtensionDescriptionStateDTO> { self.ScannedExtensions.lock().clone() }
 
 	/// Gets an extension by its identifier.
 	pub fn Get(&self, identifier:&str) -> Option<ExtensionDescriptionStateDTO> {
@@ -68,6 +63,7 @@ impl ScannedExtensionCollection {
 	/// Sets all scanned extensions.
 	pub fn SetAll(&self, extensions:HashMap<String, ExtensionDescriptionStateDTO>) {
 		let mut guard = self.ScannedExtensions.lock();
+
 		*guard = extensions;
 		dev_log!(
 			"extensions",
@@ -79,14 +75,16 @@ impl ScannedExtensionCollection {
 	/// Adds or updates an extension.
 	pub fn AddOrUpdate(&self, identifier:String, extension:ExtensionDescriptionStateDTO) {
 		let mut guard = self.ScannedExtensions.lock();
+
 		guard.insert(identifier, extension);
 
 		dev_log!("extensions", "[ScannedExtensions] Extension added/updated");
 	}
 
-/// Removes an extension by its identifier.
+	/// Removes an extension by its identifier.
 	pub fn Remove(&self, identifier:&str) {
 		let mut guard = self.ScannedExtensions.lock();
+
 		guard.remove(identifier);
 
 		dev_log!("extensions", "[ScannedExtensions] Extension removed: {}", identifier);
@@ -95,6 +93,7 @@ impl ScannedExtensionCollection {
 	/// Clears all scanned extensions.
 	pub fn Clear(&self) {
 		let mut guard = self.ScannedExtensions.lock();
+
 		guard.clear();
 
 		dev_log!("extensions", "[ScannedExtensions] All extensions cleared");
@@ -104,7 +103,5 @@ impl ScannedExtensionCollection {
 	pub fn Count(&self) -> usize { self.ScannedExtensions.lock().len() }
 
 	/// Checks if an extension exists.
-	pub fn Contains(&self, identifier:&str) -> bool {
-		self.ScannedExtensions.lock().contains_key(identifier)
-	}
+	pub fn Contains(&self, identifier:&str) -> bool { self.ScannedExtensions.lock().contains_key(identifier) }
 }

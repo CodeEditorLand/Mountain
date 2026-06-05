@@ -161,7 +161,7 @@ impl TreeViewProvider for Struct {
 					}
 				})?
 		} else {
-				let Folders = AppState.Workspace.WorkspaceFolders.lock();
+			let Folders = AppState.Workspace.WorkspaceFolders.lock();
 
 			let RootItems:Vec<Value> = Folders
 				.iter()
