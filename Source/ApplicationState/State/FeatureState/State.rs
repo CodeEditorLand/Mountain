@@ -35,6 +35,11 @@
 //! - [ ] Implement feature lifecycle events
 //! - [ ] Add feature state metrics collection
 
+use std::sync::{
+	Arc,
+	atomic::{AtomicU32, Ordering as AtomicOrdering},
+};
+
 use super::{
 	Debug::DebugState::DebugState,
 	Decorations::DecorationsState::DecorationsState,
@@ -49,10 +54,6 @@ use super::{
 	TreeViews::TreeViewState::TreeViewState,
 	Webviews::WebviewState::WebviewState,
 	WorkingCopy::WorkingCopyState::WorkingCopyState,
-};
-use std::sync::{
-	Arc,
-	atomic::{AtomicU32, Ordering as AtomicOrdering},
 };
 use crate::dev_log;
 
@@ -135,7 +136,7 @@ impl Default for State {
 			WorkingCopy:Default::default(),
 
 			SCMHandleCounter:Arc::new(AtomicU32::new(1)),
-			}
+		}
 	}
 }
 

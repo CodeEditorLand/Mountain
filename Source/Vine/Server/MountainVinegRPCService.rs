@@ -237,8 +237,9 @@ impl MountainService for MountainVinegRPCService {
 	///
 	/// Operations that require cancellation support must call RegisterOperation
 	/// from within their handler and UnregisterOperation on completion.
-	/// process_cocoon_request itself does NOT register operations unconditionally
-	/// to avoid an unbounded ActiveOperations map (one leaked entry per RPC).
+	/// process_cocoon_request itself does NOT register operations
+	/// unconditionally to avoid an unbounded ActiveOperations map (one leaked
+	/// entry per RPC).
 	async fn process_cocoon_request(
 		&self,
 
@@ -300,12 +301,7 @@ impl MountainService for MountainVinegRPCService {
 
 				dev_log!("grpc", "error: {}", msg);
 
-				return Ok(Response::new(Self::CreateErrorResponse(
-					RequestIdentifier,
-					-32700,
-					msg,
-					None,
-				)));
+				return Ok(Response::new(Self::CreateErrorResponse(RequestIdentifier, -32700, msg, None)));
 			},
 		};
 
@@ -967,7 +963,8 @@ impl MountainService for MountainVinegRPCService {
 			None => {
 				dev_log!(
 					"grpc",
-					"warn: [MountainVinegRPCService] Cannot cancel operation {}: operation not found (may have already completed)",
+					"warn: [MountainVinegRPCService] Cannot cancel operation {}: operation not found (may have \
+					 already completed)",
 					RequestIdentifierToCancel
 				);
 

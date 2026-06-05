@@ -443,7 +443,7 @@ pub fn Fn() {
 		);
 
 		// Create Arc for application state to be managed by Tauri
-		let AppStateArcForClosure: SharedApplicationState = Arc::new(AppState);
+		let AppStateArcForClosure:SharedApplicationState = Arc::new(AppState);
 
 		// ---------------------------------------------------------------------
 		// [Boot] [Runtime] Scheduler handles (using RuntimeBuild module)

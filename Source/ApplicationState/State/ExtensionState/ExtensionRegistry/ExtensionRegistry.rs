@@ -95,28 +95,20 @@ impl Registry {
 
 	/// Executes a closure with exclusive access to the command registry,
 	/// recovering from poison without silently discarding mutations.
-	pub fn WithCommands<F, T>(&self, f: F) -> T
+	pub fn WithCommands<F, T>(&self, f:F) -> T
 	where
-		F: FnOnce(&HashMap<String, CommandHandler<Wry>>) -> T,
-	{
-		let guard = self
-			.CommandRegistry
-			.lock()
-			.unwrap_or_else(|e| {
-				dev_log!(
-					"extensions",
-					"warn: [ExtensionRegistry] CommandRegistry poisoned: {}",
-					e
-				);
-				e.into_inner()
-			});
+		F: FnOnce(&HashMap<String, CommandHandler<Wry>>) -> T, {
+		let guard = self.CommandRegistry.lock().unwrap_or_else(|e| {
+			dev_log!("extensions", "warn: [ExtensionRegistry] CommandRegistry poisoned: {}", e);
+
+			e.into_inner()
+		});
+
 		f(&*guard)
 	}
 
 	/// Gets all registered commands.
-	pub fn GetCommands(&self) -> HashMap<String, CommandHandler<Wry>> {
-		self.WithCommands(|commands| commands.clone())
-	}
+	pub fn GetCommands(&self) -> HashMap<String, CommandHandler<Wry>> { self.WithCommands(|commands| commands.clone()) }
 
 	/// Registers a command.
 	pub fn RegisterCommand(&self, name:String, handler:CommandHandler<Wry>) {
@@ -125,11 +117,7 @@ impl Registry {
 		if let Ok(mut guard) = self.CommandRegistry.lock() {
 			guard.insert(name, handler);
 
-			dev_log!(
-				"extensions",
-				"[ExtensionRegistry] Command registered: {}",
-				name_for_log
-			);
+			dev_log!("extensions", "[ExtensionRegistry] Command registered: {}", name_for_log);
 		}
 	}
 
@@ -147,11 +135,8 @@ impl Registry {
 		self.ExtensionScanPaths
 			.lock()
 			.unwrap_or_else(|e| {
-				dev_log!(
-					"extensions",
-					"warn: [ExtensionRegistry] ExtensionScanPaths poisoned: {}",
-					e
-				);
+				dev_log!("extensions", "warn: [ExtensionRegistry] ExtensionScanPaths poisoned: {}", e);
+
 				e.into_inner()
 			})
 			.clone()
@@ -183,11 +168,8 @@ impl Registry {
 		self.EnabledProposedAPIs
 			.lock()
 			.unwrap_or_else(|e| {
-				dev_log!(
-					"extensions",
-					"warn: [ExtensionRegistry] EnabledProposedAPIs poisoned: {}",
-					e
-				);
+				dev_log!("extensions", "warn: [ExtensionRegistry] EnabledProposedAPIs poisoned: {}", e);
+
 				e.into_inner()
 			})
 			.clone()

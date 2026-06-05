@@ -88,15 +88,17 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				// Only base64-encoded strings are accepted.
 				// The Value::Array path (per-byte u64 iteration) was removed:
 				//   - O(N) enum-match per byte (200k matches for a 200 KB file)
-				//   - filter_map silently drops bytes >127 from signed Int8Array
-				//     serializers, causing silent data corruption
+				//   - filter_map silently drops bytes >127 from signed Int8Array serializers,
+				//     causing silent data corruption
 				let content_bytes = match content {
 					Some(Value::String(s)) => {
-						STANDARD.decode(&s).map_err(|e| format!("FileSystem.WriteFile: base64 decode failed: {}", e))?
+						STANDARD
+							.decode(&s)
+							.map_err(|e| format!("FileSystem.WriteFile: base64 decode failed: {}", e))?
 					},
 					Some(Value::Array(_)) => {
 						return Err(
-							"FileSystem.WriteFile: content must be base64-encoded string, not byte array".to_string(),
+							"FileSystem.WriteFile: content must be base64-encoded string, not byte array".to_string()
 						);
 					},
 					_ => vec![],
