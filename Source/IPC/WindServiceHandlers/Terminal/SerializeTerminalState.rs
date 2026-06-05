@@ -31,14 +31,7 @@ use serde_json::{Value, json};
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-	let Terminals = RunTime
-		.Environment
-		.ApplicationState
-		.Feature
-		.Terminals
-		.ActiveTerminals
-		.lock()
-		.map_err(|Error| format!("SerializeTerminalState: lock poisoned: {}", Error))?;
+	let Terminals = RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
 
 	let NowMs = std::time::SystemTime::now()
 		.duration_since(std::time::UNIX_EPOCH)
@@ -48,7 +41,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Serialized:Vec<Value> = Terminals
 		.iter()
 		.filter_map(|(TerminalId, ArcState)| {
-			let State = ArcState.lock().ok()?;
+			let State = ArcState.lock();
 
 			let Cwd = State.GetWorkingDirectory();
 

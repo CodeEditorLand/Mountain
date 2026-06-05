@@ -2,10 +2,9 @@
 
 use std::sync::Arc;
 
+use once_cell::sync::Lazy;
+
 use crate::Telemetry::Metrics::MetricsRegistry;
 
-lazy_static::lazy_static! {
-
-	pub(crate) static ref REGISTRY: Arc<MetricsRegistry::Struct> =
-		Arc::new(MetricsRegistry::Struct::new(10_000));
-}
+pub(crate) static REGISTRY:Lazy<Arc<MetricsRegistry::Struct>> =
+	Lazy::new(|| Arc::new(MetricsRegistry::Struct::new(10_000)));

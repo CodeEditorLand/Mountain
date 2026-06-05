@@ -35,10 +35,11 @@ use std::{
 	collections::HashMap,
 	sync::{
 		Arc,
-		Mutex as StandardMutex,
 		atomic::{AtomicU64, Ordering as AtomicOrdering},
 	},
 };
+
+use parking_lot::Mutex;
 
 use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, dev_log};
 
@@ -47,7 +48,7 @@ use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, dev_log};
 #[derive(Clone)]
 pub struct TerminalState {
 	/// Active terminals organized by ID.
-	pub ActiveTerminals:Arc<StandardMutex<HashMap<u64, Arc<StandardMutex<TerminalStateDTO>>>>>,
+	pub ActiveTerminals:Arc<Mutex<HashMap<u64, Arc<Mutex<TerminalStateDTO>>>>>,
 
 	/// Counter for generating unique terminal identifiers.
 	pub NextTerminalIdentifier:Arc<AtomicU64>,
@@ -58,7 +59,7 @@ impl Default for TerminalState {
 		dev_log!("terminal", "[TerminalState] Initializing default terminal state...");
 
 		Self {
-			ActiveTerminals:Arc::new(StandardMutex::new(HashMap::new())),
+			ActiveTerminals:Arc::new(Mutex::new(HashMap::new())),
 
 			NextTerminalIdentifier:Arc::new(AtomicU64::new(1)),
 		}
@@ -71,67 +72,74 @@ impl TerminalState {
 
 	/// Gets all active terminals.
 	pub fn GetAll(&self) -> HashMap<u64, TerminalStateDTO> {
-		self.ActiveTerminals
-			.lock()
-			.ok()
-			.map(|guard| {
-				guard
-					.iter()
-					.filter_map(|(id, arc)| arc.lock().ok().map(|dto| (*id, dto.clone())))
-					.collect()
+		let guard = self.ActiveTerminals.lock();
+
+		guard
+			.iter()
+			.filter_map(|(id, arc)| {
+				let dto_guard = arc.lock();
+
+				Some((*id, (*dto_guard).clone()))
 			})
-			.unwrap_or_default()
+			.collect()
 	}
 
 	/// Gets a terminal by its ID.
 	pub fn Get(&self, id:u64) -> Option<TerminalStateDTO> {
-		self.ActiveTerminals
-			.lock()
-			.ok()
-			.and_then(|guard| guard.get(&id).and_then(|arc| arc.lock().ok().map(|dto| dto.clone())))
+		let guard = self.ActiveTerminals.lock();
+
+		guard.get(&id).and_then(|arc| {
+			let dto_guard = arc.lock();
+
+			Some((*dto_guard).clone())
+		})
 	}
 
 	/// Gets a terminal's Arc<Mutex<>> by its ID for direct manipulation.
-	pub fn GetArc(&self, id:u64) -> Option<Arc<StandardMutex<TerminalStateDTO>>> {
-		self.ActiveTerminals.lock().ok().and_then(|guard| guard.get(&id).cloned())
+	pub fn GetArc(&self, id:u64) -> Option<Arc<Mutex<TerminalStateDTO>>> {
+		let guard = self.ActiveTerminals.lock();
+
+		guard.get(&id).cloned()
 	}
 
 	/// Adds or updates a terminal.
 	pub fn AddOrUpdate(&self, id:u64, terminal:TerminalStateDTO) {
-		if let Ok(mut guard) = self.ActiveTerminals.lock() {
-			guard.insert(id, Arc::new(StandardMutex::new(terminal)));
+		let mut guard = self.ActiveTerminals.lock();
 
-			dev_log!("terminal", "[TerminalState] Terminal added/updated with ID: {}", id);
-		}
+		guard.insert(id, Arc::new(Mutex::new(terminal)));
+
+		dev_log!("terminal", "[TerminalState] Terminal added/updated with ID: {}", id);
 	}
 
 	/// Removes a terminal by its ID.
 	pub fn Remove(&self, id:u64) {
-		if let Ok(mut guard) = self.ActiveTerminals.lock() {
-			guard.remove(&id);
+		let mut guard = self.ActiveTerminals.lock();
 
-			dev_log!("terminal", "[TerminalState] Terminal removed with ID: {}", id);
-		}
+		guard.remove(&id);
+
+		dev_log!("terminal", "[TerminalState] Terminal removed with ID: {}", id);
 	}
 
 	/// Clears all active terminals.
 	pub fn Clear(&self) {
-		if let Ok(mut guard) = self.ActiveTerminals.lock() {
-			guard.clear();
+		let mut guard = self.ActiveTerminals.lock();
 
-			dev_log!("terminal", "[TerminalState] All terminals cleared");
-		}
+		guard.clear();
+
+		dev_log!("terminal", "[TerminalState] All terminals cleared");
 	}
 
 	/// Gets the count of active terminals.
-	pub fn Count(&self) -> usize { self.ActiveTerminals.lock().ok().map(|guard| guard.len()).unwrap_or(0) }
+	pub fn Count(&self) -> usize {
+		let guard = self.ActiveTerminals.lock();
+
+		guard.len()
+	}
 
 	/// Checks if a terminal exists.
 	pub fn Contains(&self, id:u64) -> bool {
-		self.ActiveTerminals
-			.lock()
-			.ok()
-			.map(|guard| guard.contains_key(&id))
-			.unwrap_or(false)
+		let guard = self.ActiveTerminals.lock();
+
+		guard.contains_key(&id)
 	}
 }

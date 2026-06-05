@@ -28,3 +28,13 @@ pub(crate) fn MapLockErrorToCommonError<T>(Error:PoisonError<MutexGuard<'_, T>>)
 
 	CommonError::StateLockPoisoned { Context:ErrorMessage }
 }
+
+/// Helper for `parking_lot::Mutex` which doesn't return a Result from lock()
+/// (it panics on poison instead). Executes a closure with the locked mutex.
+pub(crate) fn WithParkingLotMutex<T, F, R>(mutex:&parking_lot::Mutex<T>, f:F) -> R
+where
+	F: FnOnce(&mut T) -> R, {
+	let mut guard = mutex.lock();
+
+	f(&mut guard)
+}

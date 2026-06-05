@@ -16,14 +16,7 @@ impl ApplicationRunTime {
 		let TerminalProvider:Arc<dyn TerminalProviderTrait> = self.Environment.Require();
 
 		let TerminalIdentifiers:Vec<u64> = {
-			let TerminalsGuard = self
-				.Environment
-				.ApplicationState
-				.Feature
-				.Terminals
-				.ActiveTerminals
-				.lock()
-				.map_err(|E| CommonError::StateLockPoisoned { Context:E.to_string() })?;
+			let TerminalsGuard = self.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
 
 			TerminalsGuard.keys().cloned().collect()
 		};

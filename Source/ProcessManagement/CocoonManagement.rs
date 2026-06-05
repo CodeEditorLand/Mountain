@@ -57,6 +57,7 @@
 
 use std::{collections::HashMap, process::Stdio, sync::Arc, time::Duration};
 
+use once_cell::sync::Lazy;
 use CommonLibrary::Error::CommonError::CommonError;
 use tauri::{
 	AppHandle,
@@ -151,14 +152,10 @@ impl Default for CocoonProcessState {
 }
 
 // Global state for Cocoon process management
-lazy_static::lazy_static! {
+static COCOON_STATE:Lazy<Arc<Mutex<CocoonProcessState>>> =
+	Lazy::new(|| Arc::new(Mutex::new(CocoonProcessState::default())));
 
-	static ref COCOON_STATE: Arc<Mutex<CocoonProcessState>> =
-		Arc::new(Mutex::new(CocoonProcessState::default()));
-
-	static ref COCOON_HEALTH: Arc<Mutex<HealthMonitor>> =
-		Arc::new(Mutex::new(HealthMonitor::new()));
-}
+static COCOON_HEALTH:Lazy<Arc<Mutex<HealthMonitor>>> = Lazy::new(|| Arc::new(Mutex::new(HealthMonitor::new())));
 
 /// Last-known PID of the Cocoon child process. Mirrored here so callers can
 /// read it without taking the async `COCOON_STATE` mutex (e.g. from IPC

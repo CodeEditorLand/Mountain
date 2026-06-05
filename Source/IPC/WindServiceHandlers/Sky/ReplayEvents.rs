@@ -238,23 +238,23 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 	// the PTY reader produced before SkyBridge was up. Without this, the
 	// shell's first prompt is silently dropped and the user sees an empty
 	// terminal pane until they type.
-	if let Ok(Terminals) = RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock() {
-		for (TerminalId, Arc) in Terminals.iter() {
-			let (Name, Pid) = if let Ok(State) = Arc.lock() {
-				(State.Name.clone(), State.OSProcessIdentifier.unwrap_or(0))
-			} else {
-				(String::new(), 0)
-			};
+	let Terminals = RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
 
-			let CreatePayload = serde_json::json!({
-				"id": *TerminalId,
-				"name": Name,
-				"pid": Pid,
-			});
+	for (TerminalId, Arc) in Terminals.iter() {
+		let (Name, Pid) = {
+			let State = Arc.lock();
 
-			if ApplicationHandle.emit("sky://terminal/create", CreatePayload).is_ok() {
-				TerminalCount += 1;
-			}
+			(State.Name.clone(), State.OSProcessIdentifier.unwrap_or(0))
+		};
+
+		let CreatePayload = serde_json::json!({
+			"id": *TerminalId,
+			"name": Name,
+			"pid": Pid,
+		});
+
+		if ApplicationHandle.emit("sky://terminal/create", CreatePayload).is_ok() {
+			TerminalCount += 1;
 		}
 	}
 

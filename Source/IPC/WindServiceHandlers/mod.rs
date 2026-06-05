@@ -2170,17 +2170,19 @@ pub async fn mountain_ipc_invoke(
 						Ok(Value::Null)
 					} else if PropId == 0 {
 						// TerminalProperty::Cwd - return last OSC 633 P;cwd= value
-						let Cwd = RunTime
-							.Environment
-							.ApplicationState
-							.Feature
-							.Terminals
-							.ActiveTerminals
-							.lock()
-							.ok()
-							.and_then(|G| G.get(&TerminalId).cloned())
-							.and_then(|S| S.lock().ok().and_then(|S| S.CurrentWorkingDirectory.clone()))
-							.map(|P| P.to_string_lossy().into_owned());
+						let Cwd = {
+							let guard = RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
+
+							guard
+								.get(&TerminalId)
+								.cloned()
+								.and_then(|S| {
+									let s_guard = S.lock();
+
+									s_guard.CurrentWorkingDirectory.clone()
+								})
+								.map(|P| P.to_string_lossy().into_owned())
+						};
 
 						Ok(Cwd.map(|C| json!(C)).unwrap_or(Value::Null))
 					} else if PropId == 1 {
@@ -2329,12 +2331,11 @@ pub async fn mountain_ipc_invoke(
 					if !Cwd.is_empty() {
 						// Persist CWD in ApplicationState so refreshProperty(0)
 						// can return it without probing the OS process.
-						if let Ok(Guard) = RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock()
-						{
-							if let Some(StateEntry) = Guard.get(&TermId) {
-								if let Ok(mut State) = StateEntry.lock() {
-									State.CurrentWorkingDirectory = Some(std::path::PathBuf::from(&Cwd));
-								}
+						let mut Guard = RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
+
+						if let Some(StateEntry) = Guard.get(&TermId) {
+							if let mut State = StateEntry.lock() {
+								State.CurrentWorkingDirectory = Some(std::path::PathBuf::from(&Cwd));
 							}
 						}
 

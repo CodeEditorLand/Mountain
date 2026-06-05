@@ -5,10 +5,9 @@
 
 use std::sync::Arc;
 
+use once_cell::sync::Lazy;
+
 use crate::Telemetry::FeatureFlags::FeatureFlagRegistry;
 
-lazy_static::lazy_static! {
-
-	pub(crate) static ref REGISTRY: Arc<FeatureFlagRegistry::Struct> =
-		Arc::new(FeatureFlagRegistry::Struct::new());
-}
+pub(crate) static REGISTRY:Lazy<Arc<FeatureFlagRegistry::Struct>> =
+	Lazy::new(|| Arc::new(FeatureFlagRegistry::Struct::new()));

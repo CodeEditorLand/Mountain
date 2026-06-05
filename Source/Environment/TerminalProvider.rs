@@ -47,7 +47,11 @@
 //! - `vs/workbench/contrib/terminal/node/terminalProcess.ts`
 //! - `vs/platform/terminal/node/ptyService.ts`
 
-use std::{env, io::Write, sync::Arc};
+use std::{
+	env,
+	io::Write,
+	sync::{Arc, OnceLock},
+};
 
 use CommonLibrary::{
 	Environment::Requires::Requires,
@@ -56,6 +60,7 @@ use CommonLibrary::{
 	Terminal::TerminalProvider::TerminalProvider,
 };
 use async_trait::async_trait;
+use parking_lot::Mutex;
 use portable_pty::{CommandBuilder, MasterPty, NativePtySystem, PtySize, PtySystem};
 use serde_json::{Value, json};
 use tauri::Emitter;
@@ -72,48 +77,44 @@ use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, IPC::SkyE
 // Without buffering, those bytes vanish and the user sees an empty pane
 // until they type something to coax fresh output. We buffer up to
 // `MAX_BUFFERED_BYTES` per terminal and replay on `sky:replay-events`.
-//
 // The buffer is bounded; on overflow we drop oldest bytes (keep the most
 // recent suffix). 64 KB is enough for ~600 lines of typical zsh/bash
 // startup; tail-cropping preserves the prompt the user actually needs to
 // see.
 const MAX_BUFFERED_BYTES:usize = 64 * 1024;
 
-static TERMINAL_OUTPUT_BUFFER:std::sync::OnceLock<std::sync::Mutex<std::collections::HashMap<u64, Vec<u8>>>> =
-	std::sync::OnceLock::new();
+static TERMINAL_OUTPUT_BUFFER:OnceLock<parking_lot::Mutex<std::collections::HashMap<u64, Vec<u8>>>> = OnceLock::new();
 
-fn TerminalOutputBuffer() -> &'static std::sync::Mutex<std::collections::HashMap<u64, Vec<u8>>> {
-	TERMINAL_OUTPUT_BUFFER.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()))
+fn TerminalOutputBuffer() -> &'static parking_lot::Mutex<std::collections::HashMap<u64, Vec<u8>>> {
+	TERMINAL_OUTPUT_BUFFER.get_or_init(|| parking_lot::Mutex::new(std::collections::HashMap::new()))
 }
 
 pub(crate) fn AppendTerminalOutput(TerminalId:u64, Bytes:&[u8]) {
-	if let Ok(mut Map) = TerminalOutputBuffer().lock() {
-		let Entry = Map.entry(TerminalId).or_insert_with(Vec::new);
+	let mut Map = TerminalOutputBuffer().lock();
 
-		Entry.extend_from_slice(Bytes);
+	let Entry = Map.entry(TerminalId).or_insert_with(Vec::new);
 
-		// Drop oldest if over cap. Keep the trailing MAX_BUFFERED_BYTES so
-		// the prompt + most-recent context survive.
-		if Entry.len() > MAX_BUFFERED_BYTES {
-			let DropCount = Entry.len() - MAX_BUFFERED_BYTES;
+	Entry.extend_from_slice(Bytes);
 
-			Entry.drain(..DropCount);
-		}
+	// Drop oldest if over cap. Keep the trailing MAX_BUFFERED_BYTES so
+	// the prompt + most-recent context survive.
+	if Entry.len() > MAX_BUFFERED_BYTES {
+		let DropCount = Entry.len() - MAX_BUFFERED_BYTES;
+
+		Entry.drain(..DropCount);
 	}
 }
 
 pub fn Fn() -> Vec<(u64, Vec<u8>)> {
-	if let Ok(Map) = TerminalOutputBuffer().lock() {
-		Map.iter().map(|(K, V)| (*K, V.clone())).collect()
-	} else {
-		Vec::new()
-	}
+	let Map = TerminalOutputBuffer().lock();
+
+	Map.iter().map(|(K, V)| (*K, V.clone())).collect()
 }
 
 pub(crate) fn RemoveTerminalOutputBuffer(TerminalId:u64) {
-	if let Ok(mut Map) = TerminalOutputBuffer().lock() {
-		Map.remove(&TerminalId);
-	}
+	let mut Map = TerminalOutputBuffer().lock();
+
+	Map.remove(&TerminalId);
 }
 
 // TODO: terminal profiles + env var management, resize handling (PtySize),
@@ -254,7 +255,7 @@ impl TerminalProvider for MountainEnvironment {
 		// can call `resize()` on it and so dropping it during `DisposeTerminal`
 		// tears the shell down cleanly.
 		let PTYMasterHandle:crate::ApplicationState::DTO::TerminalStateDTO::PtyMasterHandle =
-			Arc::new(std::sync::Mutex::new(PtyPair.master));
+			Arc::new(Mutex::new(PtyPair.master));
 
 		TerminalState.PTYMaster = Some(PTYMasterHandle);
 
@@ -385,9 +386,9 @@ impl TerminalProvider for MountainEnvironment {
 			}
 
 			// Clean up the terminal from the state
-			if let Ok(mut Guard) = EnvironmentClone.ApplicationState.Feature.Terminals.ActiveTerminals.lock() {
-				Guard.remove(&TermIDForExit);
-			}
+			let mut Guard = EnvironmentClone.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
+
+			Guard.remove(&TermIDForExit);
 
 			// Drop the recent-output replay buffer; nothing left to replay
 			// after the shell has exited.
@@ -426,8 +427,7 @@ impl TerminalProvider for MountainEnvironment {
 			.Terminals
 			.ActiveTerminals
 			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-			.insert(TerminalIdentifier, Arc::new(std::sync::Mutex::new(TerminalState.clone())));
+			.insert(TerminalIdentifier, Arc::new(Mutex::new(TerminalState.clone())));
 
 		// BATCH-19 Part B: let Sky render the new terminal panel without
 		// waiting for Cocoon to round-trip a notification. The `sky://` event
@@ -525,18 +525,15 @@ impl TerminalProvider for MountainEnvironment {
 		dev_log!("terminal", "[TerminalProvider] Sending text to terminal ID: {}", TerminalId);
 
 		let SenderOption = {
-			let TerminalsGuard = self
-				.ApplicationState
-				.Feature
-				.Terminals
-				.ActiveTerminals
-				.lock()
-				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			let TerminalsGuard = self.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
 
-			TerminalsGuard
-				.get(&TerminalId)
-				.and_then(|TerminalArc| TerminalArc.lock().ok())
-				.and_then(|TerminalStateGuard| TerminalStateGuard.PTYInputTransmitter.clone())
+			if let Some(TerminalArc) = TerminalsGuard.get(&TerminalId) {
+				let TerminalStateGuard = TerminalArc.lock();
+
+				TerminalStateGuard.PTYInputTransmitter.clone()
+			} else {
+				None
+			}
 		};
 
 		if let Some(Sender) = SenderOption {
@@ -560,7 +557,6 @@ impl TerminalProvider for MountainEnvironment {
 			.Terminals
 			.ActiveTerminals
 			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.remove(&TerminalId);
 
 		if let Some(TerminalArc) = TerminalArc {
@@ -597,17 +593,15 @@ impl TerminalProvider for MountainEnvironment {
 	}
 
 	async fn GetTerminalProcessId(&self, TerminalId:u64) -> Result<Option<u32>, CommonError> {
-		let TerminalsGuard = self
-			.ApplicationState
-			.Feature
-			.Terminals
-			.ActiveTerminals
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		let TerminalsGuard = self.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
 
-		Ok(TerminalsGuard
-			.get(&TerminalId)
-			.and_then(|t| t.lock().ok().and_then(|g| g.OSProcessIdentifier)))
+		Ok(if let Some(t) = TerminalsGuard.get(&TerminalId) {
+			let g = t.lock();
+
+			g.OSProcessIdentifier
+		} else {
+			None
+		})
 	}
 
 	async fn ResizeTerminal(&self, TerminalId:u64, Columns:u16, Rows:u16) -> Result<(), CommonError> {
@@ -621,18 +615,15 @@ impl TerminalProvider for MountainEnvironment {
 		// Pull the shared master-PTY handle out of the state lock before touching
 		// it so we never hold the outer terminals map while performing IO.
 		let MasterOption = {
-			let TerminalsGuard = self
-				.ApplicationState
-				.Feature
-				.Terminals
-				.ActiveTerminals
-				.lock()
-				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			let TerminalsGuard = self.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
 
-			TerminalsGuard
-				.get(&TerminalId)
-				.and_then(|TerminalArc| TerminalArc.lock().ok())
-				.and_then(|TerminalStateGuard| TerminalStateGuard.PTYMaster.clone())
+			if let Some(TerminalArc) = TerminalsGuard.get(&TerminalId) {
+				let TerminalStateGuard = TerminalArc.lock();
+
+				TerminalStateGuard.PTYMaster.clone()
+			} else {
+				None
+			}
 		};
 
 		let Master = MasterOption.ok_or_else(|| {
@@ -649,7 +640,7 @@ impl TerminalProvider for MountainEnvironment {
 		// is nominally fast - SIGWINCH delivery can stall briefly when the
 		// child shell is ptrace-frozen or mid-syscall.
 		tokio::task::spawn_blocking(move || {
-			let Guard = Master.lock().map_err(|_| "PTY master mutex poisoned".to_string())?;
+			let Guard = Master.lock();
 
 			Guard.resize(Size).map_err(|Error| Error.to_string())
 		})

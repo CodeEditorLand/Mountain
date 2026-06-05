@@ -18,12 +18,9 @@
 //! - PTYInputTransmitter: PTY input channel sender
 //! - ReaderTaskHandle: Output reader task handle
 //! - ProcessWaitHandle: Process wait task handle
-use std::{
-	collections::HashMap,
-	path::PathBuf,
-	sync::{Arc, Mutex as StandardMutex},
-};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
+use parking_lot::Mutex;
 use portable_pty::MasterPty;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -35,7 +32,7 @@ use tokio::{
 /// Thread-safe handle around a portable-pty master PTY. We keep the handle
 /// alive past CreateTerminal so Resize / drop-to-kill semantics work. Not
 /// Clone / Serialize; the surrounding struct marks it `#[serde(skip)]`.
-pub type PtyMasterHandle = Arc<StandardMutex<Box<dyn MasterPty + Send>>>;
+pub type PtyMasterHandle = Arc<parking_lot::Mutex<Box<dyn MasterPty + Send>>>;
 
 /// Maximum terminal name length
 const MAX_TERMINAL_NAME_LENGTH:usize = 128;
