@@ -20,6 +20,7 @@ use super::RPCRangeDTO::RPCRangeDTO;
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RPCModelContentChangeDTO {
+
 	/// The range of text to replace
 	pub Range:RPCRangeDTO,
 
@@ -28,6 +29,7 @@ pub struct RPCModelContentChangeDTO {
 }
 
 impl RPCModelContentChangeDTO {
+
 	/// Creates a new RPCModelContentChangeDTO with validation.
 	///
 	/// # Arguments

@@ -17,7 +17,9 @@
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, IPC::IPCProvider::IPCProvider};
+
 use serde_json::json;
+
 use url::Url;
 
 use crate::dev_log;
@@ -28,6 +30,7 @@ pub(super) async fn notify_model_added(
 
 	document_state_dto:&serde_json::Value,
 ) {
+
 	let uri_string = document_state_dto
 		.get("URI")
 		.and_then(serde_json::Value::as_str)
@@ -45,8 +48,11 @@ pub(super) async fn notify_model_added(
 	{
 		dev_log!(
 			"model",
+
 			"error: [DocumentProvider] Failed to send $acceptModelAdded for {}: {}",
+
 			uri_string,
+
 			error
 		);
 	}
@@ -62,6 +68,7 @@ pub(super) async fn notify_model_changed(
 
 	changes:serde_json::Value,
 ) {
+
 	dev_log!("model", "[DocumentProvider] Notifying ModelChanged for: {}", uri);
 
 	let uri_components = json!({ "external": uri.to_string(), "$mid": 1 });
@@ -78,8 +85,11 @@ pub(super) async fn notify_model_changed(
 	{
 		dev_log!(
 			"model",
+
 			"error: [DocumentProvider] Failed to send $acceptModelChanged for {}: {}",
+
 			uri,
+
 			error
 		);
 	}
@@ -91,6 +101,7 @@ pub(super) async fn notify_model_saved(
 
 	uri:&Url,
 ) {
+
 	dev_log!("model", "[DocumentProvider] Notifying ModelSaved for: {}", uri);
 
 	let uri_components = json!({ "external": uri.to_string(), "$mid": 1 });
@@ -105,8 +116,11 @@ pub(super) async fn notify_model_saved(
 	{
 		dev_log!(
 			"model",
+
 			"error: [DocumentProvider] Failed to send $acceptModelSaved for {}: {}",
+
 			uri,
+
 			error
 		);
 	}
@@ -118,6 +132,7 @@ pub(super) async fn notify_model_removed(
 
 	uri:&Url,
 ) {
+
 	dev_log!("model", "[DocumentProvider] Notifying ModelRemoved for: {}", uri);
 
 	let uri_components = json!({ "external": uri.to_string(), "$mid": 1 });
@@ -132,8 +147,11 @@ pub(super) async fn notify_model_removed(
 	{
 		dev_log!(
 			"model",
+
 			"error: [DocumentProvider] Failed to send $acceptModelRemoved for {}: {}",
+
 			uri,
+
 			error
 		);
 	}

@@ -31,6 +31,7 @@ use crate::{
 };
 
 pub struct Struct {
+
 	pub(super) config:DashboardConfig,
 
 	pub(super) metrics:Arc<RwLock<VecDeque<PerformanceMetric>>>,
@@ -45,6 +46,7 @@ pub struct Struct {
 }
 
 impl Struct {
+
 	pub fn new(config:DashboardConfig) -> Self {
 		let config_clone = config.clone();
 
@@ -77,7 +79,9 @@ impl Struct {
 
 		dev_log!(
 			"ipc",
+
 			"[PerformanceDashboard] Created dashboard with {}ms update interval",
+
 			config_clone.update_interval_ms
 		);
 
@@ -212,8 +216,11 @@ impl Struct {
 
 			dev_log!(
 				"ipc",
+
 				"[PerformanceDashboard] Ended trace span: {} (duration: {}ms)",
+
 				span.operation_name,
+
 				span.duration_ms.unwrap_or(0)
 			);
 
@@ -417,8 +424,11 @@ impl Struct {
 
 				message:format!(
 					"{} exceeded threshold: {} > {}",
+
 					Self::metric_type_name(&metric.metric_type),
+
 					metric.value,
+
 					threshold
 				),
 			};
@@ -448,6 +458,7 @@ impl Struct {
 			.duration_since(SystemTime::UNIX_EPOCH)
 			.unwrap_or_default()
 			.as_secs()
+
 			- (self.config.metrics_retention_hours * 3600);
 
 		{
@@ -613,6 +624,7 @@ impl Struct {
 }
 
 impl Clone for Struct {
+
 	fn clone(&self) -> Self {
 		Self {
 			config:self.config.clone(),

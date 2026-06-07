@@ -31,14 +31,21 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	Workspace::{WorkspaceEditApplier::WorkspaceEditApplier, WorkspaceProvider::WorkspaceProvider},
 };
+
 use async_trait::async_trait;
+
 use globset::GlobBuilder;
+
 use ignore::WalkBuilder;
+
 use serde_json::Value;
+
 use tokio::sync::Notify;
+
 use url::Url;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
+
 use crate::dev_log;
 
 /// Process-wide LRU cache for `FindFilesInWorkspace`. Cache key folds
@@ -57,6 +64,7 @@ const FIND_FILES_CACHE_CAPACITY:usize = 128;
 
 #[derive(Hash, Eq, PartialEq, Clone)]
 struct FindFilesCacheKey {
+
 	Folders:Vec<PathBuf>,
 
 	Include:String,
@@ -73,12 +81,14 @@ struct FindFilesCacheKey {
 }
 
 struct FindFilesCacheEntry {
+
 	Result:Vec<Url>,
 
 	StoredAt:Instant,
 }
 
 fn FindFilesCache() -> &'static Mutex<HashMap<FindFilesCacheKey, FindFilesCacheEntry>> {
+
 	static CACHE:OnceLock<Mutex<HashMap<FindFilesCacheKey, FindFilesCacheEntry>>> = OnceLock::new();
 
 	CACHE.get_or_init(|| Mutex::new(HashMap::with_capacity(FIND_FILES_CACHE_CAPACITY)))
@@ -89,6 +99,7 @@ fn FindFilesCache() -> &'static Mutex<HashMap<FindFilesCacheKey, FindFilesCacheE
 /// avoids tracking access order per entry while still keeping memory
 /// bounded under sustained workbench traffic.
 fn FindFilesCachePut(Key:FindFilesCacheKey, Result:Vec<Url>) {
+
 	if let Ok(mut Guard) = FindFilesCache().lock() {
 		if Guard.len() >= FIND_FILES_CACHE_CAPACITY {
 			let Cutoff = Instant::now() - FIND_FILES_CACHE_TTL;
@@ -111,6 +122,7 @@ fn FindFilesCachePut(Key:FindFilesCacheKey, Result:Vec<Url>) {
 }
 
 fn FindFilesCacheGet(Key:&FindFilesCacheKey) -> Option<Vec<Url>> {
+
 	let Guard = FindFilesCache().lock().ok()?;
 
 	let Entry = Guard.get(Key)?;
@@ -128,6 +140,7 @@ fn FindFilesCacheGet(Key:&FindFilesCacheKey) -> Option<Vec<Url>> {
 /// Cache holds for at most `FIND_FILES_CACHE_TTL` anyway, so missing
 /// an invalidation point here is bounded latency, not correctness.
 pub fn ClearFindFilesCache() {
+
 	if let Ok(mut Guard) = FindFilesCache().lock() {
 		Guard.clear();
 	}
@@ -146,6 +159,7 @@ pub fn ClearFindFilesCache() {
 /// single-flight guard the leader walks once, every concurrent
 /// follower awaits, then reads the freshly-populated cache.
 fn FindFilesInFlight() -> &'static Mutex<HashMap<FindFilesCacheKey, Arc<Notify>>> {
+
 	static IN_FLIGHT:OnceLock<Mutex<HashMap<FindFilesCacheKey, Arc<Notify>>>> = OnceLock::new();
 
 	IN_FLIGHT.get_or_init(|| Mutex::new(HashMap::new()))
@@ -153,6 +167,7 @@ fn FindFilesInFlight() -> &'static Mutex<HashMap<FindFilesCacheKey, Arc<Notify>>
 
 #[async_trait]
 impl WorkspaceProvider for MountainEnvironment {
+
 	/// Retrieves information about all currently open workspace folders.
 	async fn GetWorkspaceFoldersInfo(&self) -> Result<Vec<(Url, String, usize)>, CommonError> {
 		dev_log!("workspaces", "[WorkspaceProvider] Getting workspace folders info.");
@@ -215,6 +230,7 @@ impl WorkspaceProvider for MountainEnvironment {
 	async fn RequestWorkspaceTrust(&self, _Options:Option<Value>) -> Result<bool, CommonError> {
 		dev_log!(
 			"workspaces",
+
 			"warn: [WorkspaceProvider] RequestWorkspaceTrust is not implemented; defaulting to trusted."
 		);
 
@@ -284,8 +300,11 @@ impl WorkspaceProvider for MountainEnvironment {
 		// `Path.strip_prefix(...)`.
 		dev_log!(
 			"workspaces",
+
 			"[FindFilesInWorkspace] include={} dto_shape={}",
+
 			IncludePattern,
+
 			if IncludePatternDTO.is_string() {
 				"string"
 			} else if IncludePatternDTO.is_object() {
@@ -432,7 +451,9 @@ impl WorkspaceProvider for MountainEnvironment {
 			SingleFlightRole::Follower(WaitNotify) => {
 				dev_log!(
 					"workspaces",
+
 					"[FindFilesInWorkspace] singleflight wait - leader walk in progress for include={}",
+
 					IncludePattern
 				);
 
@@ -567,10 +588,15 @@ impl WorkspaceProvider for MountainEnvironment {
 
 		dev_log!(
 			"workspaces",
+
 			"[FindFilesInWorkspace] returned {} match(es) include={} exclude={:?} roots={}",
+
 			Final.len(),
+
 			IncludePattern,
+
 			ExcludePattern,
+
 			CacheKey.Folders.len()
 		);
 
@@ -620,6 +646,7 @@ impl WorkspaceProvider for MountainEnvironment {
 		self.ApplicationHandle
 			.emit(
 				"sky://editor/openDocument",
+
 				serde_json::json!({
 					"uri": UriString,
 					"viewColumn": null,
@@ -633,6 +660,7 @@ impl WorkspaceProvider for MountainEnvironment {
 
 #[async_trait]
 impl WorkspaceEditApplier for MountainEnvironment {
+
 	/// Applies a workspace edit. Two-tier behaviour:
 	///
 	///   1. Emit `sky://editor/applyEdits` per URI so the workbench's
@@ -675,6 +703,7 @@ impl WorkspaceEditApplier for MountainEnvironment {
 			// Tier 1: workbench-open document → emit Sky event.
 			let _ = self.ApplicationHandle.emit(
 				"sky://editor/applyEdits",
+
 				serde_json::json!({
 					"uri": UriString,
 					"edits": TextEdits,
@@ -696,8 +725,11 @@ impl WorkspaceEditApplier for MountainEnvironment {
 
 					dev_log!(
 						"workspaces",
+
 						"warn: [WorkspaceEditApplier] on-disk apply failed for {}: {}",
+
 						UriString,
+
 						Error
 					);
 				}
@@ -714,6 +746,7 @@ impl WorkspaceEditApplier for MountainEnvironment {
 /// `CommonError::FromStandardIOError` for read/write failures and
 /// `CommonError::InvalidArgument` for malformed edits.
 async fn ApplyEditsToDisk(UriString:&str, TextEdits:&[Value]) -> Result<(), CommonError> {
+
 	use std::path::Path;
 
 	let RawPath = if let Some(Stripped) = UriString.strip_prefix("file://") {
@@ -781,7 +814,9 @@ async fn ApplyEditsToDisk(UriString:&str, TextEdits:&[Value]) -> Result<(), Comm
 	// if the process is killed mid-mutation.
 	let TempPath = Path.with_extension(format!(
 		"{}.land-tmp-{}",
+
 		Path.extension().and_then(|E| E.to_str()).unwrap_or("tmp"),
+
 		std::process::id()
 	));
 
@@ -798,6 +833,7 @@ async fn ApplyEditsToDisk(UriString:&str, TextEdits:&[Value]) -> Result<(), Comm
 
 /// Pre-compute the byte offset of the start of every line.
 fn ComputeLineOffsets(Source:&str) -> Vec<usize> {
+
 	let mut Offsets = Vec::with_capacity(Source.len() / 40 + 1);
 
 	Offsets.push(0);
@@ -816,6 +852,7 @@ fn ComputeLineOffsets(Source:&str) -> Vec<usize> {
 /// `Range`/`Position` semantics. Falls back gracefully when line/char
 /// is past EOF.
 fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Character:usize) -> usize {
+
 	if Line >= LineOffsets.len() {
 		return Source.len();
 	}
@@ -847,6 +884,7 @@ fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Character:usiz
 /// project's existing helpers when possible; this self-contained
 /// version avoids an extra crate import.
 fn percent_decode(Input:&str) -> String {
+
 	let mut Out = String::with_capacity(Input.len());
 
 	let mut Bytes = Input.as_bytes().iter().peekable();
@@ -883,6 +921,7 @@ fn percent_decode(Input:&str) -> String {
 }
 
 fn HexDigit(Byte:u8) -> Option<u8> {
+
 	match Byte {
 		b'0'..=b'9' => Some(Byte - b'0'),
 
@@ -900,6 +939,7 @@ fn HexDigit(Byte:u8) -> Option<u8> {
 ///     VS Code's `RelativePattern`).
 ///   - Object whose `value` field is a string: legacy serialised form.
 fn ExtractGlobPattern(Pattern:&Value) -> Option<String> {
+
 	if let Some(S) = Pattern.as_str() {
 		return Some(S.to_string());
 	}
@@ -926,6 +966,7 @@ fn ExtractGlobPattern(Pattern:&Value) -> Option<String> {
 /// `{ baseUri, pattern }`); when present, the walk must be restricted
 /// to `base`. Returns `None` for plain glob strings.
 fn ExtractRelativeBase(Pattern:&Value) -> Option<String> {
+
 	let Obj = Pattern.as_object()?;
 
 	if let Some(B) = Obj.get("base").and_then(Value::as_str) {

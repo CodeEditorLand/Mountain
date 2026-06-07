@@ -1,8 +1,11 @@
 //! Forward a type hierarchy supertypes request to the registered provider.
 
 use serde_json::json;
+
 use tonic::{Response, Status};
+
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
+
 use ::Vine::Generated::{ProvideTypeHierarchyRequest, ProvideTypeHierarchyResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -12,6 +15,7 @@ pub async fn Fn(
 
 	Request:ProvideTypeHierarchyRequest,
 ) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] Providing type hierarchy supertypes");
 
 	let ItemDTO = json!({

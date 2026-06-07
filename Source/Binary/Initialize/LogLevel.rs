@@ -44,6 +44,7 @@ use log::LevelFilter;
 ///
 /// Returns the resolved log level.
 pub fn Resolve() -> LevelFilter {
+
 	let EnvLogLevel = std::env::var("RUST_LOG").ok().and_then(|s| s.parse::<LevelFilter>().ok());
 
 	let DefaultLogLevel = if cfg!(debug_assertions) { LevelFilter::Debug } else { LevelFilter::Info };

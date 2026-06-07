@@ -9,7 +9,9 @@ use CommonLibrary::{
 		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	},
 };
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::Track::Effect::{
@@ -18,6 +20,7 @@ use crate::Track::Effect::{
 };
 
 fn CreateProviderEffect(Parameters:&Value, ProviderKind:ProviderType) -> Option<Result<MappedEffect, String>> {
+
 	// Defer registration into the async effect so we clone once here.
 	let id_need = Parameters.get("handle").and_then(Value::as_str).unwrap_or("").to_string();
 
@@ -47,6 +50,7 @@ fn CreateProviderEffect(Parameters:&Value, ProviderKind:ProviderType) -> Option<
 }
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
 		"register_hover_provider" => CreateProviderEffect(&Parameters, ProviderType::Hover),
 

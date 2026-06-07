@@ -1,0 +1,25 @@
+//! Encryption command dispatcher.
+
+use crate::Encryption::{Decrypt::Fn as Decrypt, Encrypt::Fn as Encrypt};
+
+use serde_json::Value;
+
+/// Dispatches encryption commands.
+///
+/// Handled commands:
+/// - `encryption:encrypt`
+/// - `encryption:decrypt`
+pub async fn dispatch_encryption(
+    arguments: Vec<Value>,
+
+    command: &str,
+) -> Result<Value, String> {
+
+    match command {
+        "encryption:encrypt" => Encrypt(arguments).await,
+
+        "encryption:decrypt" => Decrypt(arguments).await,
+
+        _ => Err(format!("Unknown encryption command: {}", command)),
+    }
+}

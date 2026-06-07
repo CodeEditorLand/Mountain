@@ -3,10 +3,12 @@
 //! so the proto response can carry stable `selected_indices`.
 
 use tonic::{Response, Status};
+
 use CommonLibrary::UserInterface::{
 	DTO::{QuickPickItemDTO::QuickPickItemDTO, QuickPickOptionsDTO::QuickPickOptionsDTO},
 	UserInterfaceProvider::UserInterfaceProvider,
 };
+
 use ::Vine::Generated::{ShowQuickPickRequest, ShowQuickPickResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -16,6 +18,7 @@ pub async fn Fn(
 
 	Request:ShowQuickPickRequest,
 ) -> Result<Response<ShowQuickPickResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] show_quick_pick: {} items", Request.items.len());
 
 	let Items:Vec<QuickPickItemDTO> = Request

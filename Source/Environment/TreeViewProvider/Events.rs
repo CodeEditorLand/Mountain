@@ -4,7 +4,9 @@
 //! (expansion, selection).
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
+
 use serde_json::json;
+
 use tauri::Emitter;
 
 use crate::dev_log;
@@ -20,11 +22,16 @@ pub(super) async fn on_tree_node_expanded(
 
 	is_expanded:bool,
 ) -> Result<(), CommonError> {
+
 	dev_log!(
 		"extensions",
+
 		"[TreeViewProvider] Node '{}' in view '{}' expanded: {}",
+
 		element_handle,
+
 		view_identifier,
+
 		is_expanded
 	);
 
@@ -34,6 +41,7 @@ pub(super) async fn on_tree_node_expanded(
 	env.ApplicationHandle
 		.emit(
 			SkyEvent::TreeViewNodeExpanded.AsStr(),
+
 			json!({
 				"viewId": view_identifier,
 				"elementHandle": element_handle,
@@ -54,10 +62,14 @@ pub(super) async fn on_tree_selection_changed(
 
 	selected_handles:Vec<String>,
 ) -> Result<(), CommonError> {
+
 	dev_log!(
 		"extensions",
+
 		"[TreeViewProvider] Selection changed in view '{}': {} items selected",
+
 		view_identifier,
+
 		selected_handles.len()
 	);
 
@@ -67,6 +79,7 @@ pub(super) async fn on_tree_selection_changed(
 	env.ApplicationHandle
 		.emit(
 			SkyEvent::TreeViewSelectionChanged.AsStr(),
+
 			json!({
 				"viewId": view_identifier,
 				"selectedHandles": selected_handles

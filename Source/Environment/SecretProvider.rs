@@ -37,17 +37,22 @@
 //! - `vs/platform/secrets/electron-simulator/electronSecretStorage.ts`
 
 use CommonLibrary::{Error::CommonError::CommonError, Secret::SecretProvider::SecretProvider};
+
 use async_trait::async_trait;
+
 use keyring_core::{Entry, Error as KeyringError};
+
 // Import Air client types when Air is available in the workspace
 #[cfg(feature = "AirIntegration")]
 use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
 
 use super::MountainEnvironment::MountainEnvironment;
+
 use crate::dev_log;
 
 /// Constructs the service name for the keyring entry.
 fn GetKeyringServiceName(Environment:&MountainEnvironment, ExtensionIdentifier:&str) -> String {
+
 	format!("{}.{}", Environment.ApplicationHandle.package_info().name, ExtensionIdentifier)
 }
 
@@ -58,6 +63,7 @@ fn GetKeyringServiceName(Environment:&MountainEnvironment, ExtensionIdentifier:&
 /// Blocked on proper wrapper integration.
 #[cfg(feature = "AirIntegration")]
 async fn IsAirAvailable(_AirClient:&AirServiceClient<tonic::transport::Channel>) -> bool {
+
 	// TODO: implement proper health check when AirClient wrapper supports
 	// &mut self for health_check RPC. MountainEnvironment stores an
 	// immutable reference, so this is blocked on wrapper integration.
@@ -66,6 +72,7 @@ async fn IsAirAvailable(_AirClient:&AirServiceClient<tonic::transport::Channel>)
 
 #[async_trait]
 impl SecretProvider for MountainEnvironment {
+
 	/// Retrieves a secret by reading from the OS keychain.
 	///
 	/// When `AirIntegration` is enabled, attempts to delegate to the Air
@@ -75,8 +82,11 @@ impl SecretProvider for MountainEnvironment {
 	async fn GetSecret(&self, ExtensionIdentifier:String, Key:String) -> Result<Option<String>, CommonError> {
 		dev_log!(
 			"storage-verbose",
+
 			"[SecretProvider] Getting secret for ext: '{}', key: '{}'",
+
 			ExtensionIdentifier,
+
 			Key
 		);
 
@@ -86,7 +96,9 @@ impl SecretProvider for MountainEnvironment {
 				if IsAirAvailable(AirClient).await {
 					dev_log!(
 						"storage-verbose",
+
 						"[SecretProvider] Delegating GetSecret to Air service for key: '{}'",
+
 						Key
 					);
 
@@ -94,7 +106,9 @@ impl SecretProvider for MountainEnvironment {
 				} else {
 					dev_log!(
 						"storage",
+
 						"warn: [SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'",
+
 						Key
 					);
 				}
@@ -103,7 +117,9 @@ impl SecretProvider for MountainEnvironment {
 
 		dev_log!(
 			"storage-verbose",
+
 			"[SecretProvider] Using local keyring for ext: '{}'",
+
 			ExtensionIdentifier
 		);
 
@@ -115,7 +131,9 @@ impl SecretProvider for MountainEnvironment {
 			Err(KeyringError::NoStorageAccess(_)) | Err(KeyringError::PlatformFailure(_)) => {
 				dev_log!(
 					"storage",
+
 					"warn: [SecretProvider] Keyring unavailable for key '{}', returning None",
+
 					Key
 				);
 
@@ -142,8 +160,11 @@ impl SecretProvider for MountainEnvironment {
 	async fn StoreSecret(&self, ExtensionIdentifier:String, Key:String, Value:String) -> Result<(), CommonError> {
 		dev_log!(
 			"storage-verbose",
+
 			"[SecretProvider] Storing secret for ext: '{}', key: '{}'",
+
 			ExtensionIdentifier,
+
 			Key
 		);
 
@@ -153,7 +174,9 @@ impl SecretProvider for MountainEnvironment {
 				if IsAirAvailable(AirClient).await {
 					dev_log!(
 						"storage-verbose",
+
 						"[SecretProvider] Delegating StoreSecret to Air service for key: '{}'",
+
 						Key
 					);
 
@@ -161,7 +184,9 @@ impl SecretProvider for MountainEnvironment {
 				} else {
 					dev_log!(
 						"storage",
+
 						"warn: [SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'",
+
 						Key
 					);
 				}
@@ -170,7 +195,9 @@ impl SecretProvider for MountainEnvironment {
 
 		dev_log!(
 			"storage-verbose",
+
 			"[SecretProvider] Using local keyring for ext: '{}'",
+
 			ExtensionIdentifier
 		);
 
@@ -182,7 +209,9 @@ impl SecretProvider for MountainEnvironment {
 			Err(KeyringError::NoStorageAccess(_)) | Err(KeyringError::PlatformFailure(_)) => {
 				dev_log!(
 					"storage",
+
 					"warn: [SecretProvider] Keyring unavailable for key '{}', cannot store",
+
 					Key
 				);
 
@@ -206,8 +235,11 @@ impl SecretProvider for MountainEnvironment {
 	async fn DeleteSecret(&self, ExtensionIdentifier:String, Key:String) -> Result<(), CommonError> {
 		dev_log!(
 			"storage-verbose",
+
 			"[SecretProvider] Deleting secret for ext: '{}', key: '{}'",
+
 			ExtensionIdentifier,
+
 			Key
 		);
 
@@ -217,7 +249,9 @@ impl SecretProvider for MountainEnvironment {
 				if IsAirAvailable(AirClient).await {
 					dev_log!(
 						"storage-verbose",
+
 						"[SecretProvider] Delegating DeleteSecret to Air service for key: '{}'",
+
 						Key
 					);
 
@@ -225,7 +259,9 @@ impl SecretProvider for MountainEnvironment {
 				} else {
 					dev_log!(
 						"storage",
+
 						"warn: [SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'",
+
 						Key
 					);
 				}
@@ -234,7 +270,9 @@ impl SecretProvider for MountainEnvironment {
 
 		dev_log!(
 			"storage-verbose",
+
 			"[SecretProvider] Using local keyring for ext: '{}'",
+
 			ExtensionIdentifier
 		);
 
@@ -246,7 +284,9 @@ impl SecretProvider for MountainEnvironment {
 			Err(KeyringError::NoStorageAccess(_)) | Err(KeyringError::PlatformFailure(_)) => {
 				dev_log!(
 					"storage",
+
 					"warn: [SecretProvider] Keyring unavailable for key '{}', cannot delete",
+
 					Key
 				);
 
@@ -281,10 +321,14 @@ async fn GetSecretFromAir(
 
 	Key:String,
 ) -> Result<Option<String>, CommonError> {
+
 	dev_log!(
 		"storage",
+
 		"[SecretProvider] Fetching secret from Air: ext='{}', key='{}'",
+
 		ExtensionIdentifier,
+
 		Key
 	);
 
@@ -308,10 +352,14 @@ async fn StoreSecretToAir(
 
 	_Value:String,
 ) -> Result<(), CommonError> {
+
 	dev_log!(
 		"storage",
+
 		"[SecretProvider] Storing secret in Air: ext='{}', key='{}'",
+
 		ExtensionIdentifier,
+
 		Key
 	);
 
@@ -329,10 +377,14 @@ async fn DeleteSecretFromAir(
 
 	Key:String,
 ) -> Result<(), CommonError> {
+
 	dev_log!(
 		"storage",
+
 		"[SecretProvider] Deleting secret from Air: ext='{}', key='{}'",
+
 		ExtensionIdentifier,
+
 		Key
 	);
 

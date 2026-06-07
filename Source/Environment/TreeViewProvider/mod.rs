@@ -25,6 +25,7 @@
 //! while keeping code organized.
 
 use CommonLibrary::TreeView::TreeViewProvider::TreeViewProvider;
+
 use async_trait::async_trait;
 
 // Private helper modules (not re-exported)
@@ -42,6 +43,7 @@ mod Visibility;
 
 #[async_trait]
 impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvironment {
+
 	async fn RegisterTreeDataProvider(
 		&self,
 

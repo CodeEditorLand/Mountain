@@ -18,6 +18,7 @@ use serde_json::{Value, json};
 static DARK_MODE_CACHE:OnceLock<bool> = OnceLock::new();
 
 pub async fn Fn() -> Result<Value, String> {
+
 	let Dark = *DARK_MODE_CACHE.get_or_init(detect_dark_mode);
 
 	let HighContrast = {
@@ -58,6 +59,7 @@ pub async fn Fn() -> Result<Value, String> {
 }
 
 fn detect_dark_mode() -> bool {
+
 	// runs once then cached via OnceLock
 	#[cfg(target_os = "macos")]
 	{
@@ -74,8 +76,11 @@ fn detect_dark_mode() -> bool {
 		std::process::Command::new("reg")
 			.args([
 				"query",
+
 				"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+
 				"/v",
+
 				"AppsUseLightTheme",
 			])
 			.output()

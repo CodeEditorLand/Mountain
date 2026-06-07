@@ -2,9 +2,11 @@
 //! Emits `sky://exthost/debug-close` so the Sky bridge can react.
 
 use serde_json::{Value, json};
+
 use tauri::{AppHandle, Emitter};
 
 pub async fn Fn(ApplicationHandle:AppHandle) -> Result<Value, String> {
+
 	crate::dev_log!("exthost", "extensionhostdebugservice:close");
 
 	if let Err(Error) = ApplicationHandle.emit("sky://exthost/debug-close", json!({})) {

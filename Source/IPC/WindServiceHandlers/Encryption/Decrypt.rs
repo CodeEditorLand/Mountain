@@ -6,13 +6,17 @@
 //! workbench treats a corrupt blob as "no stored secret" rather than crashing.
 
 use base64::{Engine, engine::general_purpose::STANDARD as B64};
+
 use ring::aead::{AES_256_GCM, Aad, LessSafeKey, Nonce, UnboundKey};
+
 use serde_json::{Value, json};
 
 use crate::{IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string, dev_log};
+
 use super::Key::Fn as DeriveKey;
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Ciphertext = arg_string(&Arguments, 0);
 
 	if Ciphertext.is_empty() {
@@ -64,6 +68,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 		Err(_) => {
 			dev_log!(
 				"encryption",
+
 				"warn: encryption:decrypt open_in_place failed (wrong key or corrupt)"
 			);
 

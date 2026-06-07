@@ -22,8 +22,11 @@
 //! ```
 
 use serde::Serialize;
+
 use serde_json::Value;
+
 use tauri::ipc::Channel;
+
 use ::Vine::Client::SubscribeNotifications::Fn as SubscribeNotifications;
 
 use crate::dev_log;
@@ -35,6 +38,7 @@ use crate::dev_log;
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NotificationFramePayload {
+
 	pub side_car_identifier:String,
 
 	pub method:String,
@@ -54,13 +58,16 @@ pub struct NotificationFramePayload {
 /// frontend can verify the channel is registered.
 #[tauri::command]
 pub async fn vine_subscribe_notifications(channel:Channel<NotificationFramePayload>) -> Result<usize, String> {
+
 	let mut Receiver = SubscribeNotifications();
 
 	let SubscriberCount = ::Vine::Client::SubscriberCount::Fn();
 
 	dev_log!(
 		"grpc",
+
 		"[VineSubscribe] webview subscribed; total_subscribers={}",
+
 		SubscriberCount
 	);
 

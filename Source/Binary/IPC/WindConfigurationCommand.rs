@@ -37,6 +37,7 @@
 //! - Consider caching in memory for frequently accessed config
 
 use serde_json::{Value, to_value};
+
 use tauri::AppHandle;
 
 /// Get Wind desktop configuration.
@@ -58,6 +59,7 @@ use tauri::AppHandle;
 /// - Serialization fails
 #[tauri::command]
 pub async fn MountainGetWindDesktopConfiguration(app_handle:AppHandle) -> Result<Value, String> {
+
 	let config = crate::IPC::ConfigurationBridge::mountain_get_wind_desktop_configuration(app_handle).await?;
 
 	to_value(&config).map_err(|e| format!("Failed to serialize configuration: {}", e))

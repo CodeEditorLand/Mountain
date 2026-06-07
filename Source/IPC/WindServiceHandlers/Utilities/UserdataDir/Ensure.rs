@@ -4,6 +4,7 @@
 use crate::dev_log;
 
 pub fn Fn() {
+
 	if super::INITIALIZED.swap(true, std::sync::atomic::Ordering::Relaxed) {
 		return;
 	}
@@ -12,15 +13,24 @@ pub fn Fn() {
 
 	let Dirs = [
 		format!("{}/User", Base),
+
 		format!("{}/User/globalStorage", Base),
+
 		format!("{}/User/profiles/__default__profile__", Base),
+
 		format!("{}/User/snippets", Base),
+
 		format!("{}/User/prompts", Base),
+
 		format!("{}/User/cacheHome", Base),
+
 		format!("{}/logs", Base),
+
 		format!("{}/User/workspaceStorage", Base),
+
 		format!(
 			"{}/CachedConfigurations/defaults/__default__profile__-configurationDefaultsOverrides",
+
 			Base
 		),
 	];
@@ -33,9 +43,13 @@ pub fn Fn() {
 
 	let DefaultFiles = [
 		(format!("{}/User/settings.json", Base), "{}"),
+
 		(format!("{}/User/keybindings.json", Base), "[]"),
+
 		(format!("{}/User/tasks.json", Base), "{}"),
+
 		(format!("{}/User/extensions.json", Base), "[]"),
+
 		(format!("{}/User/mcp.json", Base), "{}"),
 	];
 

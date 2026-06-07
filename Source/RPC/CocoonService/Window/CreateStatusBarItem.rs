@@ -6,9 +6,13 @@
 //! (state leak). Falls back to a direct Sky emit on trait failure.
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
+
 use CommonLibrary::StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider};
+
 use ::Vine::Generated::{CreateStatusBarItemRequest, CreateStatusBarItemResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -18,6 +22,7 @@ pub async fn Fn(
 
 	Request:CreateStatusBarItemRequest,
 ) -> Result<Response<CreateStatusBarItemResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] create_status_bar_item: {}", Request.id);
 
 	let Entry = StatusBarEntryDTO {
@@ -53,6 +58,7 @@ pub async fn Fn(
 
 		let _ = Service.environment.ApplicationHandle.emit(
 			"sky://statusbar/create",
+
 			json!({ "id": Request.id, "text": Request.text, "tooltip": Request.tooltip }),
 		);
 	}

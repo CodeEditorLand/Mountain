@@ -10,11 +10,14 @@ use std::{
 };
 
 use bincode::serde::{decode_from_slice, encode_to_vec};
+
 use brotli::{CompressorReader, CompressorWriter, enc::BrotliEncoderParams};
+
 use flate2::{
 	Compression,
 	write::{GzEncoder, ZlibEncoder},
 };
+
 use tokio::time::Instant;
 
 use crate::IPC::Enhanced::MessageCompressor::{
@@ -27,6 +30,7 @@ use crate::IPC::Enhanced::MessageCompressor::{
 };
 
 pub struct Struct {
+
 	pub(super) Config:BatchConfig,
 
 	pub(super) CurrentBatch:VecDeque<Vec<u8>>,
@@ -37,6 +41,7 @@ pub struct Struct {
 }
 
 impl Struct {
+
 	pub fn new(config:BatchConfig) -> Self {
 		Self {
 			Config:config,
@@ -155,6 +160,7 @@ impl Struct {
 
 		Ok((
 			compressed,
+
 			CompressionInfo { algorithm:"brotli".to_string(), level:self.Config.CompressionLevel as u32, ratio },
 		))
 	}
@@ -170,6 +176,7 @@ impl Struct {
 
 		Ok((
 			compressed,
+
 			CompressionInfo { algorithm:"gzip".to_string(), level:self.Config.CompressionLevel as u32, ratio },
 		))
 	}
@@ -185,6 +192,7 @@ impl Struct {
 
 		Ok((
 			compressed,
+
 			CompressionInfo { algorithm:"zlib".to_string(), level:self.Config.CompressionLevel as u32, ratio },
 		))
 	}

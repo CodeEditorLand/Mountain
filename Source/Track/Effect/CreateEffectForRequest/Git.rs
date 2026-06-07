@@ -3,11 +3,13 @@ pub fn Matches(MethodName:&str) -> bool { MethodName == "$gitExec" }
 use std::time::Duration;
 
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::{Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
 		"$gitExec" => {
 			crate::effect!(_run_time, {
@@ -50,8 +52,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				dev_log!(
 					"grpc",
+
 					"[$gitExec] Received gRPC Request: Method='$gitExec' args={:?} cwd={}",
+
 					Args,
+
 					Cwd.display()
 				);
 
@@ -59,6 +64,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				let OutputResult = tokio::time::timeout(
 					Duration::from_secs(30),
+
 					tokio::process::Command::new("git").args(&Args).current_dir(&Cwd).output(),
 				)
 				.await
@@ -73,10 +79,15 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				dev_log!(
 					"grpc",
+
 					"[$gitExec] exit={} elapsed={}ms stdout={}B stderr={}B",
+
 					ExitCode,
+
 					StartAt.elapsed().as_millis(),
+
 					Stdout.len(),
+
 					Stderr.len()
 				);
 

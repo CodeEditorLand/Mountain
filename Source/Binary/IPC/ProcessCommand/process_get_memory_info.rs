@@ -8,6 +8,7 @@ use serde_json::{Value, json};
 
 #[tauri::command]
 pub async fn process_get_memory_info() -> Result<Value, String> {
+
 	#[cfg(target_os = "macos")]
 	{
 		let Output = std::process::Command::new("ps")

@@ -3,13 +3,17 @@
 //! shellArgs + cwd) and forwards through.
 
 use serde_json::json;
+
 use tonic::{Response, Status};
+
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
+
 use ::Vine::Generated::{Empty, OpenTerminalRequest};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:OpenTerminalRequest) -> Result<Response<Empty>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] Opening terminal: {}", Request.name);
 
 	let Options = json!({

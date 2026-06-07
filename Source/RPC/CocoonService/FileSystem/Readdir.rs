@@ -1,11 +1,13 @@
 //! Enumerate the entries of a directory by name.
 
 use tonic::{Response, Status};
+
 use ::Vine::Generated::{ReaddirRequest, ReaddirResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:ReaddirRequest) -> Result<Response<ReaddirResponse>, Status> {
+
 	let Path = CocoonServiceImpl::UriToPath(Request.uri.as_ref())
 		.ok_or_else(|| Status::invalid_argument("readdir: missing or empty URI"))?;
 

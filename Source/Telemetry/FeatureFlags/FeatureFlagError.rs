@@ -2,6 +2,7 @@
 
 #[derive(Debug, thiserror::Error)]
 pub enum Enum {
+
 	#[error("Feature flag not found: {0}")]
 	NotFound(String),
 

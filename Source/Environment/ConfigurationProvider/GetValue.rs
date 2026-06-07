@@ -15,6 +15,7 @@ use CommonLibrary::{
 	Configuration::DTO::ConfigurationOverridesDTO::ConfigurationOverridesDTO,
 	Error::CommonError::CommonError,
 };
+
 use serde_json::Value;
 
 use crate::dev_log;
@@ -30,10 +31,14 @@ pub(super) async fn get_configuration_value(
 
 	overrides:ConfigurationOverridesDTO,
 ) -> Result<Value, CommonError> {
+
 	dev_log!(
 		"config",
+
 		"[ConfigurationProvider] Getting configuration for section: {:?} (language: {:?})",
+
 		section,
+
 		overrides.OverrideIdentifier
 	);
 
@@ -58,8 +63,11 @@ pub(super) async fn get_configuration_value(
 					None => {
 						dev_log!(
 							"config",
+
 							"warn: [ConfigurationProvider] Configuration section '{}' not found in path: {:?}",
+
 							key,
+
 							section_path
 						);
 
@@ -135,7 +143,9 @@ pub(super) async fn get_configuration_value(
 	if configuration_value.is_null() {
 		dev_log!(
 			"config",
+
 			"warn: [ConfigurationProvider] Configuration section not found: {:?}",
+
 			section
 		);
 	}

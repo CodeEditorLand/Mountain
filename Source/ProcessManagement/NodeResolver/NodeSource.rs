@@ -4,6 +4,7 @@
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Enum {
+
 	/// `Pick` environment variable.
 	Override,
 
@@ -32,6 +33,7 @@ pub enum Enum {
 }
 
 impl Enum {
+
 	pub fn AsLabel(self) -> &'static str {
 		match self {
 			Self::Override => "override",

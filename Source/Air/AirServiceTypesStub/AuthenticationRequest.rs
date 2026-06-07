@@ -2,6 +2,7 @@
 
 #[derive(Debug, Clone)]
 pub struct Struct {
+
 	pub request_id:String,
 
 	pub provider:String,

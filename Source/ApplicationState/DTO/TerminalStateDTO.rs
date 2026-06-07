@@ -21,9 +21,13 @@
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use parking_lot::Mutex;
+
 use portable_pty::MasterPty;
+
 use serde::{Deserialize, Serialize};
+
 use serde_json::Value;
+
 use tokio::{
 	sync::{Mutex as TokioMutex, mpsc as TokioMPSC},
 	task::JoinHandle,
@@ -59,6 +63,7 @@ const MAX_ENV_VARS:usize = 1000;
 /// placeholder so the surrounding struct remains `Debug`-printable.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct TerminalStateDTO {
+
 	// --- Identifiers ---
 	/// Unique terminal identifier
 	pub Identifier:u64,
@@ -109,6 +114,7 @@ pub struct TerminalStateDTO {
 }
 
 impl TerminalStateDTO {
+
 	/// Creates a new `TerminalStateDTO` by parsing terminal options from a
 	/// `serde_json::Value` with validation.
 	///
@@ -125,6 +131,7 @@ impl TerminalStateDTO {
 		if Name.len() > MAX_TERMINAL_NAME_LENGTH {
 			return Err(format!(
 				"Terminal name exceeds maximum length of {} bytes",
+
 				MAX_TERMINAL_NAME_LENGTH
 			));
 		}
@@ -154,6 +161,7 @@ impl TerminalStateDTO {
 					if Arg.len() > MAX_ARGUMENT_LENGTH {
 						return Err(format!(
 							"Shell argument exceeds maximum length of {} bytes",
+
 							MAX_ARGUMENT_LENGTH
 						));
 					}
@@ -214,6 +222,7 @@ impl TerminalStateDTO {
 }
 
 impl std::fmt::Debug for TerminalStateDTO {
+
 	fn fmt(&self, Formatter:&mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		Formatter
 			.debug_struct("TerminalStateDTO")

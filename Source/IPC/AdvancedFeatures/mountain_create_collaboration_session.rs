@@ -20,6 +20,7 @@ pub async fn mountain_create_collaboration_session(
 
 	permissions:CollaborationPermissions,
 ) -> Result<(), String> {
+
 	dev_log!("lifecycle", "Tauri command: create_collaboration_session");
 
 	if let Some(features) = app_handle.try_state::<Features>() {

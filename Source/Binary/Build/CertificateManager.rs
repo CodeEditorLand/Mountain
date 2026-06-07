@@ -51,10 +51,15 @@
 use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::RwLock;
+
 use anyhow::Result;
+
 use chrono::{DateTime, Utc};
+
 use rustls::ServerConfig;
+
 use rustls_pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
+
 use keyring_core::{Entry, Error as KeyringError};
 
 use crate::dev_log;
@@ -62,6 +67,7 @@ use crate::dev_log;
 /// Certificate information for display and validation
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CertificateInfo {
+
 	/// Subject Common Name (e.g., "CN=localhost")
 	pub subject:String,
 
@@ -84,6 +90,7 @@ pub struct CertificateInfo {
 /// Server certificate data including PEM formats and rustls configuration
 #[derive(Clone)]
 struct ServerCertData {
+
 	/// Certificate in PEM format
 	cert_pem:Vec<u8>,
 
@@ -105,6 +112,7 @@ struct ServerCertData {
 /// Manages a root CA certificate and generates server certificates as needed.
 /// The CA certificate is persisted in the OS keyring for security.
 pub struct CertificateManager {
+
 	/// Application identifier for keyring storage
 	app_id:String,
 
@@ -119,6 +127,7 @@ pub struct CertificateManager {
 }
 
 impl CertificateManager {
+
 	/// Keyring service name for certificate storage
 	const KEYRING_SERVICE:&'static str = "CodeEditorLand-TLS";
 
@@ -241,7 +250,9 @@ impl CertificateManager {
 
 		params.key_usages = vec![
 			rcgen::KeyUsagePurpose::DigitalSignature,
+
 			rcgen::KeyUsagePurpose::KeyCertSign,
+
 			rcgen::KeyUsagePurpose::CrlSign,
 		];
 
@@ -348,11 +359,13 @@ impl CertificateManager {
 		// ];
 		params.key_usages = vec![
 			rcgen::KeyUsagePurpose::DigitalSignature,
+
 			rcgen::KeyUsagePurpose::KeyEncipherment,
 		];
 
 		params.extended_key_usages = vec![
 			rcgen::ExtendedKeyUsagePurpose::ServerAuth,
+
 			rcgen::ExtendedKeyUsagePurpose::ClientAuth,
 		];
 
@@ -405,8 +418,11 @@ impl CertificateManager {
 
 		dev_log!(
 			"security",
+
 			"server certificate generated for {} (valid until {})",
+
 			hostname,
+
 			valid_until
 		);
 
@@ -680,8 +696,10 @@ impl CertificateManager {
 			.extensions()
 			.iter()
 			.find(|e| e.oid == x509_parser::oid_registry::OID_X509_EXT_SUBJECT_ALT_NAME)
+
 		{
 			if let x509_parser::extensions::ParsedExtension::SubjectAlternativeName(sans_list) = ext.parsed_extension()
+
 			{
 				sans = sans_list
 					.general_names
@@ -697,6 +715,7 @@ impl CertificateManager {
 									16 => {
 										format!(
 											"::{}:{}:{}:{}:{}",
+
 											octets[0], octets[1], octets[2], octets[3], octets[4]
 										)
 									},
@@ -765,6 +784,7 @@ impl CertificateManager {
 /// Certificate validity check result
 #[derive(Debug, Clone)]
 struct CertValidityResult {
+
 	/// Whether the certificate is currently valid
 	is_valid:bool,
 

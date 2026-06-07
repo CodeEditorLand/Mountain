@@ -12,11 +12,13 @@
 use std::sync::Arc;
 
 use serde_json::Value;
+
 use tauri::{AppHandle, Emitter};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+
 	let mut TreeViewCount:usize = 0;
 
 	let mut ScmCount:usize = 0;
@@ -61,6 +63,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 		.Markers
 		.SourceControlManagementProviders
 		.lock()
+
 	{
 		for (Handle, Dto) in ScmProviders.iter() {
 			let RootUriStr = Dto
@@ -110,6 +113,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 		.Markers
 		.SourceControlManagementProviders
 		.lock()
+
 	{
 		ScmProviders
 			.iter()
@@ -134,6 +138,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 		.Markers
 		.SourceControlManagementGroups
 		.lock()
+
 	{
 		for (ProviderHandle, GroupsByID) in ScmGroups.iter() {
 			let ScmId = ProviderIdentifierByHandle
@@ -172,6 +177,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 		.Markers
 		.SourceControlManagementResources
 		.lock()
+
 	{
 		for (ProviderHandle, GroupsByID) in ScmResources.iter() {
 			let ScmId = ProviderIdentifierByHandle
@@ -227,6 +233,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 			if ApplicationHandle
 				.emit("sky://command/register", serde_json::json!({ "commands": Batch }))
 				.is_ok()
+
 			{
 				CommandCount = Count;
 			}
@@ -265,20 +272,28 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 
 		let _ = ApplicationHandle.emit(
 			"sky://terminal/data",
+
 			serde_json::json!({ "id": TerminalId, "data": DataString }),
 		);
 	}
 
 	crate::dev_log!(
 		"sky-emit",
+
 		"[SkyEmit] replay-events tree-views={} scm={} scm-groups={} scm-resource-updates={} commands={} terminals={} \
 		 terminal-bytes={}",
 		TreeViewCount,
+
 		ScmCount,
+
 		ScmGroupCount,
+
 		ScmResourceUpdateCount,
+
 		CommandCount,
+
 		TerminalCount,
+
 		TerminalDataBytes
 	);
 

@@ -15,6 +15,7 @@ use crate::{
 };
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	match TerminalCreate(RunTime, Arguments).await {
 		Ok(Response) => {
 			let TerminalIdOption = Response.get("id").and_then(serde_json::Value::as_u64);
@@ -29,12 +30,15 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 					// and every subsequent `_proxy.input(0, data)` fails loudly.
 					crate::dev_log!(
 						"terminal",
+
 						"error: [localPty:createProcess] CreateTerminal returned no usable id; response={:?}",
+
 						Response
 					);
 
 					Err(format!(
 						"localPty:createProcess: CreateTerminal returned no terminal id (response={})",
+
 						Response
 					))
 				},

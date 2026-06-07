@@ -7,6 +7,7 @@
 /// Pre-compute the byte offset of the start of every line in `Source`.
 /// The returned vec always has at least one entry (`[0]`).
 pub(crate) fn ComputeLineOffsets(Source:&str) -> Vec<usize> {
+
 	let mut Offsets = Vec::with_capacity(Source.len() / 40 + 1);
 
 	Offsets.push(0);
@@ -25,6 +26,7 @@ pub(crate) fn ComputeLineOffsets(Source:&str) -> Vec<usize> {
 /// `Range`/`Position` semantics. Falls back to EOF when line/character
 /// exceeds the source length.
 pub(crate) fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Character:usize) -> usize {
+
 	if Line >= LineOffsets.len() {
 		return Source.len();
 	}
@@ -55,6 +57,7 @@ pub(crate) fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Cha
 /// Minimal percent-decoder for `file://` URI paths. Self-contained to avoid
 /// an extra crate dependency; handles `%XX` sequences only.
 pub(crate) fn percent_decode(Input:&str) -> String {
+
 	let mut Out = String::with_capacity(Input.len());
 
 	let mut Bytes = Input.as_bytes().iter().peekable();
@@ -91,6 +94,7 @@ pub(crate) fn percent_decode(Input:&str) -> String {
 }
 
 fn hex_digit(Byte:u8) -> Option<u8> {
+
 	match Byte {
 		b'0'..=b'9' => Some(Byte - b'0'),
 

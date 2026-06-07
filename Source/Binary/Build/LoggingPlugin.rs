@@ -4,7 +4,9 @@
 //! filters.
 
 use log::LevelFilter;
+
 use tauri::plugin::TauriPlugin;
+
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 
 use crate::IPC::DevLog;
@@ -59,6 +61,7 @@ fn CompressTarget(Target:&str) -> &str { Target.rsplit("::").next().unwrap_or(Ta
 /// - tokio_reactor: Async reactor events
 /// - want: Connection readiness logs
 pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
+
 	tauri_plugin_log::Builder::new()
 
 		// Configure output targets

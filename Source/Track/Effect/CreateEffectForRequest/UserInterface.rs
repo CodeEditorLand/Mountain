@@ -1,4 +1,5 @@
 pub fn Matches(MethodName:&str) -> bool {
+
 	MethodName.starts_with("UserInterface.") || MethodName.starts_with("Window.")
 }
 
@@ -8,7 +9,9 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	UserInterface::{DTO::MessageSeverity::MessageSeverity, UserInterfaceProvider::UserInterfaceProvider},
 };
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::{
@@ -21,6 +24,7 @@ use crate::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
 		"UserInterface.ShowMessage" => {
 			crate::effect!(run_time, {
@@ -71,6 +75,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						match serde_json::from_value::<
 							CommonLibrary::UserInterface::DTO::QuickPickOptionsDTO::QuickPickOptionsDTO,
 						>(V.clone())
+
 						{
 							Ok(dto) => Some(dto),
 							Err(e) => {
@@ -100,6 +105,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					match serde_json::from_value::<
 						CommonLibrary::UserInterface::DTO::InputBoxOptionsDTO::InputBoxOptionsDTO,
 					>(Value::Object(obj.clone()))
+
 					{
 						Ok(dto) => Some(dto),
 						Err(e) => {
@@ -128,6 +134,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					match serde_json::from_value::<
 						CommonLibrary::UserInterface::DTO::OpenDialogOptionsDTO::OpenDialogOptionsDTO,
 					>(Value::Object(obj.clone()))
+
 					{
 						Ok(dto) => Some(dto),
 						Err(e) => {
@@ -156,6 +163,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					match serde_json::from_value::<
 						CommonLibrary::UserInterface::DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO,
 					>(Value::Object(obj.clone()))
+
 					{
 						Ok(dto) => Some(dto),
 						Err(e) => {

@@ -8,17 +8,23 @@
 use std::collections::HashMap;
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
+
 use serde::{Deserialize, Serialize};
+
 use serde_json::Value;
+
 use tauri::{Emitter, Listener, Manager};
+
 use uuid::Uuid;
 
 use super::super::MountainEnvironment::MountainEnvironment;
+
 use crate::dev_log;
 
 /// Represents a Webview message
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebviewMessage {
+
 	pub MessageIdentifier:String,
 
 	pub MessageType:String,
@@ -30,6 +36,7 @@ pub struct WebviewMessage {
 
 /// Webview message handler context
 struct WebviewMessageContext {
+
 	Handle:String,
 
 	SideCarIdentifier:Option<String>,
@@ -45,6 +52,7 @@ pub(super) async fn post_message_to_webview_impl(
 
 	message:Value,
 ) -> Result<bool, CommonError> {
+
 	dev_log!("extensions", "[WebviewProvider] Posting message to Webview: {}", handle);
 
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
@@ -66,7 +74,9 @@ pub(super) async fn post_message_to_webview_impl(
 
 		dev_log!(
 			"extensions",
+
 			"[WebviewProvider] Message sent successfully to Webview: {}",
+
 			handle
 		);
 
@@ -74,7 +84,9 @@ pub(super) async fn post_message_to_webview_impl(
 	} else {
 		dev_log!(
 			"extensions",
+
 			"warn: [WebviewProvider] Webview not found for message: {}",
+
 			handle
 		);
 
@@ -94,9 +106,12 @@ pub(super) async fn setup_webview_message_listener_impl(
 
 	handle:String,
 ) -> Result<(), CommonError> {
+
 	dev_log!(
 		"extensions",
+
 		"[WebviewProvider] Setting up message listener for Webview: {}",
+
 		handle
 	);
 
@@ -122,15 +137,20 @@ pub(super) async fn setup_webview_message_listener_impl(
 
 				if let Err(E) = ::Vine::Client::SendNotification::Fn(
 					"cocoon-main".to_string(),
+
 					"webview.message".to_string(),
+
 					Notification,
 				)
 				.await
 				{
 					dev_log!(
 						"extensions",
+
 						"warn: [WebviewProvider] webview.message notify failed handle={}: {}",
+
 						H2,
+
 						E
 					);
 				}
@@ -139,13 +159,17 @@ pub(super) async fn setup_webview_message_listener_impl(
 
 		dev_log!(
 			"extensions",
+
 			"[WebviewProvider] Message listener installed for handle={}",
+
 			handle
 		);
 	} else {
 		dev_log!(
 			"extensions",
+
 			"warn: [WebviewProvider] Webview window not found for handle={}, listener skipped",
+
 			handle
 		);
 	}
@@ -158,9 +182,12 @@ pub(super) async fn setup_webview_message_listener_impl(
 /// on the webview window being destroyed (which drops all its listeners)
 /// rather than storing the handle. Future work: store in a global map.
 pub(super) async fn remove_webview_message_listener_impl(_env:&MountainEnvironment, handle:&str) {
+
 	dev_log!(
 		"extensions",
+
 		"[WebviewProvider] Message listener unregistered for handle={}",
+
 		handle
 	);
 }

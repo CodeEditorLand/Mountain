@@ -8,6 +8,7 @@ use serde_json::{Value, json};
 use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_string;
 
 pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Path = arg_string(&Arguments, 0);
 
 	if Path.is_empty() {
@@ -24,6 +25,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 				.env("MOVE_TARGET", &Path)
 				.args([
 					"-e",
+
 					"tell application \"Finder\" to delete POSIX file (system attribute \"MOVE_TARGET\")",
 				])
 				.status()
@@ -60,7 +62,9 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 				.env("MOVE_TARGET", &Path)
 				.args([
 					"-NoProfile",
+
 					"-Command",
+
 					"(new-object -comobject Shell.Application).NameSpace(0xA).MoveHere($env:MOVE_TARGET)",
 				])
 				.status()

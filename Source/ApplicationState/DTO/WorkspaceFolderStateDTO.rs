@@ -10,7 +10,9 @@
 //! - Name: Display name
 //! - Index: Zero-based position in workspace
 use serde::{Deserialize, Serialize};
+
 use url::Url;
+
 use CommonLibrary::Utility::Serialization::URLSerializationHelper;
 
 /// Maximum folder name length
@@ -24,6 +26,7 @@ const MAX_WORKSPACE_FOLDERS:usize = 100;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkspaceFolderStateDTO {
+
 	/// The URI of the folder.
 	#[serde(rename = "uri", with = "URLSerializationHelper")]
 	pub URI:Url,
@@ -37,6 +40,7 @@ pub struct WorkspaceFolderStateDTO {
 }
 
 impl WorkspaceFolderStateDTO {
+
 	/// Creates a new WorkspaceFolderStateDTO with validation.
 	///
 	/// # Arguments
@@ -56,6 +60,7 @@ impl WorkspaceFolderStateDTO {
 		if Name.len() > MAX_FOLDER_NAME_LENGTH {
 			return Err(format!(
 				"Folder name exceeds maximum length of {} bytes",
+
 				MAX_FOLDER_NAME_LENGTH
 			));
 		}
@@ -64,6 +69,7 @@ impl WorkspaceFolderStateDTO {
 		if Index >= MAX_WORKSPACE_FOLDERS {
 			return Err(format!(
 				"Folder index {} exceeds maximum workspace folders count of {}",
+
 				Index, MAX_WORKSPACE_FOLDERS
 			));
 		}
@@ -82,6 +88,7 @@ impl WorkspaceFolderStateDTO {
 		if Name.len() > MAX_FOLDER_NAME_LENGTH {
 			return Err(format!(
 				"Folder name exceeds maximum length of {} bytes",
+
 				MAX_FOLDER_NAME_LENGTH
 			));
 		}

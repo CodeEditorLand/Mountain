@@ -8,7 +8,9 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	TreeView::TreeViewProvider::TreeViewProvider as CommonTreeViewProvider,
 };
+
 use serde_json::{Value, json};
+
 use tauri::{AppHandle, Manager, State, Wry, command};
 
 use crate::{
@@ -28,10 +30,14 @@ pub async fn GetTreeViewChildren(
 
 	ElementHandle:Option<String>,
 ) -> Result<Value, String> {
+
 	dev_log!(
 		"commands",
+
 		"getting TreeView children for '{}', element: {:?}",
+
 		ViewId,
+
 		ElementHandle
 	);
 

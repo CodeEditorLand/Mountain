@@ -3,8 +3,11 @@
 //! `GetAuthenticationSession` calls look up the registered handle.
 
 use serde_json::json;
+
 use tonic::{Response, Status};
+
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
+
 use ::Vine::Generated::{Empty, RegisterAuthenticationProviderRequest};
 
 use crate::{
@@ -18,9 +21,12 @@ pub async fn Fn(
 
 	Request:RegisterAuthenticationProviderRequest,
 ) -> Result<Response<Empty>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] Registering Authentication Provider: id={}",
+
 		Request.id
 	);
 

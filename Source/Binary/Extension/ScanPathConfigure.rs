@@ -27,6 +27,7 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 ///
 /// Returns an error if ExtensionScanPaths mutex lock fails.
 pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<Vec<PathBuf>, String> {
+
 	dev_log!("extensions", "[Extensions] [ScanPaths] Locking ExtensionScanPaths...");
 
 	let mut ScanPathsGuard = AppState.Extension.Registry.ExtensionScanPaths.lock();
@@ -37,11 +38,13 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// minimal profiles and the skill-file env stay in sync. User scan path
 	// still runs so VSIX-installed extensions remain visible.
 	let SkipBuiltins = matches!(std::env::var("Skip").as_deref(), Ok("1") | Ok("true"))
+
 		|| matches!(std::env::var("Skip").as_deref(), Ok("1") | Ok("true"));
 
 	if SkipBuiltins {
 		dev_log!(
 			"extensions",
+
 			"[Extensions] [ScanPaths] Skip=true - skipping all built-in paths, keeping user path"
 		);
 	} else {
@@ -62,7 +65,9 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 			} else {
 				dev_log!(
 					"extensions",
+
 					"warn: [Extensions] [ScanPaths] Ship={} does not exist; ignoring",
+
 					Override
 				);
 			}
@@ -107,7 +112,9 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 
 					dev_log!(
 						"extensions",
+
 						"[Extensions] [ScanPaths] + {} (Static/Application canonical)",
+
 						StaticAppExtPath.display()
 					);
 
@@ -154,7 +161,9 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 
 					dev_log!(
 						"extensions",
+
 						"[Extensions] [ScanPaths] + {} (Sky Target, repo-layout)",
+
 						SkyTargetPath.display()
 					);
 
@@ -168,7 +177,9 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 				if DependencyPath.exists() {
 					dev_log!(
 						"extensions",
+
 						"[Extensions] [ScanPaths] + {} (VS Code Dependency, repo-layout)",
+
 						DependencyPath.display()
 					);
 
@@ -199,7 +210,9 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 
 		dev_log!(
 			"extensions",
+
 			"[Extensions] [ScanPaths] + {} (User)",
+
 			UserExtensionPath.display()
 		);
 
@@ -221,7 +234,9 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 			if LandLegacy.is_dir() {
 				dev_log!(
 					"extensions",
+
 					"[Extensions] [ScanPaths] + {} (User legacy ~/.land)",
+
 					LandLegacy.display()
 				);
 
@@ -275,6 +290,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 /// without shell expansion (e.g. in `.env` files, GUI launchers, sidecar
 /// manifests). Leaves absolute and relative paths untouched.
 fn ExpandUserPath(Raw:&str) -> PathBuf {
+
 	if let Some(Stripped) = Raw.strip_prefix("~/") {
 		if let Some(Home) = dirs::home_dir() {
 			return Home.join(Stripped);

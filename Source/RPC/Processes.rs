@@ -7,10 +7,12 @@ pub struct Struct;
 
 #[cfg(feature = "child-processes")]
 impl Struct {
+
 	pub fn new() -> Self { Struct }
 }
 
 #[cfg(feature = "child-processes")]
 impl Default for Struct {
+
 	fn default() -> Self { Self::new() }
 }

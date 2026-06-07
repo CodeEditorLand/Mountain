@@ -46,16 +46,22 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
 };
+
 use async_trait::async_trait;
+
 use serde_json::{Value, json};
+
 use tauri::Emitter;
+
 use url::Url;
 
 use super::MountainEnvironment::MountainEnvironment;
+
 use crate::dev_log;
 
 #[async_trait]
 impl DebugService for MountainEnvironment {
+
 	async fn RegisterDebugConfigurationProvider(
 		&self,
 
@@ -75,9 +81,13 @@ impl DebugService for MountainEnvironment {
 
 		dev_log!(
 			"exthost",
+
 			"[DebugProvider] Registering DebugConfigurationProvider for type '{}' (handle: {}, sidecar: {})",
+
 			DebugType,
+
 			ProviderHandle,
+
 			SideCarIdentifier
 		);
 
@@ -110,9 +120,13 @@ impl DebugService for MountainEnvironment {
 
 		dev_log!(
 			"exthost",
+
 			"[DebugProvider] Registering DebugAdapterDescriptorFactory for type '{}' (handle: {}, sidecar: {})",
+
 			DebugType,
+
 			FactoryHandle,
+
 			SideCarIdentifier
 		);
 
@@ -131,8 +145,11 @@ impl DebugService for MountainEnvironment {
 
 		dev_log!(
 			"exthost",
+
 			"[DebugProvider] Starting debug session '{}' with config: {:?}",
+
 			SessionID,
+
 			Configuration
 		);
 
@@ -164,7 +181,9 @@ impl DebugService for MountainEnvironment {
 		// 1. Resolve configuration (Reverse-RPC to Cocoon)
 		dev_log!(
 			"exthost",
+
 			"[DebugProvider] Resolving debug configuration for type '{}'",
+
 			DebugType
 		);
 
@@ -175,8 +194,11 @@ impl DebugService for MountainEnvironment {
 		let ResolvedConfig = IPCProvider
 			.SendRequestToSideCar(
 				TargetSideCar.clone(),
+
 				ResolveConfigMethod,
+
 				json!([DebugType.clone(), Configuration]),
+
 				5000,
 			)
 			.await?;
@@ -190,8 +212,11 @@ impl DebugService for MountainEnvironment {
 		let Descriptor = IPCProvider
 			.SendRequestToSideCar(
 				TargetSideCar.clone(),
+
 				CreateDescriptorMethod,
+
 				json!([DebugType, &ResolvedConfig]),
+
 				5000,
 			)
 			.await?;
@@ -199,7 +224,9 @@ impl DebugService for MountainEnvironment {
 		// 3. Spawn the Debug Adapter process based on the descriptor.
 		dev_log!(
 			"exthost",
+
 			"[DebugProvider] Spawning Debug Adapter based on descriptor: {:?}",
+
 			Descriptor
 		);
 
@@ -278,6 +305,7 @@ impl DebugService for MountainEnvironment {
 					CommonError::IPCError {
 						Description:format!(
 							"Failed to spawn debug adapter '{}' for session {}: {}",
+
 							Command, SessionID, Error
 						),
 					}
@@ -318,8 +346,11 @@ impl DebugService for MountainEnvironment {
 						if let Err(Error) = Pipe.write_all(&Frame).await {
 							crate::dev_log!(
 								"exthost",
+
 								"warn: [DebugAdapter] stdin write failed for session {}: {}",
+
 								StdinSessionId,
+
 								Error
 							);
 
@@ -329,8 +360,11 @@ impl DebugService for MountainEnvironment {
 						if let Err(Error) = Pipe.flush().await {
 							crate::dev_log!(
 								"exthost",
+
 								"warn: [DebugAdapter] stdin flush failed for session {}: {}",
+
 								StdinSessionId,
+
 								Error
 							);
 
@@ -374,8 +408,11 @@ impl DebugService for MountainEnvironment {
 								Err(Error) => {
 									crate::dev_log!(
 										"exthost",
+
 										"warn: [DebugAdapter] stdout read failed for session {}: {}",
+
 										StdoutSessionId,
+
 										Error
 									);
 
@@ -405,8 +442,11 @@ impl DebugService for MountainEnvironment {
 						if let Err(Error) = Reader.read_exact(&mut Body).await {
 							crate::dev_log!(
 								"exthost",
+
 								"warn: [DebugAdapter] stdout body read failed for session {}: {}",
+
 								StdoutSessionId,
+
 								Error
 							);
 
@@ -417,6 +457,7 @@ impl DebugService for MountainEnvironment {
 
 						let _ = StdoutHandle.emit(
 							"sky://debug/dap-message",
+
 							json!({
 								"sessionId": StdoutSessionId,
 								"sidecarId": StdoutSidecar,
@@ -446,9 +487,13 @@ impl DebugService for MountainEnvironment {
 
 				dev_log!(
 					"exthost",
+
 					"[DebugProvider] Spawned executable adapter for session '{}' pid={:?} command={:?}",
+
 					SessionID,
+
 					Pid,
+
 					Command
 				);
 			},
@@ -475,8 +520,11 @@ impl DebugService for MountainEnvironment {
 
 				dev_log!(
 					"exthost",
+
 					"[DebugProvider] Connecting to debug adapter server at {} (session '{}')",
+
 					Addr,
+
 					SessionID
 				);
 
@@ -484,6 +532,7 @@ impl DebugService for MountainEnvironment {
 					CommonError::IPCError {
 						Description:format!(
 							"Failed to connect to debug adapter server at {} for session {}: {}",
+
 							Addr, SessionID, Error
 						),
 					}
@@ -505,8 +554,11 @@ impl DebugService for MountainEnvironment {
 						if let Err(Error) = Pipe.write_all(&Frame).await {
 							crate::dev_log!(
 								"exthost",
+
 								"warn: [DebugAdapter/server] write failed for session {}: {}",
+
 								WriterSessionId,
+
 								Error
 							);
 
@@ -546,8 +598,11 @@ impl DebugService for MountainEnvironment {
 								Err(Error) => {
 									crate::dev_log!(
 										"exthost",
+
 										"warn: [DebugAdapter/server] read failed for session {}: {}",
+
 										ReaderSessionId,
+
 										Error
 									);
 
@@ -577,8 +632,11 @@ impl DebugService for MountainEnvironment {
 						if let Err(Error) = Reader.read_exact(&mut Body).await {
 							crate::dev_log!(
 								"exthost",
+
 								"warn: [DebugAdapter/server] body read failed for session {}: {}",
+
 								ReaderSessionId,
+
 								Error
 							);
 
@@ -589,6 +647,7 @@ impl DebugService for MountainEnvironment {
 
 						let _ = ReaderHandle.emit(
 							"sky://debug/dap-message",
+
 							json!({
 								"sessionId": ReaderSessionId,
 								"sidecarId": ReaderSidecar,
@@ -604,8 +663,11 @@ impl DebugService for MountainEnvironment {
 
 				dev_log!(
 					"exthost",
+
 					"[DebugProvider] Connected to server adapter at {} for session '{}'",
+
 					Addr,
+
 					SessionID
 				);
 			},
@@ -627,8 +689,11 @@ impl DebugService for MountainEnvironment {
 
 				dev_log!(
 					"exthost",
+
 					"[DebugProvider] Connecting to debug adapter pipe at '{}' (session '{}')",
+
 					PipePath,
+
 					SessionID
 				);
 
@@ -638,6 +703,7 @@ impl DebugService for MountainEnvironment {
 						CommonError::IPCError {
 							Description:format!(
 								"Failed to connect to debug adapter pipe '{}' for session {}: {}",
+
 								PipePath, SessionID, Error
 							),
 						}
@@ -657,6 +723,7 @@ impl DebugService for MountainEnvironment {
 								CommonError::IPCError {
 									Description:format!(
 										"Failed to open named pipe '{}' for session {}: {}",
+
 										PipePath, SessionID, Error
 									),
 								}
@@ -678,8 +745,11 @@ impl DebugService for MountainEnvironment {
 						if let Err(Error) = Pipe.write_all(&Frame).await {
 							crate::dev_log!(
 								"exthost",
+
 								"warn: [DebugAdapter/pipe] write failed for session {}: {}",
+
 								PipeWriterSessionId,
+
 								Error
 							);
 
@@ -717,8 +787,11 @@ impl DebugService for MountainEnvironment {
 								Err(Error) => {
 									crate::dev_log!(
 										"exthost",
+
 										"warn: [DebugAdapter/pipe] read failed for session {}: {}",
+
 										PipeReaderSessionId,
+
 										Error
 									);
 
@@ -748,8 +821,11 @@ impl DebugService for MountainEnvironment {
 						if let Err(Error) = Reader.read_exact(&mut Body).await {
 							crate::dev_log!(
 								"exthost",
+
 								"warn: [DebugAdapter/pipe] body read failed for session {}: {}",
+
 								PipeReaderSessionId,
+
 								Error
 							);
 
@@ -760,6 +836,7 @@ impl DebugService for MountainEnvironment {
 
 						let _ = PipeReaderHandle.emit(
 							"sky://debug/dap-message",
+
 							json!({
 								"sessionId": PipeReaderSessionId,
 								"sidecarId": PipeReaderSidecar,
@@ -775,8 +852,11 @@ impl DebugService for MountainEnvironment {
 
 				dev_log!(
 					"exthost",
+
 					"[DebugProvider] Connected to pipe adapter at '{}' for session '{}'",
+
 					PipePath,
+
 					SessionID
 				);
 			},
@@ -784,6 +864,7 @@ impl DebugService for MountainEnvironment {
 			"implementation" => {
 				dev_log!(
 					"exthost",
+
 					"[DebugProvider] Inline implementation adapter for session '{}' - DAP frames travel via Cocoon \
 					 reverse-RPC.",
 					SessionID
@@ -797,9 +878,11 @@ impl DebugService for MountainEnvironment {
 			_ => {
 				dev_log!(
 					"exthost",
+
 					"warn: [DebugProvider] Unknown adapter descriptor type '{}' for session '{}' - registering \
 					 session without spawn.",
 					DescriptorType,
+
 					SessionID
 				);
 
@@ -824,8 +907,11 @@ impl DebugService for MountainEnvironment {
 		) {
 			dev_log!(
 				"exthost",
+
 				"warn: [DebugProvider] Failed to register session '{}' in DebugState: {}",
+
 				SessionID,
+
 				RegError
 			);
 		}
@@ -854,8 +940,11 @@ impl DebugService for MountainEnvironment {
 		{
 			dev_log!(
 				"exthost",
+
 				"warn: [DebugProvider] StartDebugging notification failed for '{}': {:?}",
+
 				SessionID,
+
 				error
 			);
 		}
@@ -867,6 +956,7 @@ impl DebugService for MountainEnvironment {
 		// (typed RPC) and Sky (renderer event).
 		let _ = self.ApplicationHandle.emit(
 			"sky://debug/sessionStart",
+
 			json!({
 				"sessionId": SessionID.clone(),
 				"type": DebugType.clone(),
@@ -882,9 +972,13 @@ impl DebugService for MountainEnvironment {
 	async fn SendCommand(&self, SessionID:String, Command:String, Arguments:Value) -> Result<Value, CommonError> {
 		dev_log!(
 			"exthost",
+
 			"[DebugProvider] SendCommand for session '{}' (command: '{}', args: {:?})",
+
 			SessionID,
+
 			Command,
+
 			Arguments
 		);
 
@@ -972,8 +1066,11 @@ impl DebugService for MountainEnvironment {
 		match IPCProvider
 			.SendRequestToSideCar(
 				TargetSidecar,
+
 				SendDapMethod,
+
 				json!([{ "sessionId": SessionID, "request": DapRequest }]),
+
 				15000,
 			)
 			.await
@@ -983,8 +1080,11 @@ impl DebugService for MountainEnvironment {
 			Err(Error) => {
 				dev_log!(
 					"exthost",
+
 					"warn: [DebugProvider] reverse-RPC SendCommand failed for session {}: {:?}",
+
 					SessionID,
+
 					Error
 				);
 
@@ -1039,8 +1139,11 @@ impl DebugService for MountainEnvironment {
 		{
 			dev_log!(
 				"exthost",
+
 				"warn: [DebugProvider] StopDebugging notification failed for '{}': {:?}",
+
 				SessionID,
+
 				error
 			);
 		}

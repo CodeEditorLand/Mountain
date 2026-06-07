@@ -8,6 +8,7 @@ use tauri::{AppHandle, Manager, Runtime, path::BaseDirectory};
 use crate::ProcessManagement::NodeResolver::{NodeSource, ResolvedNode};
 
 pub fn Fn<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> Option<ResolvedNode::Struct> {
+
 	let RelativeToResource = if cfg!(target_os = "windows") { "Node/node.exe" } else { "Node/bin/node" };
 
 	if let Ok(Resolved) = ApplicationHandle.path().resolve(RelativeToResource, BaseDirectory::Resource) {

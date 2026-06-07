@@ -1,6 +1,7 @@
 //! Provider registration and unregistration logic.
 
 use CommonLibrary::{Error::CommonError::CommonError, LanguageFeature::DTO::ProviderType::ProviderType};
+
 use serde_json::Value;
 
 use crate::{
@@ -22,6 +23,7 @@ pub(super) async fn register_provider(
 
 	options_dto:Option<Value>,
 ) -> Result<u32, CommonError> {
+
 	let handle = environment.ApplicationState.GetNextProviderHandle();
 
 	let new_registration = ProviderRegistrationDTO {
@@ -55,6 +57,7 @@ pub(super) async fn unregister_provider(
 
 	handle:u32,
 ) -> Result<(), CommonError> {
+
 	let mut providers = environment
 		.ApplicationState
 		.Extension
@@ -66,7 +69,9 @@ pub(super) async fn unregister_provider(
 	if providers.remove(&handle).is_none() {
 		dev_log!(
 			"extensions",
+
 			"warn: Attempted to unregister non-existent provider handle: {}",
+
 			handle
 		);
 	}

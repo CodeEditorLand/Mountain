@@ -1,4 +1,5 @@
 pub fn Matches(MethodName:&str) -> bool {
+
 	MethodName == "vscode.diff" || MethodName == "$scm:openDiff" || MethodName.starts_with("$scm:")
 }
 
@@ -8,7 +9,9 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider,
 };
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::{
@@ -20,6 +23,7 @@ use crate::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	dev_log!("scm", "[SCM] CreateEffect method={}", MethodName);
 
 	match MethodName {
@@ -115,7 +119,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
 					&run_time.Environment,
+
 					"sky://editor/diff",
+
 					Parameters,
 				)
 				.await
@@ -124,7 +130,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					Err(Error) => {
 						dev_log!(
 							"scm",
+
 							"warn: [SCM] vscode.diff sky://editor/diff did not answer ({:?}); returning null",
+
 							Error
 						);
 

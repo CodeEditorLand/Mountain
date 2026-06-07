@@ -17,6 +17,7 @@ use tauri::Wry;
 /// - Windows/Linux: Enables any_thread configuration
 /// - macOS: Uses default threading (no special configuration)
 pub fn TauriBuild() -> tauri::Builder<Wry> {
+
 	// Initialize the builder with default configuration
 	let Builder = tauri::Builder::default();
 

@@ -24,6 +24,7 @@ const MAX_COLUMN_NUMBER:usize = 1_000_000;
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct RPCRangeDTO {
+
 	/// Start line number (0-based)
 	pub StartLineNumber:usize,
 
@@ -38,6 +39,7 @@ pub struct RPCRangeDTO {
 }
 
 impl RPCRangeDTO {
+
 	/// Creates a new RPCRangeDTO with validation.
 	///
 	/// # Arguments

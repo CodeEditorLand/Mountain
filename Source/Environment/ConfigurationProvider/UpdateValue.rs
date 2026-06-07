@@ -31,7 +31,9 @@ use CommonLibrary::{
 	FileSystem::{ReadFile::ReadFile, WriteFileBytes::WriteFileBytes},
 	IPC::SkyEvent::SkyEvent,
 };
+
 use serde_json::{Map, Value};
+
 use tauri::Manager;
 
 use crate::{Environment::Utility, IPC::SkyEmit::LogSkyEmit, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
@@ -50,10 +52,14 @@ pub(super) async fn update_configuration_value(
 
 	_scope_to_language:Option<bool>,
 ) -> Result<(), CommonError> {
+
 	dev_log!(
 		"config",
+
 		"[ConfigurationProvider] Updating key '{}' in target {:?}",
+
 		key,
+
 		target
 	);
 
@@ -128,7 +134,9 @@ pub(super) async fn update_configuration_value(
 
 			dev_log!(
 				"config",
+
 				"[ConfigurationProvider] Memory target: stored in-memory value for '{}'",
+
 				key
 			);
 
@@ -211,12 +219,16 @@ pub(super) async fn update_configuration_value(
 
 	if let Err(Error) = LogSkyEmit(
 		&environment.ApplicationHandle,
+
 		SkyEvent::ConfigurationChanged.AsStr(),
+
 		EmitPayload,
 	) {
 		dev_log!(
 			"config",
+
 			"warn: [ConfigurationProvider] sky://configuration/changed emit failed: {}",
+
 			Error
 		);
 	}
@@ -232,14 +244,18 @@ pub(super) async fn update_configuration_value(
 	tokio::spawn(async move {
 		if let Err(Error) = ::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),
+
 			"configuration.change".to_string(),
+
 			serde_json::json!({ "keys": [NotifyKey] }),
 		)
 		.await
 		{
 			crate::dev_log!(
 				"config",
+
 				"warn: [ConfigurationProvider] configuration.change Cocoon notify failed: {:?}",
+
 				Error
 			);
 		}

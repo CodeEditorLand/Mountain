@@ -4,6 +4,7 @@
 use crate::IPC::DevLog::{DedupState, WriteToFile};
 
 pub fn Fn() {
+
 	// Use `try_lock` instead of `lock` so a contended flush (another
 	// dev_log! call holding the mutex) simply skips the dedup tail rather
 	// than parking the Tokio worker thread. The dedup compression is

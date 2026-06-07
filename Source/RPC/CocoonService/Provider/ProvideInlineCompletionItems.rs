@@ -10,12 +10,16 @@
 //! maps back into Monaco's `InlineCompletionList`.
 
 use tonic::{Response, Status};
+
 use url::Url;
+
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
+
 use serde_json::json;
+
 use ::Vine::Generated::{InlineCompletionItem, ProvideInlineCompletionRequest, ProvideInlineCompletionResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -25,6 +29,7 @@ pub async fn Fn(
 
 	Request:ProvideInlineCompletionRequest,
 ) -> Result<Response<ProvideInlineCompletionResponse>, Status> {
+
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
 
 	let Position_ = Request.position.as_ref();
@@ -35,10 +40,15 @@ pub async fn Fn(
 
 	dev_log!(
 		"provider",
+
 		"ProvideInlineCompletionItems handle={} uri={} line={} char={}",
+
 		Request.provider_handle,
+
 		URI,
+
 		Line,
+
 		Character
 	);
 

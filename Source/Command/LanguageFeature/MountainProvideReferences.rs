@@ -2,6 +2,7 @@
 //! `LanguageFeature::References::provide_references_impl`.
 
 use serde_json::Value;
+
 use tauri::{AppHandle, Wry, command};
 
 use crate::{Command::LanguageFeature::References, dev_log};
@@ -16,10 +17,14 @@ pub async fn MountainProvideReferences(
 
 	context:Value,
 ) -> Result<Value, String> {
+
 	dev_log!(
 		"commands",
+
 		"[Language Feature] Providing references for: {} at {:?}",
+
 		uri,
+
 		position
 	);
 

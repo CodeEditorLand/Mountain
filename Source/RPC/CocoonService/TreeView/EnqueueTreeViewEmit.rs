@@ -7,19 +7,24 @@
 use std::sync::OnceLock;
 
 use serde_json::{Value, json};
+
 use tauri::{AppHandle, Emitter};
+
 use tokio::sync::mpsc::{UnboundedSender, unbounded_channel};
+
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 use crate::dev_log;
 
 struct TreeViewChannel {
+
 	Sender:UnboundedSender<(AppHandle, Value)>,
 }
 
 static TV_CH:OnceLock<TreeViewChannel> = OnceLock::new();
 
 fn GetOrInitChannel(Handle:&AppHandle) -> &'static TreeViewChannel {
+
 	TV_CH.get_or_init(|| {
 		let (Tx, mut Rx) = unbounded_channel::<(AppHandle, Value)>();
 
@@ -64,6 +69,7 @@ fn GetOrInitChannel(Handle:&AppHandle) -> &'static TreeViewChannel {
 }
 
 pub fn Fn(Handle:&AppHandle, Payload:Value) {
+
 	let Ch = GetOrInitChannel(Handle);
 
 	let _ = Ch.Sender.send((Handle.clone(), Payload));

@@ -22,6 +22,7 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
+
 use CommonLibrary::{Search::SearchProvider::SearchProvider, Workspace::WorkspaceProvider::WorkspaceProvider};
 
 use crate::{
@@ -38,6 +39,7 @@ use crate::{
 /// its own `serde_json::from_value::<TextSearchQuery>` so callers can
 /// keep sending arbitrary shapes - we pass through directly.
 pub async fn SearchFindInFiles(RunTime:Arc<ApplicationRunTime>, mut Arguments:Vec<Value>) -> Result<Value, String> {
+
 	// Positional → named translation. VS Code's SearchService sends the
 	// query object in slot 0; older Wind Effect callers passed flat
 	// positional Arguments (pattern, isRegex, isCase, isWord, include,
@@ -80,6 +82,7 @@ pub async fn SearchFindInFiles(RunTime:Arc<ApplicationRunTime>, mut Arguments:Ve
 /// `WorkspaceProvider::FindFilesInWorkspace` which returns `Vec<Url>`;
 /// we reshape to `Vec<String>` for the renderer.
 pub async fn SearchFindFiles(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let IncludePattern = Arguments
 		.first()
 		.cloned()
@@ -95,8 +98,11 @@ pub async fn SearchFindFiles(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Valu
 
 	dev_log!(
 		"search",
+
 		"search:fileSearch delegating to WorkspaceProvider::FindFilesInWorkspace (ignore={}, symlinks={})",
+
 		UseIgnoreFiles,
+
 		FollowSymlinks
 	);
 

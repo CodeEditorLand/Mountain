@@ -30,6 +30,7 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 /// user-installed VSIXes never reach the Extensions sidebar even though
 /// they are present on disk.
 pub fn Fn(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), CommonError> {
+
 	// Per-call verification line is one of the highest-volume tags
 	// (~15k hits per long session). The failure path below logs its own
 	// line; the success path is auditable from IPC-side request logs.
@@ -101,8 +102,11 @@ pub fn Fn(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), C
 
 		// Try both canonical-canonical AND raw-raw - either match wins.
 		PathToCheck.starts_with(&FolderPath)
+
 			|| PathToCheck.starts_with(&CanonicalFolderPath)
+
 			|| CanonicalPathToCheck.starts_with(&FolderPath)
+
 			|| CanonicalPathToCheck.starts_with(&CanonicalFolderPath)
 	});
 
@@ -125,9 +129,13 @@ pub fn Fn(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), C
 
 		dev_log!(
 			"vfs",
+
 			"[PathSecurity] reject path={} canonical={} folders=[{}]",
+
 			PathToCheck.display(),
+
 			CanonicalPathToCheck.display(),
+
 			FolderPaths.join(", ")
 		);
 
@@ -171,6 +179,7 @@ pub fn Fn(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), C
 /// bookkeeping reads + cooperating neighbour-tool probes without
 /// handing extensions an unbounded filesystem.
 fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
+
 	// Canonicalising is best-effort - when the path doesn't exist yet
 	// (e.g. first-boot probes for `globalStorage/<extension>/state.json`)
 	// `canonicalize` returns Err and we compare against the raw path.
@@ -210,7 +219,9 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 		let MacAppSupport = PathBuf::from(&Home).join("Library/Application Support");
 
 		if (Candidate.starts_with(&MacAppSupport) || PathToCheck.starts_with(&MacAppSupport))
+
 			&& ContainsLandEditorSegment(PathToCheck)
+
 		{
 			return true;
 		}
@@ -220,7 +231,9 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 			.unwrap_or_else(|_| PathBuf::from(&Home).join(".config"));
 
 		if (Candidate.starts_with(&XdgConfig) || PathToCheck.starts_with(&XdgConfig))
+
 			&& ContainsLandEditorSegment(PathToCheck)
+
 		{
 			return true;
 		}
@@ -230,7 +243,9 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 			.unwrap_or_else(|_| PathBuf::from(&Home).join(".local/share"));
 
 		if (Candidate.starts_with(&XdgData) || PathToCheck.starts_with(&XdgData))
+
 			&& ContainsLandEditorSegment(PathToCheck)
+
 		{
 			return true;
 		}
@@ -240,8 +255,11 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 		if let Some(ExeParent) = Exe.parent() {
 			let BundleRoots = [
 				ExeParent.join("extensions"),
+
 				ExeParent.join("../Resources/extensions"),
+
 				ExeParent.join("../Resources/app/extensions"),
+
 				// Canonical bundle layout: tauri.conf.json maps Sky's
 				// Static/Application/extensions into Contents/Resources/Static/
 				// Application/extensions. This is the path ScanPathConfigure
@@ -265,7 +283,9 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 	// resolves that, but we also fall back to a path-segment match so a
 	// missing file (first-boot probe) still clears the check.
 	if ContainsPathSegments(PathToCheck, &["Sky", "Target", "Static", "Application", "extensions"])
+
 		|| ContainsPathSegments(PathToCheck, &["Dependency", "Microsoft", "Dependency", "Editor", "extensions"])
+
 	{
 		return true;
 	}
@@ -278,10 +298,14 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 	// above and keeps third-party probes from getting "outside workspace"
 	// rejections for files Land itself shipped.
 	if ContainsPathSegments(PathToCheck, &["Sky", "Target"])
+
 		|| ContainsPathSegments(PathToCheck, &["Output", "Target"])
+
 		|| ContainsPathSegments(PathToCheck, &["Dependency", "Microsoft", "Dependency", "Editor", "out"])
+
 		|| ContainsPathSegments(
 			PathToCheck,
+
 			&["Dependency", "Microsoft", "Dependency", "Editor", "product.json"],
 		) {
 		return true;
@@ -291,6 +315,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 		let TempPath = PathBuf::from(&TempDir);
 
 		if !TempPath.as_os_str().is_empty() && (Candidate.starts_with(&TempPath) || PathToCheck.starts_with(&TempPath))
+
 		{
 			return true;
 		}
@@ -338,19 +363,33 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 	// abuse vector. Match by full equality to keep the carve-out tight.
 	for SystemFile in [
 		"/etc/os-release",
+
 		"/etc/lsb-release",
+
 		"/etc/system-release",
+
 		"/etc/redhat-release",
+
 		"/etc/SuSE-release",
+
 		"/etc/debian_version",
+
 		"/etc/alpine-release",
+
 		"/etc/machine-id",
+
 		"/etc/timezone",
+
 		"/etc/localtime",
+
 		"/proc/version",
+
 		"/proc/cpuinfo",
+
 		"/proc/meminfo",
+
 		"/proc/self/status",
+
 		"/proc/self/cgroup",
 	] {
 		let SysPath = PathBuf::from(SystemFile);
@@ -368,6 +407,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 /// we only trust directories that Land itself provisioned, not every file
 /// under `$HOME/Library/Application Support`.
 fn ContainsLandEditorSegment(path:&Path) -> bool {
+
 	path.components().any(|Component| {
 		Component
 			.as_os_str()
@@ -381,6 +421,7 @@ fn ContainsLandEditorSegment(path:&Path) -> bool {
 /// path components of `path`. Used to match Sky / Dependency extension
 /// roots regardless of which relative-path prefix the scanner used.
 fn ContainsPathSegments(path:&Path, segments:&[&str]) -> bool {
+
 	let Names:Vec<&str> = path.components().filter_map(|C| C.as_os_str().to_str()).collect();
 
 	if segments.is_empty() || Names.len() < segments.len() {

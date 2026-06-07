@@ -63,11 +63,15 @@ use CommonLibrary::{
 		SourceControlManagementProvider::SourceControlManagementProvider,
 	},
 };
+
 use async_trait::async_trait;
+
 use serde_json::{Value, json};
+
 use tauri::Emitter;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
+
 use crate::dev_log;
 
 // TODO: built-in Git provider (libgit2 or CLI), repository discovery +
@@ -77,6 +81,7 @@ use crate::dev_log;
 // tag management, detached HEAD / bisect, rebase / cherry-pick, telemetry.
 #[async_trait]
 impl SourceControlManagementProvider for MountainEnvironment {
+
 	async fn CreateSourceControl(&self, ProviderDataValue:Value) -> Result<u32, CommonError> {
 		let ProviderData:SourceControlCreateDTO = serde_json::from_value(ProviderDataValue)?;
 
@@ -95,7 +100,9 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		dev_log!(
 			"extensions",
+
 			"[SourceControlManagementProvider] Creating new SCM provider with handle {}",
+
 			Handle
 		);
 
@@ -145,7 +152,9 @@ impl SourceControlManagementProvider for MountainEnvironment {
 	async fn DisposeSourceControl(&self, ProviderHandle:u32) -> Result<(), CommonError> {
 		dev_log!(
 			"extensions",
+
 			"[SourceControlManagementProvider] Disposing SCM provider with handle {}",
+
 			ProviderHandle
 		);
 
@@ -177,7 +186,9 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		dev_log!(
 			"extensions",
+
 			"[SourceControlManagementProvider] Updating provider {}",
+
 			ProviderHandle
 		);
 
@@ -222,6 +233,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			self.ApplicationHandle
 				.emit(
 					SkyEvent::SCMProviderChanged.AsStr(),
+
 					json!({ "handle": ProviderHandle, "provider": ProviderClone }),
 				)
 				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
@@ -235,8 +247,11 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		dev_log!(
 			"extensions",
+
 			"[SourceControlManagementProvider] Updating group '{}' for provider {}",
+
 			GroupData.GroupID,
+
 			ProviderHandle
 		);
 
@@ -267,13 +282,16 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			self.ApplicationHandle
 				.emit(
 					SkyEvent::SCMGroupChanged.AsStr(),
+
 					json!({ "providerHandle": ProviderHandle, "group": GroupClone }),
 				)
 				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 		} else {
 			dev_log!(
 				"extensions",
+
 				"warn: [SourceControlManagementProvider] Received group update for unknown provider handle: {}",
+
 				ProviderHandle
 			);
 		}
@@ -286,7 +304,9 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		dev_log!(
 			"extensions",
+
 			"[SourceControlManagementProvider] Registering input box for provider {}",
+
 			ProviderHandle
 		);
 
@@ -309,6 +329,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			self.ApplicationHandle
 				.emit(
 					SkyEvent::SCMProviderChanged.AsStr(),
+
 					json!({ "handle": ProviderHandle, "provider": ProviderClone }),
 				)
 				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;

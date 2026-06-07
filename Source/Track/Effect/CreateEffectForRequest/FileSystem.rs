@@ -1,4 +1,5 @@
 pub fn Matches(MethodName:&str) -> bool {
+
 	match MethodName {
 		"FileSystem.ReadFile"
 		| "FileSystem.WriteFile"
@@ -20,11 +21,14 @@ pub fn Matches(MethodName:&str) -> bool {
 use std::sync::Arc;
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
+
 use CommonLibrary::{
 	Environment::Requires::Requires,
 	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
 };
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::Track::Effect::{
@@ -37,6 +41,7 @@ use crate::Track::Effect::{
 /// Validated before Environment.Require() in all four read/write handlers.
 #[inline]
 fn require_non_empty_path(method:&str, path:&str) -> Result<(), String> {
+
 	if path.is_empty() {
 		Err(format!("{}: empty path (resource not found)", method))
 	} else {
@@ -45,6 +50,7 @@ fn require_non_empty_path(method:&str, path:&str) -> Result<(), String> {
 }
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
 		"FileSystem.ReadFile" => {
 			crate::effect!(run_time, {
@@ -197,7 +203,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				fs_writer
 					.Rename(
 						&std::path::PathBuf::from(strip_file_uri(source)),
+
 						&std::path::PathBuf::from(strip_file_uri(target)),
+
 						true,
 					)
 					.await
@@ -217,7 +225,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				fs_writer
 					.Copy(
 						&std::path::PathBuf::from(strip_file_uri(source)),
+
 						&std::path::PathBuf::from(strip_file_uri(target)),
+
 						true,
 					)
 					.await

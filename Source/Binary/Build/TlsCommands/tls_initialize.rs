@@ -10,6 +10,7 @@ use crate::{Binary::Build::CertificateManager::CertificateManager, dev_log};
 
 #[tauri::command]
 pub async fn tls_initialize(app_handle:AppHandle) -> Result<String, String> {
+
 	dev_log!("security", "TLS certificate manager initializing");
 
 	let state = app_handle

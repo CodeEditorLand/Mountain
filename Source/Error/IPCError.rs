@@ -14,6 +14,7 @@ use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 /// IPC-specific error types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum IPCError {
+
 	/// Connection failed.
 	ConnectionFailed { context:ErrorContext, source:Option<String> },
 
@@ -40,6 +41,7 @@ pub enum IPCError {
 }
 
 impl IPCError {
+
 	/// Get the error context.
 	pub fn context(&self) -> &ErrorContext {
 		match self {
@@ -123,11 +125,13 @@ impl IPCError {
 }
 
 impl fmt::Display for IPCError {
+
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{}", self.context()) }
 }
 
 impl StdError for IPCError {}
 
 impl From<IPCError> for MountainError {
+
 	fn from(err:IPCError) -> Self { MountainError::new(err.context().clone()).with_source(err.to_string()) }
 }

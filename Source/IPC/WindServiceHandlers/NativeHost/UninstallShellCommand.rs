@@ -12,6 +12,7 @@ const CLI_NAME:&str = "land";
 const SYMLINK_DIR:&str = "/usr/local/bin";
 
 pub async fn Fn(_Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Target = PathBuf::from(SYMLINK_DIR).join(CLI_NAME);
 
 	dev_log!("shell-cmd", "uninstallShellCommand: removing {}", Target.display());
@@ -34,6 +35,7 @@ pub async fn Fn(_Arguments:Vec<Value>) -> Result<Value, String> {
 					.env("SH_TARGET", Target.as_os_str())
 					.args([
 						"-e",
+
 						"do shell script (\"rm -f \" & quoted form of (system attribute \"SH_TARGET\")) with \
 						 administrator privileges",
 					])

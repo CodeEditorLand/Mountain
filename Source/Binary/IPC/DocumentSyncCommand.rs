@@ -40,6 +40,7 @@
 //! - Consider delta sync for large documents
 
 use serde_json::Value;
+
 use tauri::AppHandle;
 
 use crate::dev_log;
@@ -64,6 +65,7 @@ use crate::dev_log;
 /// - Document registration fails
 #[tauri::command]
 pub async fn MountainAddDocumentForSync(app_handle:AppHandle, document_data:Value) -> Result<Value, String> {
+
 	let DocumentId = document_data["document_id"]
 		.as_str()
 		.ok_or_else(|| {
@@ -109,6 +111,7 @@ pub async fn MountainAddDocumentForSync(app_handle:AppHandle, document_data:Valu
 /// Returns an error if status cannot be retrieved.
 #[tauri::command]
 pub async fn MountainGetSyncStatus(app_handle:AppHandle) -> Result<Value, String> {
+
 	crate::IPC::WindAdvancedSync::mountain_get_sync_status(app_handle)
 		.await
 		.map_err(|Error| {

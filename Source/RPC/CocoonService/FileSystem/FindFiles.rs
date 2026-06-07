@@ -2,12 +2,15 @@
 //! (globset). Falls back to cwd when no roots are open.
 
 use globset::Glob;
+
 use tonic::{Response, Status};
+
 use ::Vine::Generated::{FindFilesRequest, FindFilesResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:FindFilesRequest) -> Result<Response<FindFilesResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] Finding files with pattern: {}", Request.pattern);
 
 	let Matcher = Glob::new(&Request.pattern)
@@ -62,8 +65,11 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:FindFilesRequest) -> Result<
 
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] find_files: {} results for pattern '{}'",
+
 		URIs.len(),
+
 		Request.pattern
 	);
 

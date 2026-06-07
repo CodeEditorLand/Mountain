@@ -30,8 +30,11 @@ use CommonLibrary::{
 		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	},
 };
+
 use async_trait::async_trait;
+
 use serde_json::Value;
+
 use url::Url;
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;
@@ -45,6 +48,7 @@ mod FeatureMethods;
 
 #[async_trait]
 impl LanguageFeatureProviderRegistry for MountainEnvironment {
+
 	async fn RegisterProvider(
 		&self,
 
@@ -60,10 +64,15 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 	) -> Result<u32, CommonError> {
 		Registration::register_provider(
 			self,
+
 			SideCarIdentifier,
+
 			ProviderType,
+
 			SelectorDTO,
+
 			ExtensionIdentifierDTO,
+
 			OptionsDTO,
 		)
 		.await

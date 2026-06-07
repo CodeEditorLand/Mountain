@@ -6,12 +6,14 @@
 use std::sync::Arc;
 
 use CommonLibrary::Environment::{Environment::Environment, HasEnvironment::HasEnvironment};
+
 use Echo::Scheduler::Scheduler::Scheduler;
 
 use crate::{Environment::MountainEnvironment::MountainEnvironment, dev_log};
 
 #[derive(Clone)]
 pub struct ApplicationRunTime {
+
 	/// Shared handle to the application's central scheduler.
 	pub Scheduler:Arc<Scheduler>,
 
@@ -20,6 +22,7 @@ pub struct ApplicationRunTime {
 }
 
 impl ApplicationRunTime {
+
 	pub fn Create(Scheduler:Arc<Scheduler>, Environment:Arc<MountainEnvironment>) -> Self {
 		dev_log!("lifecycle", "new Echo-based instance created");
 
@@ -28,6 +31,7 @@ impl ApplicationRunTime {
 }
 
 impl HasEnvironment for ApplicationRunTime {
+
 	type EnvironmentType = MountainEnvironment;
 
 	fn GetEnvironment(&self) -> Arc<Self::EnvironmentType> { self.Environment.clone() }

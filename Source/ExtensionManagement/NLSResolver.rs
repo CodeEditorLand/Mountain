@@ -10,6 +10,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 use CommonLibrary::{Effect::ApplicationRunTime::ApplicationRunTime as _, FileSystem::ReadFile::ReadFile};
+
 use serde_json::{Map, Value};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
@@ -17,6 +18,7 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 /// Return `true` if `Value` contains any `%placeholder%` token anywhere in
 /// the tree. Used to skip bundle I/O for manifests that have no tokens.
 pub fn ManifestContainsNLSPlaceholders(Value:&Value) -> bool {
+
 	match Value {
 		serde_json::Value::String(Text) => {
 			Text.len() >= 2 && Text.starts_with('%') && Text.ends_with('%') && !Text[1..Text.len() - 1].contains('%')
@@ -42,6 +44,7 @@ pub async fn LoadNLSBundle(
 
 	PlaceholdersNeeded:bool,
 ) -> Option<Map<String, Value>> {
+
 	let NLSPath = ExtensionPath.join("package.nls.json");
 
 	let Content = match RunTime.Run(ReadFile(NLSPath.clone())).await {
@@ -53,7 +56,9 @@ pub async fn LoadNLSBundle(
 			} else {
 				dev_log!(
 					"nls",
+
 					"[LandFix:NLS] {} has no placeholders, no bundle needed",
+
 					ExtensionPath.display()
 				);
 			}
@@ -92,8 +97,11 @@ pub async fn LoadNLSBundle(
 
 	dev_log!(
 		"nls",
+
 		"[LandFix:NLS] loaded {} keys for {}",
+
 		Resolved.len(),
+
 		ExtensionPath.display()
 	);
 
@@ -104,6 +112,7 @@ pub async fn LoadNLSBundle(
 /// `Replaced` and `Unresolved` accumulate counts for the outer scanner's
 /// one-line summary log.
 pub fn ResolveNLSPlaceholdersInner(Value:&mut Value, NLS:&Map<String, Value>, Replaced:&mut u32, Unresolved:&mut u32) {
+
 	match Value {
 		serde_json::Value::String(Text) => {
 			if Text.len() >= 2 && Text.starts_with('%') && Text.ends_with('%') {

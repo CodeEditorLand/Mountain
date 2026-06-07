@@ -1,4 +1,5 @@
 pub fn Matches(MethodName:&str) -> bool {
+
 	match MethodName {
 		"Document.Save" | "Document.SaveAs" => true,
 
@@ -9,13 +10,17 @@ pub fn Matches(MethodName:&str) -> bool {
 use std::sync::Arc;
 
 use CommonLibrary::{Document::DocumentProvider::DocumentProvider, Environment::Requires::Requires};
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
+
 use url::Url;
 
 use crate::Track::Effect::{CreateEffectForRequest::Utilities::Params::str_at, MappedEffectType::MappedEffect};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
 		"Document.Save" => {
 			crate::effect!(run_time, {

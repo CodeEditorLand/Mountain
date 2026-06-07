@@ -9,6 +9,7 @@ use std::{
 use crate::Telemetry::Metrics::GlobalRegistry;
 
 pub struct Struct {
+
 	Name:String,
 
 	Labels:HashMap<String, String>,
@@ -17,6 +18,7 @@ pub struct Struct {
 }
 
 impl Struct {
+
 	pub fn Start(Name:&str) -> Self { Self { Name:Name.to_string(), Labels:HashMap::new(), Start:Instant::now() } }
 
 	pub fn WithLabel(mut self, Key:&str, Value:&str) -> Self {

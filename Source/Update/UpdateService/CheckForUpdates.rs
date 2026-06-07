@@ -13,13 +13,17 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	UserInterface::{DTO::MessageSeverity::MessageSeverity, ShowMessage::ShowMessage},
 };
+
 use serde_json::json;
+
 use tauri::AppHandle;
+
 use tauri_plugin_updater::UpdaterExt;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<Runtime>, NotifyNoUpdate:bool) -> Result<(), CommonError> {
+
 	dev_log!("update", "[UpdateService] Checking for updates...");
 
 	let Updater = ApplicationHandle.updater_builder().build().map_err(|Error| {
@@ -37,7 +41,9 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<Runtime>, NotifyNoUpdat
 			let Response = RunTime
 				.Run(ShowMessage(
 					MessageSeverity::Info,
+
 					Message,
+
 					json!({ "modal": true, "actions": ["Install", "Later"] }),
 				))
 				.await?;
@@ -59,7 +65,9 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<Runtime>, NotifyNoUpdat
 					RunTime
 						.Run(ShowMessage(
 							MessageSeverity::Error,
+
 							format!("Failed to install update: {}", Error),
+
 							json!(null),
 						))
 						.await?;
@@ -74,7 +82,9 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<Runtime>, NotifyNoUpdat
 				RunTime
 					.Run(ShowMessage(
 						MessageSeverity::Info,
+
 						"You are running the latest version of Mountain.".to_string(),
+
 						json!(null),
 					))
 					.await?;
@@ -88,7 +98,9 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<Runtime>, NotifyNoUpdat
 				RunTime
 					.Run(ShowMessage(
 						MessageSeverity::Error,
+
 						format!("Failed to check for updates: {}", Error),
+
 						json!(null),
 					))
 					.await?;

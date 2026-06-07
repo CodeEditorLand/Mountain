@@ -38,6 +38,7 @@
 //! - Consider rate limiting if called frequently
 
 use serde_json::Value;
+
 use tauri::AppHandle;
 
 use crate::dev_log;
@@ -62,6 +63,7 @@ use crate::dev_log;
 /// - Status cannot be retrieved from IPC server
 #[tauri::command]
 pub async fn MountainIPCGetStatus(app_handle:AppHandle) -> Result<Value, String> {
+
 	let Status = crate::IPC::TauriIPCServer_Old::mountain_ipc_get_status(app_handle)
 		.await
 		.map_err(|Error| {

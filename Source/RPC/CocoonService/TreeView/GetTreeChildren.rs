@@ -3,7 +3,9 @@
 //! is registered or the sidecar call times out (5 s default).
 
 use serde_json::{Value, json};
+
 use tonic::{Response, Status};
+
 use ::Vine::{
 	Client::SendRequest::Fn as SendRequest,
 	Generated::{GetTreeChildrenRequest, GetTreeChildrenResponse, TreeItem},
@@ -19,6 +21,7 @@ pub async fn Fn(
 
 	Request:GetTreeChildrenRequest,
 ) -> Result<Response<GetTreeChildrenResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] get_tree_children: view={}", Request.view_id);
 
 	let Handle = ViewIdHandle::Fn(&Request.view_id);
@@ -33,8 +36,11 @@ pub async fn Fn(
 	if Provider.is_none() {
 		dev_log!(
 			"tree-view",
+
 			"[TreeView] get-children view={} parent_handle={} - no provider registered",
+
 			Request.view_id,
+
 			Request.tree_item_handle
 		);
 
@@ -43,8 +49,11 @@ pub async fn Fn(
 
 	dev_log!(
 		"tree-view",
+
 		"[TreeView] get-children view={} parent_handle={} - forwarding to Cocoon $provideTreeChildren",
+
 		Request.view_id,
+
 		Request.tree_item_handle
 	);
 
@@ -64,8 +73,11 @@ pub async fn Fn(
 		Err(Error) => {
 			dev_log!(
 				"tree-view",
+
 				"[TreeView] get-children view={} error forwarding to Cocoon: {:?}",
+
 				Request.view_id,
+
 				Error
 			);
 
@@ -94,9 +106,13 @@ pub async fn Fn(
 
 	dev_log!(
 		"tree-view",
+
 		"[TreeView] get-children view={} parent_handle={} children={}",
+
 		Request.view_id,
+
 		Request.tree_item_handle,
+
 		Items.len()
 	);
 

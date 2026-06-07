@@ -9,6 +9,7 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
 };
+
 use serde_json::Value;
 
 use crate::{Environment::Utility, dev_log};
@@ -22,10 +23,14 @@ pub(super) async fn get_children(
 
 	element_handle:Option<String>,
 ) -> Result<Vec<Value>, CommonError> {
+
 	dev_log!(
 		"extensions",
+
 		"[TreeViewProvider] Getting children for view '{}', handle: {:?}",
+
 		view_identifier,
+
 		element_handle
 	);
 
@@ -71,10 +76,14 @@ pub(super) async fn get_tree_item(
 
 	element_handle:String,
 ) -> Result<Value, CommonError> {
+
 	dev_log!(
 		"extensions",
+
 		"[TreeViewProvider] Getting item for view '{}', handle: {}",
+
 		view_identifier,
+
 		element_handle
 	);
 

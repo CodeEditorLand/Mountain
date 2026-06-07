@@ -40,6 +40,7 @@ use crate::{ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO, dev_log};
 /// Diagnostic errors state containing markers by owner and resource.
 #[derive(Clone)]
 pub struct DiagnosticsState {
+
 	/// Diagnostics map organized by owner and resource URI.
 	///
 	/// Structure: owner -> resource URI -> list of markers
@@ -47,6 +48,7 @@ pub struct DiagnosticsState {
 }
 
 impl Default for DiagnosticsState {
+
 	fn default() -> Self {
 		dev_log!("extensions", "[DiagnosticsState] Initializing default diagnostics state...");
 
@@ -55,6 +57,7 @@ impl Default for DiagnosticsState {
 }
 
 impl DiagnosticsState {
+
 	/// Gets all diagnostics for all owners and resources.
 	pub fn GetAll(&self) -> HashMap<String, HashMap<String, Vec<MarkerDataDTO>>> { self.DiagnosticsMap.lock().clone() }
 

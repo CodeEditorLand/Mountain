@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use parking_lot::Mutex;
+
 use tokio::sync::Notify;
+
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 use crate::{IPC::SkyEmit::LogSkyEmit, dev_log};
@@ -15,6 +17,7 @@ pub type Phase = u8;
 /// can await it instead of polling at 100 ms intervals.
 #[derive(Clone)]
 pub struct LifecyclePhaseState {
+
 	CurrentPhase:Arc<Mutex<Phase>>,
 
 	/// Fired (notify_waiters) on every forward phase transition.
@@ -22,9 +25,11 @@ pub struct LifecyclePhaseState {
 }
 
 impl Default for LifecyclePhaseState {
+
 	fn default() -> Self {
 		dev_log!(
 			"lifecycle",
+
 			"[LifecyclePhaseState] Initializing default lifecycle state (phase 1: Starting)..."
 		);
 
@@ -33,6 +38,7 @@ impl Default for LifecyclePhaseState {
 }
 
 impl LifecyclePhaseState {
+
 	/// Return the current lifecycle phase.
 	pub fn GetPhase(&self) -> Phase { *self.CurrentPhase.lock() }
 
@@ -81,7 +87,9 @@ impl LifecyclePhaseState {
 
 		if let Err(Error) = LogSkyEmit(
 			ApplicationHandle,
+
 			SkyEvent::LifecyclePhaseChanged.AsStr(),
+
 			serde_json::json!({
 				"phase": NewPhase,
 				"previous": Previous,
@@ -90,7 +98,9 @@ impl LifecyclePhaseState {
 		) {
 			dev_log!(
 				"lifecycle",
+
 				"warn: [LifecyclePhaseState] sky://lifecycle/phaseChanged emit failed: {}",
+
 				Error
 			);
 		}

@@ -8,10 +8,12 @@ use crate::dev_log;
 /// Drives the dirty dot in editor tabs and the explorer badge count.
 #[derive(Clone)]
 pub struct WorkingCopyState {
+
 	DirtyUris:Arc<Mutex<HashSet<String>>>,
 }
 
 impl Default for WorkingCopyState {
+
 	fn default() -> Self {
 		dev_log!("workingcopy", "[WorkingCopyState] Initializing default working-copy state...");
 
@@ -20,6 +22,7 @@ impl Default for WorkingCopyState {
 }
 
 impl WorkingCopyState {
+
 	/// Returns `true` if the given URI has unsaved changes.
 	pub fn IsDirty(&self, Uri:&str) -> bool { self.DirtyUris.lock().contains(Uri) }
 

@@ -3,6 +3,7 @@
 //! `tokio::task::spawn_blocking` so the event loop stays responsive.
 
 use tonic::{Response, Status};
+
 use ::Vine::Generated::{FindTextInFilesRequest, FindTextInFilesResponse, Position, Range, TextMatch, Uri};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -12,6 +13,7 @@ pub async fn Fn(
 
 	Request:FindTextInFilesRequest,
 ) -> Result<Response<FindTextInFilesResponse>, Status> {
+
 	if Request.pattern.is_empty() {
 		return Ok(Response::new(FindTextInFilesResponse::default()));
 	}
@@ -105,8 +107,11 @@ pub async fn Fn(
 
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] find_text_in_files: {} matches for '{}'",
+
 		Matches.len(),
+
 		Request.pattern
 	);
 

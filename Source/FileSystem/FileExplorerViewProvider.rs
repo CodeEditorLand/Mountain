@@ -15,21 +15,27 @@ use CommonLibrary::{
 	FileSystem::{DTO::FileTypeDTO::FileTypeDTO, ReadDirectory::ReadDirectory},
 	TreeView::TreeViewProvider::TreeViewProvider,
 };
+
 use async_trait::async_trait;
+
 use serde_json::{Value, json};
+
 use tauri::{AppHandle, Manager};
+
 use url::Url;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 #[derive(Clone)]
 pub struct Struct {
+
 	AppicationHandle:AppHandle,
 }
 
 impl Environment for Struct {}
 
 impl Struct {
+
 	pub fn New(AppicationHandle:AppHandle) -> Self { Self { AppicationHandle } }
 
 	fn CreateTreeItemDTO(&self, Name:&str, URI:&Url, FileType:FileTypeDTO) -> Value {
@@ -54,6 +60,7 @@ impl Struct {
 
 #[async_trait]
 impl TreeViewProvider for Struct {
+
 	// Push methods - no-ops for native providers.
 
 	async fn RegisterTreeDataProvider(&self, _ViewIdentifier:String, _Options:Value) -> Result<(), CommonError> {

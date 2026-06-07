@@ -3,11 +3,13 @@
 //! `extension_id` from `Params` and call `RegisterProvider`.
 
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
+
 use serde_json::Value;
 
 use crate::RPC::CocoonService::CocoonServiceImpl;
 
 pub fn HandleRegisterProvider(Params:Value, Service:&CocoonServiceImpl, ProvType:ProviderType) {
+
 	let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
 
 	let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
@@ -20,6 +22,7 @@ pub fn HandleRegisterProvider(Params:Value, Service:&CocoonServiceImpl, ProvType
 /// Dispatch a `register_*_provider` method string to the correct
 /// `ProviderType`. Returns `true` if the method was recognised and dispatched.
 pub fn DispatchRegisterProvider(Method:&str, Params:Value, Service:&CocoonServiceImpl) -> bool {
+
 	let ProvType = match Method {
 		"register_hover_provider" => ProviderType::Hover,
 

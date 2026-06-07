@@ -13,11 +13,13 @@
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
+
 use serde_json::{Value, json};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let TerminalId = match Arguments.first() {
 		Some(Value::Number(N)) => N.as_u64().unwrap_or(0),
 
@@ -46,7 +48,9 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		Ok(None) => {
 			dev_log!(
 				"terminal",
+
 				"warn: [AttachToProcess] id={} not found in active terminals",
+
 				TerminalId
 			);
 

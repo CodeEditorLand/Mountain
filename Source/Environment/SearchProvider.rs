@@ -47,15 +47,23 @@ use std::{
 };
 
 use CommonLibrary::{Error::CommonError::CommonError, Search::SearchProvider::SearchProvider};
+
 use async_trait::async_trait;
+
 use grep_matcher::Matcher;
+
 use grep_regex::{RegexMatcher, RegexMatcherBuilder};
+
 use grep_searcher::{Searcher, SearcherBuilder, Sink, SinkMatch};
+
 use ignore::WalkBuilder;
+
 use serde::{Deserialize, Serialize};
+
 use serde_json::{Value, json};
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
+
 use crate::dev_log;
 
 // TODO: result pagination, cancellation via CancellationToken, include/exclude
@@ -83,6 +91,7 @@ use crate::dev_log;
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 struct TextSearchQuery {
+
 	pattern:String,
 
 	#[serde(default)]
@@ -111,6 +120,7 @@ struct TextSearchQuery {
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct ColumnRange {
+
 	start:u64,
 
 	end:u64,
@@ -119,6 +129,7 @@ struct ColumnRange {
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct TextMatch {
+
 	preview:String,
 
 	/// 1-based line number (grep-searcher emits 1-based when
@@ -136,6 +147,7 @@ struct TextMatch {
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct FileMatch {
+
 	// URI
 	resource:String,
 
@@ -145,6 +157,7 @@ struct FileMatch {
 // This Sink is designed to be created for each file. It holds a reference to
 // the central results vector and the path of the file it's searching.
 struct PerFileSink {
+
 	path:PathBuf,
 
 	results:Arc<Mutex<Vec<FileMatch>>>,
@@ -158,6 +171,7 @@ struct PerFileSink {
 }
 
 impl Sink for PerFileSink {
+
 	type Error = io::Error;
 
 	fn matched(&mut self, _Searcher:&Searcher, Mat:&SinkMatch<'_>) -> Result<bool, Self::Error> {
@@ -285,6 +299,7 @@ impl Sink for PerFileSink {
 
 #[async_trait]
 impl SearchProvider for MountainEnvironment {
+
 	async fn TextSearch(&self, QueryValue:Value, _OptionsValue:Value) -> Result<Value, CommonError> {
 		let Query:TextSearchQuery = serde_json::from_value(QueryValue)?;
 
@@ -362,8 +377,11 @@ impl SearchProvider for MountainEnvironment {
 								if let Err(Error) = Searcher.search_path(&Matcher, Entry.path(), Sink) {
 									dev_log!(
 										"search",
+
 										"warn: [SearchProvider] Error searching path {}: {}",
+
 										Entry.path().display(),
+
 										Error
 									);
 								}
@@ -385,9 +403,13 @@ impl SearchProvider for MountainEnvironment {
 
 		dev_log!(
 			"search",
+
 			"[SearchProvider] returned {} files / {} line-matches for pattern={:?}",
+
 			FinalMatches.len(),
+
 			TotalLineMatches,
+
 			Query.pattern
 		);
 

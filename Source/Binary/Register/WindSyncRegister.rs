@@ -33,6 +33,7 @@ use crate::{
 ///
 /// Returns an error if Wind advanced sync initialization fails.
 pub fn WindSyncRegister(ApplicationHandle:&tauri::AppHandle, RunTime:Arc<ApplicationRunTime>) -> Result<(), String> {
+
 	match initialize_wind_advanced_sync(ApplicationHandle, RunTime) {
 		Ok(()) => {
 			dev_log!("lifecycle", "[IPC] [WindSync] Wind advanced sync initialized successfully.");

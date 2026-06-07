@@ -10,6 +10,7 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
+
 use tauri::{State, command};
 
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
@@ -22,6 +23,7 @@ pub async fn ExecuteSCMCommand(
 
 	_Arguments:Value,
 ) -> Result<Value, String> {
+
 	dev_log!("commands", "executing command: {}", CommandName);
 
 	match CommandName.as_str() {

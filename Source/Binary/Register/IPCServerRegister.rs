@@ -28,6 +28,7 @@ use crate::{IPC::TauriIPCServer_Old::TauriIPCServer, dev_log};
 ///
 /// Returns an error if IPC server initialization or state management fails.
 pub fn IPCServerRegister(ApplicationHandle:&tauri::AppHandle) -> Result<TauriIPCServer, String> {
+
 	let ipc_server = TauriIPCServer::new(ApplicationHandle.clone());
 
 	ApplicationHandle.manage(ipc_server.clone());

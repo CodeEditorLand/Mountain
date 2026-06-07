@@ -25,6 +25,7 @@ const DEFAULT_ZOOM_LEVEL:f64 = 0.0;
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct WindowStateDTO {
+
 	/// Whether the window currently has input focus
 	#[serde(default)]
 	pub IsFocused:bool,
@@ -39,6 +40,7 @@ pub struct WindowStateDTO {
 }
 
 impl WindowStateDTO {
+
 	/// Creates a new WindowStateDTO with validation.
 	///
 	/// # Arguments
@@ -53,6 +55,7 @@ impl WindowStateDTO {
 		if ZoomLevel < MIN_ZOOM_LEVEL || ZoomLevel > MAX_ZOOM_LEVEL {
 			return Err(format!(
 				"Zoom level must be between {} and {}, got {}",
+
 				MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL, ZoomLevel
 			));
 		}
@@ -71,6 +74,7 @@ impl WindowStateDTO {
 		if ZoomLevel < MIN_ZOOM_LEVEL || ZoomLevel > MAX_ZOOM_LEVEL {
 			return Err(format!(
 				"Zoom level must be between {} and {}, got {}",
+
 				MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL, ZoomLevel
 			));
 		}

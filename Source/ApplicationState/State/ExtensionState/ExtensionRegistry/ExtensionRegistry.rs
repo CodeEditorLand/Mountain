@@ -41,6 +41,7 @@ use std::{
 };
 
 use parking_lot::Mutex;
+
 use tauri::Wry;
 
 use crate::{Environment::CommandProvider::CommandHandler, dev_log};
@@ -48,6 +49,7 @@ use crate::{Environment::CommandProvider::CommandHandler, dev_log};
 /// Extension registry containing command registry and provider handle state.
 #[derive(Clone)]
 pub struct Registry {
+
 	/// Registered CLI commands.
 	pub CommandRegistry:Arc<Mutex<HashMap<String, CommandHandler<Wry>>>>,
 
@@ -62,6 +64,7 @@ pub struct Registry {
 }
 
 impl Default for Registry {
+
 	fn default() -> Self {
 		dev_log!("extensions", "[ExtensionRegistry] Initializing default extension registry...");
 
@@ -78,6 +81,7 @@ impl Default for Registry {
 }
 
 impl Registry {
+
 	/// Gets the next available unique identifier for a provider registration.
 	pub fn GetNextProviderHandle(&self) -> u32 {
 		let current = self.NextProviderHandle.load(AtomicOrdering::Relaxed);
@@ -85,7 +89,9 @@ impl Registry {
 		if current > std::u32::MAX / 2 {
 			dev_log!(
 				"extensions",
+
 				"warn: [ExtensionRegistry] GetNextProviderHandle near overflow ({}); wrap is about to degenerate IDs",
+
 				current
 			);
 		}
@@ -136,7 +142,9 @@ impl Registry {
 		*guard = paths;
 		dev_log!(
 			"extensions",
+
 			"[ExtensionRegistry] Extension scan paths updated ({} paths)",
+
 			guard.len()
 		);
 	}
@@ -160,7 +168,9 @@ impl Registry {
 		*guard = apis;
 		dev_log!(
 			"extensions",
+
 			"[ExtensionRegistry] Enabled proposed APIs updated ({} entries)",
+
 			guard.len()
 		);
 	}

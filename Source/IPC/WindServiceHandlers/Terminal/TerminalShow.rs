@@ -5,6 +5,7 @@
 use std::sync::Arc;
 
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
+
 use serde_json::Value;
 
 use crate::{
@@ -13,6 +14,7 @@ use crate::{
 };
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let TerminalId = arg_u64(&Arguments, 0);
 
 	let PreserveFocus = arg_bool(&Arguments, 1);

@@ -7,7 +7,9 @@ use CommonLibrary::{
 	IPC::SkyEvent::SkyEvent,
 	TreeView::TreeViewProvider::TreeViewProvider,
 };
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::{
@@ -21,6 +23,7 @@ use crate::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
 		"$tree:register" | "tree.register" => {
 			crate::effect!(run_time, {
@@ -50,15 +53,20 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				dev_log!(
 					"tree-view",
+
 					"[TreeView] register view={} result={}",
+
 					ViewId,
+
 					if Result.is_ok() { "ok" } else { "err" }
 				);
 
 				if Result.is_ok() {
 					if let Err(Error) = LogSkyEmit(
 						&run_time.Environment.ApplicationHandle,
+
 						SkyEvent::TreeViewCreate.AsStr(),
+
 						json!({ "viewId": ViewId, "options": Options }),
 					) {
 						dev_log!("tree-view", "warn: [TreeView] emit failed view={}: {}", ViewId, Error);
@@ -86,7 +94,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				if Result.is_ok() {
 					if let Err(Error) = LogSkyEmit(
 						&run_time.Environment.ApplicationHandle,
+
 						SkyEvent::TreeViewDispose.AsStr(),
+
 						json!({ "viewId": ViewId }),
 					) {
 						dev_log!("tree-view", "warn: [TreeView] dispose emit failed view={}: {}", ViewId, Error);
@@ -115,6 +125,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				if let Err(Error) =
 					LogSkyEmit(&run_time.Environment.ApplicationHandle, "sky://tree-view/reveal", Payload)
+
 				{
 					dev_log!("tree-view", "warn: [TreeView] reveal emit failed: {}", Error);
 				}

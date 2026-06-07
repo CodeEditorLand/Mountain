@@ -4,11 +4,13 @@
 //! the workbench triggers a self-restart after a crash.
 
 use serde_json::Value;
+
 use tauri::AppHandle;
 
 use crate::dev_log;
 
 pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
+
 	dev_log!("lifecycle", "nativeHost:relaunch - restarting process");
 
 	// restart() calls std::process::exit internally - return type is `!`

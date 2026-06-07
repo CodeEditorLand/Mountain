@@ -9,6 +9,7 @@
 //! - Data: Merged configuration JSON object from all sources
 
 use serde::{Deserialize, Serialize};
+
 use serde_json::Value;
 
 use crate::dev_log;
@@ -23,11 +24,13 @@ const MAX_CONFIGURATION_DEPTH:usize = 50;
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct MergedConfigurationStateDTO {
+
 	/// Merged configuration data from all sources
 	pub Data:Value,
 }
 
 impl MergedConfigurationStateDTO {
+
 	/// Creates a new `MergedConfigurationStateDTO` from a `serde_json::Value`.
 	///
 	/// # Arguments
@@ -52,8 +55,11 @@ impl MergedConfigurationStateDTO {
 			if Depth > MAX_CONFIGURATION_DEPTH {
 				dev_log!(
 					"config",
+
 					"warn: configuration path depth {} exceeds maximum of {}",
+
 					Depth,
+
 					MAX_CONFIGURATION_DEPTH
 				);
 
@@ -84,6 +90,7 @@ impl MergedConfigurationStateDTO {
 		if Depth > MAX_CONFIGURATION_DEPTH {
 			return Err(format!(
 				"Configuration path depth {} exceeds maximum of {}",
+
 				Depth, MAX_CONFIGURATION_DEPTH
 			));
 		}

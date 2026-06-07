@@ -10,6 +10,7 @@ use serde_json::{Value, json};
 static OS_PROPERTIES_CACHE:OnceLock<Value> = OnceLock::new();
 
 pub async fn Fn() -> Result<Value, String> {
+
 	if let Some(Cached) = OS_PROPERTIES_CACHE.get() {
 		return Ok(Cached.clone());
 	}
@@ -22,6 +23,7 @@ pub async fn Fn() -> Result<Value, String> {
 }
 
 fn compute_os_properties() -> Value {
+
 	use sysinfo::System;
 
 	let OsType = match std::env::consts::OS {

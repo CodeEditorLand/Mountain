@@ -2,6 +2,7 @@
 //! `LanguageFeature::Completions::provide_completions_impl`.
 
 use serde_json::Value;
+
 use tauri::{AppHandle, Wry, command};
 
 use crate::{Command::LanguageFeature::Completions, dev_log};
@@ -16,10 +17,14 @@ pub async fn MountainProvideCompletions(
 
 	context:Value,
 ) -> Result<Value, String> {
+
 	dev_log!(
 		"commands",
+
 		"[Language Feature] Providing completions for: {} at {:?}",
+
 		uri,
+
 		position
 	);
 

@@ -1,4 +1,5 @@
 pub fn Matches(MethodName:&str) -> bool {
+
 	match MethodName {
 		"executeCommand" | "Command.Execute" | "Command.GetAll" => true,
 
@@ -9,7 +10,9 @@ pub fn Matches(MethodName:&str) -> bool {
 use std::sync::Arc;
 
 use CommonLibrary::{Command::CommandExecutor::CommandExecutor, Environment::Requires::Requires};
+
 use serde_json::{Value, json};
+
 use tauri::{Emitter, Runtime};
 
 use crate::Track::Effect::{
@@ -18,6 +21,7 @@ use crate::Track::Effect::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
 		"executeCommand" => {
 			crate::effect!(run_time, {
@@ -89,7 +93,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				if BroadcastEnabled == "On" {
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptCommandExecuted".to_string(),
+
 						json!({
 							"command": BroadcastId,
 							"arguments": [BroadcastArgs],

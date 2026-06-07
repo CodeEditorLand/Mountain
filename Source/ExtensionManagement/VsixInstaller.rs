@@ -53,6 +53,7 @@ use std::{
 };
 
 use serde_json::Value;
+
 use zip::ZipArchive;
 
 use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO, dev_log};
@@ -60,6 +61,7 @@ use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescri
 /// Everything an IPC handler needs after a successful install.
 #[derive(Debug)]
 pub struct InstallOutcome {
+
 	/// `<publisher>.<name>` - the canonical identifier string.
 	pub Identifier:String,
 
@@ -75,6 +77,7 @@ pub struct InstallOutcome {
 
 /// Manifest facts we need before we start writing files.
 struct ManifestFacts {
+
 	Publisher:String,
 
 	Name:String,
@@ -86,6 +89,7 @@ struct ManifestFacts {
 /// without a `CommonError` cast. Flattened to String at the handler boundary.
 #[derive(Debug, thiserror::Error)]
 pub enum InstallError {
+
 	#[error("VSIX path '{0}' does not exist")]
 	SourceMissing(PathBuf),
 
@@ -110,6 +114,7 @@ const PAYLOAD_PREFIX:&str = "extension/";
 /// caller receives the new identifier, install directory, and a DTO ready
 /// for `ScannedExtensionCollection::AddOrUpdate`.
 pub fn InstallVsix(VsixPath:&Path, InstallRoot:&Path) -> Result<InstallOutcome, InstallError> {
+
 	if !VsixPath.exists() {
 		return Err(InstallError::SourceMissing(VsixPath.to_path_buf()));
 	}
@@ -141,9 +146,13 @@ pub fn InstallVsix(VsixPath:&Path, InstallRoot:&Path) -> Result<InstallOutcome, 
 
 			dev_log!(
 				"extensions",
+
 				"[VsixInstaller] Reinstall no-op - '{}' v{} already present at {}",
+
 				Identifier,
+
 				Facts.Version,
+
 				InstalledAt.display()
 			);
 
@@ -153,7 +162,9 @@ pub fn InstallVsix(VsixPath:&Path, InstallRoot:&Path) -> Result<InstallOutcome, 
 		// Corrupt / partial previous install - wipe and re-extract below.
 		dev_log!(
 			"extensions",
+
 			"[VsixInstaller] Existing install at {} is unreadable - wiping and reinstalling",
+
 			InstalledAt.display()
 		);
 
@@ -168,9 +179,13 @@ pub fn InstallVsix(VsixPath:&Path, InstallRoot:&Path) -> Result<InstallOutcome, 
 
 	dev_log!(
 		"extensions",
+
 		"[VsixInstaller] Installed '{}' v{} at {}",
+
 		Identifier,
+
 		Facts.Version,
+
 		InstalledAt.display()
 	);
 
@@ -179,10 +194,13 @@ pub fn InstallVsix(VsixPath:&Path, InstallRoot:&Path) -> Result<InstallOutcome, 
 
 /// Delete the install directory. Returns `Ok` if the path was already absent.
 pub fn UninstallExtension(InstallDir:&Path) -> Result<(), InstallError> {
+
 	if !InstallDir.exists() {
 		dev_log!(
 			"extensions",
+
 			"[VsixInstaller] Uninstall skipped - {} already absent",
+
 			InstallDir.display()
 		);
 
@@ -199,6 +217,7 @@ pub fn UninstallExtension(InstallDir:&Path) -> Result<(), InstallError> {
 // --- Internals ----------------------------------------------------------
 
 fn ReadManifestFacts(VsixPath:&Path) -> Result<ManifestFacts, InstallError> {
+
 	let Manifest = ReadFullManifest(VsixPath)?;
 
 	let Publisher = ReadStringField(&Manifest, "publisher")?;
@@ -221,6 +240,7 @@ fn ReadManifestFacts(VsixPath:&Path) -> Result<ManifestFacts, InstallError> {
 /// version/displayName for the preview UI, and NLS keys would require
 /// unpacking `package.nls.json` from the archive too).
 pub fn ReadFullManifest(VsixPath:&Path) -> Result<Value, InstallError> {
+
 	let Archive = File::open(VsixPath).map_err(|Error| InstallError::ArchiveRead(Error.to_string()))?;
 
 	let mut Archive = ZipArchive::new(Archive).map_err(|Error| InstallError::ArchiveRead(Error.to_string()))?;
@@ -239,6 +259,7 @@ pub fn ReadFullManifest(VsixPath:&Path) -> Result<Value, InstallError> {
 }
 
 fn ReadStringField(Manifest:&Value, Field:&'static str) -> Result<String, InstallError> {
+
 	Manifest
 		.get(Field)
 		.and_then(|Value| Value.as_str())
@@ -248,6 +269,7 @@ fn ReadStringField(Manifest:&Value, Field:&'static str) -> Result<String, Instal
 }
 
 fn CreateParent(InstalledAt:&Path) -> Result<(), InstallError> {
+
 	if let Some(Parent) = InstalledAt.parent() {
 		fs::create_dir_all(Parent).map_err(|Error| InstallError::FilesystemIO(Error.to_string()))?;
 	}
@@ -256,6 +278,7 @@ fn CreateParent(InstalledAt:&Path) -> Result<(), InstallError> {
 }
 
 fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError> {
+
 	let Archive = File::open(VsixPath).map_err(|Error| InstallError::ArchiveRead(Error.to_string()))?;
 
 	let mut Archive = ZipArchive::new(Archive).map_err(|Error| InstallError::ArchiveRead(Error.to_string()))?;
@@ -359,6 +382,7 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 						let MachMagic = BytesRead >= 4
 							&& matches!(
 								&Bytes[..4],
+
 								b"\xCF\xFA\xED\xFE"
 									| b"\xCE\xFA\xED\xFE" | b"\xFE\xED\xFA\xCF"
 									| b"\xFE\xED\xFA\xCE" | b"\xCA\xFE\xBA\xBE"
@@ -398,6 +422,7 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 /// EACCES it would have anyway.
 #[cfg(unix)]
 pub fn HealExecutableBits(InstalledAt:&Path) {
+
 	use std::{io::Read, os::unix::fs::PermissionsExt};
 
 	fn IsBinSegment(Segment:&std::ffi::OsStr) -> bool {
@@ -438,6 +463,7 @@ pub fn HealExecutableBits(InstalledAt:&Path) {
 		let MachMagic = BytesRead >= 4
 			&& matches!(
 				&Probe[..4],
+
 				b"\xCF\xFA\xED\xFE"
 					| b"\xCE\xFA\xED\xFE"
 					| b"\xFE\xED\xFA\xCF"
@@ -507,14 +533,18 @@ pub fn HealExecutableBits(InstalledAt:&Path) {
 	if Healed > 0 {
 		dev_log!(
 			"extensions",
+
 			"[VsixInstaller] Healed {} executable bit(s) under {}",
+
 			Healed,
+
 			InstalledAt.display()
 		);
 	}
 }
 
 fn BuildDescription(InstalledAt:&Path) -> Result<ExtensionDescriptionStateDTO, InstallError> {
+
 	let ManifestPath = InstalledAt.join("package.json");
 
 	let Raw = fs::read_to_string(&ManifestPath).map_err(|Error| InstallError::ManifestMissing(Error.to_string()))?;

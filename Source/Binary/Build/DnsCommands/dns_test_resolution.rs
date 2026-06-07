@@ -8,6 +8,7 @@ use crate::Binary::Build::{DnsCommands::dns_resolve::dns_resolve, Scheme::DnsPor
 
 #[tauri::command]
 pub fn dns_test_resolution(domain:String, dns_port:State<DnsPort>) -> Result<bool, String> {
+
 	let result = dns_resolve(domain, dns_port)?;
 
 	Ok(result.succeeded)

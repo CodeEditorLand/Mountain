@@ -21,14 +21,18 @@
 //! responsiveness.
 
 use CommonLibrary::{Error::CommonError::CommonError, Utility::Serialization::URLSerializationHelper};
+
 use serde::{Deserialize, Serialize};
+
 use serde_json::Value;
+
 use url::Url;
 
 use crate::{
 	ApplicationState::Internal::TextProcessing::AnalyzeTextLinesAndEOL::Fn as AnalyzeTextLinesAndEOL,
 	dev_log,
 };
+
 use super::{RPCModelContentChangeDTO::RPCModelContentChangeDTO, RPCRangeDTO::RPCRangeDTO};
 
 /// Maximum line count for a document to prevent memory exhaustion
@@ -44,6 +48,7 @@ const MAX_LANGUAGE_ID_LENGTH:usize = 128;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentStateDTO {
+
 	/// The unique resource identifier for this document.
 	#[serde(rename = "uri", with = "URLSerializationHelper")]
 	pub URI:Url,
@@ -73,6 +78,7 @@ pub struct DocumentStateDTO {
 }
 
 impl DocumentStateDTO {
+
 	/// Creates a new `DocumentStateDTO` from its initial content with
 	/// validation.
 	///
@@ -222,6 +228,7 @@ impl DocumentStateDTO {
 
 				Reason:format!(
 					"Invalid change format for {}: expected string or RPCModelContentChangeDTO array.",
+
 					self.URI
 				),
 			});
@@ -255,6 +262,7 @@ impl DocumentStateDTO {
 /// # Returns
 /// Updated lines vector after applying all changes
 fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChangeDTO]) -> Vec<String> {
+
 	// Join lines into full text for offset-based manipulation
 	let mut ResultText = Lines.join(EOL);
 
@@ -281,9 +289,13 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 		if StartOffset > EndOffset {
 			dev_log!(
 				"model",
+
 				"error: invalid range: start ({}) > end ({}) for text length {}",
+
 				StartOffset,
+
 				EndOffset,
+
 				ResultText.len()
 			);
 
@@ -295,9 +307,13 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 		if StartOffset > TextLength || EndOffset > TextLength {
 			dev_log!(
 				"model",
+
 				"error: out of bounds: start ({}) or end ({}) exceeds text length {}",
+
 				StartOffset,
+
 				EndOffset,
+
 				TextLength
 			);
 
@@ -322,6 +338,7 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 /// VSCode LSP uses 0-based line numbers and 0-based column numbers.
 /// This function matches that convention.
 fn PositionToOffset(Text:&str, EOL:&str, LineNumber:&usize, Column:&usize) -> usize {
+
 	let Lines:Vec<&str> = Text.split(EOL).collect();
 
 	let EOLLength = EOL.len();
@@ -355,6 +372,7 @@ fn PositionToOffset(Text:&str, EOL:&str, LineNumber:&usize, Column:&usize) -> us
 /// Returns negative if a comes before b, zero if equal, positive if a comes
 /// after b.
 fn CMP_Range_Position(A:&RPCRangeDTO, B:&RPCRangeDTO) -> std::cmp::Ordering {
+
 	A.StartLineNumber
 		.cmp(&B.StartLineNumber)
 		.then_with(|| A.StartColumn.cmp(&B.StartColumn))

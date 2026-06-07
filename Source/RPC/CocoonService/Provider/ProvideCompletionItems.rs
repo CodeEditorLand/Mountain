@@ -2,7 +2,9 @@
 //! the suggestions into the gRPC `CompletionItem` shape.
 
 use tonic::{Response, Status};
+
 use url::Url;
+
 use CommonLibrary::LanguageFeature::{
 	DTO::{
 		CompletionContextDTO::{CompletionContextDTO, CompletionTriggerKindDTO},
@@ -10,6 +12,7 @@ use CommonLibrary::LanguageFeature::{
 	},
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
+
 use ::Vine::Generated::{CompletionItem, ProvideCompletionItemsRequest, ProvideCompletionItemsResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -19,9 +22,12 @@ pub async fn Fn(
 
 	Request:ProvideCompletionItemsRequest,
 ) -> Result<Response<ProvideCompletionItemsResponse>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] Providing completions for provider {}",
+
 		Request.provider_handle
 	);
 

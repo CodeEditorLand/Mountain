@@ -3,6 +3,7 @@
 //! so the rest of the boot path sees them.
 
 use tonic::{Response, Status};
+
 use ::Vine::Generated::{Empty, InitExtensionHostRequest};
 
 use crate::{
@@ -12,17 +13,23 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:InitExtensionHostRequest) -> Result<Response<Empty>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] Initializing extension host with {} workspace folders",
+
 		Request.workspace_folders.len()
 	);
 
 	for Folder in &Request.workspace_folders {
 		dev_log!(
 			"cocoon",
+
 			"[CocoonService] Workspace folder: {} ({})",
+
 			Folder.name,
+
 			Folder.uri.as_ref().map(|U| &U.value).unwrap_or(&String::new())
 		);
 	}
@@ -47,7 +54,9 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:InitExtensionHostRequest) ->
 
 		dev_log!(
 			"cocoon",
+
 			"[CocoonService] Workspace folders stored: {}",
+
 			Request.workspace_folders.len()
 		);
 	}

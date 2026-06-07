@@ -11,6 +11,7 @@ use tauri::AppHandle;
 use crate::Vine::Server::VineHostImpl::TauriRendererEmitter;
 
 pub fn TryEnqueue(Handle:&AppHandle, Channel:String, Value:String) -> bool {
+
 	let Emitter = Arc::new(TauriRendererEmitter::New(Handle.clone()));
 
 	::Vine::Server::Notification::OutputChannelCoalesce::TryEnqueue(Emitter, Channel, Value)

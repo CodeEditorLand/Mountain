@@ -7,9 +7,13 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
+
 use CommonLibrary::Webview::WebviewProvider::WebviewProvider;
+
 use ::Vine::Generated::{CreateWebviewPanelRequest, CreateWebviewPanelResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -19,10 +23,14 @@ pub async fn Fn(
 
 	Request:CreateWebviewPanelRequest,
 ) -> Result<Response<CreateWebviewPanelResponse>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] create_webview_panel: view_type={} title={}",
+
 		Request.view_type,
+
 		Request.title
 	);
 
@@ -30,10 +38,15 @@ pub async fn Fn(
 		.environment
 		.CreateWebviewPanel(
 			json!({}),
+
 			Request.view_type.clone(),
+
 			Request.title.clone(),
+
 			json!({ "viewColumn": Request.view_column, "preserveFocus": Request.preserve_focus }),
+
 			json!({}),
+
 			json!({}),
 		)
 		.await
@@ -50,6 +63,7 @@ pub async fn Fn(
 
 			let _ = Service.environment.ApplicationHandle.emit(
 				"sky://webview/create",
+
 				json!({
 					"handle": Fallback,
 					"viewType": Request.view_type,

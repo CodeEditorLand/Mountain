@@ -2,7 +2,9 @@
 //! signature-help-specific request shape (carries trigger characters).
 
 use tonic::{Response, Status};
+
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
+
 use ::Vine::Generated::{Empty, RegisterSignatureHelpProviderRequest};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -12,12 +14,16 @@ pub async fn Fn(
 
 	Request:RegisterSignatureHelpProviderRequest,
 ) -> Result<Response<Empty>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] Registering Signature Help Provider");
 
 	Service.RegisterProvider(
 		Request.handle,
+
 		ProviderType::SignatureHelp,
+
 		&Request.language_selector,
+
 		&Request.extension_id,
 	);
 

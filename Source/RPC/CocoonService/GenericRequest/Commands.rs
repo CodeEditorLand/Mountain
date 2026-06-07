@@ -3,14 +3,19 @@
 //! using Cocoon's `MountainGRPCClient` method name conventions.
 
 use serde_json::{Value, json};
+
 use tonic::Response;
+
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
+
 use ::Vine::Generated::GenericResponse;
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;
+
 use super::FileSystem::{ErrResponse, OkResponse};
 
 pub async fn HandleCommandsExecute(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
+
 	let CommandId = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Arg = Params.get("arg").cloned().unwrap_or(Value::Null);
@@ -23,6 +28,7 @@ pub async fn HandleCommandsExecute(RequestId:u64, Params:Value, Env:&MountainEnv
 }
 
 pub async fn HandleExecuteCommand(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
+
 	let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Arg = Params
@@ -46,6 +52,7 @@ pub async fn HandleUnregisterCommand(
 
 	Env:&MountainEnvironment,
 ) -> Response<GenericResponse> {
+
 	let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();

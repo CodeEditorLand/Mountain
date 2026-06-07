@@ -2,17 +2,24 @@
 //! Group label/metadata is already stored from register_scm_resource_group.
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
+
 use ::Vine::Generated::{Empty, UpdateScmGroupRequest};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateScmGroupRequest) -> Result<Response<Empty>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] update_scm_group: provider={} group={}",
+
 		Request.provider_id,
+
 		Request.group_id
 	);
 
@@ -32,6 +39,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateScmGroupRequest) -> Re
 	// scmId + providerId both set so Sky's ResolveScmShim finds the shim.
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://scm/updateGroup",
+
 		json!({
 			"scmId": Request.provider_id,
 			"providerId": Request.provider_id,

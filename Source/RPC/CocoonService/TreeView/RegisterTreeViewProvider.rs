@@ -2,8 +2,11 @@
 //! and notify Sky via the coalesced `EnqueueTreeViewEmit` batcher.
 
 use serde_json::json;
+
 use tonic::{Response, Status};
+
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
+
 use ::Vine::Generated::{Empty, RegisterTreeViewProviderRequest};
 
 use crate::{
@@ -17,6 +20,7 @@ pub async fn Fn(
 
 	Request:RegisterTreeViewProviderRequest,
 ) -> Result<Response<Empty>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] Registering tree view provider: {}", Request.view_id);
 
 	let Handle = Request
@@ -48,6 +52,7 @@ pub async fn Fn(
 
 	EnqueueTreeViewEmit::Fn(
 		&Service.environment.ApplicationHandle,
+
 		json!({ "viewId": Request.view_id, "extensionId": Request.extension_id }),
 	);
 

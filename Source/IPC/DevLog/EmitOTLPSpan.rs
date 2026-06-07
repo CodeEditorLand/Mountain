@@ -23,6 +23,7 @@ static OTLP_AVAILABLE:AtomicBool = AtomicBool::new(true);
 static OTLP_TRACE_ID:OnceLock<String> = OnceLock::new();
 
 fn GetTraceId() -> &'static str {
+
 	OTLP_TRACE_ID.get_or_init(|| {
 		let mut H = DefaultHasher::new();
 
@@ -35,6 +36,7 @@ fn GetTraceId() -> &'static str {
 }
 
 fn RandU64() -> u64 {
+
 	let mut H = DefaultHasher::new();
 
 	std::thread::current().id().hash(&mut H);
@@ -45,6 +47,7 @@ fn RandU64() -> u64 {
 }
 
 pub fn Fn(Name:&str, StartNano:u64, EndNano:u64, Attributes:&[(&str, &str)]) {
+
 	if !cfg!(debug_assertions) {
 		return;
 	}
@@ -72,7 +75,9 @@ pub fn Fn(Name:&str, StartNano:u64, EndNano:u64, Attributes:&[(&str, &str)]) {
 		.map(|(K, V)| {
 			format!(
 				r#"{{"key":"{}","value":{{"stringValue":"{}"}}}}"#,
+
 				K,
+
 				V.replace('\\', "\\\\").replace('"', "\\\"")
 			)
 		})
@@ -85,19 +90,32 @@ pub fn Fn(Name:&str, StartNano:u64, EndNano:u64, Attributes:&[(&str, &str)]) {
 	let Payload = format!(
 		concat!(
 			r#"{{"resourceSpans":[{{"resource":{{"attributes":["#,
+
 			r#"{{"key":"service.name","value":{{"stringValue":"land-editor-mountain"}}}},"#,
+
 			r#"{{"key":"service.version","value":{{"stringValue":"0.0.1"}}}}"#,
+
 			r#"]}},"scopeSpans":[{{"scope":{{"name":"mountain.ipc","version":"1.0.0"}},"#,
+
 			r#""spans":[{{"traceId":"{}","spanId":"{}","name":"{}","kind":1,"#,
+
 			r#""startTimeUnixNano":"{}","endTimeUnixNano":"{}","#,
+
 			r#""attributes":[{}],"status":{{"code":{}}}}}]}}]}}]}}"#,
 		),
+
 		TraceId,
+
 		SpanId,
+
 		SpanName,
+
 		StartNano,
+
 		EndNano,
+
 		AttributesJson.join(","),
+
 		StatusCode,
 	);
 
@@ -133,7 +151,9 @@ pub fn Fn(Name:&str, StartNano:u64, EndNano:u64, Attributes:&[(&str, &str)]) {
 			"POST {} HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: \
 			 close\r\n\r\n",
 			PathSegment,
+
 			HostAddress,
+
 			Payload.len()
 		);
 
@@ -159,6 +179,7 @@ pub fn Fn(Name:&str, StartNano:u64, EndNano:u64, Attributes:&[(&str, &str)]) {
 /// path to `/v1/traces` when the endpoint has none. Returns owned `String`s
 /// so the spawned thread does not borrow the build-time `&'static str`.
 fn ParseEndpoint(Endpoint:&str) -> (String, String) {
+
 	let WithoutScheme = Endpoint
 		.strip_prefix("http://")
 		.or_else(|| Endpoint.strip_prefix("https://"))

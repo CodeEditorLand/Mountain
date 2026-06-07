@@ -12,6 +12,7 @@ use crate::IPC::Enhanced::ConnectionPool::ConnectionHealth;
 
 #[derive(Debug, Clone)]
 pub struct Struct {
+
 	pub id:String,
 
 	pub created_at:Instant,
@@ -34,6 +35,7 @@ pub struct Struct {
 }
 
 impl Struct {
+
 	pub fn new() -> Self {
 		Self {
 			id:Uuid::new_v4().to_string(),

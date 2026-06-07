@@ -37,6 +37,7 @@ pub fn StatusReporterRegister(
 
 	RunTime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
+
 	match initialize_status_reporter(ApplicationHandle, RunTime) {
 		Ok(()) => {
 			dev_log!("lifecycle", "[IPC] [StatusReporter] Status reporter initialized successfully.");

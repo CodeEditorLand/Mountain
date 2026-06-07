@@ -21,6 +21,7 @@ use crate::dev_log;
 /// # Returns
 /// `Ok(())` if tray initialization succeeded, or `Err(String)` if it failed.
 pub fn enable_tray(_app:&App) -> Result<(), String> {
+
 	dev_log!("window", "[Tray] Initializing system tray...");
 
 	// Implement full system tray functionality using Tauri's SystemTray API.

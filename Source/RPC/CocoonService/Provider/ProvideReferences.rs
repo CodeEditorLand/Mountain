@@ -2,12 +2,16 @@
 //! result into the gRPC `Location` shape.
 
 use serde_json::json;
+
 use tonic::{Response, Status};
+
 use url::Url;
+
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
+
 use ::Vine::Generated::{Location, Position, ProvideReferencesRequest, ProvideReferencesResponse, Range, Uri};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -17,9 +21,12 @@ pub async fn Fn(
 
 	Request:ProvideReferencesRequest,
 ) -> Result<Response<ProvideReferencesResponse>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] Providing references for provider {}",
+
 		Request.provider_handle
 	);
 

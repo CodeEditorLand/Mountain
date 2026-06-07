@@ -12,6 +12,7 @@ use crate::{
 };
 
 pub fn Fn(Config:SchedulerConfig::Struct) -> Arc<Scheduler> {
+
 	dev_log!("lifecycle", "[RuntimeBuild] Initializing scheduler with config: {:?}", Config);
 
 	let Builder = CreateBuilder::Fn(Config);

@@ -11,6 +11,7 @@ use crate::Binary::Build::{DnsCommands::DnsResolutionResult::DnsResolutionResult
 
 #[tauri::command]
 pub fn dns_resolve(domain:String, dns_port:State<DnsPort>) -> Result<DnsResolutionResult, String> {
+
 	if dns_port.0 == 0 {
 		return Err("DNS server is not running".to_string());
 	}

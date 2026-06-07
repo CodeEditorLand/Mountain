@@ -11,6 +11,7 @@ use CommonLibrary::{Environment::Requires::Requires, Error::CommonError::CommonE
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
+
 	pub async fn ShutdownCocoonWithRetry(&self) -> Result<(), CommonError> {
 		let IPCProvider:Arc<dyn IPCProvider> = self.Environment.Require();
 
@@ -43,8 +44,11 @@ impl ApplicationRunTime {
 					if Attempts < MaximumAttempts {
 						dev_log!(
 							"lifecycle",
+
 							"warn: [ApplicationRunTime] Cocoon shutdown attempt {} failed: {}. Retrying...",
+
 							Attempts,
+
 							Error
 						);
 

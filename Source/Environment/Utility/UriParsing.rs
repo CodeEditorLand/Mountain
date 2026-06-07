@@ -3,6 +3,7 @@
 //! Functions for parsing and converting URI/URL representations.
 
 use url::Url;
+
 use CommonLibrary::Error::CommonError::CommonError;
 
 /// Helper to get a `Url` from a `serde_json::Value` which is expected to be a
@@ -22,6 +23,7 @@ use CommonLibrary::Error::CommonError::CommonError;
 /// trips the breaker after 5 publishes and silences every linter / compiler
 /// across all language extensions.
 pub fn Fn(URIDTO:&serde_json::Value) -> Result<Url, CommonError> {
+
 	// 1. Plain string: parse directly.
 	if let Some(URIString) = URIDTO.as_str() {
 		return Url::parse(URIString).map_err(|Error| {

@@ -6,6 +6,7 @@
 use serde_json::{Value, json};
 
 pub async fn Fn() -> Result<Value, String> {
+
 	use sysinfo::System;
 
 	let mut Sys = System::new();

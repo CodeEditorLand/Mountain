@@ -25,12 +25,14 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	FileSystem::DTO::{FileSystemStatDTO::FileSystemStatDTO, FileTypeDTO::FileTypeDTO},
 };
+
 use tokio::fs;
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
 
 /// Read operations implementation for MountainEnvironment
 pub(super) async fn read_file_impl(env:&MountainEnvironment, path:&PathBuf) -> Result<Vec<u8>, CommonError> {
+
 	Utility::PathSecurity::Fn(&env.ApplicationState, path)?;
 
 	// Validate that the path exists and is a file, not a directory
@@ -52,6 +54,7 @@ pub(super) async fn read_file_impl(env:&MountainEnvironment, path:&PathBuf) -> R
 
 /// Stat operations implementation for MountainEnvironment
 pub(super) async fn stat_file_impl(env:&MountainEnvironment, path:&PathBuf) -> Result<FileSystemStatDTO, CommonError> {
+
 	Utility::PathSecurity::Fn(&env.ApplicationState, path)?;
 
 	let metadata = fs::metadata(path)
@@ -110,6 +113,7 @@ pub(super) async fn read_directory_impl(
 
 	path:&PathBuf,
 ) -> Result<Vec<(String, FileTypeDTO)>, CommonError> {
+
 	Utility::PathSecurity::Fn(&env.ApplicationState, path)?;
 
 	// Validate that the path exists and is a directory

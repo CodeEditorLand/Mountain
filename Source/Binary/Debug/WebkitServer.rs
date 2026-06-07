@@ -49,8 +49,11 @@ use std::{
 };
 
 use once_cell::sync::Lazy;
+
 use serde_json::{Value, json};
+
 use tauri::{WebviewWindow, Wry};
+
 use url::Url;
 
 /// Global storage for the webview window used by the debug server.
@@ -59,6 +62,7 @@ static WINDOW:Lazy<Mutex<Option<Arc<WebviewWindow<Wry>>>>> = Lazy::new(|| Mutex:
 /// Parsed Mountain-layer activation mode. See module docs for the matrix.
 #[derive(Copy, Clone, Debug)]
 enum LayerMode {
+
 	Off,
 
 	Mountain,
@@ -69,6 +73,7 @@ enum LayerMode {
 }
 
 fn parse_mode() -> LayerMode {
+
 	match std::env::var("DebugServer").ok().as_deref().map(str::trim) {
 		None | Some("") | Some("0") | Some("false") | Some("off") | Some("no") => LayerMode::Off,
 
@@ -96,6 +101,7 @@ fn mountain_enabled(m:LayerMode) -> bool { matches!(m, LayerMode::Mountain | Lay
 fn cocoon_enabled(m:LayerMode) -> bool { matches!(m, LayerMode::Cocoon | LayerMode::Both) }
 
 fn mountain_port() -> u16 {
+
 	std::env::var("DebugServerPortMountain")
 		.or_else(|_| std::env::var("DebugServerPort"))
 		.ok()
@@ -104,6 +110,7 @@ fn mountain_port() -> u16 {
 }
 
 fn cocoon_port() -> u16 {
+
 	std::env::var("DebugServerPortCocoon")
 		.ok()
 		.and_then(|p| p.parse().ok())
@@ -118,6 +125,7 @@ fn cocoon_port() -> u16 {
 /// the window handle (so `/eval` keeps working for proxy requests) but
 /// skips starting the Mountain HTTP listener.
 pub fn install(window:&WebviewWindow<Wry>) {
+
 	// Always store the window: even in cocoon-only mode the eval pipeline
 	// stays useful for tests that imported this module directly.
 	let mut guard = WINDOW.lock().unwrap();
@@ -134,6 +142,7 @@ pub fn install(window:&WebviewWindow<Wry>) {
 	if cocoon_enabled(mode) {
 		eprintln!(
 			"[WebkitDebug] Cocoon layer requested (port {}). Cocoon must start its own listener.",
+
 			cocoon_port()
 		);
 	}
@@ -141,6 +150,7 @@ pub fn install(window:&WebviewWindow<Wry>) {
 
 /// Main server loop listening for TCP connections.
 fn start_server() {
+
 	let port = mountain_port();
 
 	let listener = match TcpListener::bind(("127.0.0.1", port)) {
@@ -155,7 +165,9 @@ fn start_server() {
 
 	eprintln!(
 		"[WebkitDebug] Mountain layer listening on http://127.0.0.1:{} (mode={:?})",
+
 		port,
+
 		parse_mode()
 	);
 
@@ -178,6 +190,7 @@ fn start_server() {
 
 /// Handles a single HTTP connection, dispatches based on method and path.
 fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut std::net::TcpStream) -> io::Result<()> {
+
 	// Early check for window initialization
 	if window_opt.is_none() {
 		send_json(stream, 503, &json!({"error": "debug server not initialized"}))?;
@@ -257,6 +270,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 		("GET", "/health") => {
 			(
 				200,
+
 				json!({
 					"layer": "mountain",
 					"version": env!("CARGO_PKG_VERSION"),
@@ -273,6 +287,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 		("GET", "/layers") => {
 			(
 				200,
+
 				json!({
 					"mountain": { "enabled": mountain_enabled(parse_mode()), "port": mountain_port() },
 					"cocoon":   { "enabled": cocoon_enabled(parse_mode()),   "port": cocoon_port()   },
@@ -335,6 +350,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
                             }} catch (e) {{ return JSON.stringify({{ error: String(e) }}); }}
                         }})()"#,
 						json!(format!("iframe#{}", iframe_id)),
+
 						json!(js)
 					);
 
@@ -433,6 +449,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
                     }} catch (e) {{ return JSON.stringify({{ ok:false, error: String(e?.stack||e) }}); }}
                 }})()"#,
 				args,
+
 				json!(id)
 			);
 
@@ -471,7 +488,9 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
                         }} catch (e) {{ return JSON.stringify({{ok:false,error:String(e?.stack||e)}}); }}
                     }})()"#,
 					json!(left),
+
 					json!(right),
+
 					json!(title)
 				);
 
@@ -495,6 +514,7 @@ fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut st
 /// Evaluates JavaScript in the webview and returns the result as a
 /// serde_json::Value.
 fn eval_js(window_opt:&Option<Arc<WebviewWindow<Wry>>>, js:&str) -> Result<Value, String> {
+
 	let window = window_opt.as_ref().ok_or("debug server not initialized")?;
 
 	let (tx, rx) = std::sync::mpsc::sync_channel(1);
@@ -515,6 +535,7 @@ fn eval_js(window_opt:&Option<Arc<WebviewWindow<Wry>>>, js:&str) -> Result<Value
 /// Best-effort forward to the Cocoon DebugServer over loopback.
 /// Returns (status, json). If Cocoon is unreachable, returns 502.
 fn proxy_to_cocoon(method:&str, path:&str, body:&str) -> (u16, Value) {
+
 	use std::net::TcpStream;
 
 	let port = cocoon_port();
@@ -527,6 +548,7 @@ fn proxy_to_cocoon(method:&str, path:&str, body:&str) -> (u16, Value) {
 		Err(e) => {
 			return (
 				502,
+
 				json!({"error":"cocoon layer unreachable","detail":e.to_string(),"port":port}),
 			);
 		},
@@ -538,8 +560,11 @@ fn proxy_to_cocoon(method:&str, path:&str, body:&str) -> (u16, Value) {
 		"{} {} HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: \
 		 close\r\n\r\n{}",
 		method,
+
 		path,
+
 		body.len(),
+
 		body
 	);
 
@@ -565,6 +590,7 @@ fn proxy_to_cocoon(method:&str, path:&str, body:&str) -> (u16, Value) {
 
 /// Sends a JSON response with the given status code.
 fn send_json(stream:&mut std::net::TcpStream, status:u16, value:&Value) -> io::Result<()> {
+
 	let body =
 		serde_json::to_string(value).map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "serialization error"))?;
 
@@ -586,8 +612,11 @@ fn send_json(stream:&mut std::net::TcpStream, status:u16, value:&Value) -> io::R
 
 	let headers = format!(
 		"HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+
 		status,
+
 		status_text,
+
 		body.len()
 	);
 

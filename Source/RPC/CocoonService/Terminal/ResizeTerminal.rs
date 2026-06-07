@@ -4,14 +4,19 @@
 //! viewport to match.
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
+
 use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
+
 use ::Vine::Generated::{Empty, ResizeTerminalRequest};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:ResizeTerminalRequest) -> Result<Response<Empty>, Status> {
+
 	let TerminalId = Request.terminal_id;
 
 	let Cols = Request.cols.max(1) as u16;
@@ -20,9 +25,13 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:ResizeTerminalRequest) -> Re
 
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] resize_terminal id={} cols={} rows={}",
+
 		TerminalId,
+
 		Cols,
+
 		Rows
 	);
 
@@ -32,8 +41,11 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:ResizeTerminalRequest) -> Re
 	if let Err(Error) = Provider.ResizeTerminal(TerminalId.into(), Cols, Rows).await {
 		dev_log!(
 			"cocoon",
+
 			"warn: [CocoonService] resize_terminal id={} failed: {}",
+
 			TerminalId,
+
 			Error
 		);
 	}

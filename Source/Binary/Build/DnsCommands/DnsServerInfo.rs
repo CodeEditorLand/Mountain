@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DnsServerInfo {
+
 	pub port:u16,
 
 	pub is_running:bool,

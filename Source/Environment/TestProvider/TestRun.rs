@@ -9,6 +9,7 @@ use crate::Environment::TestProvider::{TestResult, TestRunStatus};
 
 #[derive(Debug, Clone)]
 pub struct Struct {
+
 	pub RunIdentifier:String,
 
 	pub ControllerIdentifier:String,

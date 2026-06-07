@@ -28,8 +28,11 @@
 use std::{path::PathBuf, sync::Arc};
 
 use serde::{Deserialize, Serialize};
+
 use serde_json::Value;
+
 use tauri::{AppHandle, State};
+
 use url::Url;
 
 use crate::{
@@ -47,6 +50,7 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkspaceFolderPayload {
+
 	pub Uri:String,
 
 	pub Name:String,
@@ -55,6 +59,7 @@ pub struct WorkspaceFolderPayload {
 }
 
 impl From<&WorkspaceFolderStateDTO> for WorkspaceFolderPayload {
+
 	fn from(Dto:&WorkspaceFolderStateDTO) -> Self {
 		Self { Uri:Dto.URI.to_string(), Name:Dto.Name.clone(), Index:Dto.Index }
 	}
@@ -73,6 +78,7 @@ pub async fn MountainWorkspaceOpenFolder(
 
 	paths:Vec<String>,
 ) -> Result<Vec<WorkspaceFolderPayload>, String> {
+
 	if paths.is_empty() {
 		return Err("No paths provided".to_string());
 	}
@@ -108,8 +114,11 @@ pub async fn MountainWorkspaceOpenFolder(
 
 	dev_log!(
 		"lifecycle",
+
 		"[WorkspaceFolderCommand] Opened {} folder(s); first URI={}",
+
 		Folders.len(),
+
 		Folders.first().map(|F| F.URI.as_str()).unwrap_or("")
 	);
 
@@ -121,6 +130,7 @@ pub async fn MountainWorkspaceOpenFolder(
 pub async fn MountainWorkspaceListFolders(
 	state:State<'_, Arc<ApplicationState>>,
 ) -> Result<Vec<WorkspaceFolderPayload>, String> {
+
 	Ok(state
 		.Workspace
 		.GetWorkspaceFolders()
@@ -139,6 +149,7 @@ pub async fn MountainWorkspaceCloseAllFolders(
 
 	state:State<'_, Arc<ApplicationState>>,
 ) -> Result<Value, String> {
+
 	UpdateWorkspaceFoldersAndBroadcast(&app_handle, &state.Workspace, Vec::new());
 
 	dev_log!("lifecycle", "[WorkspaceFolderCommand] All folders closed");

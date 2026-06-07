@@ -59,14 +59,21 @@ use CommonLibrary::{
 	IPC::{IPCProvider::IPCProvider, SkyEvent::SkyEvent},
 	Terminal::TerminalProvider::TerminalProvider,
 };
+
 use async_trait::async_trait;
+
 use parking_lot::Mutex;
+
 use portable_pty::{CommandBuilder, MasterPty, NativePtySystem, PtySize, PtySystem};
+
 use serde_json::{Value, json};
+
 use tauri::Emitter;
+
 use tokio::sync::mpsc as TokioMPSC;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
+
 use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, IPC::SkyEmit::LogSkyEmit, dev_log};
 
 // Per-terminal recent-output buffer. The PTY reader task races SkyBridge's
@@ -86,10 +93,12 @@ const MAX_BUFFERED_BYTES:usize = 64 * 1024;
 static TERMINAL_OUTPUT_BUFFER:OnceLock<parking_lot::Mutex<std::collections::HashMap<u64, Vec<u8>>>> = OnceLock::new();
 
 fn TerminalOutputBuffer() -> &'static parking_lot::Mutex<std::collections::HashMap<u64, Vec<u8>>> {
+
 	TERMINAL_OUTPUT_BUFFER.get_or_init(|| parking_lot::Mutex::new(std::collections::HashMap::new()))
 }
 
 pub(crate) fn AppendTerminalOutput(TerminalId:u64, Bytes:&[u8]) {
+
 	let mut Map = TerminalOutputBuffer().lock();
 
 	let Entry = Map.entry(TerminalId).or_insert_with(Vec::new);
@@ -106,12 +115,14 @@ pub(crate) fn AppendTerminalOutput(TerminalId:u64, Bytes:&[u8]) {
 }
 
 pub fn Fn() -> Vec<(u64, Vec<u8>)> {
+
 	let Map = TerminalOutputBuffer().lock();
 
 	Map.iter().map(|(K, V)| (*K, V.clone())).collect()
 }
 
 pub(crate) fn RemoveTerminalOutputBuffer(TerminalId:u64) {
+
 	let mut Map = TerminalOutputBuffer().lock();
 
 	Map.remove(&TerminalId);
@@ -125,6 +136,7 @@ pub(crate) fn RemoveTerminalOutputBuffer(TerminalId:u64) {
 // config, UTF-8 / Unicode, timeout + idle detection, multi-instance mgmt.
 #[async_trait]
 impl TerminalProvider for MountainEnvironment {
+
 	/// Creates a new terminal instance, spawns a PTY, and manages its I/O.
 	async fn CreateTerminal(&self, OptionsValue:Value) -> Result<Value, CommonError> {
 		let TerminalIdentifier = self.ApplicationState.GetNextTerminalIdentifier();
@@ -143,8 +155,11 @@ impl TerminalProvider for MountainEnvironment {
 
 		dev_log!(
 			"terminal",
+
 			"[TerminalProvider] Creating terminal ID: {}, Name: '{}'",
+
 			TerminalIdentifier,
+
 			Name
 		);
 
@@ -180,6 +195,7 @@ impl TerminalProvider for MountainEnvironment {
 		// the shell is unsupported or LAND_SHELL_INTEGRATION=0 is set.
 		if let Some(Injection) =
 			super::Terminal::ShellIntegration::Compute(&self.ApplicationHandle, &TerminalState.ShellPath)
+
 		{
 			for (Key, Val) in Injection.EnvVars {
 				MergedEnv.insert(Key, Val);
@@ -233,8 +249,11 @@ impl TerminalProvider for MountainEnvironment {
 				if let Err(Error) = PTYWriter.write_all(Data.as_bytes()) {
 					dev_log!(
 						"terminal",
+
 						"error: [TerminalProvider] PTY write failed for ID {}: {}",
+
 						TermIDForInput,
+
 						Error
 					);
 
@@ -298,21 +317,27 @@ impl TerminalProvider for MountainEnvironment {
 						if let Err(Error) = IPCProvider
 							.SendNotificationToSideCar(
 								"cocoon-main".into(),
+
 								"$acceptTerminalProcessData".into(),
+
 								Payload,
 							)
 							.await
 						{
 							dev_log!(
 								"terminal",
+
 								"warn: [TerminalProvider] Failed to send process data for ID {}: {}",
+
 								TermIDForOutput,
+
 								Error
 							);
 						}
 
 						if let Err(Error) = AppHandleForOutput.emit(
 							SkyEvent::TerminalData.AsStr(),
+
 							json!({
 								"id": TermIDForOutput,
 								"data": DataString,
@@ -320,8 +345,11 @@ impl TerminalProvider for MountainEnvironment {
 						) {
 							dev_log!(
 								"terminal",
+
 								"warn: [TerminalProvider] sky://terminal/data emit failed for ID {}: {}",
+
 								TermIDForOutput,
+
 								Error
 							);
 						}
@@ -361,9 +389,13 @@ impl TerminalProvider for MountainEnvironment {
 
 			dev_log!(
 				"terminal",
+
 				"[TerminalProvider] Process for terminal ID {} pid={:?} {}",
+
 				TermIDForExit,
+
 				PidForExit,
+
 				StatusSummary
 			);
 
@@ -372,15 +404,20 @@ impl TerminalProvider for MountainEnvironment {
 			if let Err(Error) = IPCProvider
 				.SendNotificationToSideCar(
 					"cocoon-main".into(),
+
 					"$acceptTerminalProcessExit".into(),
+
 					json!([TermIDForExit]),
 				)
 				.await
 			{
 				dev_log!(
 					"terminal",
+
 					"warn: [TerminalProvider] Failed to send process exit notification for ID {}: {}",
+
 					TermIDForExit,
+
 					Error
 				);
 			}
@@ -400,13 +437,18 @@ impl TerminalProvider for MountainEnvironment {
 			// lingers until the next render cycle).
 			if let Err(Error) = LogSkyEmit(
 				&EnvironmentClone.ApplicationHandle,
+
 				SkyEvent::TerminalExit.AsStr(),
+
 				json!({ "id": TermIDForExit }),
 			) {
 				dev_log!(
 					"terminal",
+
 					"warn: [TerminalProvider] sky://terminal/exit emit failed for ID {}: {}",
+
 					TermIDForExit,
+
 					Error
 				);
 			}
@@ -416,7 +458,9 @@ impl TerminalProvider for MountainEnvironment {
 			// filters `__terminals` by id.
 			let _ = ::Vine::Client::SendNotification::Fn(
 				"cocoon-main".to_string(),
+
 				"$acceptTerminalClosed".to_string(),
+
 				serde_json::json!({ "id": TermIDForExit }),
 			)
 			.await;
@@ -485,8 +529,11 @@ impl TerminalProvider for MountainEnvironment {
 			if let Err(Error) = LogSkyEmit(&CreateAppHandle, SkyEvent::TerminalCreate.AsStr(), CreatePayload.clone()) {
 				dev_log!(
 					"terminal",
+
 					"warn: [TerminalProvider] sky://terminal/create emit failed for ID {}: {}",
+
 					CreateTermId,
+
 					Error
 				);
 			}
@@ -497,15 +544,20 @@ impl TerminalProvider for MountainEnvironment {
 			// maps `$acceptTerminalOpened` → pushes a stub to `__terminals`.
 			if let Err(E) = ::Vine::Client::SendNotification::Fn(
 				"cocoon-main".to_string(),
+
 				"$acceptTerminalOpened".to_string(),
+
 				serde_json::json!({ "id": CreateTermId, "name": CreateName, "pid": CreatePid }),
 			)
 			.await
 			{
 				dev_log!(
 					"terminal",
+
 					"warn: [TerminalProvider] $acceptTerminalOpened notify failed ID={}: {}",
+
 					CreateTermId,
+
 					E
 				);
 			}
@@ -513,8 +565,11 @@ impl TerminalProvider for MountainEnvironment {
 
 		dev_log!(
 			"terminal",
+
 			"[TerminalProvider] localPty:spawn OK id={} pid={:?}",
+
 			TerminalIdentifier,
+
 			TerminalState.OSProcessIdentifier
 		);
 
@@ -574,6 +629,7 @@ impl TerminalProvider for MountainEnvironment {
 		self.ApplicationHandle
 			.emit(
 				SkyEvent::TerminalShow.AsStr(),
+
 				json!({ "id": TerminalId, "preserveFocus": PreserveFocus }),
 			)
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
@@ -586,7 +642,9 @@ impl TerminalProvider for MountainEnvironment {
 		// `LogSkyEmit` for histogram visibility.
 		LogSkyEmit(
 			&self.ApplicationHandle,
+
 			SkyEvent::TerminalHide.AsStr(),
+
 			json!({ "id": TerminalId }),
 		)
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
@@ -650,9 +708,13 @@ impl TerminalProvider for MountainEnvironment {
 
 		dev_log!(
 			"terminal",
+
 			"[TerminalProvider] Resized terminal ID {} to {}×{}",
+
 			TerminalId,
+
 			Columns,
+
 			Rows
 		);
 

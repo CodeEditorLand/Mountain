@@ -119,8 +119,11 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	FileSystem::{DTO::FileTypeDTO::FileTypeDTO, ReadDirectory::ReadDirectory, ReadFile::ReadFile},
 };
+
 use futures::future::join_all;
+
 use serde_json::{Map, Value};
+
 use tauri::Manager;
 
 use crate::{
@@ -149,9 +152,13 @@ const EXTENSION_SCAN_DENY_LIST:&[&str] = &["types", "out", "node_modules", "test
 /// time on every user session.
 const TEST_ONLY_EXTENSIONS:&[&str] = &[
 	"vscode-api-tests",
+
 	"vscode-test-resolver",
+
 	"vscode-colorize-tests",
+
 	"vscode-colorize-perf-tests",
+
 	"vscode-notebook-tests",
 ];
 
@@ -179,6 +186,7 @@ fn IsTestOnlyExtension(Name:&str) -> bool { TEST_ONLY_EXTENSIONS.iter().any(|Tes
 /// Sky's `Static/Application/extensions`, the VS Code submodule's
 /// `Dependency/…/extensions` - is treated as built-in.
 pub(crate) fn IsUserExtensionScanPath(DirectoryPath:&std::path::Path) -> bool {
+
 	let Normalised = match DirectoryPath.canonicalize() {
 		Ok(Canonical) => Canonical,
 
@@ -230,6 +238,7 @@ pub async fn ScanDirectoryForExtensions(
 
 	DirectoryPath:PathBuf,
 ) -> Result<Vec<ExtensionDescriptionStateDTO>, CommonError> {
+
 	// Decide up-front whether this scan path contributes built-ins or user
 	// extensions. Built-ins are ones shipped inside the Mountain/Sky/VS Code
 	// bundle; the `~/.fiddee/extensions` root is user-space.
@@ -246,7 +255,9 @@ pub async fn ScanDirectoryForExtensions(
 		Ok(false) => {
 			dev_log!(
 				"extensions",
+
 				"[ExtensionScanner] Extension path '{}' does not exist, skipping (no extensions installed here)",
+
 				DirectoryPath.display()
 			);
 
@@ -256,8 +267,11 @@ pub async fn ScanDirectoryForExtensions(
 		Err(error) => {
 			dev_log!(
 				"extensions",
+
 				"[ExtensionScanner] Could not stat extension path '{}': {} - skipping",
+
 				DirectoryPath.display(),
+
 				error
 			);
 
@@ -273,8 +287,11 @@ pub async fn ScanDirectoryForExtensions(
 		Err(error) => {
 			dev_log!(
 				"extensions",
+
 				"warn: [ExtensionScanner] Could not read extension directory '{}': {}. Skipping.",
+
 				DirectoryPath.display(),
+
 				error
 			);
 
@@ -284,8 +301,11 @@ pub async fn ScanDirectoryForExtensions(
 
 	dev_log!(
 		"extensions",
+
 		"[ExtensionScanner] Directory '{}' contains {} top-level entries",
+
 		DirectoryPath.display(),
+
 		TopLevelEntries.len()
 	);
 
@@ -325,7 +345,9 @@ pub async fn ScanDirectoryForExtensions(
 			// `ext-scan` tag below.
 			dev_log!(
 				"ext-scan-verbose",
+
 				"[ExtensionScanner] Checking for package.json in: {}",
+
 				PotentialExtensionPath.display()
 			);
 
@@ -344,8 +366,11 @@ pub async fn ScanDirectoryForExtensions(
 
 							dev_log!(
 								"extensions",
+
 								"warn: [ExtensionScanner] Failed to parse package.json at '{}': {}",
+
 								PotentialExtensionPath.display(),
+
 								error
 							);
 
@@ -372,9 +397,13 @@ pub async fn ScanDirectoryForExtensions(
 
 						dev_log!(
 							"nls",
+
 							"[LandFix:NLS] {} → {} replaced, {} unresolved placeholders",
+
 							PotentialExtensionPath.display(),
+
 							Replaced,
+
 							Unresolved
 						);
 					}
@@ -389,6 +418,7 @@ pub async fn ScanDirectoryForExtensions(
 							// Construct identifier from publisher.name if not set
 							if Description.Identifier == Value::Null
 								|| Description.Identifier == Value::Object(Default::default())
+
 							{
 								let Id = if Description.Publisher.is_empty() {
 									Description.Name.clone()
@@ -427,10 +457,15 @@ pub async fn ScanDirectoryForExtensions(
 
 							dev_log!(
 								"ext-scan",
+
 								"[ExtScan] accept path={} is_user={} is_builtin={} id={}",
+
 								PotentialExtensionPath.display(),
+
 								IsUserPath,
+
 								Description.IsBuiltin,
+
 								Description
 									.Identifier
 									.get("value")
@@ -446,15 +481,21 @@ pub async fn ScanDirectoryForExtensions(
 
 							dev_log!(
 								"extensions",
+
 								"warn: [ExtensionScanner] Failed to parse package.json for extension at '{}': {}",
+
 								PotentialExtensionPath.display(),
+
 								error
 							);
 
 							dev_log!(
 								"ext-scan",
+
 								"[ExtScan] skip path={} reason=parse-failure err={}",
+
 								PotentialExtensionPath.display(),
+
 								error
 							);
 						},
@@ -466,15 +507,21 @@ pub async fn ScanDirectoryForExtensions(
 
 					dev_log!(
 						"extensions",
+
 						"warn: [ExtensionScanner] Could not read package.json at '{}': {}",
+
 						PackageJsonPath.display(),
+
 						error
 					);
 
 					dev_log!(
 						"ext-scan",
+
 						"[ExtScan] skip path={} reason=no-package-json err={}",
+
 						PotentialExtensionPath.display(),
+
 						error
 					);
 				},
@@ -484,14 +531,21 @@ pub async fn ScanDirectoryForExtensions(
 
 	dev_log!(
 		"extensions",
+
 		"[ExtensionScanner] Directory '{}' scan done: {} parsed, {} parse-failures, {} missing package.json, {} \
 		 denied-dirs, {} test-extensions-skipped (Test={})",
 		DirectoryPath.display(),
+
 		FoundExtensions.len(),
+
 		parse_failures,
+
 		missing_package_json,
+
 		denied_directory_count,
+
 		test_extension_skips,
+
 		AllowTestExtensions,
 	);
 
@@ -502,6 +556,7 @@ pub async fn ScanDirectoryForExtensions(
 /// is encountered. Used to decide whether a missing `package.nls.json` bundle
 /// is a real problem or a shipped-as-English extension.
 fn ManifestContainsNLSPlaceholders(Value:&Value) -> bool {
+
 	match Value {
 		serde_json::Value::String(Text) => {
 			Text.len() >= 2 && Text.starts_with('%') && Text.ends_with('%') && !Text[1..Text.len() - 1].contains('%')
@@ -531,6 +586,7 @@ async fn LoadNLSBundle(
 
 	PlaceholdersNeeded:bool,
 ) -> Option<Map<String, Value>> {
+
 	let NLSPath = ExtensionPath.join("package.nls.json");
 
 	let Content = match RunTime.Run(ReadFile(NLSPath.clone())).await {
@@ -542,7 +598,9 @@ async fn LoadNLSBundle(
 			} else {
 				dev_log!(
 					"nls",
+
 					"[LandFix:NLS] {} has no placeholders, no bundle needed",
+
 					ExtensionPath.display()
 				);
 			}
@@ -581,8 +639,11 @@ async fn LoadNLSBundle(
 
 	dev_log!(
 		"nls",
+
 		"[LandFix:NLS] loaded {} keys for {}",
+
 		Resolved.len(),
+
 		ExtensionPath.display()
 	);
 
@@ -593,6 +654,7 @@ async fn LoadNLSBundle(
 /// placeholders it saw, so the outer scanner can log a one-line summary per
 /// extension.
 fn ResolveNLSPlaceholdersInner(Value:&mut Value, NLS:&Map<String, Value>, Replaced:&mut u32, Unresolved:&mut u32) {
+
 	match Value {
 		serde_json::Value::String(Text) => {
 			if Text.len() >= 2 && Text.starts_with('%') && Text.ends_with('%') {
@@ -628,6 +690,7 @@ fn ResolveNLSPlaceholdersInner(Value:&mut Value, NLS:&Map<String, Value>, Replac
 /// A helper function to extract default configuration values from all
 /// scanned extensions.
 pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, CommonError> {
+
 	let mut MergedDefaults = Map::new();
 
 	let Extensions = State.Extension.ScannedExtensions.ScannedExtensions.lock();
@@ -656,6 +719,7 @@ fn process_configuration_properties(
 
 	visited_keys:&mut Vec<String>,
 ) -> Result<(), CommonError> {
+
 	for (key, value) in properties {
 		// Build the full path for this property
 		let full_path = if current_path.is_empty() {

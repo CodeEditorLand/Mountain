@@ -40,6 +40,7 @@
 //! - Consider message batching for high-frequency updates
 
 use serde_json::Value;
+
 use tauri::AppHandle;
 
 /// Receive messages from Wind through IPC.
@@ -64,8 +65,10 @@ use tauri::AppHandle;
 /// - TauriIPCServer processing fails
 #[tauri::command]
 pub async fn MountainIPCReceiveMessage(app_handle:AppHandle, message:Value) -> Result<Value, String> {
+
 	crate::IPC::TauriIPCServer_Old::mountain_ipc_receive_message(
 		app_handle,
+
 		serde_json::from_value(message).map_err(|e| e.to_string())?,
 	)
 	.await?;

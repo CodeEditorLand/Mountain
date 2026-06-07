@@ -11,6 +11,7 @@ use crate::{
 
 #[tauri::command]
 pub async fn mountain_get_cache_stats(app_handle:tauri::AppHandle) -> Result<MessageCache, String> {
+
 	dev_log!("lifecycle", "Tauri command: get_cache_stats");
 
 	if let Some(features) = app_handle.try_state::<Features>() {

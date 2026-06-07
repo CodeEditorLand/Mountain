@@ -6,12 +6,16 @@
 //! `UpdateScmGroup` call landed.
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
+
 use CommonLibrary::{
 	LanguageFeature::DTO::ProviderType::ProviderType,
 	SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider,
 };
+
 use ::Vine::Generated::{Empty, RegisterScmProviderRequest};
 
 use crate::{
@@ -21,6 +25,7 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterScmProviderRequest) -> Result<Response<Empty>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] Registering SCM provider: {}", Request.scm_id);
 
 	let Handle = Request
@@ -61,12 +66,15 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterScmProviderRequest) 
 	if let Err(Error) = Service.environment.CreateSourceControl(CreateData).await {
 		dev_log!(
 			"cocoon",
+
 			"warn: [CocoonService] CreateSourceControl trait failed ({}); falling back to Sky emit",
+
 			Error
 		);
 
 		let _ = Service.environment.ApplicationHandle.emit(
 			"sky://scm/register",
+
 			json!({ "scmId": Request.scm_id, "extensionId": Request.extension_id }),
 		);
 	}

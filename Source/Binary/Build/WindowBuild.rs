@@ -31,6 +31,7 @@ use crate::IPC::WindServiceHandlers::Utilities::RecentlyOpened::Read::Fn as Read
 ///   window can be moved by the drag region.
 /// - **Debug builds**: DevTools auto-open.
 pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewWindow<Wry> {
+
 	// Restore the most-recently-opened folder so the webview boots
 	// directly into the workspace. Without this, every launch lands
 	// on the Welcome tab, the user clicks "Open Folder", and the
@@ -247,6 +248,7 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 /// The returned string is already URL-encoded and safe to feed to
 /// `WebviewUrl::External`.
 fn BuildInitialUrl(LocalhostUrl:&str) -> String {
+
 	let Base = format!("{}/index.html", LocalhostUrl);
 
 	let Recent = match ReadRecentlyOpened() {
@@ -289,6 +291,7 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 			.and_then(|V| V.get("configPath"))
 			.and_then(|V| V.get("path"))
 			.and_then(|V| V.as_str())
+
 		{
 			return Some(Path.to_string());
 		}

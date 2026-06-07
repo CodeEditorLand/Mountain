@@ -5,6 +5,7 @@
 //! tag.
 
 pub fn Fn(Line:&str) -> Option<String> {
+
 	let Stripped = Line.strip_prefix("[DEV:")?;
 
 	let (TagUpper, _Rest) = Stripped.split_once(']')?;
@@ -31,6 +32,7 @@ mod Tests {
 	fn StripsKnownTag() {
 		assert_eq!(
 			Fn("[DEV:BOOTSTRAP-STAGE] [Bootstrap] stage=Environment event=start"),
+
 			Some("bootstrap-stage".to_string())
 		);
 	}

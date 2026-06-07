@@ -32,6 +32,7 @@ use crate::dev_log;
 
 /// Describes how a shell integration script should be injected.
 pub struct Injection {
+
 	/// Additional environment variables to set before spawning the shell.
 	pub EnvVars:Vec<(String, String)>,
 
@@ -44,6 +45,7 @@ pub struct Injection {
 
 /// Returns the resource-dir path for a named integration script.
 fn ScriptPath(AppHandle:&AppHandle, Name:&str) -> Option<PathBuf> {
+
 	let Base = AppHandle.path().resource_dir().ok()?;
 
 	let Candidate = Base.join("scripts/shell-integration").join(Name);
@@ -53,7 +55,9 @@ fn ScriptPath(AppHandle:&AppHandle, Name:&str) -> Option<PathBuf> {
 	} else {
 		dev_log!(
 			"terminal",
+
 			"[ShellIntegration] script not found at {} (bundled .app only)",
+
 			Candidate.display()
 		);
 
@@ -68,6 +72,7 @@ fn ShellName(ShellPath:&str) -> &str { Path::new(ShellPath).file_name().and_then
 /// unsupported or integration is explicitly disabled via
 /// `LAND_SHELL_INTEGRATION=0`.
 pub fn Compute(AppHandle:&AppHandle, ShellPath:&str) -> Option<Injection> {
+
 	if std::env::var("LAND_SHELL_INTEGRATION").as_deref() == Ok("0") {
 		dev_log!("terminal", "[ShellIntegration] disabled via LAND_SHELL_INTEGRATION=0");
 
@@ -96,7 +101,9 @@ pub fn Compute(AppHandle:&AppHandle, ShellPath:&str) -> Option<Injection> {
 
 			dev_log!(
 				"terminal",
+
 				"[ShellIntegration] zsh: ZDOTDIR injection script={}",
+
 				Script.display()
 			);
 
@@ -114,7 +121,9 @@ pub fn Compute(AppHandle:&AppHandle, ShellPath:&str) -> Option<Injection> {
 			// Write a minimal .zshrc that forwards to our integration script.
 			let ZshRcContent = format!(
 				"export LAND_ORIG_ZDOTDIR=\"{}\"\nexport LAND_SHELL_INTEGRATION_ACTIVE=1\nsource \"{}\"\n",
+
 				OrigZdotDir.replace('"', "\\\""),
+
 				Script.to_string_lossy().replace('"', "\\\""),
 			);
 
@@ -139,7 +148,9 @@ pub fn Compute(AppHandle:&AppHandle, ShellPath:&str) -> Option<Injection> {
 
 			dev_log!(
 				"terminal",
+
 				"[ShellIntegration] fish: --init-command source {}",
+
 				Script.display()
 			);
 

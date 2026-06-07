@@ -46,6 +46,8 @@ pub mod TreeView;
 
 pub mod Update;
 
+pub mod Dispatcher;
+
 pub mod Utilities;
 
 // Local `use X::*;` (NOT `pub use`): brings the domain handler names into
@@ -60,6 +62,7 @@ use Cocoon::{
 	Notify::Fn as CocoonNotify,
 	Request::Fn as CocoonRequest,
 };
+
 use ExtensionHost::{
 	DebugServiceClose::Fn as ExtensionHostDebugClose,
 	DebugServiceReload::Fn as ExtensionHostDebugReload,
@@ -69,8 +72,11 @@ use ExtensionHost::{
 	StarterStart::Fn as ExtensionHostStarterStart,
 	StarterWaitForExit::Fn as ExtensionHostStarterWaitForExit,
 };
+
 use Sky::ReplayEvents::Fn as SkyReplayEvents;
+
 use TreeView::GetChildren::Fn as TreeGetChildren;
+
 use Update::{
 	ApplyUpdate::Fn as UpdateApplyUpdate,
 	CheckForUpdates::Fn as UpdateCheckForUpdates,
@@ -79,20 +85,25 @@ use Update::{
 	IsLatestVersion::Fn as UpdateIsLatestVersion,
 	QuitAndInstall::Fn as UpdateQuitAndInstall,
 };
+
 use Commands::{Execute::Fn as CommandsExecute, GetAll::Fn as CommandsGetAll};
+
 use Configuration::{
 	EnvironmentGet::Fn as EnvironmentGet,
 	Get::Fn as ConfigurationGet,
 	Update::Fn as ConfigurationUpdate,
 	Workbench::Fn as WorkbenchConfiguration,
 };
+
 use Encryption::{Decrypt::Fn as Decrypt, Encrypt::Fn as Encrypt};
+
 use Extensions::{
 	ExtensionsGet::Fn as ExtensionsGet,
 	ExtensionsGetAll::Fn as ExtensionsGetAll,
 	ExtensionsGetInstalled::Fn as ExtensionsGetInstalled,
 	ExtensionsIsActive::Fn as ExtensionsIsActive,
 };
+
 use FileSystem::{
 	Managed::{
 		FileCopy::Fn as FileCopy,
@@ -124,6 +135,7 @@ use FileSystem::{
 		FileWriteNative::Fn as FileWriteNative,
 	},
 };
+
 use Model::{
 	ModelClose::Fn as ModelClose,
 	ModelGet::Fn as ModelGet,
@@ -134,6 +146,7 @@ use Model::{
 	TextfileSave::Fn as TextfileSave,
 	TextfileWrite::Fn as TextfileWrite,
 };
+
 use NativeHost::{
 	ClipboardHas::Fn as NativeHasClipboard,
 	ClipboardReadBuffer::Fn as NativeReadClipboardBuffer,
@@ -170,6 +183,7 @@ use NativeHost::{
 	ToggleDevTools::Fn as ToggleDevTools,
 	UninstallShellCommand::Fn as UninstallShellCommand,
 };
+
 use Navigation::{
 	HistoryCanGoBack::Fn as HistoryCanGoBack,
 	HistoryCanGoForward::Fn as HistoryCanGoForward,
@@ -182,6 +196,7 @@ use Navigation::{
 	LabelGetURI::Fn as LabelGetURI,
 	LabelGetWorkspace::Fn as LabelGetWorkspace,
 };
+
 use Output::{
 	OutputAppend::Fn as OutputAppend,
 	OutputAppendLine::Fn as OutputAppendLine,
@@ -189,7 +204,9 @@ use Output::{
 	OutputCreate::Fn as OutputCreate,
 	OutputShow::Fn as OutputShow,
 };
+
 use Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchFindInFiles};
+
 use Storage::{
 	StorageDelete::Fn as StorageDelete,
 	StorageGet::Fn as StorageGet,
@@ -198,6 +215,7 @@ use Storage::{
 	StorageSet::Fn as StorageSet,
 	StorageUpdateItems::Fn as StorageUpdateItems,
 };
+
 use Terminal::{
 	AttachToProcess::Fn as AttachToProcess,
 	DetachFromProcess::Fn as DetachFromProcess,
@@ -215,6 +233,7 @@ use Terminal::{
 	TerminalSendText::Fn as TerminalSendText,
 	TerminalShow::Fn as TerminalShow,
 };
+
 use UI::{
 	DecorationsClear::Fn as DecorationsClear,
 	DecorationsGet::Fn as DecorationsGet,
@@ -248,6 +267,7 @@ use UI::{
 	WorkspacesGetName::Fn as WorkspacesGetName,
 	WorkspacesRemoveFolder::Fn as WorkspacesRemoveFolder,
 };
+
 use Utilities::{
 	ApplicationRoot::{Get::Fn as get_static_application_root, Set::Fn as set_static_application_root},
 	ChannelPriority::Fn as ResolveChannelPriority,
@@ -279,9 +299,13 @@ use Utilities::{
 		Set::Fn as set_userdata_base_dir,
 	},
 };
+
 use Echo::Task::Priority::Priority as EchoPriority;
+
 use serde_json::{Value, json};
+
 use tauri::{AppHandle, Manager};
+
 // Type aliases for Configuration DTOs to simplify usage
 use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
@@ -321,6 +345,7 @@ use crate::{
 };
 
 fn cocoon_payload(args:Vec<Value>) -> Value {
+
 	match args.len() {
 		0 => Value::Null,
 
@@ -331,6 +356,7 @@ fn cocoon_payload(args:Vec<Value>) -> Value {
 }
 
 macro_rules! forward_to_cocoon {
+
 	($tag:literal, $command:ident, $Arguments:ident) => {{
 		dev_log!("ipc", "{}: {} (→ Cocoon)", $tag, $command);
 
@@ -398,6 +424,7 @@ const TIER_WEBSOCKET:&str = env!("TierWebSocket", "Disabled");
 
 #[inline]
 fn tier_routes_to_node(BakedConst:&'static str, EnvKey:&str) -> bool {
+
 	let Resolved = std::env::var(EnvKey).unwrap_or_else(|_| BakedConst.to_string());
 
 	Resolved == "Node"
@@ -410,10 +437,12 @@ pub async fn mountain_ipc_invoke(
 
 	Arguments:Vec<Value>,
 ) -> Result<Value, String> {
+
 	// Determine high-frequency status first - used to skip OTLP timing,
 	// dev-logs, span emission, and PostHog capture for noisy calls.
 	let IsHighFrequencyCommand = matches!(
 		command.as_str(),
+
 		"logger:log"
 			| "logger:info"
 			| "logger:debug"
@@ -946,7 +975,9 @@ pub async fn mountain_ipc_invoke(
 
 						let _ = ::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
+
 							"$activateByEvent".to_string(),
+
 							Notification,
 						)
 						.await;
@@ -1135,8 +1166,11 @@ pub async fn mountain_ipc_invoke(
 							Err(Error) => {
 								dev_log!(
 									"extensions",
+
 									"warn: [WindServiceHandlers] extensions:getManifest failed for '{}': {}",
+
 									VsixPath,
+
 									Error
 								);
 
@@ -1183,27 +1217,39 @@ pub async fn mountain_ipc_invoke(
 				"notification:showProgress" => {
 					call!(
 						app,
+
 						"notification",
+
 						"notification:showProgress",
+
 						NotificationShowProgress,
+
 						Arguments
 					)
 				},
 				"notification:updateProgress" => {
 					call!(
 						app,
+
 						"notification",
+
 						"notification:updateProgress",
+
 						NotificationUpdateProgress,
+
 						Arguments
 					)
 				},
 				"notification:endProgress" => {
 					call!(
 						app,
+
 						"notification",
+
 						"notification:endProgress",
+
 						NotificationEndProgress,
+
 						Arguments
 					)
 				},
@@ -1329,14 +1375,19 @@ pub async fn mountain_ipc_invoke(
 								if let Err(Error) = MainWindow.show() {
 									dev_log!(
 										"lifecycle",
+
 										"warn: [Lifecycle] main window show() failed on phase {}: {}",
+
 										NewPhase,
+
 										Error
 									);
 								} else {
 									dev_log!(
 										"lifecycle",
+
 										"[Lifecycle] main window revealed on phase {} (hidden-until-ready)",
+
 										NewPhase
 									);
 
@@ -2226,7 +2277,9 @@ pub async fn mountain_ipc_invoke(
 				"localPty:reviveTerminalProcesses" => {
 					dev_log!(
 						"terminal",
+
 						"localPty:reviveTerminalProcesses count={}",
+
 						Arguments.first().and_then(|V| V.as_array()).map(|A| A.len()).unwrap_or(0)
 					);
 
@@ -2275,7 +2328,9 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptActiveTerminalChanged".to_string(),
+
 						Payload,
 					)
 					.await;
@@ -2292,7 +2347,9 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptTerminalShellIntegrationActivated".to_string(),
+
 						serde_json::json!({ "id": TermId }),
 					)
 					.await;
@@ -2311,7 +2368,9 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptTerminalStateChanged".to_string(),
+
 						Payload,
 					)
 					.await;
@@ -2341,7 +2400,9 @@ pub async fn mountain_ipc_invoke(
 
 						let _ = ::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
+
 							"$acceptTerminalCwdChange".to_string(),
+
 							serde_json::json!({ "id": TermId, "cwd": Cwd }),
 						)
 						.await;
@@ -2381,7 +2442,9 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptTerminalShellExecutionStart".to_string(),
+
 						Payload,
 					)
 					.await;
@@ -2404,14 +2467,18 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptTerminalShellExecutionEnd".to_string(),
+
 						Payload.clone(),
 					)
 					.await;
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptExecutedTerminalCommand".to_string(),
+
 						Payload,
 					)
 					.await;
@@ -2808,6 +2875,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ApplicationHandle.emit(
 						"sky://tree-view/reveal",
+
 						json!({
 							"viewId": ViewId,
 							"handle": Handle,
@@ -2904,7 +2972,9 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"window.didChangeTextEditorSelection".to_string(),
+
 						Payload,
 					)
 					.await;
@@ -2953,7 +3023,9 @@ pub async fn mountain_ipc_invoke(
 						tokio::spawn(async move {
 							let _ = ::Vine::Client::SendNotification::Fn(
 								"cocoon-main".to_string(),
+
 								"$acceptModelChanged".to_string(),
+
 								Payload2,
 							)
 							.await;
@@ -2980,7 +3052,9 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"window.didChangeActiveTextEditor".to_string(),
+
 						Payload,
 					)
 					.await;
@@ -3003,7 +3077,9 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptVisibleEditorsChanged".to_string(),
+
 						Payload,
 					)
 					.await;
@@ -3025,7 +3101,9 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptTabsChanged".to_string(),
+
 						Payload,
 					)
 					.await;
@@ -3046,7 +3124,9 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptVisibleRangesChanged".to_string(),
+
 						Payload,
 					)
 					.await;
@@ -3067,7 +3147,9 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptTextEditorOptionsChanged".to_string(),
+
 						Payload,
 					)
 					.await;
@@ -3087,7 +3169,9 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptTextEditorDiffInformationChanged".to_string(),
+
 						Payload,
 					)
 					.await;
@@ -3107,7 +3191,9 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
+
 						"$acceptTextEditorViewColumnChanged".to_string(),
+
 						Payload,
 					)
 					.await;
@@ -3307,8 +3393,11 @@ pub async fn mountain_ipc_invoke(
 							Err(CocoonError) => {
 								dev_log!(
 									"ipc",
+
 									"warn: [NodeDeferred] {} deferred but Cocoon rejected: {:?}",
+
 									command,
+
 									CocoonError
 								);
 
@@ -3320,7 +3409,9 @@ pub async fn mountain_ipc_invoke(
 							Ok(KnownChannel) => {
 								dev_log!(
 									"ipc",
+
 									"error: [WindServiceHandlers] Channel {:?} is registered but has no dispatch arm",
+
 									KnownChannel
 								);
 
@@ -3339,10 +3430,12 @@ pub async fn mountain_ipc_invoke(
 			if ResultSender.send(MatchResult).is_err() {
 				dev_log!(
 					"ipc",
+
 					"warn: [WindServiceHandlers] IPC result receiver dropped before dispatch completed"
 				);
 			}
 		},
+
 		CommandPriority,
 	);
 
@@ -3352,6 +3445,7 @@ pub async fn mountain_ipc_invoke(
 		Err(_) => {
 			dev_log!(
 				"ipc",
+
 				"error: [WindServiceHandlers] IPC task cancelled before producing a result"
 			);
 
@@ -3401,6 +3495,7 @@ pub async fn mountain_ipc_invoke(
 }
 
 pub fn register_wind_ipc_handlers(ApplicationHandle:&tauri::AppHandle) -> Result<(), String> {
+
 	dev_log!("lifecycle", "registering IPC handlers");
 
 	// Note: These handlers are automatically registered when included in the

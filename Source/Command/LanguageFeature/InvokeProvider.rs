@@ -9,7 +9,9 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
+
 use serde_json::Value;
+
 use tauri::{AppHandle, Manager, Wry};
 
 use super::Validation::validate_language_feature_request;
@@ -18,7 +20,9 @@ use super::Validation::validate_language_feature_request;
 pub(super) async fn invoke_provider<F, T>(application_handle:AppHandle<Wry>, handler:F) -> Result<Value, String>
 where
 	F: FnOnce(Arc<dyn LanguageFeatureProviderRegistry>) -> T,
+
 	T: std::future::Future<Output = Result<Value, CommonError>>, {
+
 	let run_time = application_handle
 		.state::<Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>>()
 		.inner()

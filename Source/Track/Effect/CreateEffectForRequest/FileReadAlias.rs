@@ -1,4 +1,5 @@
 pub fn Matches(MethodName:&str) -> bool {
+
 	match MethodName {
 		"openDocument" | "readFile" | "stat" => true,
 
@@ -9,7 +10,9 @@ pub fn Matches(MethodName:&str) -> bool {
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, FileSystem::FileSystemReader::FileSystemReader};
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::Track::Effect::{
@@ -18,6 +21,7 @@ use crate::Track::Effect::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
 		"openDocument" | "readFile" | "stat" => {
 			let MethodNameOwned = MethodName.to_string();

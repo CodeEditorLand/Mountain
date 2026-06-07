@@ -67,9 +67,11 @@
 use std::sync::Arc;
 
 use tauri::Manager;
+
 use Echo::Scheduler::Scheduler::Scheduler;
 
 use crate::dev_log;
+
 #[cfg(debug_assertions)]
 use crate::Binary::Debug::WebkitServer;
 
@@ -85,6 +87,7 @@ use crate::Binary::Debug::WebkitServer;
 /// Code paths are NOT removed - just skipped at runtime so a clean
 /// `Disable=` env var (or `Disable=false`) restores stock behaviour.
 fn IsLandDisabled() -> bool {
+
 	std::env::var("Disable")
 		.map(|Value| Value.eq_ignore_ascii_case("true"))
 		.unwrap_or(false)
@@ -158,6 +161,7 @@ pub fn AppLifecycleSetup(
 
 	app_state:Arc<ApplicationState>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+
 	dev_log!("lifecycle", "[Lifecycle] [Setup] Setup hook started.");
 
 	dev_log!("lifecycle", "[Lifecycle] [Setup] LocalhostUrl={}", localhost_url);
@@ -237,6 +241,7 @@ pub fn AppLifecycleSetup(
 		} else {
 			dev_log!(
 				"lifecycle",
+
 				"[UI] [Window] Debug build: DevTools auto-open suppressed (export Inspect=1 to override)."
 			);
 		}
@@ -253,11 +258,15 @@ pub fn AppLifecycleSetup(
 			// Cocoon extension-host process from its own bootstrap path.
 			dev_log!(
 				"lifecycle",
+
 				"[Debug] [Webkit] DebugServer mode={} Mountain-port={} Cocoon-port={}",
+
 				std::env::var("DebugServer").unwrap_or_else(|_| "(unset)".into()),
+
 				std::env::var("DebugServerPortMountain")
 					.or_else(|_| std::env::var("DebugServerPort"))
 					.unwrap_or_else(|_| "9933".into()),
+
 				std::env::var("DebugServerPortCocoon").unwrap_or_else(|_| "9934".into())
 			);
 
@@ -285,6 +294,7 @@ pub fn AppLifecycleSetup(
 	if IsLandDisabled() {
 		dev_log!(
 			"window",
+
 			"[UI] [Window] Disable=true: CloseRequested intercept SKIPPED (Cmd+W will close window natively)"
 		);
 	} else {
@@ -368,7 +378,9 @@ pub fn AppLifecycleSetup(
 
 		dev_log!(
 			"lifecycle",
+
 			"[Lifecycle] [Dirs] Static application root: {}",
+
 			SkyTargetDir.display()
 		);
 
@@ -376,23 +388,36 @@ pub fn AppLifecycleSetup(
 		let Dirs = [
 			// User profile directories
 			AppDataDir.join("User"),
+
 			AppDataDir.join("User/globalStorage"),
+
 			AppDataDir.join("User/workspaceStorage"),
+
 			AppDataDir.join("User/workspaceStorage/vscode-chat-images"),
+
 			AppDataDir.join("User/extensions"),
+
 			AppDataDir.join("User/profiles/__default__profile__"),
+
 			AppDataDir.join("User/snippets"),
+
 			AppDataDir.join("User/prompts"),
+
 			AppDataDir.join("User/caches"),
+
 			// Configuration cache
 			AppDataDir.join("CachedConfigurations/defaults/__default__profile__-configurationDefaultsOverrides"),
+
 			// Log directories - VS Code stats {logsPath}/window1/output_{timestamp}
 			LogDir.join("window1"),
+
 			// System extensions directory - VS Code scans appRoot/../extensions
 			// which resolves to /Static/Application/extensions (mapped to Sky Target).
 			SkyTargetDir.join("Static/Application/extensions"),
+
 			// Agent directories VS Code probes for (create to avoid stat errors)
 			HomeDir.join(".claude/agents"),
+
 			HomeDir.join(".copilot/agents"),
 		];
 
@@ -400,8 +425,11 @@ pub fn AppLifecycleSetup(
 			if let Err(Error) = std::fs::create_dir_all(Dir) {
 				dev_log!(
 					"lifecycle",
+
 					"warn: [Lifecycle] [Dirs] Failed to create {}: {}",
+
 					Dir.display(),
+
 					Error
 				);
 			}
@@ -410,9 +438,13 @@ pub fn AppLifecycleSetup(
 		// Default empty files VS Code reads on startup
 		let DefaultFiles:&[(&std::path::Path, &str)] = &[
 			(&AppDataDir.join("User/settings.json"), "{}"),
+
 			(&AppDataDir.join("User/keybindings.json"), "[]"),
+
 			(&AppDataDir.join("User/tasks.json"), "{}"),
+
 			(&AppDataDir.join("User/extensions.json"), "[]"),
+
 			(&AppDataDir.join("User/mcp.json"), "{}"),
 		];
 
@@ -454,7 +486,9 @@ pub fn AppLifecycleSetup(
 
 						dev_log!(
 							"lifecycle",
+
 							"[Lifecycle] [Dirs] Injected default 'security.workspace.trust.enabled=false' into {}",
+
 							SettingsPath.display()
 						);
 					}
@@ -485,8 +519,11 @@ pub fn AppLifecycleSetup(
 			if !LoadedGlobal.is_empty() {
 				dev_log!(
 					"lifecycle",
+
 					"[Lifecycle] [Memento] Hydrated GlobalMemento ({} keys) from {}",
+
 					LoadedGlobal.len(),
+
 					GlobalMementoFile.display()
 				);
 			}
@@ -496,7 +533,9 @@ pub fn AppLifecycleSetup(
 
 		dev_log!(
 			"lifecycle",
+
 			"[Lifecycle] [Dirs] Userdata directories ensured at {}",
+
 			AppDataDir.display()
 		);
 	}
@@ -527,7 +566,9 @@ pub fn AppLifecycleSetup(
 	if let Err(e) = StatusReporterRegisterFn(&app_handle_for_setup, Runtime.clone()) {
 		dev_log!(
 			"lifecycle",
+
 			"error: [Lifecycle] [IPC] Failed to initialize status reporter: {}",
+
 			e
 		);
 	}
@@ -538,7 +579,9 @@ pub fn AppLifecycleSetup(
 	if let Err(e) = AdvancedFeaturesRegisterFn(&app_handle_for_setup, Runtime.clone()) {
 		dev_log!(
 			"lifecycle",
+
 			"error: [Lifecycle] [IPC] Failed to initialize advanced features: {}",
+
 			e
 		);
 	}
@@ -549,7 +592,9 @@ pub fn AppLifecycleSetup(
 	if let Err(e) = WindSyncRegisterFn(&app_handle_for_setup, Runtime.clone()) {
 		dev_log!(
 			"lifecycle",
+
 			"error: [Lifecycle] [IPC] Failed to initialize wind advanced sync: {}",
+
 			e
 		);
 	}
@@ -622,7 +667,9 @@ pub fn AppLifecycleSetup(
 
 		let _ = VineStartFn(
 			PostSetupAppHandle.clone(),
+
 			"127.0.0.1:50051".to_string(),
+
 			"127.0.0.1:50052".to_string(),
 		)
 		.await;
@@ -636,6 +683,7 @@ pub fn AppLifecycleSetup(
 		if IsLandDisabled() {
 			dev_log!(
 				"cocoon",
+
 				"[Cocoon] [Start] Disable=true: Cocoon spawn SKIPPED (workbench will run without extensions)"
 			);
 		} else {
@@ -696,6 +744,7 @@ pub fn AppLifecycleSetup(
 			if LifecycleStateClone.GetPhase() < 3 {
 				dev_log!(
 					"lifecycle",
+
 					"[Lifecycle] [Fallback] Sky did not advance to Restored within 8s; Mountain auto-advancing \
 					 (current phase={})",
 					LifecycleStateClone.GetPhase()
@@ -709,6 +758,7 @@ pub fn AppLifecycleSetup(
 			if LifecycleStateClone.GetPhase() < 4 {
 				dev_log!(
 					"lifecycle",
+
 					"[Lifecycle] [Fallback] Sky did not advance to Eventually within 23s total; Mountain \
 					 auto-advancing (current phase={})",
 					LifecycleStateClone.GetPhase()
@@ -735,6 +785,7 @@ pub fn AppLifecycleSetup(
 				if let Ok(false) = MainWindow.is_visible() {
 					dev_log!(
 						"lifecycle",
+
 						"warn: [Lifecycle] [Fallback] main window hidden at +3s; force-revealing to avoid an \
 						 invisible-window lockup (Sky never reached phase 3)"
 					);

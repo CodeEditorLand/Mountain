@@ -16,7 +16,9 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+
 use url::Url;
+
 use CommonLibrary::Utility::Serialization::URLSerializationHelper;
 
 /// Maximum length for ViewType string to prevent allocation attacks
@@ -34,6 +36,7 @@ const MAX_EDITS_PER_DOCUMENT:usize = 1000;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CustomDocumentStateDTO {
+
 	/// The URI of the document resource being edited.
 	#[serde(rename = "uri", with = "URLSerializationHelper")]
 	pub URI:Url,
@@ -61,6 +64,7 @@ pub struct CustomDocumentStateDTO {
 }
 
 impl CustomDocumentStateDTO {
+
 	/// Creates a new CustomDocumentStateDTO with validation.
 	///
 	/// # Arguments
@@ -81,6 +85,7 @@ impl CustomDocumentStateDTO {
 		if SideCarIdentifier.len() > MAX_SIDECAR_IDENTIFIER_LENGTH {
 			return Err(format!(
 				"SideCarIdentifier exceeds maximum length of {} bytes",
+
 				MAX_SIDECAR_IDENTIFIER_LENGTH
 			));
 		}

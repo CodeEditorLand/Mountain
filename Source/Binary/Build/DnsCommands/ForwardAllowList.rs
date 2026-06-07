@@ -5,5 +5,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ForwardAllowList {
+
 	pub domains:Vec<String>,
 }

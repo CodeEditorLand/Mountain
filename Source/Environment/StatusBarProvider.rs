@@ -9,7 +9,9 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider},
 };
+
 use async_trait::async_trait;
+
 use serde_json::Value;
 
 use super::MountainEnvironment::MountainEnvironment;
@@ -26,6 +28,7 @@ mod Tooltip;
 
 #[async_trait]
 impl StatusBarProvider for MountainEnvironment {
+
 	/// Creates a new status bar entry or updates an existing one.
 	async fn SetStatusBarEntry(&self, entry:StatusBarEntryDTO) -> Result<(), CommonError> {
 		EntryManagement::set_status_bar_entry_impl(self, entry).await

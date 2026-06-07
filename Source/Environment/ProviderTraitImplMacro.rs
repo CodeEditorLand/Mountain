@@ -47,6 +47,7 @@
 /// ```
 #[macro_export]
 macro_rules! impl_provider {
+
 	($trait_name:ident) => {
 		impl Requires<dyn $trait_name> for MountainEnvironment {
 			fn Require(&self) -> Arc<dyn $trait_name> { Arc::new(self.clone()) }

@@ -20,8 +20,10 @@ use std::sync::Arc;
 // ============ Feature Flags ============
 #[cfg(feature = "Telemetry")]
 use opentelemetry::{KeyValue, global};
+
 #[cfg(feature = "Telemetry")]
 use opentelemetry::trace::Tracer;
+
 #[cfg(feature = "Telemetry")]
 use opentelemetry::trace::Span;
 
@@ -34,6 +36,7 @@ use crate::{
 /// State build configuration
 #[derive(Debug)]
 pub struct StateBuildConfig {
+
 	/// Enable comprehensive validation
 	pub strict_validation:bool,
 
@@ -45,6 +48,7 @@ pub struct StateBuildConfig {
 }
 
 impl Default for StateBuildConfig {
+
 	fn default() -> Self {
 		Self {
 			#[cfg(feature = "Debug")]
@@ -81,6 +85,7 @@ impl Default for StateBuildConfig {
 ///
 /// Returns error if required capabilities are not available
 pub fn Build(environment:MountainEnvironment) -> Result<ApplicationState, String> {
+
 	BuildWithConfig(environment, StateBuildConfig::default())
 }
 
@@ -95,6 +100,7 @@ pub fn Build(environment:MountainEnvironment) -> Result<ApplicationState, String
 ///
 /// Configured application state
 pub fn BuildWithConfig(environment:MountainEnvironment, config:StateBuildConfig) -> Result<ApplicationState, String> {
+
 	#[cfg(feature = "Telemetry")]
 	let span = global::tracer("StateBuild").start("Build");
 
@@ -138,6 +144,7 @@ pub fn BuildWithConfig(environment:MountainEnvironment, config:StateBuildConfig)
 
 /// Validate required capabilities are available
 fn ValidateCapabilities(_environment:&MountainEnvironment) -> Result<(), String> {
+
 	// Check critical capabilities
 	// TODO: Implement actual capability checks based on Environment API
 	Ok(())
@@ -146,6 +153,7 @@ fn ValidateCapabilities(_environment:&MountainEnvironment) -> Result<(), String>
 /// Create minimal state for testing (reduced requirements)
 #[cfg(any(test, feature = "Test"))]
 pub fn BuildMinimal(_app_handle:tauri::AppHandle) -> Result<ApplicationState, String> {
+
 	dev_log!("lifecycle", "[StateBuild] Creating minimal test state");
 
 	// Create minimal ApplicationState for tests (no environment needed)

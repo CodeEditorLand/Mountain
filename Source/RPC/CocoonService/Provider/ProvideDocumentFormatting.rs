@@ -1,9 +1,13 @@
 //! Forward a document-formatting request to the registered provider.
 
 use serde_json::json;
+
 use tonic::{Response, Status};
+
 use url::Url;
+
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
+
 use ::Vine::Generated::{ProvideDocumentFormattingRequest, ProvideDocumentFormattingResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -13,6 +17,7 @@ pub async fn Fn(
 
 	Request:ProvideDocumentFormattingRequest,
 ) -> Result<Response<ProvideDocumentFormattingResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] Providing document formatting");
 
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");

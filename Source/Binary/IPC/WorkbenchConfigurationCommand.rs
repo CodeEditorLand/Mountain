@@ -44,6 +44,7 @@
 use std::sync::Arc;
 
 use tauri::{AppHandle, State};
+
 use serde_json::Value;
 
 use crate::{
@@ -80,6 +81,7 @@ pub async fn MountainGetWorkbenchConfiguration(
 
 	State:State<'_, Arc<ApplicationState>>,
 ) -> Result<Value, String> {
+
 	dev_log!("ipc", "[IPC] [WorkbenchConfig] Request received.");
 
 	dev_log!("ipc", "[IPC] [WorkbenchConfig] Constructing sandbox configuration...");

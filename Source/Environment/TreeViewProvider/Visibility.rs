@@ -3,7 +3,9 @@
 //! Internal helper functions for tree view visibility and refresh operations.
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
+
 use serde_json::json;
+
 use tauri::Emitter;
 
 use crate::dev_log;
@@ -18,16 +20,21 @@ pub(super) async fn reveal_tree_item(
 
 	options:serde_json::Value,
 ) -> Result<(), CommonError> {
+
 	dev_log!(
 		"extensions",
+
 		"[TreeViewProvider] Revealing item '{}' in view '{}'",
+
 		item_handle,
+
 		view_identifier
 	);
 
 	env.ApplicationHandle
 		.emit(
 			SkyEvent::TreeViewReveal.AsStr(),
+
 			json!({ "viewId": view_identifier, "itemHandle": item_handle, "options": options }),
 		)
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
@@ -41,11 +48,13 @@ pub(super) async fn refresh_tree_view(
 
 	items_to_refresh:Option<serde_json::Value>,
 ) -> Result<(), CommonError> {
+
 	dev_log!("extensions", "[TreeViewProvider] Refreshing view '{}'", view_identifier);
 
 	env.ApplicationHandle
 		.emit(
 			SkyEvent::TreeViewRefresh.AsStr(),
+
 			json!({ "viewId": view_identifier, "itemsToRefresh": items_to_refresh }),
 		)
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })

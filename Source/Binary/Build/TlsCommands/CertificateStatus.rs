@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CertificateStatus {
+
 	pub exists:bool,
 
 	pub is_valid:bool,

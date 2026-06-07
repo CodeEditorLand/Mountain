@@ -32,6 +32,7 @@ use crate::dev_log;
 /// Debug configuration provider registration info
 #[derive(Clone, Debug)]
 pub struct DebugConfigurationProviderRegistration {
+
 	/// The provider handle
 	pub ProviderHandle:u32,
 
@@ -42,6 +43,7 @@ pub struct DebugConfigurationProviderRegistration {
 /// Debug adapter descriptor factory registration info
 #[derive(Clone, Debug)]
 pub struct DebugAdapterDescriptorFactoryRegistration {
+
 	/// The factory handle
 	pub FactoryHandle:u32,
 
@@ -61,6 +63,7 @@ pub struct DebugAdapterDescriptorFactoryRegistration {
 /// through to a reverse-RPC into Cocoon instead of dropping silently.
 #[derive(Clone)]
 pub struct DebugSessionEntry {
+
 	/// Session ID assigned at `StartDebugging` time.
 	pub SessionId:String,
 
@@ -88,6 +91,7 @@ pub struct DebugSessionEntry {
 /// Debug state containing debug provider registrations.
 #[derive(Clone)]
 pub struct DebugState {
+
 	/// Debug configuration providers organized by debug type.
 	pub DebugConfigurationProviders:Arc<Mutex<HashMap<String, DebugConfigurationProviderRegistration>>>,
 
@@ -103,6 +107,7 @@ pub struct DebugState {
 }
 
 impl Default for DebugState {
+
 	fn default() -> Self {
 		dev_log!("exthost", "[DebugState] Initializing default debug state...");
 
@@ -117,6 +122,7 @@ impl Default for DebugState {
 }
 
 impl DebugState {
+
 	/// Registers a debug configuration provider.
 	pub fn RegisterDebugConfigurationProvider(
 		&self,
@@ -131,6 +137,7 @@ impl DebugState {
 
 		guard.insert(
 			debug_type,
+
 			DebugConfigurationProviderRegistration {
 				ProviderHandle:provider_handle,
 				SideCarIdentifier:sidecar_identifier,
@@ -159,6 +166,7 @@ impl DebugState {
 
 		guard.insert(
 			debug_type,
+
 			DebugAdapterDescriptorFactoryRegistration {
 				FactoryHandle:factory_handle,
 				SideCarIdentifier:sidecar_identifier,

@@ -1,6 +1,7 @@
 //! Provider lookup and matching utilities.
 
 use CommonLibrary::{Error::CommonError::CommonError, LanguageFeature::DTO::ProviderType::ProviderType};
+
 use url::Url;
 
 use crate::{
@@ -16,6 +17,7 @@ pub(super) async fn get_matching_provider(
 
 	feature_type:ProviderType,
 ) -> Result<Option<ProviderRegistrationDTO>, CommonError> {
+
 	let providers = environment
 		.ApplicationState
 		.Extension
@@ -89,7 +91,9 @@ pub(super) async fn get_matching_provider(
 			})
 		} else if let Some(LangValue) = Provider.Selector.get("language") {
 			LangValue.as_str() == Some(&LanguageId)
+
 				|| LangValue.as_str() == Some("*")
+
 				|| LangValue
 					.as_array()
 					.map(|Arr| {
@@ -110,9 +114,13 @@ pub(super) async fn get_matching_provider(
 
 	dev_log!(
 		"extensions",
+
 		"warn: [ProviderLookup] No {:?} provider for language '{}' (uri={})",
+
 		feature_type,
+
 		LanguageId,
+
 		document_uri
 	);
 

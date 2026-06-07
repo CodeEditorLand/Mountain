@@ -5,7 +5,9 @@
 use std::sync::Arc;
 
 use CommonLibrary::TreeView::TreeViewProvider::TreeViewProvider;
+
 use serde_json::{Value, json};
+
 use tauri::{AppHandle, Manager, State, Wry, command};
 
 use crate::{
@@ -27,6 +29,7 @@ pub async fn RevealTreeViewItem(
 
 	Options:Option<Value>,
 ) -> Result<Value, String> {
+
 	dev_log!("commands", "revealing item '{}' in view '{}'", ItemHandle, ViewId);
 
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();

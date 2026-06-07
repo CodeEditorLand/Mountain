@@ -2,18 +2,26 @@
 //! captured in `WebviewStateDTO` and re-servable on reveal/restore.
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
+
 use CommonLibrary::Webview::WebviewProvider::WebviewProvider;
+
 use ::Vine::Generated::{Empty, SetWebviewHtmlRequest};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:SetWebviewHtmlRequest) -> Result<Response<Empty>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] set_webview_html: handle={} ({} bytes)",
+
 		Request.handle,
+
 		Request.html.len()
 	);
 
@@ -26,6 +34,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:SetWebviewHtmlRequest) -> Re
 
 		let _ = Service.environment.ApplicationHandle.emit(
 			"sky://webview/set-html",
+
 			json!({ "handle": Request.handle, "html": Request.html }),
 		);
 	}

@@ -1,8 +1,11 @@
 //! Forward a semantic-tokens-full request to the registered provider.
 
 use tonic::{Response, Status};
+
 use url::Url;
+
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
+
 use ::Vine::Generated::{ProvideSemanticTokensRequest, ProvideSemanticTokensResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -12,6 +15,7 @@ pub async fn Fn(
 
 	Request:ProvideSemanticTokensRequest,
 ) -> Result<Response<ProvideSemanticTokensResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] Providing semantic tokens");
 
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");

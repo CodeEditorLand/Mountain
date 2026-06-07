@@ -1,4 +1,5 @@
 pub fn Matches(MethodName:&str) -> bool {
+
 	// WindowUI handles Window.ShowMessage, Window.ShowQuickPick, etc.
 	MethodName.starts_with("Window.")
 }
@@ -6,6 +7,7 @@ pub fn Matches(MethodName:&str) -> bool {
 use std::sync::Arc;
 
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::{
@@ -19,6 +21,7 @@ use crate::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
 		"Window.ShowMessage" => {
 			crate::effect!(run_time, {
@@ -44,6 +47,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					// Fire-and-forget: no action buttons needed.
 					let _ = AppHandle.emit(
 						"sky://notification/show",
+
 						json!({
 							"message": Message,
 							"severity": Level,
@@ -73,6 +77,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				if let Err(Error) = AppHandle.emit(
 					"sky://ui/show-message-request",
+
 					json!({
 						"RequestIdentifier": Nonce,
 						"Payload": {

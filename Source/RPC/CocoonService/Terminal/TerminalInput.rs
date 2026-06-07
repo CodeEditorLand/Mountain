@@ -1,18 +1,24 @@
 //! Forward bytes received from Cocoon to the PTY master writer.
 
 use tonic::{Response, Status};
+
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
+
 use ::Vine::Generated::{Empty, TerminalInputRequest};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalInputRequest) -> Result<Response<Empty>, Status> {
+
 	let TerminalIdentifier = Request.terminal_id as u64;
 
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] terminal_input: id={} bytes={}",
+
 		TerminalIdentifier,
+
 		Request.data.len()
 	);
 
@@ -24,8 +30,11 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalInputRequest) -> Res
 		Err(Error) => {
 			dev_log!(
 				"cocoon",
+
 				"warn: [CocoonService] terminal_input failed id={}: {}",
+
 				TerminalIdentifier,
+
 				Error
 			);
 

@@ -16,7 +16,9 @@
 //! - IsActive: Focus state flag
 //! - IsVisible: Visibility state flag
 use CommonLibrary::Webview::DTO::WebviewContentOptionsDTO::WebviewContentOptionsDTO;
+
 use serde::{Deserialize, Serialize};
+
 // For PanelOptions, etc.
 use serde_json::Value;
 
@@ -41,6 +43,7 @@ const MAX_TITLE_LENGTH:usize = 256;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct WebviewStateDTO {
+
 	/// A unique UUID handle for this Webview instance.
 	pub Handle:String,
 
@@ -75,6 +78,7 @@ pub struct WebviewStateDTO {
 }
 
 impl WebviewStateDTO {
+
 	/// Creates a new WebviewStateDTO with validation.
 	///
 	/// # Arguments
@@ -122,6 +126,7 @@ impl WebviewStateDTO {
 		if SideCarIdentifier.len() > MAX_SIDECAR_IDENTIFIER_LENGTH {
 			return Err(format!(
 				"SideCar identifier exceeds maximum length of {} bytes",
+
 				MAX_SIDECAR_IDENTIFIER_LENGTH
 			));
 		}
@@ -130,6 +135,7 @@ impl WebviewStateDTO {
 		if ExtensionIdentifier.len() > MAX_EXTENSION_IDENTIFIER_LENGTH {
 			return Err(format!(
 				"Extension identifier exceeds maximum length of {} bytes",
+
 				MAX_EXTENSION_IDENTIFIER_LENGTH
 			));
 		}

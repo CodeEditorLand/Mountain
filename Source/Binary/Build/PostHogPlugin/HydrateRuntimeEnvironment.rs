@@ -18,17 +18,24 @@
 use crate::{Binary::Build::PostHogPlugin::Constants, dev_log};
 
 pub fn Fn() {
+
 	if !cfg!(debug_assertions) {
 		return;
 	}
 
 	for (Key, Value) in [
 		("Authorize", Constants::POSTHOG_API_KEY),
+
 		("Beam", Constants::POSTHOG_HOST),
+
 		("Report", Constants::POSTHOG_ENABLED),
+
 		("Brand", Constants::POSTHOG_DISTINCT_ID_SEED),
+
 		("Pipe", Constants::OTLP_ENDPOINT),
+
 		("Emit", Constants::OTLP_ENABLED),
+
 		("Capture", Constants::TELEMETRY_CAPTURE),
 	] {
 		if Value.is_empty() {
@@ -50,10 +57,15 @@ pub fn Fn() {
 
 	dev_log!(
 		"lifecycle",
+
 		"[PostHog] Hydrated runtime env from baked Constants (Authorize={}, Beam={}, Capture={}, Emit={})",
+
 		if Constants::POSTHOG_API_KEY.is_empty() { "<unset>" } else { "<set>" },
+
 		Constants::POSTHOG_HOST,
+
 		Constants::TELEMETRY_CAPTURE,
+
 		Constants::OTLP_ENABLED,
 	);
 }

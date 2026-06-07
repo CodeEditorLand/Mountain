@@ -3,6 +3,7 @@
 use serde_json::{Value, json};
 
 pub fn Fn() -> Result<Value, String> {
+
 	let Path = super::Path::Fn();
 
 	match std::fs::read_to_string(&Path) {

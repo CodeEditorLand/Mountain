@@ -49,15 +49,23 @@ use CommonLibrary::{
 		UserInterfaceProvider::UserInterfaceProvider,
 	},
 };
+
 use async_trait::async_trait;
+
 use serde::Serialize;
+
 use serde_json::{Value, json};
+
 use tauri::Emitter;
+
 use tauri_plugin_dialog::{DialogExt, FilePath};
+
 use tokio::time::{Duration, timeout};
+
 use uuid::Uuid;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
+
 use crate::dev_log;
 
 // TODO: custom dialog buttons/layouts, glob-pattern file-type filters,
@@ -68,6 +76,7 @@ use crate::dev_log;
 
 #[derive(Serialize, Clone)]
 struct UserInterfaceRequest<TPayload:Serialize + Clone> {
+
 	pub RequestIdentifier:String,
 
 	pub Payload:TPayload,
@@ -75,6 +84,7 @@ struct UserInterfaceRequest<TPayload:Serialize + Clone> {
 
 #[async_trait]
 impl UserInterfaceProvider for MountainEnvironment {
+
 	/// Shows a message to the user with a given severity and optional action
 	/// buttons.
 	async fn ShowMessage(
@@ -124,7 +134,9 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 			(
 				opts.CanSelectMany.unwrap_or(false),
+
 				opts.CanSelectFolders.unwrap_or(false),
+
 				opts.CanSelectFiles.unwrap_or(true),
 			)
 		} else {
@@ -205,7 +217,9 @@ impl UserInterfaceProvider for MountainEnvironment {
 	) -> Result<Option<Vec<String>>, CommonError> {
 		dev_log!(
 			"window",
+
 			"[UserInterfaceProvider] Showing quick pick with {} items.",
+
 			Items.len()
 		);
 
@@ -258,6 +272,7 @@ pub(crate) async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 
 	Payload:TPayload,
 ) -> Result<Value, CommonError> {
+
 	let RequestIdentifier = Uuid::new_v4().to_string();
 
 	let (Sender, Receiver) = tokio::sync::oneshot::channel();
@@ -295,8 +310,11 @@ pub(crate) async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 		Err(_) => {
 			dev_log!(
 				"window",
+
 				"warn: [UserInterfaceProvider] UI request '{}' with ID {} timed out.",
+
 				EventName,
+
 				RequestIdentifier
 			);
 

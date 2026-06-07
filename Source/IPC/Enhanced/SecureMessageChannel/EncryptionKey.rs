@@ -13,6 +13,7 @@ use ring::{
 
 #[derive(Debug, Clone)]
 pub struct Struct {
+
 	pub(super) key:LessSafeKey,
 
 	pub(super) created_at:SystemTime,
@@ -23,6 +24,7 @@ pub struct Struct {
 }
 
 impl Struct {
+
 	pub(super) fn new(key_bytes:&[u8]) -> Result<Self, String> {
 		let unbound_key =
 			UnboundKey::new(&AES_256_GCM, key_bytes).map_err(|e| format!("Failed to create unbound key: {}", e))?;

@@ -1,4 +1,5 @@
 pub fn Matches(MethodName:&str) -> bool {
+
 	match MethodName {
 		"Task.Fetch" | "Task.Execute" => true,
 
@@ -7,7 +8,9 @@ pub fn Matches(MethodName:&str) -> bool {
 }
 
 use CommonLibrary::IPC::DTO::ProxyTarget::ProxyTarget;
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::{
@@ -19,6 +22,7 @@ use crate::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
 		"Task.Fetch" => {
 			crate::effect!(run_time, {
@@ -43,7 +47,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					.or_else(|error| {
 						dev_log!(
 							"ipc",
+
 							"warn: [Task.Execute] extension did not answer ({:?}); returning null",
+
 							error
 						);
 
@@ -64,16 +70,22 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				proxy_cocoon(
 					&run_time,
+
 					ProxyTarget::ExtHostTaskService,
+
 					"terminateTask",
+
 					json!([execution]),
+
 					5000,
 				)
 				.await
 				.or_else(|error| {
 					dev_log!(
 						"ipc",
+
 						"warn: [Task.Terminate] extension did not answer ({:?}); treating as no-op",
+
 						error
 					);
 

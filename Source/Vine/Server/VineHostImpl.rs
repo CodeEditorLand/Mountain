@@ -1,4 +1,5 @@
 fn UpdateScmGroupMarkers(&self, ScmHandle:u32, GroupId:&str, ResourceStates:&Value) {
+
 	use std::collections::HashMap;
 
 	use CommonLibrary::SourceControlManagement::DTO::SourceControlManagementResourceDTO::SourceControlManagementResourceDTO;

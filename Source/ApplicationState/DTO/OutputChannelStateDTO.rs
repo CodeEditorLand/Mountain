@@ -29,6 +29,7 @@ const MAX_BUFFER_SIZE:usize = 10_000_000;
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct OutputChannelStateDTO {
+
 	/// Channel display name
 	#[serde(skip_serializing_if = "String::is_empty")]
 	pub Name:String,
@@ -46,6 +47,7 @@ pub struct OutputChannelStateDTO {
 }
 
 impl OutputChannelStateDTO {
+
 	/// Creates a new `OutputChannelStateDTO` with validation.
 	///
 	/// # Arguments
@@ -59,6 +61,7 @@ impl OutputChannelStateDTO {
 		if Name.len() > MAX_CHANNEL_NAME_LENGTH {
 			return Err(format!(
 				"Channel name exceeds maximum length of {} bytes",
+
 				MAX_CHANNEL_NAME_LENGTH
 			));
 		}
@@ -68,6 +71,7 @@ impl OutputChannelStateDTO {
 			if LangID.len() > MAX_LANGUAGE_ID_LENGTH {
 				return Err(format!(
 					"Language identifier exceeds maximum length of {} bytes",
+
 					MAX_LANGUAGE_ID_LENGTH
 				));
 			}
@@ -113,6 +117,7 @@ impl OutputChannelStateDTO {
 
 /// Formats a byte count into a human-readable string.
 fn FormatBytes(Bytes:usize) -> String {
+
 	const UNITS:&[&str] = &["B", "KB", "MB", "GB"];
 
 	if Bytes == 0 {

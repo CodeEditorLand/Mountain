@@ -40,12 +40,17 @@ use CommonLibrary::{
 	IPC::{DTO::ProxyTarget::ProxyTarget, SkyEvent::SkyEvent},
 	Testing::TestController::TestController,
 };
+
 use async_trait::async_trait;
+
 use serde_json::{Value, json};
+
 use tauri::{Emitter, Manager};
+
 use uuid::Uuid;
 
 use super::MountainEnvironment::MountainEnvironment;
+
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::Effect::CreateEffectForRequest::Utilities::Proxy::proxy_cocoon,
@@ -54,11 +59,15 @@ use crate::{
 
 #[async_trait]
 impl TestController for MountainEnvironment {
+
 	async fn RegisterTestController(&self, ControllerId:String, Label:String) -> Result<(), CommonError> {
 		dev_log!(
 			"extensions",
+
 			"[TestProvider] Registering test controller '{}' with label '{}'",
+
 			ControllerId,
+
 			Label
 		);
 
@@ -85,6 +94,7 @@ impl TestController for MountainEnvironment {
 		self.ApplicationHandle
 			.emit(
 				SkyEvent::TestRegistered.AsStr(),
+
 				json!({ "ControllerIdentifier": ControllerId }),
 			)
 			.map_err(|Error| {
@@ -93,7 +103,9 @@ impl TestController for MountainEnvironment {
 
 		dev_log!(
 			"extensions",
+
 			"[TestProvider] Test controller '{}' registered successfully",
+
 			ControllerId
 		);
 
@@ -103,8 +115,11 @@ impl TestController for MountainEnvironment {
 	async fn RunTests(&self, ControllerIdentifier:String, TestRunRequest:Value) -> Result<(), CommonError> {
 		dev_log!(
 			"extensions",
+
 			"[TestProvider] Running tests for controller '{}': {:?}",
+
 			ControllerIdentifier,
+
 			TestRunRequest
 		);
 
@@ -139,6 +154,7 @@ impl TestController for MountainEnvironment {
 		self.ApplicationHandle
 			.emit(
 				SkyEvent::TestRunStarted.AsStr(),
+
 				json!({ "RunIdentifier": RunIdentifier, "ControllerIdentifier": ControllerIdentifier }),
 			)
 			.map_err(|Error| {
@@ -150,7 +166,9 @@ impl TestController for MountainEnvironment {
 		} else {
 			dev_log!(
 				"extensions",
+
 				"warn: [TestProvider] Native test controllers not yet implemented for '{}'",
+
 				ControllerIdentifier
 			);
 
@@ -162,6 +180,7 @@ impl TestController for MountainEnvironment {
 }
 
 impl MountainEnvironment {
+
 	async fn RunProxiedTests(
 		&self,
 
@@ -173,8 +192,11 @@ impl MountainEnvironment {
 	) -> Result<(), CommonError> {
 		dev_log!(
 			"extensions",
+
 			"[TestProvider] Running proxied tests for run '{}' on sidecar '{}'",
+
 			RunIdentifier,
+
 			SideCarIdentifier
 		);
 
@@ -196,14 +218,19 @@ impl MountainEnvironment {
 
 					dev_log!(
 						"extensions",
+
 						"[TestProvider] Test run '{}' completed with status {:?}",
+
 						RunIdentifier,
+
 						FinalStatus
 					);
 				} else {
 					dev_log!(
 						"extensions",
+
 						"error: [TestProvider] Failed to parse test results for run '{}'",
+
 						RunIdentifier
 					);
 
@@ -234,6 +261,7 @@ impl MountainEnvironment {
 			self.ApplicationHandle
 				.emit(
 					SkyEvent::TestRunStatusChanged.AsStr(),
+
 					json!({ "RunIdentifier": RunIdentifier, "Status": Status }),
 				)
 				.map_err(|Error| {

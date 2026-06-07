@@ -1,12 +1,15 @@
 //! Persist a value to the OS keychain.
 
 use tonic::{Response, Status};
+
 use CommonLibrary::Secret::SecretProvider::SecretProvider;
+
 use ::Vine::Generated::{Empty, StoreSecretRequest};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:StoreSecretRequest) -> Result<Response<Empty>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] store_secret: key={}", Request.key);
 
 	match Service
@@ -19,8 +22,11 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:StoreSecretRequest) -> Resul
 		Err(Error) => {
 			dev_log!(
 				"cocoon",
+
 				"warn: [CocoonService] store_secret failed key={}: {}",
+
 				Request.key,
+
 				Error
 			);
 

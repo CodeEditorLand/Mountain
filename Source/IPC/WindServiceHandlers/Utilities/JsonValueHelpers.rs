@@ -7,6 +7,7 @@
 use serde_json::Value;
 
 pub fn Fn(Value:&Value) -> Option<String> {
+
 	if let Some(s) = Value.as_str() {
 		return Some(s.to_string());
 	}
@@ -29,6 +30,7 @@ pub fn arg_str(args:&[Value], n:usize) -> &str { args.get(n).and_then(Value::as_
 pub fn arg_string(args:&[Value], n:usize) -> String { arg_str(args, n).to_string() }
 
 pub fn arg_string_or(args:&[Value], n:usize, default:&str) -> String {
+
 	args.get(n).and_then(Value::as_str).unwrap_or(default).to_string()
 }
 
@@ -47,9 +49,11 @@ pub fn arg_bool(args:&[Value], n:usize) -> bool { args.get(n).and_then(Value::as
 pub fn arg_bool_true(args:&[Value], n:usize) -> bool { args.get(n).and_then(Value::as_bool).unwrap_or(true) }
 
 pub fn req_str<'a>(args:&'a [Value], n:usize, msg:&str) -> Result<&'a str, String> {
+
 	args.get(n).and_then(Value::as_str).ok_or_else(|| msg.to_string())
 }
 
 pub fn req_string(args:&[Value], n:usize, msg:&str) -> Result<String, String> {
+
 	req_str(args, n, msg).map(str::to_string)
 }

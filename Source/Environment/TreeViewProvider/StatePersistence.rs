@@ -3,7 +3,9 @@
 //! Internal helper functions for saving and restoring tree view state.
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
+
 use serde_json::json;
+
 use tauri::Emitter;
 
 use crate::{Environment::Utility, dev_log};
@@ -15,9 +17,12 @@ pub(super) async fn persist_tree_view_state(
 
 	view_identifier:String,
 ) -> Result<serde_json::Value, CommonError> {
+
 	dev_log!(
 		"extensions",
+
 		"[TreeViewProvider] Persisting state for view '{}'",
+
 		view_identifier
 	);
 
@@ -53,9 +58,12 @@ pub(super) async fn restore_tree_view_state(
 
 	state_value:serde_json::Value,
 ) -> Result<(), CommonError> {
+
 	dev_log!(
 		"extensions",
+
 		"[TreeViewProvider] Restoring state for view '{}'",
+
 		view_identifier
 	);
 
@@ -87,6 +95,7 @@ pub(super) async fn restore_tree_view_state(
 		env.ApplicationHandle
 			.emit(
 				SkyEvent::TreeViewRestoreState.AsStr(),
+
 				json!({
 					"viewId": view_identifier,
 					"state": state_value

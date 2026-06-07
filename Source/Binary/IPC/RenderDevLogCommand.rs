@@ -46,6 +46,7 @@ pub async fn RenderDevLog(
 
 	message:Option<String>,
 ) -> Result<(), String> {
+
 	let ResolvedTag = Tag.or(tag).unwrap_or_default();
 
 	let ResolvedMessage = Message.or(message).unwrap_or_default();

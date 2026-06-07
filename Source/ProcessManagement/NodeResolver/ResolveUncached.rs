@@ -21,6 +21,7 @@ use crate::{
 };
 
 pub fn Fn<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode::Struct {
+
 	if let Some(Found) = TryOverride::Fn() {
 		return Found;
 	}
@@ -51,6 +52,7 @@ pub fn Fn<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode::Struct {
 
 	dev_log!(
 		"cocoon",
+
 		"[NodeResolver] No specific install found; falling back to `node` on PATH"
 	);
 

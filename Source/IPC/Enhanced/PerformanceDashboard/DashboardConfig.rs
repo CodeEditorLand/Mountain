@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
+
 	pub update_interval_ms:u64,
 
 	pub metrics_retention_hours:u64,
@@ -18,6 +19,7 @@ pub struct Struct {
 }
 
 impl Default for Struct {
+
 	fn default() -> Self {
 		Self {
 			update_interval_ms:5000,

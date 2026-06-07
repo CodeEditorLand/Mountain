@@ -3,21 +3,26 @@
 //! prefixed with `stderr: ` so the extension can differentiate.
 
 use tonic::{Response, Status};
+
 use ::Vine::Generated::{GitExecRequest, GitExecResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<Response<GitExecResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] git_exec: {}", Request.args.join(" "));
 
 	dev_log!(
 		"git",
+
 		"[Git] exec-begin cwd={} args=[{}]",
+
 		if Request.repository_path.is_empty() {
 			"<cwd>".to_string()
 		} else {
 			Request.repository_path.clone()
 		},
+
 		Request.args.join(" ")
 	);
 
@@ -37,9 +42,13 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<R
 
 			dev_log!(
 				"git",
+
 				"[Git] exec-spawn-fail cwd={:?} args=[{}] error={}",
+
 				WorkingDirectory,
+
 				Request.args.join(" "),
+
 				Error
 			);
 
@@ -50,18 +59,27 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<R
 
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] git_exec exit={} stdout={} bytes stderr={} bytes",
+
 		ExitCode,
+
 		Output.stdout.len(),
+
 		Output.stderr.len()
 	);
 
 	dev_log!(
 		"git",
+
 		"[Git] exec-done args=[{}] exit={} stdout={} stderr={}",
+
 		Request.args.join(" "),
+
 		ExitCode,
+
 		Output.stdout.len(),
+
 		Output.stderr.len()
 	);
 

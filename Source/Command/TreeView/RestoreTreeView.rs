@@ -9,6 +9,7 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
+
 use tauri::{AppHandle, State, Wry, command};
 
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
@@ -23,6 +24,7 @@ pub async fn RestoreTreeView(
 
 	_StateValue:Value,
 ) -> Result<Value, String> {
+
 	dev_log!("commands", "warn: RestoreTreeView not implemented");
 
 	Ok(json!({ "success": false, "error": "RestoreTreeViewState method not implemented" }))

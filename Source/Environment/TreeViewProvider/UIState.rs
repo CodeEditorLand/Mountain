@@ -4,7 +4,9 @@
 //! (message, title, badge).
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
+
 use serde_json::json;
+
 use tauri::Emitter;
 
 use crate::{Environment::Utility, dev_log};
@@ -17,10 +19,14 @@ pub(super) async fn set_tree_view_message(
 
 	message:Option<String>,
 ) -> Result<(), CommonError> {
+
 	dev_log!(
 		"extensions",
+
 		"[TreeViewProvider] Setting message for view '{}': {:?}",
+
 		view_identifier,
+
 		message
 	);
 
@@ -41,6 +47,7 @@ pub(super) async fn set_tree_view_message(
 	env.ApplicationHandle
 		.emit(
 			SkyEvent::TreeViewSetMessage.AsStr(),
+
 			json!({ "viewId": view_identifier, "message": message }),
 		)
 		.map_err(|Error| {
@@ -58,11 +65,16 @@ pub(super) async fn set_tree_view_title(
 
 	description:Option<String>,
 ) -> Result<(), CommonError> {
+
 	dev_log!(
 		"extensions",
+
 		"[TreeViewProvider] Setting title/description for view '{}': {:?} {:?}",
+
 		view_identifier,
+
 		title,
+
 		description
 	);
 
@@ -85,6 +97,7 @@ pub(super) async fn set_tree_view_title(
 	env.ApplicationHandle
 		.emit(
 			SkyEvent::TreeViewSetTitle.AsStr(),
+
 			json!({
 				"viewId": view_identifier,
 				"title": title,
@@ -104,10 +117,14 @@ pub(super) async fn set_tree_view_badge(
 
 	badge:Option<serde_json::Value>,
 ) -> Result<(), CommonError> {
+
 	dev_log!(
 		"extensions",
+
 		"[TreeViewProvider] Setting badge for view '{}': {:?}",
+
 		view_identifier,
+
 		badge
 	);
 
@@ -137,6 +154,7 @@ pub(super) async fn set_tree_view_badge(
 	env.ApplicationHandle
 		.emit(
 			SkyEvent::TreeViewSetBadge.AsStr(),
+
 			json!({ "viewId": view_identifier, "badge": badge }),
 		)
 		.map_err(|Error| {

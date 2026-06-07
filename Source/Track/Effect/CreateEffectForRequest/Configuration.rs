@@ -1,4 +1,5 @@
 pub fn Matches(MethodName:&str) -> bool {
+
 	match MethodName {
 		"config.get" | "config.update" | "Configuration.Inspect" | "Configuration.Update" => true,
 
@@ -17,7 +18,9 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	IPC::IPCProvider::IPCProvider as IPCProviderTrait,
 };
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::{
@@ -40,6 +43,7 @@ async fn UpdateConfigurationValueAndNotify(
 
 	log_prefix:&str,
 ) -> Result<Value, String> {
+
 	use tauri::Emitter;
 
 	let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
@@ -61,8 +65,11 @@ async fn UpdateConfigurationValueAndNotify(
 		if let Err(Error) = AppHandle.emit("sky://configuration/changed", Payload.clone()) {
 			dev_log!(
 				"config",
+
 				"warn: [{}] sky://configuration/changed emit failed: {}",
+
 				log_prefix,
+
 				Error
 			);
 		}
@@ -75,8 +82,11 @@ async fn UpdateConfigurationValueAndNotify(
 		{
 			dev_log!(
 				"config",
+
 				"warn: [{}] Cocoon configuration.change notification failed: {}",
+
 				log_prefix,
+
 				Error
 			);
 		}
@@ -86,6 +96,7 @@ async fn UpdateConfigurationValueAndNotify(
 }
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
 		"config.get" => {
 			crate::effect!(run_time, {

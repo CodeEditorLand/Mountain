@@ -1,11 +1,14 @@
 //! Forward a rename-edits request to the registered provider.
 
 use tonic::{Response, Status};
+
 use url::Url;
+
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
+
 use ::Vine::Generated::{ProvideRenameEditsRequest, ProvideRenameEditsResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -15,9 +18,12 @@ pub async fn Fn(
 
 	Request:ProvideRenameEditsRequest,
 ) -> Result<Response<ProvideRenameEditsResponse>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] Providing rename edits: new_name={}",
+
 		Request.new_name
 	);
 
