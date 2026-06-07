@@ -43,7 +43,6 @@ use std::{
 };
 
 use parking_lot::Mutex;
-
 use CommonLibrary::{
 	SourceControlManagement::DTO::{
 		SourceControlManagementGroupDTO::SourceControlManagementGroupDTO,
@@ -58,7 +57,6 @@ use crate::{ApplicationState::DTO::CustomDocumentStateDTO::CustomDocumentStateDT
 /// Marker-related state containing custom documents, status bar, and SCM state.
 #[derive(Clone)]
 pub struct MarkerState {
-
 	/// Active custom documents organized by ID.
 	pub ActiveCustomDocuments:Arc<Mutex<HashMap<String, CustomDocumentStateDTO>>>,
 
@@ -80,7 +78,6 @@ pub struct MarkerState {
 }
 
 impl Default for MarkerState {
-
 	fn default() -> Self {
 		dev_log!("extensions", "[MarkerState] Initializing default marker state...");
 
@@ -101,7 +98,6 @@ impl Default for MarkerState {
 }
 
 impl MarkerState {
-
 	/// Gets the next available unique identifier for an SCM provider.
 	pub fn GetNextSourceControlManagementProviderHandle(&self) -> u32 {
 		self.NextSourceControlManagementProviderHandle

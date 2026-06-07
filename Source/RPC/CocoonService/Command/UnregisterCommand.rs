@@ -1,15 +1,12 @@
 //! Remove a previously-registered Cocoon command from the executor.
 
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
-
 use tonic::{Response, Status};
-
 use ::Vine::Generated::{Empty, UnregisterCommandRequest};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:UnregisterCommandRequest) -> Result<Response<Empty>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] Unregistering command '{}'", Request.command_id);
 
 	if let Err(Error) = Service
@@ -19,11 +16,8 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:UnregisterCommandRequest) ->
 	{
 		dev_log!(
 			"cocoon",
-
 			"warn: [CocoonService] Failed to unregister command '{}': {:?}",
-
 			Request.command_id,
-
 			Error
 		);
 	} else {

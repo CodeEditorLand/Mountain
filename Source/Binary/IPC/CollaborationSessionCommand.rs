@@ -38,7 +38,6 @@
 //! - Consider connection pooling for active sessions
 
 use serde_json::Value;
-
 use tauri::AppHandle;
 
 /// Create collaboration session.
@@ -61,7 +60,6 @@ use tauri::AppHandle;
 /// - Session creation fails
 #[tauri::command]
 pub async fn MountainCreateCollaborationSession(app_handle:AppHandle, session_data:Value) -> Result<Value, String> {
-
 	// Extract session_id and permissions from the JSON object
 	let session_id = session_data
 		.get("session_id")
@@ -82,9 +80,7 @@ pub async fn MountainCreateCollaborationSession(app_handle:AppHandle, session_da
 
 	crate::IPC::AdvancedFeatures::mountain_create_collaboration_session::mountain_create_collaboration_session(
 		app_handle,
-
 		session_id,
-
 		permissions,
 	)
 	.await?;
@@ -109,7 +105,6 @@ pub async fn MountainCreateCollaborationSession(app_handle:AppHandle, session_da
 /// Returns an error if sessions cannot be retrieved.
 #[tauri::command]
 pub async fn MountainGetCollaborationSessions(app_handle:AppHandle) -> Result<Value, String> {
-
 	let sessions =
 		crate::IPC::AdvancedFeatures::mountain_get_collaboration_sessions::mountain_get_collaboration_sessions(
 			app_handle,

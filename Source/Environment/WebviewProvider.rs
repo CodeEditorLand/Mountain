@@ -41,9 +41,7 @@
 use std::collections::HashMap;
 
 use CommonLibrary::{Error::CommonError::CommonError, Webview::WebviewProvider::WebviewProvider};
-
 use async_trait::async_trait;
-
 use serde_json::Value;
 
 use super::MountainEnvironment::MountainEnvironment;
@@ -73,7 +71,6 @@ mod Messaging;
 /// Webview message handler context. Private - only the dispatch
 /// machinery in `Messaging.rs` consumes it.
 struct WebviewMessageContext {
-
 	Handle:String,
 
 	SideCarIdentifier:Option<String>,
@@ -83,7 +80,6 @@ struct WebviewMessageContext {
 
 #[async_trait]
 impl WebviewProvider for MountainEnvironment {
-
 	/// Creates a new Webview panel with proper security isolation.
 	async fn CreateWebviewPanel(
 		&self,
@@ -102,17 +98,11 @@ impl WebviewProvider for MountainEnvironment {
 	) -> Result<String, CommonError> {
 		Lifecycle::create_webview_panel_impl(
 			self,
-
 			extension_data_value,
-
 			view_type,
-
 			title,
-
 			_show_options_value,
-
 			panel_options_value,
-
 			content_options_value,
 		)
 		.await

@@ -7,9 +7,7 @@ use CommonLibrary::{
 	IPC::SkyEvent::SkyEvent,
 	TreeView::DTO::TreeViewOptionsDTO::TreeViewOptionsDTO,
 };
-
 use serde_json::json;
-
 use tauri::Emitter;
 
 use crate::{ApplicationState::DTO::TreeViewStateDTO::TreeViewStateDTO, Environment::Utility, dev_log};
@@ -22,12 +20,9 @@ pub(super) async fn register_tree_data_provider(
 
 	options:serde_json::Value,
 ) -> Result<(), CommonError> {
-
 	dev_log!(
 		"extensions",
-
 		"[TreeViewProvider] Registering data provider for view: {}",
-
 		view_identifier
 	);
 
@@ -70,7 +65,6 @@ pub(super) async fn register_tree_data_provider(
 	env.ApplicationHandle
 		.emit(
 			SkyEvent::TreeViewCreate.AsStr(),
-
 			json!({ "viewId": view_identifier, "options": options }),
 		)
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
@@ -84,12 +78,9 @@ pub(super) async fn unregister_tree_data_provider(
 
 	view_identifier:String,
 ) -> Result<(), CommonError> {
-
 	dev_log!(
 		"extensions",
-
 		"[TreeViewProvider] Unregistering data provider for view: {}",
-
 		view_identifier
 	);
 

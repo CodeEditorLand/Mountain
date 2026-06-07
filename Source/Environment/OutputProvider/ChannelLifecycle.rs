@@ -5,9 +5,7 @@
 //! implementation.
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
-
 use serde_json::json;
-
 use tauri::Emitter;
 
 use crate::{ApplicationState::DTO::OutputChannelStateDTO::OutputChannelStateDTO, Environment::Utility, dev_log};
@@ -20,7 +18,6 @@ pub(super) async fn register_channel(
 
 	language_identifier:Option<String>,
 ) -> Result<String, CommonError> {
-
 	dev_log!("output", "[OutputProvider] Registering channel: '{}'", name);
 
 	// Validate channel name
@@ -83,7 +80,6 @@ pub(super) async fn dispose_channel(
 
 	channel_identifier:String,
 ) -> Result<(), CommonError> {
-
 	dev_log!("output", "[OutputProvider] Disposing channel: '{}'", channel_identifier);
 
 	env.ApplicationState

@@ -3,7 +3,6 @@
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Enum {
-
 	/// Experimental features (may change or be removed)
 	Experimental,
 

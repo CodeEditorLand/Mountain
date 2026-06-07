@@ -2,7 +2,6 @@
 
 #[derive(Debug, Clone)]
 pub struct Struct {
-
 	pub memory_usage_mb:f64,
 
 	pub cpu_usage_percent:f64,

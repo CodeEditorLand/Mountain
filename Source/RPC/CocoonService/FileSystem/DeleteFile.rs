@@ -1,13 +1,11 @@
 //! Remove a file or recursively remove a directory.
 
 use tonic::{Response, Status};
-
 use ::Vine::Generated::{DeleteFileRequest, Empty};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:DeleteFileRequest) -> Result<Response<Empty>, Status> {
-
 	let Path = CocoonServiceImpl::UriToPath(Request.uri.as_ref())
 		.ok_or_else(|| Status::invalid_argument("delete_file: missing URI"))?;
 

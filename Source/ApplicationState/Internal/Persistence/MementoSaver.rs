@@ -31,7 +31,6 @@
 use std::{collections::HashMap, fs, path::Path};
 
 use serde_json::Value;
-
 use CommonLibrary::Error::CommonError::CommonError;
 
 use crate::dev_log;
@@ -53,18 +52,14 @@ use crate::dev_log;
 /// - Serializes data to JSON
 /// - Writes to file atomically (creates temp file then renames)
 pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> Result<(), CommonError> {
-
 	// Ensure parent directory exists
 	if let Some(parent) = StorageFilePath.parent() {
 		if !parent.exists() {
 			fs::create_dir_all(parent).map_err(|e| {
 				dev_log!(
 					"storage",
-
 					"error: [MementoSaver] Failed to create directory '{}': {}",
-
 					parent.display(),
-
 					e
 				);
 
@@ -91,11 +86,8 @@ pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> R
 	fs::write(&temp_path, json_content).map_err(|e| {
 		dev_log!(
 			"storage",
-
 			"error: [MementoSaver] Failed to write memento to temp file '{}': {}",
-
 			temp_path.display(),
-
 			e
 		);
 
@@ -106,11 +98,8 @@ pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> R
 	fs::rename(&temp_path, StorageFilePath).map_err(|e| {
 		dev_log!(
 			"storage",
-
 			"error: [MementoSaver] Failed to rename temp file to '{}': {}",
-
 			StorageFilePath.display(),
-
 			e
 		);
 
@@ -125,9 +114,7 @@ pub async fn Fn(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> R
 
 	dev_log!(
 		"storage",
-
 		"[MementoSaver] Successfully saved memento to: {}",
-
 		StorageFilePath.display()
 	);
 

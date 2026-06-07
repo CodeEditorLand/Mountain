@@ -49,7 +49,6 @@ use crate::{ApplicationState::DTO::MergedConfigurationStateDTO::MergedConfigurat
 /// Configuration and storage state.
 #[derive(Clone)]
 pub struct State {
-
 	/// Merged global configuration from all sources.
 	pub GlobalConfiguration:Arc<Mutex<serde_json::Value>>,
 
@@ -64,7 +63,6 @@ pub struct State {
 }
 
 impl Default for State {
-
 	fn default() -> Self {
 		dev_log!("config", "[ConfigurationState] Initializing default configuration state...");
 
@@ -81,7 +79,6 @@ impl Default for State {
 }
 
 impl State {
-
 	/// Gets the global configuration.
 	pub fn GetGlobalConfiguration(&self) -> serde_json::Value { self.GlobalConfiguration.lock().clone() }
 
@@ -126,11 +123,8 @@ impl State {
 		if let Err(e) = dto.SetValue(path, value) {
 			dev_log!(
 				"config",
-
 				"warn: [ConfigurationState] Failed to set value at path '{}': {}",
-
 				path,
-
 				e
 			);
 
@@ -153,9 +147,7 @@ impl State {
 		*guard = storage;
 		dev_log!(
 			"config",
-
 			"[ConfigurationState] Global memento storage updated ({} keys)",
-
 			guard.len()
 		);
 	}
@@ -186,9 +178,7 @@ impl State {
 		*guard = storage;
 		dev_log!(
 			"config",
-
 			"[ConfigurationState] Workspace memento storage updated ({} keys)",
-
 			guard.len()
 		);
 	}
@@ -206,9 +196,7 @@ impl State {
 
 		dev_log!(
 			"config",
-
 			"[ConfigurationState] Workspace memento value updated for key: {}",
-
 			key
 		);
 	}
@@ -221,9 +209,7 @@ impl State {
 
 		dev_log!(
 			"config",
-
 			"[ConfigurationState] Workspace memento value removed for key: {}",
-
 			key
 		);
 	}

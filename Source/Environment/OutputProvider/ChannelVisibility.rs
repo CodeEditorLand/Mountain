@@ -5,9 +5,7 @@
 //! implementation.
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
-
 use serde_json::json;
-
 use tauri::Emitter;
 
 use crate::{Environment::Utility, dev_log};
@@ -20,7 +18,6 @@ pub(super) async fn reveal_channel(
 
 	preserve_focus:bool,
 ) -> Result<(), CommonError> {
-
 	dev_log!("output", "[OutputProvider] Revealing channel: '{}'", channel_identifier);
 
 	let mut channels_guard = env
@@ -42,9 +39,7 @@ pub(super) async fn reveal_channel(
 	} else {
 		dev_log!(
 			"output",
-
 			"warn: [OutputProvider] Channel '{}' not found for reveal.",
-
 			channel_identifier
 		);
 	}
@@ -63,7 +58,6 @@ pub(super) async fn close_channel(
 
 	channel_identifier:String,
 ) -> Result<(), CommonError> {
-
 	dev_log!("output", "[OutputProvider] Closing channel: '{}'", channel_identifier);
 
 	let mut channels_guard = env
@@ -89,9 +83,7 @@ pub(super) async fn close_channel(
 	} else {
 		dev_log!(
 			"output",
-
 			"warn: [OutputProvider] Channel '{}' not found for close.",
-
 			channel_identifier
 		);
 	}

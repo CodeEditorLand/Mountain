@@ -5,7 +5,6 @@
 use crate::Binary::Build::PostHogPlugin::{CaptureAllowed, Client, DistinctId};
 
 pub fn Fn(EventName:&str, Properties:Option<Vec<(&str, &str)>>) {
-
 	if !CaptureAllowed::Fn() {
 		return;
 	}

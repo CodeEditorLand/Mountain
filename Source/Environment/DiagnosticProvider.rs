@@ -42,9 +42,7 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	IPC::SkyEvent::SkyEvent,
 };
-
 use async_trait::async_trait;
-
 use serde_json::{Value, json};
 
 // `tauri::Emitter` is no longer used directly here - all emits
@@ -52,7 +50,6 @@ use serde_json::{Value, json};
 // import was previously here for the direct `.emit()` calls now
 // replaced. Removed to keep the file warning-clean.
 use super::{MountainEnvironment::MountainEnvironment, Utility};
-
 use crate::{ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO, IPC::SkyEmit::LogSkyEmit, dev_log};
 
 // TODO: severity filtering, code actions/quick-fix integration, diagnostic
@@ -60,7 +57,6 @@ use crate::{ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO, IPC::SkyEmit::L
 // telemetry, remote diagnostics, caching, workspace-wide filtering.
 #[async_trait]
 impl DiagnosticManager for MountainEnvironment {
-
 	/// Sets or updates diagnostics for multiple resources from a specific
 	/// owner. Empty marker arrays are treated as clearing diagnostics for that
 	/// URI.
@@ -111,11 +107,8 @@ impl DiagnosticManager for MountainEnvironment {
 				Err(Error) => {
 					dev_log!(
 						"extensions",
-
 						"warn: [DiagnosticProvider] skipping diagnostic entry with bad URI: {} (raw={:?})",
-
 						Error,
-
 						URIComponentsValue
 					);
 
@@ -126,7 +119,6 @@ impl DiagnosticManager for MountainEnvironment {
 			if URIKey.is_empty() {
 				dev_log!(
 					"extensions",
-
 					"warn: [DiagnosticProvider] skipping diagnostic entry with empty URI string"
 				);
 
@@ -186,18 +178,14 @@ impl DiagnosticManager for MountainEnvironment {
 		if let Err(Error) = LogSkyEmit(&self.ApplicationHandle, SkyEvent::DiagnosticsChanged.AsStr(), EventPayload) {
 			dev_log!(
 				"extensions",
-
 				"error: [DiagnosticProvider] Failed to emit 'diagnostics_changed': {}",
-
 				Error
 			);
 		}
 
 		dev_log!(
 			"extensions",
-
 			"[DiagnosticProvider] Emitted diagnostics changed for {} URI(s)",
-
 			ChangedURIKeys.len()
 		);
 
@@ -208,9 +196,7 @@ impl DiagnosticManager for MountainEnvironment {
 	async fn ClearDiagnostics(&self, Owner:String) -> Result<(), CommonError> {
 		dev_log!(
 			"extensions",
-
 			"[DiagnosticProvider] Clearing all diagnostics for owner: {}",
-
 			Owner
 		);
 
@@ -236,11 +222,8 @@ impl DiagnosticManager for MountainEnvironment {
 		if !ChangedURIKeys.is_empty() {
 			dev_log!(
 				"extensions",
-
 				"[DiagnosticProvider] Cleared {} diagnostics across {} URI(s)",
-
 				ClearedCount,
-
 				ChangedURIKeys.len()
 			);
 
@@ -258,13 +241,10 @@ impl DiagnosticManager for MountainEnvironment {
 			});
 
 			if let Err(Error) = LogSkyEmit(&self.ApplicationHandle, SkyEvent::DiagnosticsChanged.AsStr(), EventPayload)
-
 			{
 				dev_log!(
 					"extensions",
-
 					"error: [DiagnosticProvider] Failed to emit 'diagnostics_changed' on clear: {}",
-
 					Error
 				);
 			}
@@ -279,9 +259,7 @@ impl DiagnosticManager for MountainEnvironment {
 	async fn GetAllDiagnostics(&self, ResourceURIFilterOption:Option<Value>) -> Result<Value, CommonError> {
 		dev_log!(
 			"extensions",
-
 			"[DiagnosticProvider] Getting all diagnostics with filter: {:?}",
-
 			ResourceURIFilterOption
 		);
 
@@ -325,9 +303,7 @@ impl DiagnosticManager for MountainEnvironment {
 
 		dev_log!(
 			"extensions",
-
 			"[DiagnosticProvider] Returning {} diagnostic collection(s)",
-
 			ResultList.len()
 		);
 

@@ -62,11 +62,9 @@ use std::sync::{
 };
 
 use tauri::{App, Manager, RunEvent, Wry};
-
 use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
 
 use crate::dev_log;
-
 use crate::{
 	// Crate root imports
 	ApplicationState::State::ApplicationState::{ApplicationState, SharedApplicationState},
@@ -110,7 +108,6 @@ use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track,
 };
-
 use super::AppLifecycle::AppLifecycleSetup;
 
 // Note: Tauri commands are used with fully qualified paths in generate_handler
@@ -139,7 +136,6 @@ macro_rules! TraceStep {
 /// 9. Runs the Tauri application
 /// 10. Handles graceful shutdown
 pub fn Fn() {
-
 	// Initialize the native keyring store (Keychain on macOS) before any
 	// code path that calls SecretProvider. keyring-core 1.0 requires an
 	// explicit store set via set_default_store() before Entry::new() can
@@ -156,7 +152,6 @@ pub fn Fn() {
 		Err(E) => {
 			dev_log!(
 				"lifecycle",
-
 				"warn: [Boot] [Keyring] Failed to initialize native store ({}); secret operations will fall back to \
 				 no-op",
 				E
@@ -276,7 +271,6 @@ pub fn Fn() {
 			if !Loaded {
 				crate::dev_log!(
 					"lifecycle",
-
 					"[Boot] [Env] No .env.Land / .env.Land.Sample found - using defaults"
 				);
 			}
@@ -309,15 +303,10 @@ pub fn Fn() {
 
 		dev_log!(
 			"lifecycle",
-
 			"[LandFix:Profile] Active profile={} workbench={} bundle={} compiler={}",
-
 			NamedProfile,
-
 			Workbench,
-
 			Bundle,
-
 			Compiler
 		);
 	}
@@ -391,7 +380,6 @@ pub fn Fn() {
 			if InitialFolderPaths.is_empty() {
 				dev_log!(
 					"lifecycle",
-
 					"[Boot] [Workspace] No initial folders resolved - editor will open in \"no folder\" mode."
 				);
 			} else {
@@ -405,9 +393,7 @@ pub fn Fn() {
 						Err(()) => {
 							dev_log!(
 								"lifecycle",
-
 								"warn: [Boot] [Workspace] Failed to build URL for {}; skipping",
-
 								Path.display()
 							);
 
@@ -426,11 +412,8 @@ pub fn Fn() {
 						Err(Error) => {
 							dev_log!(
 								"lifecycle",
-
 								"warn: [Boot] [Workspace] Failed to build folder DTO for {}: {}",
-
 								Path.display(),
-
 								Error
 							);
 						},
@@ -446,9 +429,7 @@ pub fn Fn() {
 
 					dev_log!(
 						"lifecycle",
-
 						"[Boot] [Workspace] Seeded {} workspace folder(s).",
-
 						InitialFolderPaths.len()
 					);
 				}
@@ -457,9 +438,7 @@ pub fn Fn() {
 
 		dev_log!(
 			"lifecycle",
-
 			"[Boot] [State] ApplicationState created with {} workspace folders.",
-
 			AppState.Workspace.WorkspaceFolders.lock().len()
 		);
 
@@ -511,7 +490,6 @@ pub fn Fn() {
 					// ---------------------------------------------------------
 					dev_log!(
 						"lifecycle",
-
 						"[Lifecycle] [Setup] Initializing ServiceRegistry for land:// scheme..."
 					);
 
@@ -525,9 +503,7 @@ pub fn Fn() {
 					// Register the main code editor service
 					dev_log!(
 						"lifecycle",
-
 						"[Lifecycle] [Setup] Registering code.land.playform.cloud service on port {}",
-
 						ServerPortForClosure
 					);
 
@@ -544,7 +520,6 @@ pub fn Fn() {
 
 					dev_log!(
 						"lifecycle",
-
 						"[Lifecycle] [Setup] ServiceRegistry initialized and services registered."
 					);
 
@@ -558,9 +533,7 @@ pub fn Fn() {
 					let dns_port = Mist::start(5380).unwrap_or_else(|e| {
 						dev_log!(
 							"lifecycle",
-
 							"warn: [Lifecycle] [Setup] Failed to start DNS server on port 5380: {}",
-
 							e
 						);
 
@@ -568,9 +541,7 @@ pub fn Fn() {
 						Mist::start(0).unwrap_or_else(|e| {
 							dev_log!(
 								"lifecycle",
-
 								"error: [Lifecycle] [Setup] Completely failed to start DNS server: {}",
-
 								e
 							);
 
@@ -581,16 +552,13 @@ pub fn Fn() {
 					if dns_port == 0 {
 						dev_log!(
 							"lifecycle",
-
 							"warn: [Lifecycle] [Setup] DNS server failed to start, land:// protocol will not be \
 							 available"
 						);
 					} else {
 						dev_log!(
 							"lifecycle",
-
 							"[Lifecycle] [Setup] DNS server started successfully on port {}",
-
 							dns_port
 						);
 
@@ -618,7 +586,6 @@ pub fn Fn() {
 					if TierWebSocketSetting == "Mist" {
 						dev_log!(
 							"lifecycle",
-
 							"[Lifecycle] [Setup] TierWebSocket=Mist - starting WebSocket transport on 127.0.0.1:5051"
 						);
 
@@ -644,9 +611,7 @@ pub fn Fn() {
 					} else {
 						dev_log!(
 							"lifecycle",
-
 							"[Lifecycle] [Setup] TierWebSocket={} - WebSocket transport disabled",
-
 							TierWebSocketSetting
 						);
 					}
@@ -665,13 +630,9 @@ pub fn Fn() {
 
 					if let Err(e) = AppLifecycleSetup(
 						app,
-
 						AppHandle.clone(),
-
 						LocalhostUrl.clone(),
-
 						SchedulerForClosure.clone(),
-
 						AppStateArcFromClosure,
 					) {
 						dev_log!("lifecycle", "error: [Lifecycle] [Setup] Failed to setup lifecycle: {}", e);
@@ -744,11 +705,8 @@ pub fn Fn() {
 
 					crate::dev_log!(
 						"scheme-assets",
-
 						"[LandFix:VscodeWebviewResource] {} -> {}",
-
 						Original,
-
 						RewrittenUri
 					);
 
@@ -953,7 +911,6 @@ pub fn Fn() {
 
 					dev_log!(
 						"lifecycle",
-
 						"warn: [Lifecycle] [Shutdown] Exit requested. Starting graceful shutdown..."
 					);
 

@@ -10,7 +10,6 @@ use crate::dev_log;
 pub async fn Fn<F, T>(Operation:F, MaxAttempts:u32, OperationName:&str) -> Result<T, CommonError>
 where
 	F: Fn() -> Result<T, CommonError> + Send, {
-
 	let mut Attempt = 0;
 
 	let mut DelayMs:u64 = 100;
@@ -28,15 +27,10 @@ where
 
 				dev_log!(
 					"lifecycle",
-
 					"warn: [RecoverState] Attempt {} failed for '{}': {}. Retrying in {}ms...",
-
 					Attempt,
-
 					OperationName,
-
 					Error,
-
 					DelayMs
 				);
 

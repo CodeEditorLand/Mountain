@@ -37,12 +37,10 @@ pub fn AdvancedFeaturesRegister(
 
 	RunTime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
-
 	match initialize_advanced_features(ApplicationHandle, RunTime) {
 		Ok(()) => {
 			dev_log!(
 				"lifecycle",
-
 				"[IPC] [AdvancedFeatures] Advanced features initialized successfully."
 			);
 

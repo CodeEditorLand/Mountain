@@ -5,7 +5,6 @@
 
 #[tauri::command]
 pub async fn process_get_platform() -> Result<String, String> {
-
 	Ok(match std::env::consts::OS {
 		"macos" => "darwin",
 		"windows" => "win32",

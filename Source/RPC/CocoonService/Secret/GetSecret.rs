@@ -2,15 +2,12 @@
 //! the app name is used as the keyring service scope.
 
 use tonic::{Response, Status};
-
 use CommonLibrary::Secret::SecretProvider::SecretProvider;
-
 use ::Vine::Generated::{GetSecretRequest, GetSecretResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:GetSecretRequest) -> Result<Response<GetSecretResponse>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] get_secret: key={}", Request.key);
 
 	match Service.environment.GetSecret(String::new(), Request.key.clone()).await {
@@ -21,11 +18,8 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:GetSecretRequest) -> Result<
 		Err(Error) => {
 			dev_log!(
 				"cocoon",
-
 				"warn: [CocoonService] get_secret failed key={}: {}",
-
 				Request.key,
-
 				Error
 			);
 

@@ -16,7 +16,6 @@ use crate::{
 
 #[tauri::command]
 pub async fn tls_generate_cert(app_handle:AppHandle, hostname:String) -> Result<CertificateGenerationResult, String> {
-
 	dev_log!("security", "generating certificate for {}", hostname);
 
 	let state = app_handle

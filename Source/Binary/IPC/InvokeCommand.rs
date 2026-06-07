@@ -40,7 +40,6 @@
 //! - Rate limiting may be needed for expensive operations
 
 use serde_json::Value;
-
 use tauri::AppHandle;
 
 /// Invoke IPC methods.
@@ -66,7 +65,6 @@ use tauri::AppHandle;
 /// - Parameters are invalid
 #[tauri::command]
 pub async fn MountainIPCInvoke(app_handle:AppHandle, method:String, params:Value) -> Result<Value, String> {
-
 	// Convert params to Vec<Value> - if params is an array use it, otherwise wrap
 	// in array
 	let args = if params.is_array() {

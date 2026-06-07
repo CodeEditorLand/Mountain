@@ -1,9 +1,7 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use CommonLibrary::Error::CommonError::CommonError;
-
 use serde_json::Value;
-
 use tauri::AppHandle;
 
 use crate::{
@@ -17,7 +15,6 @@ pub async fn Fn(
 
 	_State:&crate::ApplicationState::State::ExtensionState::State::State,
 ) -> Result<(), CommonError> {
-
 	dev_log!("extensions", "[ExtensionScanner] Starting extension scan...");
 
 	// --- Fast path: pre-baked manifest cache (B7.P08) ---
@@ -44,11 +41,9 @@ pub async fn Fn(
 
 					dev_log!(
 						"extensions",
-
 						"[ExtensionScanner] Cache hit: {} extensions loaded in <50ms (live scan skipped). State has \
 						 {} entries.",
 						CachedLen,
-
 						PostWriteCount
 					);
 
@@ -80,9 +75,7 @@ pub async fn Fn(
 					if !UserScanPaths.is_empty() {
 						dev_log!(
 							"extensions",
-
 							"[ExtensionScanner] Cache hit supplement: live-scanning {} user-writable path(s)",
-
 							UserScanPaths.len()
 						);
 
@@ -98,11 +91,8 @@ pub async fn Fn(
 										Ok(Found) => {
 											dev_log!(
 												"extensions",
-
 												"[ExtensionScanner] User path '{}' → {} extensions (supplement)",
-
 												Display,
-
 												Found.len()
 											);
 
@@ -112,11 +102,8 @@ pub async fn Fn(
 										Err(E) => {
 											dev_log!(
 												"extensions",
-
 												"warn: [ExtensionScanner] User path '{}' failed (supplement): {}",
-
 												Display,
-
 												E
 											);
 
@@ -158,9 +145,7 @@ pub async fn Fn(
 
 						dev_log!(
 							"extensions",
-
 							"[ExtensionScanner] Cache hit supplement: merged {} user extension(s) into state",
-
 							UserMerged
 						);
 					}
@@ -178,9 +163,7 @@ pub async fn Fn(
 				Err(E) => {
 					dev_log!(
 						"extensions",
-
 						"warn: [ExtensionScanner] Cache load error: {}; continuing with live scan",
-
 						E
 					);
 				},
@@ -192,9 +175,7 @@ pub async fn Fn(
 
 	dev_log!(
 		"extensions",
-
 		"[ExtensionScanner] Scanning {} paths in parallel",
-
 		ScanPaths.len()
 	);
 
@@ -213,11 +194,8 @@ pub async fn Fn(
 					Ok(Found) => {
 						dev_log!(
 							"extensions",
-
 							"[ExtensionScanner] Path '{}' → {} extensions",
-
 							Display,
-
 							Found.len()
 						);
 
@@ -287,15 +265,10 @@ pub async fn Fn(
 
 	dev_log!(
 		"extensions",
-
 		"[ExtensionScanner] Complete: {} extensions ({} paths ok, {} failed). State has {} entries.",
-
 		AllLen,
-
 		SuccessfulScans,
-
 		FailedScans,
-
 		PostWriteCount
 	);
 
@@ -311,7 +284,6 @@ pub(crate) async fn ScanExtensionsWithRecovery(
 
 	State:&crate::ApplicationState::State::ExtensionState::State::State,
 ) -> Result<(), CommonError> {
-
 	dev_log!("extensions", "[ExtensionScanner] Starting robust extension scan...");
 
 	match Fn(ApplicationHandle.clone(), State).await {

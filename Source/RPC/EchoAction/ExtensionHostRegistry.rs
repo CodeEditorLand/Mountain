@@ -7,12 +7,10 @@ use std::{collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
 
 pub struct Struct {
-
 	Hosts:Arc<RwLock<HashMap<String, String>>>,
 }
 
 impl Struct {
-
 	pub fn new() -> Self { Self { Hosts:Arc::new(RwLock::new(HashMap::new())) } }
 
 	pub async fn Record(&self, ExtensionIdentifier:String, HostIdentifier:String) {
@@ -29,6 +27,5 @@ impl Struct {
 }
 
 impl Default for Struct {
-
 	fn default() -> Self { Self::new() }
 }

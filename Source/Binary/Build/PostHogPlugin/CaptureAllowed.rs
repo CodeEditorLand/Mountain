@@ -11,7 +11,6 @@
 use crate::Binary::Build::PostHogPlugin::Constants;
 
 pub fn Fn() -> bool {
-
 	if !cfg!(debug_assertions) {
 		return false;
 	}

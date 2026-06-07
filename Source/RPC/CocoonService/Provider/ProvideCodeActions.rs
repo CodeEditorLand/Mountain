@@ -2,13 +2,9 @@
 //! returns an empty list pending the action-DTO mapping.
 
 use serde_json::json;
-
 use tonic::{Response, Status};
-
 use url::Url;
-
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
-
 use ::Vine::Generated::{ProvideCodeActionsRequest, ProvideCodeActionsResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -18,12 +14,9 @@ pub async fn Fn(
 
 	Request:ProvideCodeActionsRequest,
 ) -> Result<Response<ProvideCodeActionsResponse>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Providing code actions for provider {}",
-
 		Request.provider_handle
 	);
 

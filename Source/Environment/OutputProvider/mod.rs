@@ -23,7 +23,6 @@
 //! while keeping code organized.
 
 use CommonLibrary::Output::OutputChannelManager::OutputChannelManager;
-
 use async_trait::async_trait;
 
 // Private helper modules (not re-exported)
@@ -35,7 +34,6 @@ mod ChannelVisibility;
 
 #[async_trait]
 impl OutputChannelManager for crate::Environment::MountainEnvironment::MountainEnvironment {
-
 	async fn RegisterChannel(
 		&self,
 

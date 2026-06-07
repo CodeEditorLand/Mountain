@@ -37,7 +37,6 @@
 //! - Cache results if computed value
 
 use serde_json::Value;
-
 use tauri::AppHandle;
 
 /// Get configuration status.
@@ -59,6 +58,5 @@ use tauri::AppHandle;
 /// - Status cannot be retrieved
 #[tauri::command]
 pub async fn MountainGetConfigurationStatus(app_handle:AppHandle) -> Result<Value, String> {
-
 	crate::IPC::ConfigurationBridge::mountain_get_configuration_status(app_handle).await
 }

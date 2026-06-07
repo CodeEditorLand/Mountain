@@ -3,7 +3,6 @@
 //! `openExternal`, and language configuration.
 
 use serde_json::{Value, json};
-
 use tauri::Emitter;
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;
@@ -11,7 +10,6 @@ use crate::Environment::MountainEnvironment::MountainEnvironment;
 // ── Webview ───────────────────────────────────────────────────────────────
 
 pub fn HandleOnDidReceiveMessage(Params:Value, Env:&MountainEnvironment) {
-
 	let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0);
 
 	let Message = Params
@@ -27,7 +25,6 @@ pub fn HandleOnDidReceiveMessage(Params:Value, Env:&MountainEnvironment) {
 }
 
 pub fn HandleWebviewPostMessage(Params:Value, Env:&MountainEnvironment) {
-
 	let PanelId = Params.get("panelId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Method = Params.get("method").and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -36,13 +33,11 @@ pub fn HandleWebviewPostMessage(Params:Value, Env:&MountainEnvironment) {
 
 	let _ = Env.ApplicationHandle.emit(
 		"sky://webview/message",
-
 		json!({ "panelId": PanelId, "method": Method, "params": MsgParams }),
 	);
 }
 
 pub fn HandleWebviewDispose(Params:Value, Env:&MountainEnvironment) {
-
 	let PanelId = Params.get("panelId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let _ = Env
@@ -53,7 +48,6 @@ pub fn HandleWebviewDispose(Params:Value, Env:&MountainEnvironment) {
 // ── Status bar ────────────────────────────────────────────────────────────
 
 pub fn HandleSetStatusBarText(Params:Value, Env:&MountainEnvironment) {
-
 	let ItemId = Params.get("itemId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Text = Params.get("text").and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -64,7 +58,6 @@ pub fn HandleSetStatusBarText(Params:Value, Env:&MountainEnvironment) {
 }
 
 pub fn HandleDisposeStatusBarItem(Params:Value, Env:&MountainEnvironment) {
-
 	let ItemId = Params.get("itemId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let _ = Env.ApplicationHandle.emit("sky://statusbar/dispose", json!({ "id": ItemId }));
@@ -73,7 +66,6 @@ pub fn HandleDisposeStatusBarItem(Params:Value, Env:&MountainEnvironment) {
 // ── Output channels ───────────────────────────────────────────────────────
 
 pub fn HandleOutputCreate(Params:Value, Env:&MountainEnvironment) {
-
 	let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Name = Params.get("name").and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -84,7 +76,6 @@ pub fn HandleOutputCreate(Params:Value, Env:&MountainEnvironment) {
 }
 
 pub fn HandleOutputAppend(Params:Value, Env:&MountainEnvironment) {
-
 	let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Text = Params.get("value").and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -95,34 +86,29 @@ pub fn HandleOutputAppend(Params:Value, Env:&MountainEnvironment) {
 }
 
 pub fn HandleOutputAppendLine(Params:Value, Env:&MountainEnvironment) {
-
 	let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Line = Params.get("value").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let _ = Env.ApplicationHandle.emit(
 		"sky://output/append",
-
 		json!({ "channel": Channel, "text": format!("{}\n", Line) }),
 	);
 }
 
 pub fn HandleOutputClear(Params:Value, Env:&MountainEnvironment) {
-
 	let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let _ = Env.ApplicationHandle.emit("sky://output/clear", json!({ "channel": Channel }));
 }
 
 pub fn HandleOutputShow(Params:Value, Env:&MountainEnvironment) {
-
 	let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let _ = Env.ApplicationHandle.emit("sky://output/show", json!({ "channel": Channel }));
 }
 
 pub fn HandleOutputDispose(Params:Value, Env:&MountainEnvironment) {
-
 	let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let _ = Env
@@ -133,7 +119,6 @@ pub fn HandleOutputDispose(Params:Value, Env:&MountainEnvironment) {
 // ── Progress ──────────────────────────────────────────────────────────────
 
 pub fn HandleProgressStart(Params:Value, Env:&MountainEnvironment) {
-
 	let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Title = Params.get("title").and_then(|V| V.as_str()).map(|S| S.to_string());
@@ -144,13 +129,11 @@ pub fn HandleProgressStart(Params:Value, Env:&MountainEnvironment) {
 
 	let _ = Env.ApplicationHandle.emit(
 		"sky://progress/start",
-
 		json!({ "id": Id, "title": Title, "location": Location, "cancellable": Cancellable }),
 	);
 }
 
 pub fn HandleProgressUpdate(Params:Value, Env:&MountainEnvironment) {
-
 	let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Message = Params.get("message").and_then(|V| V.as_str()).map(|S| S.to_string());
@@ -159,13 +142,11 @@ pub fn HandleProgressUpdate(Params:Value, Env:&MountainEnvironment) {
 
 	let _ = Env.ApplicationHandle.emit(
 		"sky://progress/update",
-
 		json!({ "id": Id, "message": Message, "increment": Increment }),
 	);
 }
 
 pub fn HandleProgressComplete(Params:Value, Env:&MountainEnvironment) {
-
 	let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let _ = Env.ApplicationHandle.emit("sky://progress/complete", json!({ "id": Id }));
@@ -174,14 +155,12 @@ pub fn HandleProgressComplete(Params:Value, Env:&MountainEnvironment) {
 // ── Misc ──────────────────────────────────────────────────────────────────
 
 pub fn HandleOpenExternal(Params:Value, Env:&MountainEnvironment) {
-
 	let Url = Params.get("url").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let _ = Env.ApplicationHandle.emit("sky://native/openExternal", json!({ "url": Url }));
 }
 
 pub fn HandleSetLanguageConfiguration(Params:Value, Env:&MountainEnvironment) {
-
 	// Emit the full params (language + configuration) so Sky's Monaco bridge
 	// receives the actual rules (brackets, comments, indentation, etc.).
 	let _ = Env.ApplicationHandle.emit("sky://language/configure", &Params);

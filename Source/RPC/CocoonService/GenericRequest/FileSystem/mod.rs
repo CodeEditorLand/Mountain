@@ -2,20 +2,16 @@
 //! `OkResponse`/`ErrResponse` are shared helpers available to sibling modules.
 
 use serde_json::Value;
-
 use tonic::Response;
-
 use ::Vine::Generated::{GenericResponse, RpcError};
 
 pub(super) fn OkResponse(RequestId:u64, Value:&impl serde::Serialize) -> Response<GenericResponse> {
-
 	let Bytes = serde_json::to_vec(Value).unwrap_or_default();
 
 	Response::new(GenericResponse { request_identifier:RequestId, result:Bytes, error:None })
 }
 
 pub(super) fn ErrResponse(RequestId:u64, Code:i32, Message:String) -> Response<GenericResponse> {
-
 	Response::new(GenericResponse {
 		request_identifier:RequestId,
 		result:Vec::new(),

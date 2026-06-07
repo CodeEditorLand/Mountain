@@ -1,11 +1,8 @@
 //! Forward a code-lens request to the registered provider.
 
 use tonic::{Response, Status};
-
 use url::Url;
-
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
-
 use ::Vine::Generated::{ProvideCodeLensesRequest, ProvideCodeLensesResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -15,7 +12,6 @@ pub async fn Fn(
 
 	Request:ProvideCodeLensesRequest,
 ) -> Result<Response<ProvideCodeLensesResponse>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] Providing code lenses");
 
 	match Service

@@ -2,22 +2,16 @@
 //! a Proxied handler that forwards back to the sidecar.
 
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
-
 use tonic::{Response, Status};
-
 use ::Vine::Generated::{Empty, RegisterCommandRequest};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterCommandRequest) -> Result<Response<Empty>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Registering command '{}' from extension '{}'",
-
 		Request.command_id,
-
 		Request.extension_id
 	);
 
@@ -28,21 +22,15 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterCommandRequest) -> R
 	{
 		dev_log!(
 			"cocoon",
-
 			"warn: [CocoonService] Failed to register command '{}': {:?}",
-
 			Request.command_id,
-
 			Error
 		);
 	} else {
 		dev_log!(
 			"cocoon",
-
 			"[CocoonService] Command registered: id={}, title={:?}",
-
 			Request.command_id,
-
 			Request.title
 		);
 	}

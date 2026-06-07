@@ -2,11 +2,8 @@
 //! protobuf `argument` oneof into `serde_json::Value` for the executor.
 
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
-
 use serde_json::json;
-
 use tonic::{Response, Status};
-
 use ::Vine::Generated::{ExecuteCommandRequest, ExecuteCommandResponse, RpcError, argument, execute_command_response};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -16,14 +13,10 @@ pub async fn Fn(
 
 	Request:ExecuteCommandRequest,
 ) -> Result<Response<ExecuteCommandResponse>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Executing command '{}' with {} arguments",
-
 		Request.command_id,
-
 		Request.arguments.len()
 	);
 

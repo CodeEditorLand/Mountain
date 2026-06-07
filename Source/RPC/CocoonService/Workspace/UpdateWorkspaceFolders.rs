@@ -3,7 +3,6 @@
 //! set so existing indices stay stable.
 
 use tonic::{Response, Status};
-
 use ::Vine::Generated::{Empty, UpdateWorkspaceFoldersRequest};
 
 use crate::{
@@ -16,25 +15,18 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateWorkspaceFoldersRequest) -> Result<Response<Empty>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Updating workspace: {} additions, {} removals",
-
 		Request.additions.len(),
-
 		Request.removals.len()
 	);
 
 	for Addition in &Request.additions {
 		dev_log!(
 			"cocoon",
-
 			"[CocoonService] Adding workspace folder: {} ({})",
-
 			Addition.name,
-
 			Addition.uri.as_ref().map(|U| &U.value).unwrap_or(&"?".to_string())
 		);
 	}
@@ -42,9 +34,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateWorkspaceFoldersReques
 	for Removal in &Request.removals {
 		dev_log!(
 			"cocoon",
-
 			"[CocoonService] Removing workspace folder: {}",
-
 			Removal.uri.as_ref().map(|U| &U.value).unwrap_or(&"?".to_string())
 		);
 	}

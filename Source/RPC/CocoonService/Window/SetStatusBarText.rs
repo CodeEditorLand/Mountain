@@ -3,26 +3,18 @@
 //! `ActiveStatusBarItems` (HashMap insert acts as create-or-update).
 
 use serde_json::json;
-
 use tauri::Emitter;
-
 use tonic::{Response, Status};
-
 use CommonLibrary::StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider};
-
 use ::Vine::Generated::{Empty, SetStatusBarTextRequest};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:SetStatusBarTextRequest) -> Result<Response<Empty>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] set_status_bar_text: id={} text={}",
-
 		Request.item_id,
-
 		Request.text
 	);
 

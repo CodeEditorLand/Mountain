@@ -34,7 +34,6 @@ pub fn CommandRegister(
 
 	AppState:&std::sync::Arc<ApplicationState>,
 ) -> Result<(), String> {
-
 	Command::Bootstrap::RegisterNativeCommands(ApplicationHandle, AppState)
 		.map_err(|Error| format!("Failed to register native commands: {}", Error))?;
 

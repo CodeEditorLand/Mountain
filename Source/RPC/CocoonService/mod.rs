@@ -49,7 +49,6 @@ use std::{
 };
 
 use async_trait::async_trait;
-
 use CommonLibrary::{
 	Command::CommandExecutor::CommandExecutor,
 	LanguageFeature::{
@@ -67,17 +66,11 @@ use CommonLibrary::{
 		UserInterfaceProvider::UserInterfaceProvider,
 	},
 };
-
 use serde_json::json;
-
 use tokio::sync::RwLock;
-
 use tonic::{Request, Response, Status};
-
 use url::Url;
-
 use ::Vine::Generated::cocoon_service_server::CocoonService;
-
 use ::Vine::Generated::{
 	// Service trait
 	// Extended Language + Window + FS + Output + Task + Auth + Debug + Extension types
@@ -284,7 +277,6 @@ use crate::{
 	},
 	Environment::MountainEnvironment::MountainEnvironment,
 };
-
 // Import generated protobuf types
 use crate::dev_log;
 
@@ -294,7 +286,6 @@ use crate::dev_log;
 /// sidecar and dispatches them to the appropriate Mountain services.
 #[derive(Clone)]
 pub struct CocoonServiceImpl {
-
 	/// Mountain environment providing access to all services
 	environment:Arc<MountainEnvironment>,
 
@@ -304,7 +295,6 @@ pub struct CocoonServiceImpl {
 }
 
 impl CocoonServiceImpl {
-
 	/// Creates a new instance of the CocoonService server
 	///
 	/// # Parameters
@@ -382,13 +372,9 @@ impl CocoonServiceImpl {
 
 		dev_log!(
 			"cocoon",
-
 			"[CocoonService] Provider {:?} registered: handle={}, language={}",
-
 			provider_type,
-
 			handle,
-
 			language_selector
 		);
 	}
@@ -422,7 +408,6 @@ impl CocoonServiceImpl {
 #[async_trait]
 
 impl CocoonService for CocoonServiceImpl {
-
 	// LAND-PATCH B7-S6 P2: bidirectional streaming channel mirror.
 	// Stub matching MountainService::open_channel_from_cocoon. The
 	// multiplexer wiring lands with Patch 14; until then this
@@ -433,9 +418,7 @@ impl CocoonService for CocoonServiceImpl {
 			dyn tonic::codegen::tokio_stream::Stream<Item = Result<::Vine::Generated::Envelope, tonic::Status>>
 				+ Send
 				+ 'static,
-
 		>,
-
 	>;
 
 	async fn open_channel_from_mountain(

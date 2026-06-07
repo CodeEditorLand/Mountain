@@ -35,17 +35,12 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
 };
-
 use async_trait::async_trait;
-
 use serde_json::{Value, json};
-
 use tauri::{Emitter, Manager};
-
 use url::Url;
 
 use super::MountainEnvironment::MountainEnvironment;
-
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::Effect::CreateEffectForRequest::Utilities::Proxy::proxy_cocoon,
@@ -59,14 +54,12 @@ use crate::{
 static CUSTOM_EDITOR_REGISTRY:OnceLock<Mutex<HashMap<String, String>>> = OnceLock::new();
 
 fn GetRegistry() -> &'static Mutex<HashMap<String, String>> {
-
 	CUSTOM_EDITOR_REGISTRY.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 /// Return the sidecar identifier for a registered ViewType, or
 /// `"cocoon-main"` as the canonical fallback.
 pub fn LookupSidecarForViewType(ViewType:&str) -> String {
-
 	GetRegistry()
 		.lock()
 		.ok()
@@ -76,13 +69,10 @@ pub fn LookupSidecarForViewType(ViewType:&str) -> String {
 
 #[async_trait]
 impl CustomEditorProvider for MountainEnvironment {
-
 	async fn RegisterCustomEditorProvider(&self, ViewType:String, _Options:Value) -> Result<(), CommonError> {
 		dev_log!(
 			"extensions",
-
 			"[CustomEditorProvider] Registering provider for view type: {}",
-
 			ViewType
 		);
 
@@ -110,13 +100,9 @@ impl CustomEditorProvider for MountainEnvironment {
 
 			dev_log!(
 				"extensions",
-
 				"[CustomEditorProvider] {} provider registered: viewType={} sidecar={}",
-
 				if IsNew { "New" } else { "Updated" },
-
 				ViewType,
-
 				SidecarId
 			);
 		}
@@ -127,9 +113,7 @@ impl CustomEditorProvider for MountainEnvironment {
 	async fn UnregisterCustomEditorProvider(&self, ViewType:String) -> Result<(), CommonError> {
 		dev_log!(
 			"extensions",
-
 			"[CustomEditorProvider] Unregistering provider for view type: {}",
-
 			ViewType
 		);
 
@@ -138,11 +122,8 @@ impl CustomEditorProvider for MountainEnvironment {
 
 			dev_log!(
 				"extensions",
-
 				"[CustomEditorProvider] Provider unregistered: viewType={} (was_present={})",
-
 				ViewType,
-
 				Removed
 			);
 		}
@@ -153,11 +134,8 @@ impl CustomEditorProvider for MountainEnvironment {
 	async fn OnSaveCustomDocument(&self, ViewType:String, ResourceURI:Url) -> Result<(), CommonError> {
 		dev_log!(
 			"extensions",
-
 			"[CustomEditorProvider] OnSaveCustomDocument called for '{}' at '{}'",
-
 			ViewType,
-
 			ResourceURI
 		);
 
@@ -195,33 +173,24 @@ impl CustomEditorProvider for MountainEnvironment {
 
 		match proxy_cocoon(
 			&run_time,
-
 			ProxyTarget::ExtHostCustomEditors,
-
 			"onSaveCustomDocument",
-
 			RPCParameters,
-
 			30_000,
 		)
 		.await
 		.map_err(|e| CommonError::IPCError { Description:e })
-
 		{
 			Ok(_) => {
 				dev_log!(
 					"extensions",
-
 					"[CustomEditorProvider] OnSaveCustomDocument completed for '{}' at '{}'",
-
 					ViewType,
-
 					ResourceURI
 				);
 
 				let _ = self.ApplicationHandle.emit(
 					"sky://customEditor/saved",
-
 					json!({
 						"viewType": ViewType,
 						"resource": ResourceURI.to_string(),
@@ -234,13 +203,9 @@ impl CustomEditorProvider for MountainEnvironment {
 			Err(Error) => {
 				dev_log!(
 					"extensions",
-
 					"warn: [CustomEditorProvider] OnSaveCustomDocument failed for '{}' at '{}': {:?}",
-
 					ViewType,
-
 					ResourceURI,
-
 					Error
 				);
 
@@ -260,11 +225,8 @@ impl CustomEditorProvider for MountainEnvironment {
 	) -> Result<(), CommonError> {
 		dev_log!(
 			"extensions",
-
 			"[CustomEditorProvider] Resolving custom editor for '{}' on resource '{}'",
-
 			ViewType,
-
 			ResourceURI
 		);
 

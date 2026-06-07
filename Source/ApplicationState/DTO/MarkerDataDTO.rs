@@ -22,7 +22,6 @@
 //! - Tags: Additional marker tags (deprecated, unnecessary)
 
 use serde::{Deserialize, Serialize};
-
 use serde_json::Value;
 
 use super::MarkerSeverity::MarkerSeverity;
@@ -39,7 +38,6 @@ const MAX_SOURCE_LENGTH:usize = 256;
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct MarkerDataDTO {
-
 	/// Severity level of the marker
 	pub Severity:u32,
 
@@ -81,7 +79,6 @@ pub struct MarkerDataDTO {
 }
 
 impl MarkerDataDTO {
-
 	/// Creates a new MarkerDataDTO with validation.
 	///
 	/// # Arguments

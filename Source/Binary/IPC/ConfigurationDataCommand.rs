@@ -40,7 +40,6 @@
 //! - Consider debouncing save operations
 
 use serde_json::Value;
-
 use tauri::AppHandle;
 
 /// Get configuration data for Wind frontend.
@@ -62,7 +61,6 @@ use tauri::AppHandle;
 /// - File system errors occur
 #[tauri::command]
 pub async fn GetConfigurationData(app:AppHandle) -> Result<Value, String> {
-
 	crate::IPC::ConfigurationBridge::get_configuration_data(app).await
 }
 
@@ -86,6 +84,5 @@ pub async fn GetConfigurationData(app:AppHandle) -> Result<Value, String> {
 /// - File system errors occur when persisting
 #[tauri::command]
 pub async fn SaveConfigurationData(app:AppHandle, config_data:Value) -> Result<(), String> {
-
 	crate::IPC::ConfigurationBridge::save_configuration_data(app, config_data).await
 }

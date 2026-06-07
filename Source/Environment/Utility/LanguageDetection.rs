@@ -7,7 +7,6 @@ use std::{ffi::OsStr, path::Path};
 /// A simple utility to detect a language identifier string from a file path's
 /// extension.
 pub fn Fn(Path:&Path) -> String {
-
 	match Path.extension().and_then(OsStr::to_str) {
 		Some("js") | Some("mjs") | Some("cjs") => "javascript",
 

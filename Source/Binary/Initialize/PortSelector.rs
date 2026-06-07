@@ -44,7 +44,6 @@
 ///
 /// Panics if port selection fails.
 pub fn Select() -> u16 {
-
 	portpicker::pick_unused_port().expect("FATAL: Failed to find a free port for Localhost Server")
 }
 

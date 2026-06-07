@@ -13,7 +13,6 @@ use crate::dev_log;
 pub(crate) fn WithParkingLotMutex<T, F, R>(mutex:&parking_lot::Mutex<T>, f:F) -> R
 where
 	F: FnOnce(&mut T) -> R, {
-
 	let mut guard = mutex.lock();
 
 	f(&mut guard)

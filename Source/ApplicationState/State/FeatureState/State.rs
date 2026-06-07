@@ -55,12 +55,10 @@ use super::{
 	Webviews::WebviewState::WebviewState,
 	WorkingCopy::WorkingCopyState::WorkingCopyState,
 };
-
 use crate::dev_log;
 
 /// Feature state combining all feature-related components.
 pub struct State {
-
 	/// Debug provider state.
 	pub Debug:DebugState,
 
@@ -107,7 +105,6 @@ pub struct State {
 }
 
 impl Default for State {
-
 	fn default() -> Self {
 		dev_log!("lifecycle", "[FeatureState::State] Initializing default feature state...");
 
@@ -144,7 +141,6 @@ impl Default for State {
 }
 
 impl State {
-
 	/// Gets the next available unique identifier for a terminal instance.
 	pub fn GetNextTerminalIdentifier(&self) -> u64 { self.Terminals.GetNextTerminalIdentifier() }
 

@@ -11,7 +11,6 @@ use crate::Binary::Build::{
 
 #[tauri::command]
 pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
-
 	if dns_port.0 == 0 {
 		return Err("DNS server is not running".to_string());
 	}
@@ -26,7 +25,6 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 
 			data:"ns1.editor.land. admin.editor.land. 1 3600 600 604800 86400".to_string(),
 		},
-
 		ZoneRecord {
 			name:"editor.land.".to_string(),
 
@@ -36,7 +34,6 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 
 			data:"ns1.editor.land.".to_string(),
 		},
-
 		ZoneRecord {
 			name:"editor.land.".to_string(),
 
@@ -46,7 +43,6 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 
 			data:"256 3 13 (ECDSA P-256 Zone Signing Key)".to_string(),
 		},
-
 		ZoneRecord {
 			name:"ns1.editor.land.".to_string(),
 
@@ -56,7 +52,6 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 
 			data:"127.0.0.1".to_string(),
 		},
-
 		ZoneRecord {
 			name:"code.land.playform.cloud.".to_string(),
 
@@ -66,7 +61,6 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 
 			data:"127.0.0.1".to_string(),
 		},
-
 		ZoneRecord {
 			name:"api.land.playform.cloud.".to_string(),
 
@@ -76,7 +70,6 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 
 			data:"127.0.0.1".to_string(),
 		},
-
 		ZoneRecord {
 			name:"*.editor.land.".to_string(),
 

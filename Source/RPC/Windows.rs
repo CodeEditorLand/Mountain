@@ -7,12 +7,10 @@ pub struct Struct;
 
 #[cfg(any(feature = "grove", feature = "cocoon"))]
 impl Struct {
-
 	pub fn new() -> Self { Struct }
 }
 
 #[cfg(any(feature = "grove", feature = "cocoon"))]
 impl Default for Struct {
-
 	fn default() -> Self { Self::new() }
 }

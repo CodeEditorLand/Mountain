@@ -13,7 +13,6 @@ use crate::dev_log;
 
 #[cfg(feature = "Telemetry")]
 pub fn Fn() -> Result<(), Box<dyn std::error::Error>> {
-
 	tracing_subscriber::registry()
 		.with(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
 			if cfg!(debug_assertions) {

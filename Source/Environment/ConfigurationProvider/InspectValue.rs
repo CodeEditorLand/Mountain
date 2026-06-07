@@ -23,9 +23,7 @@ use CommonLibrary::{
 	},
 	Error::CommonError::CommonError,
 };
-
 use serde_json::Value;
-
 use tauri::Manager;
 
 use crate::{Environment::Utility, dev_log};
@@ -38,7 +36,6 @@ pub(super) async fn inspect_configuration_value(
 
 	_overrides:ConfigurationOverridesDTO,
 ) -> Result<Option<InspectResultDataDTO>, CommonError> {
-
 	dev_log!("config", "[ConfigurationProvider] Inspecting key: {}", key);
 
 	let user_settings_path = environment

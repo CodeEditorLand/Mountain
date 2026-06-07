@@ -38,7 +38,6 @@ use std::{
 };
 
 use http::{Request as HttpRequest, Response as HttpResponse, header};
-
 use tokio::{
 	io::{AsyncReadExt, AsyncWriteExt},
 	net::TcpStream,
@@ -58,7 +57,6 @@ use crate::dev_log;
 /// - `health_check_path`: Optional path for health check endpoint
 #[derive(Debug, Clone)]
 pub struct LocalService {
-
 	pub name:String,
 
 	pub port:u16,
@@ -71,7 +69,6 @@ pub struct LocalService {
 }
 
 impl LocalService {
-
 	/// Get the appropriate port based on TLS configuration
 	pub fn get_port(&self) -> u16 {
 		if self.use_tls {
@@ -89,7 +86,6 @@ impl LocalService {
 /// provisioning.
 #[derive(Clone)]
 pub struct ServiceRegistry {
-
 	/// Inner storage using `Arc<RwLock>` for thread-safe concurrent access
 	services:Arc<RwLock<HashMap<String, LocalService>>>,
 
@@ -98,7 +94,6 @@ pub struct ServiceRegistry {
 }
 
 impl ServiceRegistry {
-
 	/// Create a new ServiceRegistry instance
 	///
 	/// Returns an empty registry ready to accept service registrations.
@@ -179,15 +174,10 @@ impl ServiceRegistry {
 	) {
 		dev_log!(
 			"lifecycle",
-
 			"[ServiceRegistry] Registering service: {} -> HTTP:{}, TLS:{}, use_tls:{}",
-
 			name,
-
 			port,
-
 			tls_port.unwrap_or(port + 1000),
-
 			use_tls
 		);
 
@@ -201,9 +191,7 @@ impl ServiceRegistry {
 			} else {
 				dev_log!(
 					"lifecycle",
-
 					"warn: [ServiceRegistry] Service {} requested TLS but no certificate manager available",
-
 					name
 				);
 			}
@@ -214,9 +202,7 @@ impl ServiceRegistry {
 			if services.contains_key(&name) {
 				dev_log!(
 					"lifecycle",
-
 					"warn: [ServiceRegistry] Service {} already registered, overwriting",
-
 					name
 				);
 			}
@@ -227,7 +213,6 @@ impl ServiceRegistry {
 		} else {
 			dev_log!(
 				"lifecycle",
-
 				"error: [ServiceRegistry] Failed to acquire write lock for registration"
 			);
 		}
@@ -283,7 +268,6 @@ impl ServiceRegistry {
 		} else {
 			dev_log!(
 				"lifecycle",
-
 				"error: [ServiceRegistry] Failed to acquire read lock for all_services"
 			);
 
@@ -311,13 +295,9 @@ impl ServiceRegistry {
 
 		dev_log!(
 			"lifecycle",
-
 			"[ServiceRegistry] Performing health check for {} at {}:{}",
-
 			name,
-
 			addr,
-
 			health_path
 		);
 
@@ -343,9 +323,7 @@ impl ServiceRegistry {
 								} else {
 									dev_log!(
 										"lifecycle",
-
 										"warn: [ServiceRegistry] Service {} health check failed: not 200",
-
 										name
 									);
 								}
@@ -356,11 +334,8 @@ impl ServiceRegistry {
 							Err(e) => {
 								dev_log!(
 									"lifecycle",
-
 									"warn: [ServiceRegistry] Service {} health check failed to read: {}",
-
 									name,
-
 									e
 								);
 
@@ -372,11 +347,8 @@ impl ServiceRegistry {
 					Err(e) => {
 						dev_log!(
 							"lifecycle",
-
 							"warn: [ServiceRegistry] Service {} health check failed to write: {}",
-
 							name,
-
 							e
 						);
 
@@ -388,11 +360,8 @@ impl ServiceRegistry {
 			Err(e) => {
 				dev_log!(
 					"lifecycle",
-
 					"warn: [ServiceRegistry] Service {} health check failed to connect: {}",
-
 					name,
-
 					e
 				);
 
@@ -419,7 +388,6 @@ impl ServiceRegistry {
 		} else {
 			dev_log!(
 				"lifecycle",
-
 				"error: [ServiceRegistry] Failed to acquire write lock for unregistration"
 			);
 
@@ -471,7 +439,6 @@ impl ServiceRegistry {
 }
 
 impl Default for ServiceRegistry {
-
 	fn default() -> Self { Self::new() }
 }
 
@@ -549,13 +516,9 @@ mod tests {
 
 		registry.register_with_options(
 			"secure.service.land".to_string(),
-
 			8080,
-
 			Some(8443),
-
 			true,
-
 			Some("/health".to_string()),
 		);
 
@@ -578,13 +541,9 @@ mod tests {
 
 		registry.register_with_options(
 			"secure.service.land".to_string(),
-
 			8080,
-
 			None, // Use default TLS port (8080 + 1000 = 9080)
-
 			true,
-
 			None,
 		);
 

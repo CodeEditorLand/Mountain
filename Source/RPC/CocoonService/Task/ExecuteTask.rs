@@ -2,11 +2,8 @@
 //! `sky://task/execute` channel.
 
 use serde_json::json;
-
 use tauri::Emitter;
-
 use tonic::{Response, Status};
-
 use ::Vine::Generated::{ExecuteTaskRequest, ExecuteTaskResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -16,14 +13,10 @@ pub async fn Fn(
 
 	Request:ExecuteTaskRequest,
 ) -> Result<Response<ExecuteTaskResponse>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] execute_task: name={} source={}",
-
 		Request.name,
-
 		Request.source
 	);
 

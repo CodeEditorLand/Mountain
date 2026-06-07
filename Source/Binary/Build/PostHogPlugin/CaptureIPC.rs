@@ -6,7 +6,6 @@
 use crate::Binary::Build::PostHogPlugin::{CaptureAllowed, CaptureEvent};
 
 pub fn Fn(Method:&str) {
-
 	if !CaptureAllowed::Fn() {
 		return;
 	}

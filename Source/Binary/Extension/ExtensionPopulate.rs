@@ -27,10 +27,8 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 ///
 /// Returns an error if extension scanning or population fails.
 pub async fn Fn(ApplicationHandle:tauri::AppHandle, AppState:&std::sync::Arc<ApplicationState>) -> Result<(), String> {
-
 	match crate::ApplicationState::Internal::ExtensionScanner::ScanAndPopulateExtensions::Fn(
 		ApplicationHandle.clone(),
-
 		&AppState.Extension,
 	)
 	.await
@@ -38,7 +36,6 @@ pub async fn Fn(ApplicationHandle:tauri::AppHandle, AppState:&std::sync::Arc<App
 		Ok(()) => {
 			dev_log!(
 				"extensions",
-
 				"[Extensions] [Populate] Extensions scanned and populated successfully."
 			);
 

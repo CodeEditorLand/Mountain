@@ -43,7 +43,6 @@ use std::path::{Path, PathBuf};
 ///
 /// Returns the workspace file path if found, or None.
 pub fn Parse() -> Option<PathBuf> {
-
 	let CliArgs:Vec<String> = std::env::args().collect();
 
 	let WorkspacePathArgument = CliArgs.iter().find(|Arg| Arg.ends_with(".code-workspace"));
@@ -69,7 +68,6 @@ pub fn HasWorkspaceArgument() -> bool { Parse().is_some() }
 /// Returned paths are canonicalised; non-existent / non-directory entries
 /// are dropped with a warning.
 pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
-
 	let mut Collected:Vec<PathBuf> = Vec::new();
 
 	let CliArgs:Vec<String> = std::env::args().skip(1).collect();
@@ -169,11 +167,8 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 	// Folder"; this just ensures something visible is there on first
 	// launch.
 	if Collected.is_empty()
-
 		&& let Some(Home) = dirs::home_dir()
-
 		&& Home.is_dir()
-
 	{
 		Collected.push(Home);
 	}
@@ -199,7 +194,6 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 /// `None` when the file is missing/malformed, the entry has no resolvable
 /// path, the path doesn't exist on disk, or it isn't a directory.
 fn ResolveRecentlyOpenedTopFolder() -> Option<PathBuf> {
-
 	use crate::IPC::WindServiceHandlers::Utilities::RecentlyOpened::Read::Fn as ReadRecentlyOpened;
 
 	let Recent = ReadRecentlyOpened().ok()?;
@@ -226,7 +220,6 @@ fn ResolveRecentlyOpenedTopFolder() -> Option<PathBuf> {
 			.and_then(|V| V.get("configPath"))
 			.and_then(|V| V.get("path"))
 			.and_then(|V| V.as_str())
-
 		{
 			return Some(Path.to_string());
 		}
@@ -256,22 +249,14 @@ fn ResolveRecentlyOpenedTopFolder() -> Option<PathBuf> {
 /// `git`/`cargo`/`npm` CLI does and gives extensions a workspace folder
 /// they can actually scan.
 fn WalkUpToProjectRoot(Start:&Path) -> PathBuf {
-
 	const Markers:&[&str] = &[
 		"Cargo.toml",
-
 		"package.json",
-
 		".git",
-
 		"pyproject.toml",
-
 		"go.mod",
-
 		"pnpm-workspace.yaml",
-
 		"deno.json",
-
 		"deno.jsonc",
 	];
 

@@ -29,7 +29,6 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 ///
 /// Returns an error if ApplicationRunTime is not found or shutdown fails.
 pub async fn RuntimeShutdown(ApplicationHandle:&tauri::AppHandle) -> Result<(), String> {
-
 	dev_log!("lifecycle", "[Shutdown] [Runtime] Shutting down ApplicationRunTime...");
 
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();

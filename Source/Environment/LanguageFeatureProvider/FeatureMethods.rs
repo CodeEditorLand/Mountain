@@ -16,9 +16,7 @@ use CommonLibrary::{
 		TextEditDTO::TextEditDTO,
 	},
 };
-
 use serde_json::{Value, json};
-
 use url::Url;
 
 use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
@@ -34,7 +32,6 @@ pub(super) async fn provide_code_actions(
 
 	context_dto:Value,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::CodeAction).await?;
 
@@ -42,16 +39,11 @@ pub(super) async fn provide_code_actions(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					range_or_selection_dto,
-
 					context_dto,
 				],
 			)
@@ -69,7 +61,6 @@ pub(super) async fn provide_code_lenses(
 
 	document_uri:Url,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::CodeLens).await?;
 
@@ -77,12 +68,9 @@ pub(super) async fn provide_code_lenses(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
 				],
 			)
@@ -106,7 +94,6 @@ pub(super) async fn provide_completions(
 
 	cancellation_token_value:Option<Value>,
 ) -> Result<Option<CompletionListDTO>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::Completion).await?;
 
@@ -114,18 +101,12 @@ pub(super) async fn provide_completions(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					json!(position_dto),
-
 					json!(context_dto),
-
 					cancellation_token_value.unwrap_or_else(|| json!(null)),
 				],
 			)
@@ -153,7 +134,6 @@ pub(super) async fn provide_definition(
 
 	position_dto:PositionDTO,
 ) -> Result<Option<Vec<LocationDTO>>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::Definition).await?;
 
@@ -161,14 +141,10 @@ pub(super) async fn provide_definition(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					json!(position_dto),
 				],
 			)
@@ -196,7 +172,6 @@ pub(super) async fn provide_document_formatting_edits(
 
 	options_dto:Value,
 ) -> Result<Option<Vec<TextEditDTO>>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::DocumentFormatting)
 			.await?;
@@ -205,14 +180,10 @@ pub(super) async fn provide_document_formatting_edits(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					options_dto,
 				],
 			)
@@ -240,7 +211,6 @@ pub(super) async fn provide_document_highlights(
 
 	position_dto:PositionDTO,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::DocumentHighlight)
 			.await?;
@@ -249,14 +219,10 @@ pub(super) async fn provide_document_highlights(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					json!(position_dto),
 				],
 			)
@@ -274,7 +240,6 @@ pub(super) async fn provide_document_links(
 
 	document_uri:Url,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::DocumentLink).await?;
 
@@ -282,12 +247,9 @@ pub(super) async fn provide_document_links(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
 				],
 			)
@@ -309,7 +271,6 @@ pub(super) async fn provide_document_range_formatting_edits(
 
 	options_dto:Value,
 ) -> Result<Option<Vec<TextEditDTO>>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::DocumentRangeFormatting)
 			.await?;
@@ -318,16 +279,11 @@ pub(super) async fn provide_document_range_formatting_edits(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					range_dto,
-
 					options_dto,
 				],
 			)
@@ -355,7 +311,6 @@ pub(super) async fn provide_hover(
 
 	position_dto:PositionDTO,
 ) -> Result<Option<HoverResultDTO>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::Hover).await?;
 
@@ -363,14 +318,10 @@ pub(super) async fn provide_hover(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					json!(position_dto),
 				],
 			)
@@ -400,7 +351,6 @@ pub(super) async fn provide_references(
 
 	context_dto:Value,
 ) -> Result<Option<Vec<LocationDTO>>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::References).await?;
 
@@ -408,16 +358,11 @@ pub(super) async fn provide_references(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					json!(position_dto),
-
 					context_dto,
 				],
 			)
@@ -445,7 +390,6 @@ pub(super) async fn prepare_rename(
 
 	position_dto:PositionDTO,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::Rename).await?;
 
@@ -453,14 +397,10 @@ pub(super) async fn prepare_rename(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					json!(position_dto),
 				],
 			)
@@ -482,7 +422,6 @@ pub(super) async fn provide_rename_edits(
 
 	new_name:String,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::Rename).await?;
 
@@ -490,16 +429,11 @@ pub(super) async fn provide_rename_edits(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					json!(position_dto),
-
 					json!(new_name),
 				],
 			)
@@ -517,7 +451,6 @@ pub(super) async fn provide_document_symbols(
 
 	document_uri:Url,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::DocumentSymbol).await?;
 
@@ -525,12 +458,9 @@ pub(super) async fn provide_document_symbols(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
 				],
 			)
@@ -548,7 +478,6 @@ pub(super) async fn provide_workspace_symbols(
 
 	query:String,
 ) -> Result<Option<Value>, CommonError> {
-
 	// Workspace symbols don't have a specific document URI - use a dummy lookup.
 	// The provider is registered globally, so we pick the first WorkspaceSymbol
 	// provider.
@@ -588,7 +517,6 @@ pub(super) async fn provide_signature_help(
 
 	context_dto:Value,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::SignatureHelp).await?;
 
@@ -596,16 +524,11 @@ pub(super) async fn provide_signature_help(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					json!(position_dto),
-
 					context_dto,
 				],
 			)
@@ -623,7 +546,6 @@ pub(super) async fn provide_folding_ranges(
 
 	document_uri:Url,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::FoldingRange).await?;
 
@@ -631,12 +553,9 @@ pub(super) async fn provide_folding_ranges(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
 				],
 			)
@@ -656,7 +575,6 @@ pub(super) async fn provide_selection_ranges(
 
 	positions:Vec<PositionDTO>,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::SelectionRange).await?;
 
@@ -664,14 +582,10 @@ pub(super) async fn provide_selection_ranges(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					json!(positions),
 				],
 			)
@@ -689,7 +603,6 @@ pub(super) async fn provide_semantic_tokens_full(
 
 	document_uri:Url,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::SemanticTokens).await?;
 
@@ -697,12 +610,9 @@ pub(super) async fn provide_semantic_tokens_full(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
 				],
 			)
@@ -722,7 +632,6 @@ pub(super) async fn provide_inlay_hints(
 
 	range_dto:Value,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::InlayHint).await?;
 
@@ -730,14 +639,10 @@ pub(super) async fn provide_inlay_hints(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					range_dto,
 				],
 			)
@@ -755,7 +660,6 @@ pub(super) async fn provide_type_hierarchy_supertypes(
 
 	item_dto:Value,
 ) -> Result<Option<Value>, CommonError> {
-
 	// Type hierarchy uses the item's URI to find the provider
 	let uri_str = item_dto.get("uri").and_then(|u| u.as_str()).unwrap_or("");
 
@@ -781,7 +685,6 @@ pub(super) async fn provide_type_hierarchy_subtypes(
 
 	item_dto:Value,
 ) -> Result<Option<Value>, CommonError> {
-
 	let uri_str = item_dto.get("uri").and_then(|u| u.as_str()).unwrap_or("");
 
 	let document_uri = Url::parse(uri_str).unwrap_or_else(|_| Url::parse("file:///unknown").unwrap());
@@ -812,7 +715,6 @@ pub(super) async fn prepare_call_hierarchy(
 
 	position_dto:PositionDTO,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::CallHierarchy).await?;
 
@@ -824,11 +726,8 @@ pub(super) async fn prepare_call_hierarchy(
 
 			let response = invoke_provider_method(
 				environment,
-
 				&registration,
-
 				"$prepareCallHierarchyItems",
-
 				vec![json!(registration.Handle), uri_json, pos_json],
 			)
 			.await?;
@@ -848,7 +747,6 @@ pub(super) async fn prepare_type_hierarchy(
 
 	position_dto:PositionDTO,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::TypeHierarchy).await?;
 
@@ -860,11 +758,8 @@ pub(super) async fn prepare_type_hierarchy(
 
 			let response = invoke_provider_method(
 				environment,
-
 				&registration,
-
 				"$prepareTypeHierarchyItems",
-
 				vec![json!(registration.Handle), uri_json, pos_json],
 			)
 			.await?;
@@ -881,7 +776,6 @@ pub(super) async fn provide_call_hierarchy_incoming_calls(
 
 	item_dto:Value,
 ) -> Result<Option<Value>, CommonError> {
-
 	let uri_str = item_dto.get("uri").and_then(|u| u.as_str()).unwrap_or("");
 
 	let document_uri = Url::parse(uri_str).unwrap_or_else(|_| Url::parse("file:///unknown").unwrap());
@@ -906,7 +800,6 @@ pub(super) async fn provide_call_hierarchy_outgoing_calls(
 
 	item_dto:Value,
 ) -> Result<Option<Value>, CommonError> {
-
 	let uri_str = item_dto.get("uri").and_then(|u| u.as_str()).unwrap_or("");
 
 	let document_uri = Url::parse(uri_str).unwrap_or_else(|_| Url::parse("file:///unknown").unwrap());
@@ -933,7 +826,6 @@ pub(super) async fn provide_linked_editing_ranges(
 
 	position_dto:PositionDTO,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::LinkedEditingRange)
 			.await?;
@@ -942,14 +834,10 @@ pub(super) async fn provide_linked_editing_ranges(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					json!(position_dto),
 				],
 			)
@@ -973,7 +861,6 @@ pub(super) async fn provide_on_type_formatting_edits(
 
 	options_dto:Value,
 ) -> Result<Option<Vec<TextEditDTO>>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::OnTypeFormatting)
 			.await?;
@@ -982,18 +869,12 @@ pub(super) async fn provide_on_type_formatting_edits(
 		Some(registration) => {
 			let response = invoke_provider(
 				environment,
-
 				&registration,
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					json!(position_dto),
-
 					json!(character),
-
 					options_dto,
 				],
 			)
@@ -1024,7 +905,6 @@ pub(super) async fn provide_file_decoration(
 
 	resource_uri:Url,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &resource_uri, ProviderType::FileDecoration).await?;
 
@@ -1032,14 +912,10 @@ pub(super) async fn provide_file_decoration(
 		Some(registration) => {
 			let response = invoke_provider_method(
 				environment,
-
 				&registration,
-
 				"$provideFileDecoration",
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": resource_uri.to_string(), "$mid": 1 }),
 				],
 			)
@@ -1064,7 +940,6 @@ pub(super) async fn provide_inline_completion_items(
 
 	context_dto:Value,
 ) -> Result<Option<Value>, CommonError> {
-
 	let provider =
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::InlineCompletion)
 			.await?;
@@ -1075,18 +950,12 @@ pub(super) async fn provide_inline_completion_items(
 			// extHostTypes pattern used by Copilot / Roo Code.
 			let response = invoke_provider_method(
 				environment,
-
 				&registration,
-
 				"$provideInlineCompletionItems",
-
 				vec![
 					json!(registration.Handle),
-
 					json!({ "external": document_uri.to_string(), "$mid": 1 }),
-
 					json!({ "line": position_dto.LineNumber, "character": position_dto.Column }),
-
 					context_dto,
 				],
 			)
@@ -1106,7 +975,6 @@ async fn invoke_provider(
 
 	arguments:Vec<Value>,
 ) -> Result<Value, CommonError> {
-
 	let rpc_method = format!("$provide{}", registration.ProviderType.to_string());
 
 	let ipc_provider:Arc<dyn IPCProvider> = environment.Require();
@@ -1129,17 +997,13 @@ async fn invoke_provider_method(
 
 	arguments:Vec<Value>,
 ) -> Result<Value, CommonError> {
-
 	let ipc_provider:Arc<dyn IPCProvider> = environment.Require();
 
 	ipc_provider
 		.SendRequestToSideCar(
 			registration.SideCarIdentifier.clone(),
-
 			method.to_string(),
-
 			json!(arguments),
-
 			5000,
 		)
 		.await

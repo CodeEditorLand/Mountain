@@ -33,9 +33,7 @@
 use std::{collections::HashMap, path::PathBuf, time::Duration};
 
 use CommonLibrary::Error::CommonError::CommonError;
-
 use serde::Deserialize;
-
 use serde_json::Value;
 
 use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO, dev_log};
@@ -43,7 +41,6 @@ use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescri
 /// One entry in the pre-baked cache file.
 #[derive(Debug, Deserialize)]
 struct CachedEntry {
-
 	id:String,
 
 	path:String,
@@ -54,7 +51,6 @@ struct CachedEntry {
 /// Top-level cache blob.
 #[derive(Debug, Deserialize)]
 struct CacheBlob {
-
 	version:u32,
 
 	count:u32,
@@ -80,7 +76,6 @@ const MAX_CACHE_AGE:Duration = Duration::from_secs(86_400);
 /// Returns `Ok(Some(map))` on a cache hit, `Ok(None)` when the cache is
 /// missing/stale/incompatible, and `Err(_)` only on unexpected I/O errors.
 pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDescriptionStateDTO>>, CommonError> {
-
 	// Probe 1: alongside the binary (dev / repo run).
 	let DevCachePath = BinaryDir.join("extensions.manifest.json");
 
@@ -112,11 +107,8 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 	if !IsBundled && Age > MAX_CACHE_AGE {
 		dev_log!(
 			"extensions",
-
 			"[ExtensionCache] Cache is stale ({:.0}s > {:.0}s), falling back to live scan",
-
 			Age.as_secs_f32(),
-
 			MAX_CACHE_AGE.as_secs_f32()
 		);
 
@@ -130,9 +122,7 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 		Err(E) => {
 			dev_log!(
 				"extensions",
-
 				"warn: [ExtensionCache] Read failed: {}; falling back to live scan",
-
 				E
 			);
 
@@ -146,9 +136,7 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 		Err(E) => {
 			dev_log!(
 				"extensions",
-
 				"warn: [ExtensionCache] Parse error: {}; falling back to live scan",
-
 				E
 			);
 
@@ -159,9 +147,7 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 	if Blob.version != 1 {
 		dev_log!(
 			"extensions",
-
 			"[ExtensionCache] Unsupported cache version {}; falling back to live scan",
-
 			Blob.version
 		);
 
@@ -174,7 +160,6 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 	if Blob.extensions.is_empty() {
 		dev_log!(
 			"extensions",
-
 			"[ExtensionCache] Empty cache (count=0), falling back to live scan"
 		);
 
@@ -276,15 +261,10 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 
 	dev_log!(
 		"extensions",
-
 		"[ExtensionCache] Loaded {} extensions from {} cache ({} bytes{})",
-
 		Map.len(),
-
 		if IsBundled { "bundled" } else { "dev" },
-
 		Bytes.len(),
-
 		if IsBundled {
 			String::new()
 		} else {

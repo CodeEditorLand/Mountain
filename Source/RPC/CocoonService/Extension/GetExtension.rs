@@ -2,9 +2,7 @@
 //! the gRPC `ExtensionInfo` shape.
 
 use tonic::{Response, Status};
-
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
-
 use ::Vine::Generated::{ExtensionInfo, GetExtensionRequest, GetExtensionResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -14,7 +12,6 @@ pub async fn Fn(
 
 	Request:GetExtensionRequest,
 ) -> Result<Response<GetExtensionResponse>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] get_extension: {}", Request.extension_id);
 
 	let Found = Service

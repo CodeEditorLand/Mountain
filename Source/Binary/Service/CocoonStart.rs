@@ -34,7 +34,6 @@ pub async fn Fn(
 
 	Environment:&std::sync::Arc<MountainEnvironment>,
 ) -> Result<(), String> {
-
 	match InitializeCocoon(ApplicationHandle, Environment).await {
 		Ok(()) => {
 			dev_log!("cocoon", "[Cocoon] [Start] Cocoon sidecar started successfully.");

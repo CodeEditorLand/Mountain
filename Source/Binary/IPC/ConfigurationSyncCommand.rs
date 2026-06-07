@@ -39,7 +39,6 @@
 //! - Consider incremental sync for large configs
 
 use serde_json::Value;
-
 use tauri::AppHandle;
 
 /// Synchronize configuration.
@@ -63,6 +62,5 @@ use tauri::AppHandle;
 /// - Configuration conflicts cannot be resolved
 #[tauri::command]
 pub async fn MountainSynchronizeConfiguration(app_handle:AppHandle) -> Result<Value, String> {
-
 	crate::IPC::ConfigurationBridge::mountain_synchronize_configuration(app_handle).await
 }

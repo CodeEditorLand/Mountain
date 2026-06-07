@@ -5,9 +5,7 @@
 //! implementation.
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
-
 use serde_json::json;
-
 use tauri::Emitter;
 
 use crate::{Environment::Utility, dev_log};
@@ -21,7 +19,6 @@ pub(super) async fn append_to_channel(
 
 	value:String,
 ) -> Result<(), CommonError> {
-
 	dev_log!("output", "[OutputProvider] Appending to channel: '{}'", channel_identifier);
 
 	// Validate input size to prevent memory exhaustion
@@ -66,9 +63,7 @@ pub(super) async fn append_to_channel(
 	} else {
 		dev_log!(
 			"output",
-
 			"warn: [OutputProvider] Channel '{}' not found for append.",
-
 			channel_identifier
 		);
 	}
@@ -84,12 +79,9 @@ pub(super) async fn replace_channel_content(
 
 	value:String,
 ) -> Result<(), CommonError> {
-
 	dev_log!(
 		"output",
-
 		"[OutputProvider] Replacing content of channel: '{}'",
-
 		channel_identifier
 	);
 
@@ -112,9 +104,7 @@ pub(super) async fn replace_channel_content(
 	} else {
 		dev_log!(
 			"output",
-
 			"warn: [OutputProvider] Channel '{}' not found for replace.",
-
 			channel_identifier
 		);
 	}
@@ -128,7 +118,6 @@ pub(super) async fn clear_channel(
 
 	channel_identifier:String,
 ) -> Result<(), CommonError> {
-
 	dev_log!("output", "[OutputProvider] Clearing channel: '{}'", channel_identifier);
 
 	let mut channels_guard = env
@@ -148,9 +137,7 @@ pub(super) async fn clear_channel(
 	} else {
 		dev_log!(
 			"output",
-
 			"warn: [OutputProvider] Channel '{}' not found for clear.",
-
 			channel_identifier
 		);
 	}

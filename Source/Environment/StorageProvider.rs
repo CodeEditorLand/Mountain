@@ -47,29 +47,23 @@ use std::{
 };
 
 use CommonLibrary::{Error::CommonError::CommonError, Storage::StorageProvider::StorageProvider};
-
 use async_trait::async_trait;
-
 use serde_json::Value;
-
 use tokio::fs;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
-
 use crate::dev_log;
 
 /// Write-coalescing debouncer for storage scope.
 /// Accumulates the latest data snapshot and schedules a single
 /// disk write 100 ms after the first queued mutation in a burst.
 struct StorageWriteDebouncer {
-
 	Pending:Mutex<Option<(PathBuf, HashMap<String, Value>)>>,
 
 	FlushScheduled:AtomicBool,
 }
 
 impl StorageWriteDebouncer {
-
 	fn new() -> Arc<Self> { Arc::new(Self { Pending:Mutex::new(None), FlushScheduled:AtomicBool::new(false) }) }
 
 	fn Queue(&self, Path:PathBuf, Data:HashMap<String, Value>, Debouncer:Arc<Self>) {
@@ -108,12 +102,10 @@ static GLOBAL_DEBOUNCER:OnceLock<Arc<StorageWriteDebouncer>> = OnceLock::new();
 static WORKSPACE_DEBOUNCER:OnceLock<Arc<StorageWriteDebouncer>> = OnceLock::new();
 
 fn GetGlobalDebouncer() -> Arc<StorageWriteDebouncer> {
-
 	GLOBAL_DEBOUNCER.get_or_init(StorageWriteDebouncer::new).clone()
 }
 
 fn GetWorkspaceDebouncer() -> Arc<StorageWriteDebouncer> {
-
 	WORKSPACE_DEBOUNCER.get_or_init(StorageWriteDebouncer::new).clone()
 }
 
@@ -123,7 +115,6 @@ fn GetWorkspaceDebouncer() -> Arc<StorageWriteDebouncer> {
 // binary data support, transaction (batch + rollback), sync via Air.
 #[async_trait]
 impl StorageProvider for MountainEnvironment {
-
 	/// Retrieves a value from either global or workspace storage.
 	/// Includes defensive validation to prevent invalid keys and invalid JSON.
 	async fn GetStorageValue(&self, IsGlobalScope:bool, Key:&str) -> Result<Option<Value>, CommonError> {
@@ -131,11 +122,8 @@ impl StorageProvider for MountainEnvironment {
 
 		dev_log!(
 			"storage",
-
 			"[StorageProvider] Getting value from {} scope for key: {}",
-
 			ScopeName,
-
 			Key
 		);
 
@@ -188,11 +176,8 @@ impl StorageProvider for MountainEnvironment {
 		} else {
 			dev_log!(
 				"storage-verbose",
-
 				"[StorageProvider] Updating value in {} scope for key: {}",
-
 				ScopeName,
-
 				Key
 			);
 		}
@@ -228,7 +213,6 @@ impl StorageProvider for MountainEnvironment {
 		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
 			(
 				self.ApplicationState.Configuration.MementoGlobalStorage.clone(),
-
 				Some(
 					self.ApplicationState
 						.GlobalMementoPath
@@ -240,7 +224,6 @@ impl StorageProvider for MountainEnvironment {
 		} else {
 			(
 				self.ApplicationState.Configuration.MementoWorkspaceStorage.clone(),
-
 				self.ApplicationState
 					.WorkspaceMementoPath
 					.lock()
@@ -281,9 +264,7 @@ impl StorageProvider for MountainEnvironment {
 
 		dev_log!(
 			"storage-verbose",
-
 			"[StorageProvider] Getting all values from {} scope.",
-
 			ScopeName
 		);
 
@@ -306,9 +287,7 @@ impl StorageProvider for MountainEnvironment {
 
 		dev_log!(
 			"storage-verbose",
-
 			"[StorageProvider] Setting all values for {} scope.",
-
 			ScopeName
 		);
 
@@ -317,7 +296,6 @@ impl StorageProvider for MountainEnvironment {
 		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
 			(
 				self.ApplicationState.Configuration.MementoGlobalStorage.clone(),
-
 				Some(
 					self.ApplicationState
 						.GlobalMementoPath
@@ -329,7 +307,6 @@ impl StorageProvider for MountainEnvironment {
 		} else {
 			(
 				self.ApplicationState.Configuration.MementoWorkspaceStorage.clone(),
-
 				self.ApplicationState
 					.WorkspaceMementoPath
 					.lock()
@@ -360,15 +337,12 @@ impl StorageProvider for MountainEnvironment {
 /// An internal helper function to asynchronously write the storage map to a
 /// file.
 async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
-
 	// Fires on every `storage:updateItems` that mutates the global map
 	// (~50 per session during workbench boot alone). The failure path
 	// below logs unconditionally; the success path is per-call noise.
 	dev_log!(
 		"storage-verbose",
-
 		"[StorageProvider] Persisting storage to disk: {}",
-
 		Path.display()
 	);
 
@@ -378,11 +352,8 @@ async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
 				if let Err(Error) = fs::create_dir_all(ParentDirectory).await {
 					dev_log!(
 						"storage",
-
 						"error: [StorageProvider] Failed to create parent directory for '{}': {}",
-
 						Path.display(),
-
 						Error
 					);
 
@@ -393,11 +364,8 @@ async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
 			if let Err(Error) = fs::write(&Path, JSONString).await {
 				dev_log!(
 					"storage",
-
 					"error: [StorageProvider] Failed to write storage file to '{}': {}",
-
 					Path.display(),
-
 					Error
 				);
 			}
@@ -406,11 +374,8 @@ async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
 		Err(Error) => {
 			dev_log!(
 				"storage",
-
 				"error: [StorageProvider] Failed to serialize storage data for '{}': {}",
-
 				Path.display(),
-
 				Error
 			);
 		},

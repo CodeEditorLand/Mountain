@@ -28,7 +28,6 @@
 use std::path::PathBuf;
 
 use CommonLibrary::{Error::CommonError::CommonError, FileSystem::DTO::FileTypeDTO::FileTypeDTO};
-
 use tokio::fs;
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
@@ -45,7 +44,6 @@ pub(super) async fn write_file_impl(
 
 	overwrite:bool,
 ) -> Result<(), CommonError> {
-
 	Utility::PathSecurity::Fn(&env.ApplicationState, path)?;
 
 	// Validate that Content is not excessively large to prevent memory issues
@@ -101,7 +99,6 @@ pub(super) async fn create_directory_impl(
 
 	recursive:bool,
 ) -> Result<(), CommonError> {
-
 	Utility::PathSecurity::Fn(&env.ApplicationState, path)?;
 
 	// Validate that parent path doesn't point to a file
@@ -139,7 +136,6 @@ pub(super) async fn delete_impl(
 
 	_use_trash:bool,
 ) -> Result<(), CommonError> {
-
 	Utility::PathSecurity::Fn(&env.ApplicationState, path)?;
 
 	// A full implementation would use the `trash` crate if `UseTrash` is true.
@@ -175,7 +171,6 @@ pub(super) async fn rename_impl(
 
 	overwrite:bool,
 ) -> Result<(), CommonError> {
-
 	Utility::PathSecurity::Fn(&env.ApplicationState, source)?;
 
 	Utility::PathSecurity::Fn(&env.ApplicationState, target)?;
@@ -199,7 +194,6 @@ pub(super) async fn copy_impl(
 
 	overwrite:bool,
 ) -> Result<(), CommonError> {
-
 	Utility::PathSecurity::Fn(&env.ApplicationState, source)?;
 
 	Utility::PathSecurity::Fn(&env.ApplicationState, target)?;
@@ -261,7 +255,6 @@ pub(super) async fn copy_impl(
 /// re-use `tokio::fs::copy` for fast path; directories are created
 /// with `create_dir`. Symlinks are dereferenced.
 async fn copy_directory_recursive(source:&PathBuf, target:&PathBuf, overwrite:bool) -> Result<(), CommonError> {
-
 	// Pre-create the top-level target dir.
 	if !fs::try_exists(target).await.unwrap_or(false) {
 		fs::create_dir(target)
@@ -317,7 +310,6 @@ async fn copy_directory_recursive(source:&PathBuf, target:&PathBuf, overwrite:bo
 
 /// CreateFile operations implementation for MountainEnvironment
 pub(super) async fn create_file_impl(env:&MountainEnvironment, path:&PathBuf) -> Result<(), CommonError> {
-
 	// Use WriteFile with an empty Vec, ensuring creation without overwrite.
 	// This ensures proper parent directory creation and path validation.
 	write_file_impl(env, path, vec![], true, false).await

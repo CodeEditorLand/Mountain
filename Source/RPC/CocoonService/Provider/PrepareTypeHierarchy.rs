@@ -5,14 +5,11 @@
 //! panels have a starting item to display.
 
 use tonic::{Response, Status};
-
 use url::Url;
-
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
-
 use ::Vine::Generated::{ProvideTypeHierarchyRequest, ProvideTypeHierarchyResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -22,7 +19,6 @@ pub async fn Fn(
 
 	Request:ProvideTypeHierarchyRequest,
 ) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
-
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
 
 	let Position_ = Request.position.as_ref();
@@ -33,15 +29,10 @@ pub async fn Fn(
 
 	dev_log!(
 		"provider",
-
 		"PrepareTypeHierarchy handle={} uri={} line={} char={}",
-
 		Request.provider_handle,
-
 		URI,
-
 		Line,
-
 		Character
 	);
 

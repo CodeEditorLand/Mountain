@@ -1,7 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
-
 use serde_json::Value;
 
 use crate::dev_log;
@@ -9,7 +8,6 @@ use crate::dev_log;
 /// A single file/folder decoration: badge letter, tooltip, color hint.
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct DecorationData {
-
 	/// Single character badge shown in the explorer (e.g. "M" for modified).
 	pub Badge:Option<String>,
 
@@ -28,12 +26,10 @@ pub struct DecorationData {
 /// badges).
 #[derive(Clone)]
 pub struct DecorationsState {
-
 	Entries:Arc<Mutex<HashMap<String, Value>>>,
 }
 
 impl Default for DecorationsState {
-
 	fn default() -> Self {
 		dev_log!("decorations", "[DecorationsState] Initializing default decorations state...");
 
@@ -42,7 +38,6 @@ impl Default for DecorationsState {
 }
 
 impl DecorationsState {
-
 	/// Return the JSON decoration value for a URI, or `None` when not set.
 	pub fn GetDecoration(&self, Uri:&str) -> Option<Value> { self.Entries.lock().get(Uri).cloned() }
 

@@ -35,7 +35,6 @@
 use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::Mutex;
-
 use CommonLibrary::Error::CommonError::CommonError;
 
 use crate::dev_log;
@@ -43,7 +42,6 @@ use crate::dev_log;
 /// User interface request state containing pending UI interactions.
 #[derive(Clone)]
 pub struct State {
-
 	/// Pending user interface request organized by request ID.
 	///
 	/// Each request has a oneshot sender for sending the response back.
@@ -52,7 +50,6 @@ pub struct State {
 }
 
 impl Default for State {
-
 	fn default() -> Self {
 		dev_log!("window", "[UIState] Initializing default UI state...");
 
@@ -61,7 +58,6 @@ impl Default for State {
 }
 
 impl State {
-
 	/// Gets all pending user interface request IDs.
 	/// Note: Returns only the IDs since oneshot::Sender cannot be cloned.
 	pub fn GetPendingRequests(&self) -> Vec<String> {

@@ -21,7 +21,6 @@
 //! - Contributes: Extension contributions configuration
 
 use serde::{Deserialize, Serialize};
-
 use serde_json::Value;
 
 /// Maximum length for extension name
@@ -48,7 +47,6 @@ const MAX_ACTIVATION_EVENTS:usize = 100;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ExtensionDescriptionStateDTO {
-
 	// --- Core Metadata ---
 	/// Extension identifier: { value: string, uuid?: string }
 	/// Not present in package.json - constructed from publisher.name after
@@ -198,9 +196,7 @@ pub struct ExtensionDescriptionStateDTO {
 	/// Dependency list - other extensions this one needs activated first.
 	#[serde(
 		default,
-
 		skip_serializing_if = "Option::is_none",
-
 		rename = "extensionDependencies"
 	)]
 	pub ExtensionDependencies:Option<Vec<String>>,
@@ -211,7 +207,6 @@ pub struct ExtensionDescriptionStateDTO {
 }
 
 impl ExtensionDescriptionStateDTO {
-
 	/// Validates the extension description data.
 	///
 	/// # Returns
@@ -221,7 +216,6 @@ impl ExtensionDescriptionStateDTO {
 		if self.Name.len() > MAX_EXTENSION_NAME_LENGTH {
 			return Err(format!(
 				"Extension name exceeds maximum length of {} bytes",
-
 				MAX_EXTENSION_NAME_LENGTH
 			));
 		}

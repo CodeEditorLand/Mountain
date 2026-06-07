@@ -2,15 +2,12 @@
 //! shape.
 
 use tonic::{Response, Status};
-
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
-
 use ::Vine::Generated::{Empty, ExtensionInfo, GetAllExtensionsResponse};
 
 use crate::RPC::CocoonService::CocoonServiceImpl;
 
 pub async fn Fn(Service:&CocoonServiceImpl, _Request:Empty) -> Result<Response<GetAllExtensionsResponse>, Status> {
-
 	let Extensions = Service.environment.GetExtensions().await.unwrap_or_default();
 
 	let List = Extensions

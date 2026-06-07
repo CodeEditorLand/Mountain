@@ -35,15 +35,11 @@ use CommonLibrary::{
 	FileSystem::ReadFile::ReadFile,
 	Keybinding::KeybindingProvider::KeybindingProvider,
 };
-
 use async_trait::async_trait;
-
 use serde_json::{Value, json};
-
 use tauri::Manager;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
-
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 // TODO: full "when" clause expression parser/evaluator, precedence scoring
@@ -54,7 +50,6 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct KeybindingRule {
-
 	key:String,
 
 	command:String,
@@ -66,7 +61,6 @@ struct KeybindingRule {
 
 #[async_trait]
 impl KeybindingProvider for MountainEnvironment {
-
 	async fn GetResolvedKeybinding(&self) -> Result<Value, CommonError> {
 		dev_log!("keybinding", "[KeybindingProvider] Resolving all keybindings...");
 
@@ -125,7 +119,6 @@ impl KeybindingProvider for MountainEnvironment {
 			} else {
 				dev_log!(
 					"keybinding",
-
 					"warn: [KeybindingProvider] Failed to parse user keybindings.json. It may be malformed."
 				);
 			}

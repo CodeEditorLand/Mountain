@@ -2,14 +2,11 @@
 //! pieces with a Markdown horizontal-rule separator.
 
 use tonic::{Response, Status};
-
 use url::Url;
-
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
-
 use ::Vine::Generated::{Position, ProvideHoverRequest, ProvideHoverResponse, Range};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -19,7 +16,6 @@ pub async fn Fn(
 
 	Request:ProvideHoverRequest,
 ) -> Result<Response<ProvideHoverResponse>, Status> {
-
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
 
 	let Position_ = Request.position.as_ref();
@@ -30,15 +26,10 @@ pub async fn Fn(
 
 	dev_log!(
 		"provider",
-
 		"ProvideHover entry handle={} uri={} line={} char={}",
-
 		Request.provider_handle,
-
 		URI,
-
 		Line,
-
 		Character
 	);
 
@@ -64,13 +55,9 @@ pub async fn Fn(
 
 			dev_log!(
 				"provider",
-
 				"ProvideHover result handle={} contents_len={} hasRange={}",
-
 				Request.provider_handle,
-
 				Markdown.len(),
-
 				RangeOption.is_some()
 			);
 
@@ -80,9 +67,7 @@ pub async fn Fn(
 		Ok(None) => {
 			dev_log!(
 				"provider",
-
 				"ProvideHover result handle={} (no provider)",
-
 				Request.provider_handle
 			);
 
@@ -92,11 +77,8 @@ pub async fn Fn(
 		Err(Error) => {
 			dev_log!(
 				"provider",
-
 				"warn: ProvideHover failed handle={} err={}",
-
 				Request.provider_handle,
-
 				Error
 			);
 

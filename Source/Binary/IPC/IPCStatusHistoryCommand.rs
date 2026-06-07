@@ -37,7 +37,6 @@
 //! - Consider pagination for long history
 
 use serde_json::Value;
-
 use tauri::AppHandle;
 
 /// Get IPC status history.
@@ -57,6 +56,5 @@ use tauri::AppHandle;
 /// Returns an error if history cannot be retrieved.
 #[tauri::command]
 pub async fn MountainGetIPCStatusHistory(app_handle:AppHandle) -> Result<Value, String> {
-
 	crate::IPC::StatusReporter::mountain_get_ipc_status_history::mountain_get_ipc_status_history(app_handle).await
 }

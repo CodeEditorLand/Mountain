@@ -49,7 +49,6 @@
 use std::sync::Arc;
 
 use parking_lot::{Mutex, RwLock};
-
 use CommonLibrary::Error::CommonError::CommonError;
 
 use super::{
@@ -59,14 +58,12 @@ use super::{
 	UIState::UIState::State as UIState,
 	WorkspaceState::WorkspaceState::State as WorkspaceState,
 };
-
 use crate::{Environment::TestProvider::TestProviderState::Struct as TestProviderState, dev_log};
 
 /// The central, shared, thread-safe state for the entire Mountain application.
 pub type SharedApplicationState = Arc<ApplicationState>;
 
 pub struct ApplicationState {
-
 	/// Workspace state containing workspace folders, trust, and active
 	/// document.
 	pub Workspace:WorkspaceState,
@@ -93,7 +90,6 @@ pub struct ApplicationState {
 }
 
 impl Default for ApplicationState {
-
 	fn default() -> Self {
 		dev_log!("lifecycle", "[ApplicationState] Initializing default application state...");
 
@@ -118,7 +114,6 @@ impl Default for ApplicationState {
 }
 
 impl ApplicationState {
-
 	/// Gets the next available unique identifier for a provider registration.
 	pub fn GetNextProviderHandle(&self) -> u32 { self.Extension.GetNextProviderHandle() }
 

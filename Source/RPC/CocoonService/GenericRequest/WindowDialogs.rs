@@ -6,21 +6,15 @@
 //! `openExternal`.
 
 use CommonLibrary::UserInterface::UserInterfaceProvider::UserInterfaceProvider;
-
 use serde_json::{Value, json};
-
 use tauri::Emitter;
-
 use tonic::Response;
-
 use ::Vine::Generated::GenericResponse;
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;
-
 use super::FileSystem::{ErrResponse, OkResponse};
 
 pub async fn HandleShowOpenDialog(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	use CommonLibrary::UserInterface::DTO::OpenDialogOptionsDTO::OpenDialogOptionsDTO;
 
 	let Title = Params
@@ -48,7 +42,6 @@ pub async fn HandleShowOpenDialog(RequestId:u64, Params:Value, Env:&MountainEnvi
 }
 
 pub async fn HandleShowSaveDialog(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	use CommonLibrary::UserInterface::DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO;
 
 	let Title = Params
@@ -72,7 +65,6 @@ pub async fn HandleShowSaveDialog(RequestId:u64, Params:Value, Env:&MountainEnvi
 }
 
 pub async fn HandleShowInputBox(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	use CommonLibrary::UserInterface::DTO::InputBoxOptionsDTO::InputBoxOptionsDTO;
 
 	let Opts = Params.get(0);
@@ -118,7 +110,6 @@ pub async fn HandleShowMessage(
 
 	Severity:CommonLibrary::UserInterface::DTO::MessageSeverity::MessageSeverity,
 ) -> Response<GenericResponse> {
-
 	let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Items:Option<Value> = Params
@@ -136,7 +127,6 @@ pub async fn HandleShowMessage(
 }
 
 pub fn HandleShowTextDocument(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	let Uri = Params
 		.get("uri")
 		.and_then(|V| V.get("value").or(Some(V)))
@@ -150,7 +140,6 @@ pub fn HandleShowTextDocument(RequestId:u64, Params:Value, Env:&MountainEnvironm
 
 	let _ = Env.ApplicationHandle.emit(
 		"sky://editor/openDocument",
-
 		json!({ "uri": Uri, "viewColumn": ViewColumn, "preserveFocus": PreserveFocus }),
 	);
 
@@ -158,7 +147,6 @@ pub fn HandleShowTextDocument(RequestId:u64, Params:Value, Env:&MountainEnvironm
 }
 
 pub fn HandleOpenDocument(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	let Uri = Params
 		.get("uri")
 		.and_then(|V| V.get("value").or(Some(V)))
@@ -176,7 +164,6 @@ pub fn HandleOpenDocument(RequestId:u64, Params:Value, Env:&MountainEnvironment)
 }
 
 pub fn HandleSaveAll(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	let IncludeUntitled = Params.get("includeUntitled").and_then(|V| V.as_bool()).unwrap_or(false);
 
 	let _ = Env
@@ -187,7 +174,6 @@ pub fn HandleSaveAll(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> R
 }
 
 pub fn HandleApplyEdit(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	let Uri = Params
 		.get("uri")
 		.and_then(|V| V.get("value").or(Some(V)))
@@ -205,7 +191,6 @@ pub fn HandleApplyEdit(RequestId:u64, Params:Value, Env:&MountainEnvironment) ->
 }
 
 pub fn HandleOpenExternal(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	let Url = Params
 		.as_str()
 		.or_else(|| Params.get("url").and_then(|V| V.as_str()))
@@ -218,7 +203,6 @@ pub fn HandleOpenExternal(RequestId:u64, Params:Value, Env:&MountainEnvironment)
 }
 
 pub fn HandleCreateStatusBarItem(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Text = Params.get("text").and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -227,7 +211,6 @@ pub fn HandleCreateStatusBarItem(RequestId:u64, Params:Value, Env:&MountainEnvir
 
 	let _ = Env.ApplicationHandle.emit(
 		"sky://statusbar/set-entry",
-
 		json!({ "id": Id, "text": Text, "tooltip": Tooltip }),
 	);
 
@@ -235,7 +218,6 @@ pub fn HandleCreateStatusBarItem(RequestId:u64, Params:Value, Env:&MountainEnvir
 }
 
 pub fn HandleSetStatusBarText(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	let ItemId = Params.get("itemId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Text = Params.get("text").and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -248,7 +230,6 @@ pub fn HandleSetStatusBarText(RequestId:u64, Params:Value, Env:&MountainEnvironm
 }
 
 pub fn HandleCreateWebviewPanel(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	let ViewType = Params.get("viewType").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Title = Params.get("title").and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -260,7 +241,6 @@ pub fn HandleCreateWebviewPanel(RequestId:u64, Params:Value, Env:&MountainEnviro
 
 	let _ = Env.ApplicationHandle.emit(
 		"sky://webview/create",
-
 		json!({
 			"handle": Handle,
 			"viewType": ViewType,
@@ -274,7 +254,6 @@ pub fn HandleCreateWebviewPanel(RequestId:u64, Params:Value, Env:&MountainEnviro
 }
 
 pub fn HandleSetWebviewHtml(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0);
 
 	let Html = Params.get("html").and_then(|V| V.as_str()).unwrap_or("").to_string();

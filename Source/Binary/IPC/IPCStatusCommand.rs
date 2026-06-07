@@ -35,7 +35,6 @@
 //! - Status queries are fast, in-memory operations
 
 use serde_json::Value;
-
 use tauri::AppHandle;
 
 /// Get IPC status.
@@ -56,6 +55,5 @@ use tauri::AppHandle;
 /// Returns an error if status cannot be retrieved.
 #[tauri::command]
 pub async fn MountainGetIPCStatus(app_handle:AppHandle) -> Result<Value, String> {
-
 	crate::IPC::StatusReporter::mountain_get_ipc_status::mountain_get_ipc_status(app_handle).await
 }

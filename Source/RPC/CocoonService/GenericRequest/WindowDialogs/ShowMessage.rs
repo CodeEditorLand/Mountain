@@ -1,12 +1,9 @@
 use serde_json::{Value, json};
-
 use tonic::Response;
-
 use CommonLibrary::UserInterface::{
 	DTO::MessageSeverity::MessageSeverity,
 	UserInterfaceProvider::UserInterfaceProvider,
 };
-
 use ::Vine::Generated::GenericResponse;
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;
@@ -20,7 +17,6 @@ pub async fn Fn(
 
 	Severity:MessageSeverity,
 ) -> Response<GenericResponse> {
-
 	let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Items:Option<Value> = Params

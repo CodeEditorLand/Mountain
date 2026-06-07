@@ -8,7 +8,6 @@ use crate::Environment::TestProvider::TestRunStatus;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
-
 	pub TestIdentifier:String,
 
 	pub FullName:String,

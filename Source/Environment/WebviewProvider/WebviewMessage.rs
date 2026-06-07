@@ -3,12 +3,10 @@
 //! passing routed through the Tauri event bus.
 
 use serde::{Deserialize, Serialize};
-
 use serde_json::Value;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
-
 	pub MessageIdentifier:String,
 
 	pub MessageType:String,

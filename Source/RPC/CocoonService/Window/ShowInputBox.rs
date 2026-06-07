@@ -2,12 +2,10 @@
 //! when the user dismisses without confirming.
 
 use tonic::{Response, Status};
-
 use CommonLibrary::UserInterface::{
 	DTO::InputBoxOptionsDTO::InputBoxOptionsDTO,
 	UserInterfaceProvider::UserInterfaceProvider,
 };
-
 use ::Vine::Generated::{ShowInputBoxRequest, ShowInputBoxResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -17,7 +15,6 @@ pub async fn Fn(
 
 	Request:ShowInputBoxRequest,
 ) -> Result<Response<ShowInputBoxResponse>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] show_input_box");
 
 	let Options = Some(InputBoxOptionsDTO {

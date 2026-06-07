@@ -7,7 +7,6 @@ use crate::Binary::Build::{DnsCommands::DnsHealthStatus::DnsHealthStatus, Scheme
 
 #[tauri::command]
 pub fn dns_get_health_status(dns_port:State<DnsPort>) -> Result<DnsHealthStatus, String> {
-
 	let port = dns_port.0;
 
 	if port == 0 {

@@ -39,7 +39,6 @@
 //! - Consider batching for bulk subscriptions
 
 use serde_json::Value;
-
 use tauri::AppHandle;
 
 use crate::dev_log;
@@ -64,7 +63,6 @@ use crate::dev_log;
 /// - Subscription fails
 #[tauri::command]
 pub async fn MountainSubscribeToUpdates(app_handle:AppHandle, subscription_data:Value) -> Result<Value, String> {
-
 	let Target = subscription_data["target"]
 		.as_str()
 		.ok_or_else(|| {

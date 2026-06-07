@@ -27,9 +27,7 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	FileSystem::ReadFile::ReadFile,
 };
-
 use serde_json::{Map, Value};
-
 use tauri::Manager;
 
 use crate::{
@@ -51,14 +49,12 @@ use crate::{
 const SETTINGS_FILE_CACHE_TTL_MS:u64 = 250;
 
 struct CachedSettingsValue {
-
 	StoredAt:Instant,
 
 	Parsed:Value,
 }
 
 fn SettingsFileCache() -> &'static Mutex<HashMap<PathBuf, CachedSettingsValue>> {
-
 	static CACHE:OnceLock<Mutex<HashMap<PathBuf, CachedSettingsValue>>> = OnceLock::new();
 
 	CACHE.get_or_init(|| Mutex::new(HashMap::new()))
@@ -68,7 +64,6 @@ fn SettingsFileCache() -> &'static Mutex<HashMap<PathBuf, CachedSettingsValue>> 
 /// that mutates settings (`UpdateConfigurationValue`,
 /// `initialize_and_merge_configurations`).
 pub(crate) fn ClearSettingsFileCache() {
-
 	if let Ok(mut Guard) = SettingsFileCache().lock() {
 		Guard.clear();
 	}
@@ -80,7 +75,6 @@ pub(super) async fn read_and_parse_configuration_file(
 
 	path:&Option<PathBuf>,
 ) -> Result<Value, CommonError> {
-
 	if let Some(p) = path {
 		// Cache check: return a clone of the parsed value if the same
 		// file was read within the TTL window.
@@ -100,7 +94,6 @@ pub(super) async fn read_and_parse_configuration_file(
 			if let Ok(mut Guard) = SettingsFileCache().lock() {
 				Guard.insert(
 					p.clone(),
-
 					CachedSettingsValue { StoredAt:Instant::now(), Parsed:Parsed.clone() },
 				);
 			}
@@ -115,10 +108,8 @@ pub(super) async fn read_and_parse_configuration_file(
 /// Logic to load and merge all configuration files into the effective
 /// configuration stored in `ApplicationState`.
 pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEnvironment) -> Result<(), CommonError> {
-
 	dev_log!(
 		"config",
-
 		"[ConfigurationProvider] Re-initializing and merging all configurations..."
 	);
 
@@ -153,7 +144,6 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 			if value.is_object() && merged.get(key.as_str()).is_some_and(|v| v.is_object()) {
 				if let (Some(user_value), Some(_base_value)) =
 					(value.as_object(), merged.get(key.as_str()).and_then(|v| v.as_object()))
-
 				{
 					for (inner_key, inner_value) in user_value {
 						merged.get_mut(key.as_str()).and_then(|v| v.as_object_mut()).map(|m| {
@@ -172,7 +162,6 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 			if value.is_object() && merged.get(key.as_str()).is_some_and(|v| v.is_object()) {
 				if let (Some(workspace_value), Some(_base_value)) =
 					(value.as_object(), merged.get(key.as_str()).and_then(|v| v.as_object()))
-
 				{
 					for (inner_key, inner_value) in workspace_value {
 						merged.get_mut(key.as_str()).and_then(|v| v.as_object_mut()).map(|m| {
@@ -199,9 +188,7 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 
 	dev_log!(
 		"config",
-
 		"[ConfigurationProvider] Configuration merged successfully with {} top-level keys.",
-
 		configuration_size
 	);
 
@@ -245,7 +232,6 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 pub(super) fn collect_default_configurations(
 	application_state:&crate::ApplicationState::State::ApplicationState::ApplicationState,
 ) -> Result<Value, CommonError> {
-
 	let mut default_config = Map::new();
 
 	for extension in application_state
@@ -255,7 +241,6 @@ pub(super) fn collect_default_configurations(
 		.lock()
 		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.values()
-
 	{
 		let Some(contributes) = &extension.Contributes else {
 			continue;
@@ -295,7 +280,6 @@ pub(super) fn collect_default_configurations(
 /// `inspect_configuration_value`'s `try_fold` traversal so a lookup
 /// for `git.enabled` finds `target["git"]["enabled"]`.
 fn InsertDottedDefault(target:&mut Map<String, Value>, dotted:&str, value:Value) {
-
 	let parts:Vec<&str> = dotted.split('.').collect();
 
 	if parts.is_empty() {

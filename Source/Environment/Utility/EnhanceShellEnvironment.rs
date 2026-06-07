@@ -29,7 +29,6 @@ use std::time::Duration;
 /// to invoke this exactly once during boot, before any child process
 /// is spawned.
 pub fn Fn() {
-
 	// TTY = launched from terminal = already has the user's shell env.
 	if IsTty() {
 		return;
@@ -119,7 +118,6 @@ pub fn Fn() {
 }
 
 fn IsTty() -> bool {
-
 	// `IsTerminal` (stable since Rust 1.70) wraps platform isatty
 	// without pulling in libc. Stdin is the right fd to probe -
 	// Mountain redirects stdout/stderr to its own logger, so those
@@ -134,7 +132,6 @@ fn IsTty() -> bool {
 /// crafted `Key=` line. Standard env-var names are
 /// `[A-Za-z_][A-Za-z0-9_]*`; anything else is dropped silently.
 fn IsPortableEnvName(Name:&str) -> bool {
-
 	let mut Chars = Name.chars();
 
 	match Chars.next() {

@@ -19,12 +19,10 @@ use crate::{
 ///
 /// A `Result` indicating success or failure.
 pub async fn Fn(Environment:&std::sync::Arc<MountainEnvironment>) -> Result<(), String> {
-
 	match initialize_and_merge_configurations(Environment).await {
 		Ok(()) => {
 			dev_log!(
 				"config",
-
 				"[Config] [Initialize] Configuration initialized and merged successfully."
 			);
 

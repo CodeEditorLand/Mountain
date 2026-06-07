@@ -31,7 +31,6 @@ use serde_json::Value;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum MutatorType {
-
 	Replace = 1,
 
 	Append = 2,
@@ -41,7 +40,6 @@ pub enum MutatorType {
 
 #[derive(Clone, Debug)]
 pub struct Mutator {
-
 	pub Variable:String,
 
 	pub Value:String,
@@ -51,7 +49,6 @@ pub struct Mutator {
 
 #[derive(Clone, Default)]
 pub struct ExtensionCollection {
-
 	pub Persistent:bool,
 
 	pub Description:Option<String>,
@@ -64,7 +61,6 @@ static REGISTRY:OnceLock<Mutex<HashMap<String, ExtensionCollection>>> = OnceLock
 fn Get() -> &'static Mutex<HashMap<String, ExtensionCollection>> { REGISTRY.get_or_init(|| Mutex::new(HashMap::new())) }
 
 pub fn Replace(ExtensionId:&str, Variable:String, Value:String) {
-
 	if let Ok(mut Guard) = Get().lock() {
 		let Entry = Guard.entry(ExtensionId.to_string()).or_default();
 
@@ -75,7 +71,6 @@ pub fn Replace(ExtensionId:&str, Variable:String, Value:String) {
 }
 
 pub fn Append(ExtensionId:&str, Variable:String, Value:String) {
-
 	if let Ok(mut Guard) = Get().lock() {
 		let Entry = Guard.entry(ExtensionId.to_string()).or_default();
 
@@ -86,7 +81,6 @@ pub fn Append(ExtensionId:&str, Variable:String, Value:String) {
 }
 
 pub fn Prepend(ExtensionId:&str, Variable:String, Value:String) {
-
 	if let Ok(mut Guard) = Get().lock() {
 		let Entry = Guard.entry(ExtensionId.to_string()).or_default();
 
@@ -97,7 +91,6 @@ pub fn Prepend(ExtensionId:&str, Variable:String, Value:String) {
 }
 
 pub fn Delete(ExtensionId:&str, Variable:&str) {
-
 	if let Ok(mut Guard) = Get().lock() {
 		if let Some(Entry) = Guard.get_mut(ExtensionId) {
 			Entry.Mutators.remove(Variable);
@@ -106,7 +99,6 @@ pub fn Delete(ExtensionId:&str, Variable:&str) {
 }
 
 pub fn Clear(ExtensionId:&str) {
-
 	if let Ok(mut Guard) = Get().lock() {
 		if let Some(Entry) = Guard.get_mut(ExtensionId) {
 			Entry.Mutators.clear();
@@ -115,7 +107,6 @@ pub fn Clear(ExtensionId:&str) {
 }
 
 pub fn SetPersistent(ExtensionId:&str, Persistent:bool) {
-
 	if let Ok(mut Guard) = Get().lock() {
 		let Entry = Guard.entry(ExtensionId.to_string()).or_default();
 
@@ -124,7 +115,6 @@ pub fn SetPersistent(ExtensionId:&str, Persistent:bool) {
 }
 
 pub fn SetDescription(ExtensionId:&str, Description:Option<String>) {
-
 	if let Ok(mut Guard) = Get().lock() {
 		let Entry = Guard.entry(ExtensionId.to_string()).or_default();
 
@@ -138,7 +128,6 @@ pub fn SetDescription(ExtensionId:&str, Description:Option<String>) {
 /// avoid relying on cross-extension ordering for the same variable
 /// (matches VS Code's documented behavior).
 pub fn ApplyToEnv(Env:&mut HashMap<String, String>) {
-
 	let Snapshot = match Get().lock() {
 		Ok(Guard) => Guard.clone(),
 
@@ -167,7 +156,6 @@ pub fn ApplyToEnv(Env:&mut HashMap<String, String>) {
 /// strings / None; the dispatcher discards calls whose ExtensionId is
 /// empty.
 pub fn ParsePayload(Payload:&Value) -> (String, String, String) {
-
 	let ExtensionId = Payload.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let Variable = Payload.get("variable").and_then(|V| V.as_str()).unwrap_or("").to_string();

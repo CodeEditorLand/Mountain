@@ -3,12 +3,10 @@
 use std::collections::HashMap;
 
 pub struct Struct {
-
 	config:HashMap<String, serde_json::Value>,
 }
 
 impl Struct {
-
 	pub fn new() -> Self { Self { config:HashMap::new() } }
 
 	pub fn get(&self, Key:&str) -> Option<&serde_json::Value> { self.config.get(Key) }
@@ -17,6 +15,5 @@ impl Struct {
 }
 
 impl Default for Struct {
-
 	fn default() -> Self { Self::new() }
 }

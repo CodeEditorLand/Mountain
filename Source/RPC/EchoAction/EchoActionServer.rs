@@ -4,24 +4,20 @@
 use std::sync::Arc;
 
 use Echo::{Scheduler::Scheduler::Scheduler, Task::Priority::Priority as EchoPriority};
-
 use tokio::sync::oneshot;
 
 use crate::RPC::EchoAction::{ExtensionHostRegistry, ResolveMethodPriority};
 
 #[derive(Clone)]
 pub struct Struct {
-
 	Registry:Arc<ExtensionHostRegistry::Struct>,
 }
 
 impl Default for Struct {
-
 	fn default() -> Self { Self::new() }
 }
 
 impl Struct {
-
 	pub fn new() -> Self { Self { Registry:Arc::new(ExtensionHostRegistry::Struct::new()) } }
 
 	/// Registry accessor so tonic handlers can pass it into per-extension
@@ -33,7 +29,6 @@ impl Struct {
 	pub async fn Dispatch<F, T>(&self, Scheduler:&Scheduler, Method:&str, Task:F) -> Result<T, String>
 	where
 		F: std::future::Future<Output = T> + Send + 'static,
-
 		T: Send + 'static, {
 		let Priority = ResolveMethodPriority::Fn(Method);
 
@@ -45,7 +40,6 @@ impl Struct {
 
 				let _ = Sender.send(Output);
 			},
-
 			Priority,
 		);
 

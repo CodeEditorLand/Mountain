@@ -1,11 +1,8 @@
 //! Forward a call hierarchy outgoing request to the registered provider.
 
 use serde_json::json;
-
 use tonic::{Response, Status};
-
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
-
 use ::Vine::Generated::{ProvideCallHierarchyRequest, ProvideCallHierarchyResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -15,7 +12,6 @@ pub async fn Fn(
 
 	Request:ProvideCallHierarchyRequest,
 ) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] Providing call hierarchy outgoing");
 
 	let ItemDTO = json!({

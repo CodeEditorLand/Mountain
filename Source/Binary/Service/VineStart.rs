@@ -37,7 +37,6 @@ pub async fn Fn(
 
 	SecondaryAddress:String,
 ) -> Result<(), String> {
-
 	match crate::Vine::Server::Initialize::Initialize(ApplicationHandle, PrimaryAddress, SecondaryAddress) {
 		Ok(()) => {
 			dev_log!("grpc", "[Vine] [Start] Vine gRPC server started successfully.");

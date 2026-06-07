@@ -37,7 +37,6 @@
 //! - Sampling rate affects accuracy vs overhead
 
 use serde_json::{Value, to_value};
-
 use tauri::AppHandle;
 
 /// Get performance stats.
@@ -57,7 +56,6 @@ use tauri::AppHandle;
 /// Returns an error if stats cannot be collected.
 #[tauri::command]
 pub async fn MountainGetPerformanceStats(app_handle:AppHandle) -> Result<Value, String> {
-
 	let stats =
 		crate::IPC::AdvancedFeatures::mountain_get_performance_stats::mountain_get_performance_stats(app_handle)
 			.await?;

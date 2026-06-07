@@ -50,7 +50,6 @@ const MAX_BADGE_LENGTH:usize = 2048;
 /// only.
 #[derive(Clone)]
 pub struct TreeViewStateDTO {
-
 	/// The unique identifier for this tree view.
 	pub ViewIdentifier:String,
 
@@ -85,7 +84,6 @@ pub struct TreeViewStateDTO {
 }
 
 impl TreeViewStateDTO {
-
 	/// Creates a new TreeViewStateDTO with validation.
 	///
 	/// # Arguments
@@ -115,7 +113,6 @@ impl TreeViewStateDTO {
 		if ViewIdentifier.len() > MAX_VIEW_IDENTIFIER_LENGTH {
 			return Err(format!(
 				"View identifier exceeds maximum length of {} bytes",
-
 				MAX_VIEW_IDENTIFIER_LENGTH
 			));
 		}
@@ -125,7 +122,6 @@ impl TreeViewStateDTO {
 			if SideCarID.len() > MAX_SIDECAR_IDENTIFIER_LENGTH {
 				return Err(format!(
 					"SideCar identifier exceeds maximum length of {} bytes",
-
 					MAX_SIDECAR_IDENTIFIER_LENGTH
 				));
 			}
@@ -190,7 +186,6 @@ impl TreeViewStateDTO {
 		if Description.len() > MAX_DESCRIPTION_LENGTH {
 			return Err(format!(
 				"Description exceeds maximum length of {} bytes",
-
 				MAX_DESCRIPTION_LENGTH
 			));
 		}

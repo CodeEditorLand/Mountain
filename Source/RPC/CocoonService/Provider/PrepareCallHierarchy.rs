@@ -7,14 +7,11 @@
 //! empty even when the provider is correctly registered.
 
 use tonic::{Response, Status};
-
 use url::Url;
-
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
-
 use ::Vine::Generated::{ProvideCallHierarchyRequest, ProvideCallHierarchyResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -24,7 +21,6 @@ pub async fn Fn(
 
 	Request:ProvideCallHierarchyRequest,
 ) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
-
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
 
 	let Position_ = Request.position.as_ref();
@@ -35,15 +31,10 @@ pub async fn Fn(
 
 	dev_log!(
 		"provider",
-
 		"PrepareCallHierarchy handle={} uri={} line={} char={}",
-
 		Request.provider_handle,
-
 		URI,
-
 		Line,
-
 		Character
 	);
 

@@ -28,13 +28,10 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	Synchronization::SynchronizationProvider::SynchronizationProvider,
 };
-
 use async_trait::async_trait;
-
 use serde_json::Value;
 
 use super::MountainEnvironment::MountainEnvironment;
-
 use crate::dev_log;
 
 // TODO: backend integration (Firebase / Supabase / custom), OAuth/API-key auth,
@@ -45,7 +42,6 @@ use crate::dev_log;
 // uploads for large files, rate-limit throttling, health checks + failover.
 #[async_trait]
 impl SynchronizationProvider for MountainEnvironment {
-
 	async fn PushUserData(&self, _UserData:Value) -> Result<(), CommonError> {
 		dev_log!("workingcopy", "warn: [SyncProvider] PushUserData is not implemented.");
 

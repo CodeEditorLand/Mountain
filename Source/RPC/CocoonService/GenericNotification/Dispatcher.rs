@@ -5,9 +5,7 @@
 //! that predate the typed proto endpoints.
 
 use serde_json::json;
-
 use tonic::{Request, Response, Status};
-
 use CommonLibrary::{
 	Command::CommandExecutor::CommandExecutor,
 	LanguageFeature::{
@@ -15,7 +13,6 @@ use CommonLibrary::{
 		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	},
 };
-
 use ::Vine::Generated::{Empty, GenericNotification as GenericNotificationMsg};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -25,14 +22,11 @@ pub async fn Fn(
 
 	request:Request<GenericNotificationMsg>,
 ) -> Result<Response<Empty>, Status> {
-
 	let notification = request.into_inner();
 
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Notification router: method='{}'",
-
 		notification.method
 	);
 
@@ -53,11 +47,8 @@ pub async fn Fn(
 			if let Err(Error) = Service.environment.RegisterCommand(ExtensionId, CommandId.clone()).await {
 				dev_log!(
 					"cocoon",
-
 					"warn: [CocoonService] notification: registerCommand '{}' failed: {:?}",
-
 					CommandId,
-
 					Error
 				);
 			}
@@ -424,7 +415,6 @@ pub async fn Fn(
 
 			let _ = Service.environment.ApplicationHandle.emit(
 				"sky://webview/message",
-
 				json!({ "panelId": PanelId, "method": Method, "params": MsgParams }),
 			);
 		},
@@ -454,7 +444,6 @@ pub async fn Fn(
 
 			let _ = Service.environment.ApplicationHandle.emit(
 				"sky://progress/start",
-
 				json!({ "id": Id, "title": Title, "location": Location, "cancellable": Cancellable }),
 			);
 		},
@@ -470,7 +459,6 @@ pub async fn Fn(
 
 			let _ = Service.environment.ApplicationHandle.emit(
 				"sky://progress/update",
-
 				json!({ "id": Id, "message": Message, "increment": Increment }),
 			);
 		},
@@ -559,7 +547,6 @@ pub async fn Fn(
 
 			let _ = Service.environment.ApplicationHandle.emit(
 				"sky://output/append",
-
 				json!({ "channel": Channel, "text": format!("{}\n", Line) }),
 			);
 		},
@@ -609,9 +596,7 @@ pub async fn Fn(
 		_ => {
 			dev_log!(
 				"cocoon",
-
 				"[CocoonService] Unknown notification method: '{}'",
-
 				notification.method
 			);
 		},

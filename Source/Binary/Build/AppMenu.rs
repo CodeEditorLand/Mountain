@@ -26,7 +26,6 @@ use crate::dev_log;
 /// override so the default menu remains).
 #[cfg(target_os = "macos")]
 pub fn SetAppMenu(App:&tauri::App) {
-
 	use tauri::menu::{MenuBuilder, SubmenuBuilder};
 
 	let Result = (|| -> Result<(), Box<dyn std::error::Error>> {
@@ -53,7 +52,6 @@ pub fn SetAppMenu(App:&tauri::App) {
 
 		dev_log!(
 			"lifecycle",
-
 			"[UI] [Menu] macOS Edit menu set (Undo/Redo removed; Cmd+Z routes to Monaco)."
 		);
 
@@ -63,7 +61,6 @@ pub fn SetAppMenu(App:&tauri::App) {
 	if let Err(Error) = Result {
 		dev_log!(
 			"lifecycle",
-
 			"warn: [UI] [Menu] Failed to override macOS app menu ({}); default menu retained - Cmd+Z may trigger \
 			 native undo instead of Monaco undo.",
 			Error

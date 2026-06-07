@@ -4,7 +4,6 @@
 
 #[tauri::command]
 pub async fn shared_process_service_health(service:String) -> Result<bool, String> {
-
 	match service.as_str() {
 		"storage" | "update" | "search" => Ok(true),
 

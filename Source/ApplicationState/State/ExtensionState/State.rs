@@ -36,12 +36,10 @@ use std::sync::Arc;
 use tokio::sync::Notify;
 
 use super::{ExtensionRegistry, ProviderRegistration, ScannedExtensions};
-
 use crate::dev_log;
 
 /// Extension state combining all extension-related components.
 pub struct State {
-
 	/// Extension registry containing command registry and provider state.
 	pub Registry:ExtensionRegistry::ExtensionRegistry::Registry,
 
@@ -59,7 +57,6 @@ pub struct State {
 }
 
 impl Default for State {
-
 	fn default() -> Self {
 		dev_log!("extensions", "[ExtensionState::State] Initializing default extension state...");
 
@@ -76,7 +73,6 @@ impl Default for State {
 }
 
 impl State {
-
 	/// Gets the next available unique identifier for a provider registration.
 	pub fn GetNextProviderHandle(&self) -> u32 { self.Registry.GetNextProviderHandle() }
 }

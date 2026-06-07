@@ -1,32 +1,23 @@
 //! Register a Cocoon-side linked-editing-range provider.
 
 use tonic::{Response, Status};
-
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
-
 use ::Vine::Generated::{Empty, RegisterProviderRequest};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterProviderRequest) -> Result<Response<Empty>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Registering linked-editing-range provider for '{}' with handle {}",
-
 		Request.language_selector,
-
 		Request.handle
 	);
 
 	Service.RegisterProvider(
 		Request.handle,
-
 		ProviderType::LinkedEditingRange,
-
 		&Request.language_selector,
-
 		&Request.extension_id,
 	);
 

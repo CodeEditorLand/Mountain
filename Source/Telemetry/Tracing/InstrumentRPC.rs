@@ -9,9 +9,7 @@ use crate::dev_log;
 pub async fn Fn<F, T, E>(ServiceName:&str, MethodName:&str, Operation:F) -> Result<T, E>
 where
 	F: std::future::Future<Output = Result<T, E>>,
-
 	E: std::fmt::Display, {
-
 	let Span = tracing::span!(
 		tracing::Level::INFO,
 
@@ -32,13 +30,9 @@ where
 		Ok(Result) => {
 			dev_log!(
 				"lifecycle",
-
 				"RPC call completed: {}.{} (duration: {:?})",
-
 				ServiceName,
-
 				MethodName,
-
 				Start.elapsed()
 			);
 
@@ -48,15 +42,10 @@ where
 		Err(Err) => {
 			dev_log!(
 				"lifecycle",
-
 				"error: RPC call failed: {}.{} (duration: {:?}, error: {})",
-
 				ServiceName,
-
 				MethodName,
-
 				Start.elapsed(),
-
 				Err
 			);
 
@@ -69,6 +58,5 @@ where
 pub async fn Fn<F, T, E>(_ServiceName:&str, _MethodName:&str, Operation:F) -> Result<T, E>
 where
 	F: std::future::Future<Output = Result<T, E>>, {
-
 	Operation.await
 }

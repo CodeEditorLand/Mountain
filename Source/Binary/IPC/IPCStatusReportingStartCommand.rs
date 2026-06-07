@@ -36,7 +36,6 @@
 //! - Default interval should be reasonable (60s)
 
 use serde_json::Value;
-
 use tauri::AppHandle;
 
 /// Start IPC status reporting.
@@ -56,7 +55,6 @@ use tauri::AppHandle;
 /// Returns an error if reporting cannot be started.
 #[tauri::command]
 pub async fn MountainStartIPCStatusReporting(app_handle:AppHandle) -> Result<Value, String> {
-
 	crate::IPC::StatusReporter::mountain_start_ipc_status_reporting::mountain_start_ipc_status_reporting(app_handle, 60)
 		.await
 }

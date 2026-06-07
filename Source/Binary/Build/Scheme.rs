@@ -46,7 +46,6 @@ use tauri::http::{
 };
 
 use super::ServiceRegistry::ServiceRegistry;
-
 use crate::dev_log;
 
 // Global service registry (will be initialized in Tauri setup)
@@ -57,7 +56,6 @@ static SERVICE_REGISTRY:RwLock<Option<ServiceRegistry>> = RwLock::new(None);
 /// This must be called once during application setup before any land://
 /// requests.
 pub fn init_service_registry(registry:ServiceRegistry) {
-
 	let mut registry_lock = SERVICE_REGISTRY.write().unwrap();
 
 	*registry_lock = Some(registry);
@@ -75,7 +73,6 @@ pub fn init_service_registry(registry:ServiceRegistry) {
 /// 3. After initialization, we only read from it
 /// 4. The RwLock guarantees thread-safe access
 fn get_service_registry() -> Option<ServiceRegistry> {
-
 	let guard = SERVICE_REGISTRY.read().ok()?;
 
 	guard.clone()
@@ -91,7 +88,6 @@ pub struct DnsPort(pub u16);
 /// Cache entry for static asset caching
 #[derive(Clone)]
 struct CacheEntry {
-
 	/// Cached response bytes
 	body:Vec<u8>,
 
@@ -119,7 +115,6 @@ static CACHE:RwLock<Option<HashMap<String, CacheEntry>>> = RwLock::new(None);
 
 /// Initialize the static asset cache
 fn init_cache() {
-
 	let mut cache = CACHE.write().unwrap();
 
 	if cache.is_none() {
@@ -129,7 +124,6 @@ fn init_cache() {
 
 /// Get a cached response if available
 fn get_cached(path:&str) -> Option<CacheEntry> {
-
 	let cache = CACHE.read().unwrap();
 
 	cache.as_ref()?.get(path).cloned()
@@ -137,7 +131,6 @@ fn get_cached(path:&str) -> Option<CacheEntry> {
 
 /// Store a response in the cache
 fn set_cached(path:&str, entry:CacheEntry) {
-
 	let mut cache = CACHE.write().unwrap();
 
 	if let Some(cache) = cache.as_mut() {
@@ -149,31 +142,19 @@ fn set_cached(path:&str, entry:CacheEntry) {
 ///
 /// Returns true for CSS, JS, images, fonts, and other static assets.
 fn should_cache(path:&str) -> bool {
-
 	let path_lower = path.to_lowercase();
 
 	path_lower.ends_with(".css")
-
 		|| path_lower.ends_with(".js")
-
 		|| path_lower.ends_with(".png")
-
 		|| path_lower.ends_with(".jpg")
-
 		|| path_lower.ends_with(".jpeg")
-
 		|| path_lower.ends_with(".gif")
-
 		|| path_lower.ends_with(".svg")
-
 		|| path_lower.ends_with(".woff")
-
 		|| path_lower.ends_with(".woff2")
-
 		|| path_lower.ends_with(".ttf")
-
 		|| path_lower.ends_with(".eot")
-
 		|| path_lower.ends_with(".ico")
 }
 
@@ -198,7 +179,6 @@ fn should_cache(path:&str) -> bool {
 /// assert_eq!(path, "/api/status");
 /// ```
 fn parse_land_uri(uri:&str) -> Result<(String, String), String> {
-
 	// Remove the land:// prefix
 	let without_scheme = uri
 		.strip_prefix("land://")
@@ -234,7 +214,6 @@ fn forward_http_request(
 
 	method:Method,
 ) -> Result<(u16, Vec<u8>, HashMap<String, String>), String> {
-
 	// Parse URL to get host and path
 	let parsed_url = url.parse::<http::uri::Uri>().map_err(|e| format!("Invalid URL: {}", e))?;
 
@@ -385,7 +364,6 @@ fn forward_http_request(
 /// corrupted by UTF-8 lossy conversion. Only the headers portion (which is
 /// always ASCII) is decoded as UTF-8.
 fn parse_http_response(response:&[u8]) -> Result<(u16, Vec<u8>, HashMap<String, String>), String> {
-
 	let headers_end = response
 		.windows(4)
 		.position(|w| w == b"\r\n\r\n")
@@ -460,7 +438,6 @@ fn parse_http_response(response:&[u8]) -> Result<(u16, Vec<u8>, HashMap<String, 
 /// 	.register_uri_scheme_protocol("fiddee", |_app, request| fiddee_scheme_handler(request))
 /// ```
 pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
-
 	// Initialize cache on first request
 	init_cache();
 
@@ -522,13 +499,9 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 
 	dev_log!(
 		"lifecycle",
-
 		"[Scheme] Routing {} {} to local service at {}",
-
 		request.method(),
-
 		uri,
-
 		local_url
 	);
 
@@ -553,29 +526,17 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 			let LowerPath = path.to_ascii_lowercase();
 
 			let IsAssetRequest = LowerPath.ends_with(".js")
-
 				|| LowerPath.ends_with(".mjs")
-
 				|| LowerPath.ends_with(".cjs")
-
 				|| LowerPath.ends_with(".json")
-
 				|| LowerPath.ends_with(".map")
-
 				|| LowerPath.ends_with(".css")
-
 				|| LowerPath.ends_with(".wasm")
-
 				|| LowerPath.ends_with(".svg")
-
 				|| LowerPath.ends_with(".png")
-
 				|| LowerPath.ends_with(".woff")
-
 				|| LowerPath.ends_with(".woff2")
-
 				|| LowerPath.ends_with(".ttf")
-
 				|| LowerPath.ends_with(".otf");
 
 			let UpstreamSaysHtml = headers
@@ -586,11 +547,8 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 			if IsAssetRequest && (status == 404 || (status >= 400 && UpstreamSaysHtml)) {
 				dev_log!(
 					"scheme-assets",
-
 					"[LandFix:Mime] swap HTML 404 → text/plain empty for asset path={} status={}",
-
 					path,
-
 					status
 				);
 
@@ -612,21 +570,13 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 			// Add important headers from local service
 			let important_headers = [
 				"content-type",
-
 				"content-length",
-
 				"etag",
-
 				"last-modified",
-
 				"cache-control",
-
 				"expires",
-
 				"content-encoding",
-
 				"content-disposition",
-
 				"location",
 			];
 
@@ -674,7 +624,6 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 
 /// Build an error response with CORS headers
 fn build_error_response(status:u16, message:&str) -> Response<Vec<u8>> {
-
 	let body = serde_json::json!({
 		"error": message,
 		"status": status
@@ -690,7 +639,6 @@ fn build_error_response(status:u16, message:&str) -> Response<Vec<u8>> {
 
 /// Build a CORS preflight response
 fn build_cors_preflight_response() -> Response<Vec<u8>> {
-
 	Builder::new()
 		.status(204)
 		.header("Access-Control-Allow-Origin", "land://code.land.playform.cloud")
@@ -703,7 +651,6 @@ fn build_cors_preflight_response() -> Response<Vec<u8>> {
 
 /// Build a response from cached data
 fn build_cached_response(entry:CacheEntry) -> Response<Vec<u8>> {
-
 	let mut builder = Builder::new()
 		.status(200)
 		.header("Content-Type", &entry.content_type)
@@ -732,7 +679,6 @@ fn build_cached_response(entry:CacheEntry) -> Response<Vec<u8>> {
 /// - `name`: Domain name (e.g., "code.land.playform.cloud")
 /// - `port`: Local port where the service is listening
 pub fn register_land_service(name:&str, port:u16) {
-
 	let registry = get_service_registry().expect("Service registry not initialized. Call init_service_registry first.");
 
 	registry.register(name.to_string(), port, Some("/health".to_string()));
@@ -751,7 +697,6 @@ pub fn register_land_service(name:&str, port:u16) {
 /// - `Some(port)` if service is registered
 /// - `None` if service not found
 pub fn get_land_port(name:&str) -> Option<u16> {
-
 	let registry = get_service_registry()?;
 
 	registry.lookup(name).map(|s| s.port)
@@ -796,7 +741,6 @@ pub fn land_scheme_handler_async<R:tauri::Runtime>(
 
 	responder:tauri::UriSchemeResponder,
 ) {
-
 	// Spawn a new thread to handle the request asynchronously
 	std::thread::spawn(move || {
 		let response = land_scheme_handler(&request);
@@ -814,7 +758,6 @@ pub fn land_scheme_handler_async<R:tauri::Runtime>(
 ///
 /// Returns a comma-separated list of origins to support all platforms.
 fn get_cors_origins() -> &'static str {
-
 	// Support both macOS/Linux (land://localhost) and Windows (http://land.localhost)
 	"land://localhost, http://land.localhost, land://code.land.playform.cloud"
 }
@@ -832,7 +775,6 @@ pub fn Scheme() {}
 
 /// MIME type detection from file extension
 fn MimeFromExtension(Path:&str) -> &'static str {
-
 	if Path.ends_with(".js") || Path.ends_with(".mjs") {
 		"application/javascript"
 	} else if Path.ends_with(".css") {
@@ -901,7 +843,6 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 
 	Request:&tauri::http::request::Request<Vec<u8>>,
 ) -> Response<Vec<u8>> {
-
 	// The scheme handler runs inside the wkwebview URL loading code
 	// (Objective-C FFI). A panic here crosses an `extern "C"` boundary
 	// that cannot unwind - the process aborts immediately. Catch the
@@ -923,9 +864,7 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 
 			dev_log!(
 				"lifecycle",
-
 				"error: [LandFix:VscodeFile] caught panic in scheme handler: {}",
-
 				Info
 			);
 
@@ -939,7 +878,6 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 
 	Request:&tauri::http::request::Request<Vec<u8>>,
 ) -> Response<Vec<u8>> {
-
 	let Uri = Request.uri().to_string();
 
 	// Per-asset-request line - every `<img src="vscode-file://...">` +
@@ -1066,11 +1004,8 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 
 		dev_log!(
 			"scheme-assets",
-
 			"[LandFix:VscodeFile] css-shim {} -> _LOAD_CSS_WORKER({})",
-
 			CleanPath,
-
 			LocalPath
 		);
 
@@ -1094,33 +1029,19 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 	// to resolve them against `Sky/Target/` (where they do not exist).
 	let IsAbsoluteOSPath = [
 		"Volumes/",
-
 		"Users/",
-
 		"Library/",
-
 		"System/",
-
 		"Applications/",
-
 		"private/",
-
 		"tmp/",
-
 		"var/",
-
 		"etc/",
-
 		"opt/",
-
 		"home/",
-
 		"usr/",
-
 		"srv/",
-
 		"mnt/",
-
 		"root/",
 	]
 	.iter()
@@ -1133,13 +1054,9 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 
 		dev_log!(
 			"scheme-assets",
-
 			"[LandFix:VscodeFile] os-abs candidate {} (exists={}, is_file={})",
-
 			AbsolutePath,
-
 			FilesystemPath.exists(),
-
 			FilesystemPath.is_file()
 		);
 
@@ -1170,15 +1087,10 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 
 					dev_log!(
 						"scheme-assets",
-
 						"[LandFix:VscodeFile] os-abs served {} ({}, {} bytes, encoding={:?})",
-
 						AbsolutePath,
-
 						Entry.Mime,
-
 						Body.len(),
-
 						Encoding
 					);
 
@@ -1211,11 +1123,8 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 				Err(Error) => {
 					dev_log!(
 						"lifecycle",
-
 						"warn: [LandFix:VscodeFile] os-abs mmap failure {}: {}",
-
 						AbsolutePath,
-
 						Error
 					);
 				},
@@ -1237,25 +1146,17 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 
 		dev_log!(
 			"lifecycle",
-
 			"[LandFix:VscodeFile] Serving (embedded) {} ({}, {} bytes)",
-
 			CleanPath,
-
 			Mime,
-
 			Asset.bytes.len()
 		);
 
 		dev_log!(
 			"scheme-assets",
-
 			"[SchemeAssets] serve source=embedded path={} mime={} bytes={}",
-
 			CleanPath,
-
 			Mime,
-
 			Asset.bytes.len()
 		);
 
@@ -1301,15 +1202,10 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 
 					dev_log!(
 						"lifecycle",
-
 						"[LandFix:VscodeFile] Serving (fs-mmap) {} ({}, {} bytes, encoding={:?})",
-
 						CleanPath,
-
 						Entry.Mime,
-
 						Body.len(),
-
 						Encoding
 					);
 
@@ -1342,11 +1238,8 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 				Err(Error) => {
 					dev_log!(
 						"lifecycle",
-
 						"warn: [LandFix:VscodeFile] Failed to read {}: {}",
-
 						FilesystemPath.display(),
-
 						Error
 					);
 				},
@@ -1356,11 +1249,8 @@ fn _VscodeFileSchemeHandler<R:tauri::Runtime>(
 
 	dev_log!(
 		"lifecycle",
-
 		"warn: [LandFix:VscodeFile] Not found: {} (resolved: {})",
-
 		Uri,
-
 		CleanPath
 	);
 
@@ -1424,7 +1314,6 @@ pub fn VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 
 	Request:&tauri::http::request::Request<Vec<u8>>,
 ) -> Response<Vec<u8>> {
-
 	let Result = catch_unwind(AssertUnwindSafe(|| _VscodeWebviewSchemeHandler(AppHandle, Request)));
 
 	match Result {
@@ -1441,9 +1330,7 @@ pub fn VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 
 			dev_log!(
 				"lifecycle",
-
 				"error: [LandFix:VscodeWebview] caught panic in scheme handler: {}",
-
 				Info
 			);
 
@@ -1457,7 +1344,6 @@ fn _VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 
 	Request:&tauri::http::request::Request<Vec<u8>>,
 ) -> Response<Vec<u8>> {
-
 	let Uri = Request.uri().to_string();
 
 	dev_log!("scheme-assets", "[LandFix:VscodeWebview] Request: {}", Uri);
@@ -1501,11 +1387,8 @@ fn _VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 
 	dev_log!(
 		"scheme-assets",
-
 		"[LandFix:VscodeWebview] resolve {} -> {}",
-
 		CleanPath,
-
 		ResolvedPath
 	);
 
@@ -1518,13 +1401,9 @@ fn _VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 
 		dev_log!(
 			"scheme-assets",
-
 			"[LandFix:VscodeWebview] serve embedded {} ({}, {} bytes)",
-
 			ResolvedPath,
-
 			Mime,
-
 			Asset.bytes.len()
 		);
 
@@ -1555,13 +1434,9 @@ fn _VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 
 					dev_log!(
 						"scheme-assets",
-
 						"[LandFix:VscodeWebview] serve filesystem {} ({}, {} bytes)",
-
 						FilesystemPath.display(),
-
 						Mime,
-
 						Bytes.len()
 					);
 
@@ -1579,11 +1454,8 @@ fn _VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 				Err(Error) => {
 					dev_log!(
 						"lifecycle",
-
 						"warn: [LandFix:VscodeWebview] Failed to read {}: {}",
-
 						FilesystemPath.display(),
-
 						Error
 					);
 				},
@@ -1593,11 +1465,8 @@ fn _VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 
 	dev_log!(
 		"lifecycle",
-
 		"warn: [LandFix:VscodeWebview] Not found: {} (resolved: {})",
-
 		Uri,
-
 		ResolvedPath
 	);
 

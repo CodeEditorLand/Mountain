@@ -8,13 +8,10 @@
 use std::collections::HashMap;
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
-
 use serde_json::{Value, json};
-
 use tauri::{Emitter, Manager};
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
-
 use crate::dev_log;
 
 /// Configuration operations implementation for MountainEnvironment
@@ -25,7 +22,6 @@ pub(super) async fn set_webview_options_impl(
 
 	options_value:Value,
 ) -> Result<(), CommonError> {
-
 	dev_log!("extensions", "[WebviewProvider] Setting options for Webview: {}", handle);
 
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
@@ -68,7 +64,6 @@ pub(super) async fn set_webview_options_impl(
 	env.ApplicationHandle
 		.emit::<Value>(
 			SkyEvent::WebviewOptionsChanged.AsStr(),
-
 			json!({ "Handle": handle, "Options": options_value }),
 		)
 		.map_err(|error| {
@@ -86,14 +81,10 @@ pub(super) async fn set_webview_html_impl(
 
 	html:String,
 ) -> Result<(), CommonError> {
-
 	dev_log!(
 		"extensions",
-
 		"[WebviewProvider] Setting HTML for Webview: {} ({} bytes)",
-
 		handle,
-
 		html.len()
 	);
 

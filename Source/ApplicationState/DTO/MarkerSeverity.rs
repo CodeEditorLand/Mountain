@@ -14,7 +14,6 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u32)]
 pub enum MarkerSeverity {
-
 	/// Something not allowed by the rules of a language
 	Error = 8,
 

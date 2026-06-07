@@ -26,7 +26,6 @@
 //! - [ ] Add performance metrics
 
 use serde::Serializer;
-
 use url::Url;
 
 use crate::dev_log;
@@ -46,7 +45,6 @@ use crate::dev_log;
 pub fn Fn<S>(URLInstance:&Url, SerializerInstance:S) -> Result<S::Ok, S::Error>
 where
 	S: Serializer, {
-
 	let url_string = URLInstance.as_str();
 
 	dev_log!("ipc", "[URLSerializer] Serializing URL: {}", url_string);

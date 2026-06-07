@@ -14,7 +14,6 @@
 use Echo::Task::Priority::Priority as EchoPriority;
 
 pub fn Fn(Method:&str) -> EchoPriority {
-
 	match Method {
 		"FileSystem.ReadFile"
 		| "FileSystem.WriteFile"

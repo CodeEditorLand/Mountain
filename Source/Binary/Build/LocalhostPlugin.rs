@@ -41,7 +41,6 @@ const OTLP_HOST:&str = "127.0.0.1:4318";
 /// Returns `None` for unknown extensions so the plugin's `asset.mime_type`
 /// fallback still applies (images, WASM, etc.).
 fn MimeFromUrl(Url:&str) -> Option<&'static str> {
-
 	// Strip query string / fragment before extension match.
 	let Path = Url.split(['?', '#']).next().unwrap_or(Url);
 
@@ -81,7 +80,6 @@ fn MimeFromUrl(Url:&str) -> Option<&'static str> {
 ///
 /// See `OTLP_HOST` for why this is currently unused.
 fn ProxyToOTLP(Body:&[u8]) -> bool {
-
 	let Ok(mut Stream) = TcpStream::connect_timeout(&OTLP_HOST.parse().unwrap(), Duration::from_millis(500)) else {
 		return false;
 	};
@@ -94,7 +92,6 @@ fn ProxyToOTLP(Body:&[u8]) -> bool {
 		"POST /v1/traces HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: \
 		 close\r\n\r\n",
 		OTLP_HOST,
-
 		Body.len(),
 	);
 
@@ -128,7 +125,6 @@ fn ProxyToOTLP(Body:&[u8]) -> bool {
 /// (Jaeger, OTEL Collector, etc.) so OTELBridge.ts can send telemetry
 /// without cross-origin issues. Uses raw TCP - no extra HTTP client dependency.
 pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
-
 	// Resolve the user's home directory once at startup. Used to seed
 	// the vendored localhost plugin's `extension_root` allowlist for
 	// the `/Extension/<abs-fs-path>` URL prefix, which serves

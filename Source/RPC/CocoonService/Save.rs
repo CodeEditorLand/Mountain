@@ -3,11 +3,9 @@
 //! Typed gRPC RPCs: participate_in_save.
 
 use tonic::{Response, Status};
-
 use ::Vine::Generated::{ParticipateInSaveRequest, ParticipateInSaveResponse};
 
 use super::CocoonServiceImpl;
-
 use crate::dev_log;
 
 pub async fn Fn(
@@ -15,7 +13,6 @@ pub async fn Fn(
 
 	req:ParticipateInSaveRequest,
 ) -> Result<Response<ParticipateInSaveResponse>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] Participating in save for: {:?}", req.uri);
 
 	// Save participants are extension-registered onWillSaveTextDocument handlers.

@@ -38,13 +38,11 @@ use crate::{ApplicationState::DTO::TreeViewStateDTO::TreeViewStateDTO, dev_log};
 /// Active tree views state containing tree views by ID.
 #[derive(Clone)]
 pub struct TreeViewState {
-
 	/// Active tree views organized by ID.
 	pub ActiveTreeViews:Arc<Mutex<HashMap<String, TreeViewStateDTO>>>,
 }
 
 impl Default for TreeViewState {
-
 	fn default() -> Self {
 		dev_log!("extensions", "[TreeViewState] Initializing default tree view state...");
 
@@ -53,7 +51,6 @@ impl Default for TreeViewState {
 }
 
 impl TreeViewState {
-
 	/// Gets all active tree views.
 	pub fn GetAll(&self) -> HashMap<String, TreeViewStateDTO> { self.ActiveTreeViews.lock().clone() }
 

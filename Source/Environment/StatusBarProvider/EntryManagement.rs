@@ -8,13 +8,10 @@ use CommonLibrary::{
 	IPC::SkyEvent::SkyEvent,
 	StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO,
 };
-
 use serde_json::json;
-
 use tauri::Emitter;
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
-
 use crate::dev_log;
 
 /// Entry management operations implementation for MountainEnvironment
@@ -23,7 +20,6 @@ pub(super) async fn set_status_bar_entry_impl(
 
 	entry:StatusBarEntryDTO,
 ) -> Result<(), CommonError> {
-
 	dev_log!("lifecycle", "[StatusBarProvider] Setting entry: {}", entry.EntryIdentifier);
 
 	let mut items_guard = env
@@ -64,7 +60,6 @@ pub(super) async fn dispose_status_bar_entry_impl(
 
 	entry_identifier:String,
 ) -> Result<(), CommonError> {
-
 	dev_log!("lifecycle", "[StatusBarProvider] Disposing entry: {}", entry_identifier);
 
 	env.ApplicationState

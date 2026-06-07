@@ -39,7 +39,6 @@ const AIR_GRPC_ADDRESS:&str = "[::1]:50053";
 ///   - The `AirIntegration` Cargo feature (compile-time).
 ///   - The `Spawn` env var (runtime; mirrors `CocoonStart` semantics).
 pub async fn Fn(_ApplicationHandle:&AppHandle, _Environment:&Arc<MountainEnvironment>) -> Result<(), String> {
-
 	// Atom N1 mirror: respect the `Spawn=false` env that disables
 	// sidecar spawn for tests and the smallest-shippable-surface
 	// Mountain-only profile.
@@ -58,7 +57,6 @@ pub async fn Fn(_ApplicationHandle:&AppHandle, _Environment:&Arc<MountainEnviron
 	{
 		dev_log!(
 			"grpc",
-
 			"[AirStart] AirIntegration feature disabled; skipping spawn (workbench runs without Air)"
 		);
 
@@ -68,7 +66,6 @@ pub async fn Fn(_ApplicationHandle:&AppHandle, _Environment:&Arc<MountainEnviron
 
 #[cfg(feature = "AirIntegration")]
 async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<MountainEnvironment>) -> Result<(), String> {
-
 	use std::path::PathBuf;
 
 	use tauri::Manager;
@@ -98,7 +95,6 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 		None => {
 			dev_log!(
 				"grpc",
-
 				"warn: [AirStart] Air binary not found in resources or target/debug; running without Air"
 			);
 
@@ -115,7 +111,6 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 		.env("AIR_GRPC_ADDRESS", AIR_GRPC_ADDRESS)
 		.env(
 			"AIR_LOG_DIR",
-
 			std::env::var("AIR_LOG_DIR").unwrap_or_else(|_| "/tmp/air-log".to_string()),
 		)
 		.stdin(std::process::Stdio::null())
@@ -186,9 +181,7 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 		Err(Error) => {
 			dev_log!(
 				"grpc",
-
 				"warn: [AirStart] Air spawned but gRPC connect failed ({}); workbench continues in degraded mode",
-
 				Error
 			);
 		},

@@ -47,7 +47,6 @@ use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, dev_log};
 /// counter.
 #[derive(Clone)]
 pub struct TerminalState {
-
 	/// Active terminals organized by ID.
 	pub ActiveTerminals:Arc<Mutex<HashMap<u64, Arc<Mutex<TerminalStateDTO>>>>>,
 
@@ -56,7 +55,6 @@ pub struct TerminalState {
 }
 
 impl Default for TerminalState {
-
 	fn default() -> Self {
 		dev_log!("terminal", "[TerminalState] Initializing default terminal state...");
 
@@ -69,7 +67,6 @@ impl Default for TerminalState {
 }
 
 impl TerminalState {
-
 	/// Gets the next available unique identifier for a terminal instance.
 	pub fn GetNextTerminalIdentifier(&self) -> u64 { self.NextTerminalIdentifier.fetch_add(1, AtomicOrdering::Relaxed) }
 
