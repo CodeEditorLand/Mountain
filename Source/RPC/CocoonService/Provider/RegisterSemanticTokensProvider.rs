@@ -2,9 +2,7 @@
 //! semantic-tokens-specific request shape (carries the legend).
 
 use tonic::{Response, Status};
-
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
-
 use ::Vine::Generated::{Empty, RegisterSemanticTokensProviderRequest};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -14,16 +12,12 @@ pub async fn Fn(
 
 	Request:RegisterSemanticTokensProviderRequest,
 ) -> Result<Response<Empty>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] Registering Semantic Tokens Provider");
 
 	Service.RegisterProvider(
 		Request.handle,
-
 		ProviderType::SemanticTokens,
-
 		&Request.language_selector,
-
 		&Request.extension_id,
 	);
 

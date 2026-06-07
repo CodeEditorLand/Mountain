@@ -1,11 +1,8 @@
 //! Forward a document-symbols request to the registered provider.
 
 use tonic::{Response, Status};
-
 use url::Url;
-
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
-
 use ::Vine::Generated::{ProvideDocumentSymbolsRequest, ProvideDocumentSymbolsResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -15,7 +12,6 @@ pub async fn Fn(
 
 	Request:ProvideDocumentSymbolsRequest,
 ) -> Result<Response<ProvideDocumentSymbolsResponse>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] Providing document symbols");
 
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");

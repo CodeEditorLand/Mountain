@@ -2,17 +2,13 @@
 //! (`/closed` had no consumer.)
 
 use serde_json::json;
-
 use tauri::Emitter;
-
 use tonic::{Response, Status};
-
 use ::Vine::Generated::{Empty, TerminalClosedNotification};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalClosedNotification) -> Result<Response<Empty>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] Terminal closed: {}", Request.terminal_id);
 
 	let _ = Service

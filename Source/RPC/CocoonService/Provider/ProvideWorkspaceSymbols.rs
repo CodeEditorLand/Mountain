@@ -1,9 +1,7 @@
 //! Forward a workspace-symbols query to the registered provider.
 
 use tonic::{Response, Status};
-
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
-
 use ::Vine::Generated::{ProvideWorkspaceSymbolsRequest, ProvideWorkspaceSymbolsResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -13,12 +11,9 @@ pub async fn Fn(
 
 	Request:ProvideWorkspaceSymbolsRequest,
 ) -> Result<Response<ProvideWorkspaceSymbolsResponse>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Providing workspace symbols for query: {}",
-
 		Request.query
 	);
 

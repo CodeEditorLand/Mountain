@@ -2,30 +2,22 @@
 //! `sky://terminal/processId`.
 
 use serde_json::json;
-
 use tauri::Emitter;
-
 use tonic::{Response, Status};
-
 use ::Vine::Generated::{Empty, TerminalProcessIdNotification};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalProcessIdNotification) -> Result<Response<Empty>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Terminal PID: {} for terminal {}",
-
 		Request.process_id,
-
 		Request.terminal_id
 	);
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://terminal/processId",
-
 		json!({ "id": Request.terminal_id, "pid": Request.process_id }),
 	);
 

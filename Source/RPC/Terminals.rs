@@ -7,12 +7,10 @@ pub struct Struct;
 
 #[cfg(feature = "terminals")]
 impl Struct {
-
 	pub fn new() -> Self { Struct }
 }
 
 #[cfg(feature = "terminals")]
 impl Default for Struct {
-
 	fn default() -> Self { Self::new() }
 }

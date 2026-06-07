@@ -7,12 +7,10 @@ pub struct Struct;
 
 #[cfg(feature = "scm-support")]
 impl Struct {
-
 	pub fn new() -> Self { Struct }
 }
 
 #[cfg(feature = "scm-support")]
 impl Default for Struct {
-
 	fn default() -> Self { Self::new() }
 }

@@ -2,14 +2,11 @@
 //! result location into the gRPC `Location` shape.
 
 use tonic::{Response, Status};
-
 use url::Url;
-
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
-
 use ::Vine::Generated::{Location, Position, ProvideDefinitionRequest, ProvideDefinitionResponse, Range, Uri};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -19,12 +16,9 @@ pub async fn Fn(
 
 	Request:ProvideDefinitionRequest,
 ) -> Result<Response<ProvideDefinitionResponse>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Providing definition for provider {}",
-
 		Request.provider_handle
 	);
 
