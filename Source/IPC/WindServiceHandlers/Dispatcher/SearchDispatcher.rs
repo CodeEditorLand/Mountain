@@ -1,8 +1,8 @@
 //! Search command dispatcher.
 
-use crate::Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchFindInFiles};
-
 use serde_json::Value;
+
+use crate::Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchFindInFiles};
 
 /// Dispatches search commands.
 ///
@@ -11,28 +11,27 @@ use serde_json::Value;
 /// - `search:findFiles` / `search:fileSearch` / `search:searchFile`
 /// - `search:cancel` / `search:clearCache` / `search:onDidChangeResult` (stubs)
 pub async fn dispatch_search(
-    runtime: &crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
 
-    command: &str,
+	command:&str,
 
-    arguments: Vec<Value>,
+	arguments:Vec<Value>,
 ) -> Result<Value, String> {
+	match command {
+		"search:findInFiles" | "search:textSearch" | "search:searchText" => {
+			SearchFindInFiles(runtime.clone(), arguments).await
+		},
 
-    match command {
-        "search:findInFiles" | "search:textSearch" | "search:searchText" => {
-            SearchFindInFiles(runtime.clone(), arguments).await
-        },
+		"search:findFiles" | "search:fileSearch" | "search:searchFile" => {
+			SearchFindFiles(runtime.clone(), arguments).await
+		},
 
-        "search:findFiles" | "search:fileSearch" | "search:searchFile" => {
-            SearchFindFiles(runtime.clone(), arguments).await
-        },
+		"search:cancel" | "search:clearCache" | "search:onDidChangeResult" => {
+			crate::dev_log!("search", "{} (stub-ack)", command);
 
-        "search:cancel" | "search:clearCache" | "search:onDidChangeResult" => {
-            crate::dev_log!("search", "{} (stub-ack)", command);
+			Ok(Value::Null)
+		},
 
-            Ok(Value::Null)
-        },
-
-        _ => Err(format!("Unknown search command: {}", command)),
-    }
+		_ => Err(format!("Unknown search command: {}", command)),
+	}
 }

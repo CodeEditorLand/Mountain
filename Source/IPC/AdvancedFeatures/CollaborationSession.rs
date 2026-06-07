@@ -8,7 +8,6 @@ use crate::IPC::AdvancedFeatures::CollaborationPermissions;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
-
 	pub session_id:String,
 
 	pub participants:Vec<String>,

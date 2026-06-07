@@ -15,7 +15,6 @@ use serde_json::{Value, json};
 use crate::dev_log;
 
 pub async fn Fn() -> Result<Value, String> {
-
 	let mut Profiles = Vec::new();
 
 	#[cfg(unix)]
@@ -24,33 +23,19 @@ pub async fn Fn() -> Result<Value, String> {
 
 		let UnixShells = [
 			"/bin/zsh",
-
 			"/bin/bash",
-
 			"/bin/sh",
-
 			"/usr/bin/zsh",
-
 			"/usr/bin/bash",
-
 			"/usr/bin/fish",
-
 			"/usr/local/bin/fish",
-
 			"/usr/local/bin/zsh",
-
 			"/usr/local/bin/bash",
-
 			"/bin/dash",
-
 			"/usr/bin/ksh",
-
 			"/usr/bin/tcsh",
-
 			"/bin/csh",
-
 			"/usr/bin/pwsh",
-
 			"/usr/local/bin/pwsh",
 		];
 
@@ -111,42 +96,27 @@ pub async fn Fn() -> Result<Value, String> {
 		let WindowsShells:Vec<(&str, String, Vec<&str>)> = vec![
 			(
 				"PowerShell",
-
 				format!("{}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", SystemRoot),
-
 				vec!["-NoLogo"],
 			),
-
 			(
 				"PowerShell 7",
-
 				format!("{}\\PowerShell\\7\\pwsh.exe", ProgramFiles),
-
 				vec!["-NoLogo"],
 			),
-
 			("Command Prompt", format!("{}\\System32\\cmd.exe", SystemRoot), vec![]),
-
 			(
 				"Git Bash",
-
 				format!("{}\\Git\\bin\\bash.exe", ProgramFiles),
-
 				vec!["--login", "-i"],
 			),
-
 			(
 				"Git Bash (User)",
-
 				format!("{}\\Programs\\Git\\bin\\bash.exe", LocalAppData),
-
 				vec!["--login", "-i"],
 			),
-
 			("WSL", format!("{}\\System32\\wsl.exe", SystemRoot), vec![]),
-
 			("MSYS2", "C:\\msys64\\usr\\bin\\bash.exe".to_string(), vec!["--login", "-i"]),
-
 			("Cygwin", "C:\\cygwin64\\bin\\bash.exe".to_string(), vec!["--login", "-i"]),
 		];
 

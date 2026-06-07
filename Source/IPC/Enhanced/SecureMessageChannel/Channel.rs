@@ -11,15 +11,12 @@ use std::{
 };
 
 use bincode::serde::{decode_from_slice, encode_to_vec};
-
 use ring::{
 	aead::{self, AES_256_GCM, NONCE_LEN},
 	hmac,
 	rand::{SecureRandom, SystemRandom},
 };
-
 use serde::{Deserialize, Serialize};
-
 use tokio::sync::RwLock;
 
 use crate::{
@@ -34,7 +31,6 @@ use crate::{
 };
 
 pub struct Struct {
-
 	pub config:SecurityConfig,
 
 	pub current_key:Arc<RwLock<EncryptionKey>>,
@@ -49,7 +45,6 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn new(config:SecurityConfig) -> Result<Self, String> {
 		let rng = SystemRandom::new();
 
@@ -81,9 +76,7 @@ impl Struct {
 
 		dev_log!(
 			"ipc",
-
 			"[SecureMessageChannel] Created secure channel with {} encryption",
-
 			channel.config.encryption_algorithm
 		);
 
@@ -184,9 +177,7 @@ impl Struct {
 
 		dev_log!(
 			"ipc",
-
 			"[SecureMessageChannel] Message encrypted (size: {} bytes)",
-
 			encrypted_message.ciphertext.len()
 		);
 
@@ -392,7 +383,6 @@ impl Struct {
 }
 
 impl Clone for Struct {
-
 	fn clone(&self) -> Self {
 		Self {
 			config:self.config.clone(),

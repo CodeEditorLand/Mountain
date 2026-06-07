@@ -15,7 +15,6 @@ use crate::{
 };
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())

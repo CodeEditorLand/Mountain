@@ -12,7 +12,6 @@ pub(super) fn validate_language_feature_request(
 
 	position:&serde_json::Value,
 ) -> Result<(), String> {
-
 	if uri.is_empty() {
 		return Err(format!("Empty URI for {} request", request_type));
 	}

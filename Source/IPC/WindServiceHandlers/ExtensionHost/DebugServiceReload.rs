@@ -3,13 +3,10 @@
 //! a fresh Cocoon spawn.
 
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, Emitter};
-
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 pub async fn Fn(ApplicationHandle:AppHandle) -> Result<Value, String> {
-
 	crate::dev_log!("exthost", "extensionhostdebugservice:reload");
 
 	if let Err(Error) = ApplicationHandle.emit(SkyEvent::ExtHostDebugReload.AsStr(), json!({})) {

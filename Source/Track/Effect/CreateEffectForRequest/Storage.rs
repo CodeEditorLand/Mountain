@@ -1,5 +1,4 @@
 pub fn Matches(MethodName:&str) -> bool {
-
 	match MethodName {
 		"Storage.Get" | "Storage.Set" => true,
 
@@ -10,15 +9,12 @@ pub fn Matches(MethodName:&str) -> bool {
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
-
 use serde_json::{Value, json};
-
 use tauri::Runtime;
 
 use crate::Track::Effect::{CreateEffectForRequest::Utilities::Params::string_at, MappedEffectType::MappedEffect};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
 		"Storage.Get" => {
 			crate::effect!(run_time, {

@@ -6,17 +6,14 @@ use std::sync::Arc;
 
 #[cfg(feature = "AirIntegration")]
 use AirLibrary::Vine::Generated::air::{air_service_client::AirServiceClient, air_service_server::UpdateCheckRequest};
-
 #[cfg(feature = "AirIntegration")]
 use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Error::CommonError::CommonError,
 	UserInterface::{DTO::MessageSeverity::MessageSeverity, ShowMessage::ShowMessage},
 };
-
 #[cfg(feature = "AirIntegration")]
 use serde_json::json;
-
 #[cfg(feature = "AirIntegration")]
 use tauri::AppHandle;
 
@@ -33,7 +30,6 @@ pub async fn Fn(
 
 	AirClient:&Arc<AirServiceClient<tonic::transport::Channel>>,
 ) -> Result<(), CommonError> {
-
 	dev_log!("update", "[UpdateService] Checking via Air...");
 
 	let CurrentVersion = env!("CARGO_PKG_VERSION").to_string();
@@ -55,16 +51,13 @@ pub async fn Fn(
 
 				let Message = format!(
 					"A new version of Mountain is available: v{}.\n\n{}",
-
 					Reply.version, Reply.release_notes
 				);
 
 				let UserResponse = RunTime
 					.Run(ShowMessage(
 						MessageSeverity::Info,
-
 						Message,
-
 						json!({ "modal": true, "actions": ["Install", "Later"] }),
 					))
 					.await?;
@@ -74,9 +67,7 @@ pub async fn Fn(
 					RunTime
 						.Run(ShowMessage(
 							MessageSeverity::Info,
-
 							"Update download via Air is not yet implemented. Please update manually.".to_string(),
-
 							json!(null),
 						))
 						.await?;
@@ -85,9 +76,7 @@ pub async fn Fn(
 				RunTime
 					.Run(ShowMessage(
 						MessageSeverity::Info,
-
 						"You are running the latest version of Mountain.".to_string(),
-
 						json!(null),
 					))
 					.await?;
@@ -103,9 +92,7 @@ pub async fn Fn(
 				RunTime
 					.Run(ShowMessage(
 						MessageSeverity::Error,
-
 						format!("Failed to check for updates via Air: {}", Status),
-
 						json!(null),
 					))
 					.await?;

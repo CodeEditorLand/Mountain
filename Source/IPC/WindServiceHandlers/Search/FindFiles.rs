@@ -12,7 +12,6 @@ use crate::{
 };
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	use CommonLibrary::Workspace::WorkspaceProvider::WorkspaceProvider;
 
 	let IncludePattern = Arguments
@@ -30,11 +29,8 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 	dev_log!(
 		"search",
-
 		"search:fileSearch delegating to WorkspaceProvider::FindFilesInWorkspace (ignore={}, symlinks={})",
-
 		UseIgnoreFiles,
-
 		FollowSymlinks
 	);
 

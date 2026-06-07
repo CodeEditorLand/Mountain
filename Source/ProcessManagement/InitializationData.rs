@@ -153,11 +153,8 @@ use CommonLibrary::{
 	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
 	Workspace::WorkspaceProvider::WorkspaceProvider,
 };
-
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, Manager, Wry};
-
 use uuid::Uuid;
 
 use crate::{
@@ -177,7 +174,6 @@ use crate::{
 /// # Returns
 /// The machine ID as a String
 async fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
-
 	let machine_id_path = app_data_dir.join("machine-id.txt");
 
 	// Try to load existing machine ID using async I/O so the Tokio
@@ -200,9 +196,7 @@ async fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
 		if let Err(e) = tokio::fs::create_dir_all(parent).await {
 			dev_log!(
 				"cocoon",
-
 				"warn: [InitializationData] Failed to create machine ID directory: {}",
-
 				e
 			);
 		}
@@ -212,9 +206,7 @@ async fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
 	if let Err(e) = tokio::fs::write(&machine_id_path, &new_machine_id).await {
 		dev_log!(
 			"cocoon",
-
 			"warn: [InitializationData] Failed to persist machine ID to disk: {}",
-
 			e
 		);
 	} else {
@@ -230,7 +222,6 @@ pub async fn ConstructSandboxConfiguration(
 
 	ApplicationState:&Arc<ApplicationState>,
 ) -> Result<Value, CommonError> {
-
 	dev_log!("cocoon", "[InitializationData] Constructing ISandboxConfiguration for Sky.");
 
 	let PathResolver = ApplicationHandle.path();
@@ -449,7 +440,6 @@ pub async fn ConstructSandboxConfiguration(
 
 /// Constructs the `IExtensionHostInitData` payload sent to `Cocoon`.
 pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvironment) -> Result<Value, CommonError> {
-
 	dev_log!("cocoon", "[InitializationData] Constructing IExtensionHostInitData for Cocoon.");
 
 	let ApplicationState = &Environment.ApplicationState;
@@ -507,11 +497,8 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 		dev_log!(
 			"cocoon",
-
 			"[InitializationData] FoldersWire count={} sample0={}",
-
 			FolderCount,
-
 			FolderSample
 		);
 

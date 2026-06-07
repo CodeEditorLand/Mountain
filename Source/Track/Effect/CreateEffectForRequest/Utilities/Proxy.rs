@@ -12,7 +12,6 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider as IPCProviderTrait},
 };
-
 use serde_json::Value;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
@@ -28,7 +27,6 @@ pub async fn proxy_cocoon(
 
 	timeout_ms:u64,
 ) -> Result<Value, String> {
-
 	let ipc:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
 
 	let method = format!("{}${}", target.GetTargetPrefix(), method_suffix);

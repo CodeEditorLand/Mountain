@@ -13,7 +13,6 @@ use CommonLibrary::{
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
-
 	pub async fn RunWithRetry<TCapabilityProvider, TError, TOutput>(
 		&self,
 
@@ -25,12 +24,9 @@ impl ApplicationRunTime {
 	) -> Result<TOutput, TError>
 	where
 		TCapabilityProvider: ?Sized + Send + Sync + 'static,
-
 		<Self as CommonLibrary::Environment::HasEnvironment::HasEnvironment>::EnvironmentType:
 			Requires<TCapabilityProvider>,
-
 		TError: From<CommonError> + Send + Sync + 'static + std::fmt::Display,
-
 		TOutput: Send + Sync + 'static, {
 		let mut RetryCount = 0;
 
@@ -49,13 +45,9 @@ impl ApplicationRunTime {
 
 					dev_log!(
 						"lifecycle",
-
 						"warn: [ApplicationRunTime] Effect execution failed (attempt {}): {}. Retrying in {:?}...",
-
 						RetryCount,
-
 						Error,
-
 						CurrentDelay
 					);
 

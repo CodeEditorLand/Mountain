@@ -3,9 +3,7 @@ pub fn Matches(MethodName:&str) -> bool { MethodName.starts_with("$terminal:") |
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
-
 use serde_json::{Value, json};
-
 use tauri::Runtime;
 
 use crate::{
@@ -17,7 +15,6 @@ use crate::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
 		"$terminal:create" => {
 			crate::effect!(run_time, {

@@ -16,7 +16,6 @@ use tokio::net::TcpListener;
 /// Test service registration
 #[test]
 fn test_service_registration() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -35,7 +34,6 @@ fn test_service_registration() {
 /// Test service lookup not found
 #[test]
 fn test_service_lookup_not_found() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -48,7 +46,6 @@ fn test_service_lookup_not_found() {
 /// Test service lookup works
 #[test]
 fn test_service_lookup_found() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -65,7 +62,6 @@ fn test_service_lookup_found() {
 /// Test multiple service registration
 #[test]
 fn test_multiple_service_registration() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -86,7 +82,6 @@ fn test_multiple_service_registration() {
 /// Test service unregistration
 #[test]
 fn test_service_unregistration() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -103,7 +98,6 @@ fn test_service_unregistration() {
 /// Test service overwriting
 #[test]
 fn test_service_overwriting() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -120,7 +114,6 @@ fn test_service_overwriting() {
 /// Test all_services method
 #[test]
 fn test_all_services() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -139,20 +132,15 @@ fn test_all_services() {
 /// Test TLS service registration
 #[test]
 fn test_tls_service_registration() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
 
 	registry.register_with_options(
 		"secure.service.land".to_string(),
-
 		8080,
-
 		Some(8443),
-
 		true,
-
 		Some("/health".to_string()),
 	);
 
@@ -168,7 +156,6 @@ fn test_tls_service_registration() {
 /// Test default TLS port calculation
 #[test]
 fn test_default_tls_port() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -185,7 +172,6 @@ fn test_default_tls_port() {
 /// Test health check with running service
 #[tokio::test]
 async fn test_service_health_check_with_running_server() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	// Start a simple HTTP server
@@ -229,7 +215,6 @@ async fn test_service_health_check_with_running_server() {
 /// Test health check with non-existent service
 #[tokio::test]
 async fn test_service_health_check_non_existent() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -245,7 +230,6 @@ async fn test_service_health_check_non_existent() {
 /// Test health check with service not running
 #[tokio::test]
 async fn test_service_health_check_service_not_running() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -253,9 +237,7 @@ async fn test_service_health_check_service_not_running() {
 	// Register a service that's not actually running
 	registry.register(
 		"not-running.land".to_string(),
-
 		19999, // Port unlikely to be in use
-
 		Some("/health".to_string()),
 	);
 
@@ -280,7 +262,6 @@ async fn test_service_health_check_service_not_running() {
 /// Test concurrent service registration
 #[test]
 fn test_concurrent_service_registration() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -317,7 +298,6 @@ fn test_concurrent_service_registration() {
 /// Test concurrent service lookup
 #[test]
 fn test_concurrent_service_lookup() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -355,7 +335,6 @@ fn test_concurrent_service_lookup() {
 /// Test uses_tls method
 #[test]
 fn test_uses_tls() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -374,7 +353,6 @@ fn test_uses_tls() {
 /// Test service registry default implementation
 #[test]
 fn test_service_registry_default() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::default();
@@ -387,7 +365,6 @@ fn test_service_registry_default() {
 /// Test service with custom health check path
 #[test]
 fn test_custom_health_check_path() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -402,7 +379,6 @@ fn test_custom_health_check_path() {
 /// Test service without health check path
 #[test]
 fn test_no_health_check_path() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -417,7 +393,6 @@ fn test_no_health_check_path() {
 /// Test service port range validation
 #[test]
 fn test_service_port_range() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -435,7 +410,6 @@ fn test_service_port_range() {
 /// Test service name validation
 #[test]
 fn test_service_name_formats() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();
@@ -457,7 +431,6 @@ fn test_service_name_formats() {
 /// Test service clone
 #[test]
 fn test_service_registry_clone() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry1 = ServiceRegistry::new();
@@ -484,7 +457,6 @@ fn test_service_registry_clone() {
 /// Test large number of services
 #[test]
 fn test_large_number_of_services() {
-
 	use Binary::Build::ServiceRegistry::ServiceRegistry;
 
 	let registry = ServiceRegistry::new();

@@ -3,7 +3,6 @@
 use serde_json::{Value, json};
 
 pub fn Fn<F:FnOnce(&mut serde_json::Map<String, Value>)>(Apply:F) {
-
 	let Path = super::Path::Fn();
 
 	let mut Parsed:serde_json::Map<String, Value> = std::fs::read_to_string(&Path)

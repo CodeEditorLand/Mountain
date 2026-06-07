@@ -6,9 +6,7 @@
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, Keybinding::KeybindingProvider::KeybindingProvider};
-
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, Manager, Wry, command};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
@@ -21,7 +19,6 @@ pub async fn RegisterExtensionKeybindings(
 
 	_Keybindings:Value,
 ) -> Result<Value, String> {
-
 	dev_log!("keybinding", "registering keybindings for extension: {}", ExtensionIdentifier);
 
 	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();

@@ -52,7 +52,6 @@
 use std::sync::Arc;
 
 use serde_json::Value;
-
 use tauri::{AppHandle, Runtime};
 
 use crate::{
@@ -74,7 +73,6 @@ pub async fn DispatchSideCarRequest<R:Runtime>(
 
 	Parameters:Value,
 ) -> Result<Value, String> {
-
 	// Per-request dispatch line - fires for every FileSystem.ReadFile /
 	// FileSystem.Stat / Configuration.Inspect round-trip from Cocoon. The
 	// caller-side `[DEV:IPC] invoke:` and `done:` pair already carries the
@@ -82,11 +80,8 @@ pub async fn DispatchSideCarRequest<R:Runtime>(
 	// line adds nothing at the default log level. Route to `grpc-verbose`.
 	dev_log!(
 		"grpc-verbose",
-
 		"[Track/SideCarRequest] Dispatching sidecar request from '{}': {}",
-
 		SideCarIdentifier,
-
 		MethodName
 	);
 
@@ -96,11 +91,8 @@ pub async fn DispatchSideCarRequest<R:Runtime>(
 		Err(Error) => {
 			dev_log!(
 				"grpc",
-
 				"error: [Track/SideCarRequest] Failed to create effect for sidecar method '{}': {}",
-
 				MethodName,
-
 				Error
 			);
 

@@ -6,7 +6,6 @@
 use Echo::Task::Priority::Priority as EchoPriority;
 
 pub fn Fn(Command:&str) -> EchoPriority {
-
 	use std::str::FromStr;
 
 	match CommonLibrary::IPC::Channel::Channel::from_str(Command) {

@@ -8,7 +8,6 @@ use serde_json::Value;
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-
 	let Uri = RunTime.Environment.ApplicationState.Feature.NavigationHistory.GoForward();
 
 	Ok(Uri.map(Value::String).unwrap_or(Value::Null))

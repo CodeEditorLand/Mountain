@@ -7,7 +7,6 @@
 use serde_json::Value;
 
 use super::{ApplicationRoot::Get::Fn as get_static_application_root, UserdataDir::Get::Fn as get_userdata_base_dir};
-
 use crate::dev_log;
 
 /// Extract a filesystem path from a VS Code argument.
@@ -17,7 +16,6 @@ use crate::dev_log;
 /// Windows URI paths have a leading slash: `/C:/Users/...` → strip it.
 /// Unix paths start with `/` normally.
 pub fn Fn(Arg:&Value) -> Result<String, String> {
-
 	if let Some(Path) = Arg.as_str() {
 		return Ok(normalize_uri_path(Path));
 	}
@@ -48,7 +46,6 @@ pub fn Fn(Arg:&Value) -> Result<String, String> {
 }
 
 fn normalize_uri_path(Path:&str) -> String {
-
 	let Decoded = percent_decode(Path);
 
 	let Resolved = resolve_userdata_path(&Decoded);
@@ -73,7 +70,6 @@ fn normalize_uri_path(Path:&str) -> String {
 }
 
 fn resolve_userdata_path(Path:&str) -> String {
-
 	if !Path.starts_with("/User/") && Path != "/User" {
 		return Path.to_string();
 	}
@@ -95,7 +91,6 @@ fn resolve_userdata_path(Path:&str) -> String {
 /// called with a relative path and fail with ENOENT, breaking TextMate
 /// syntax highlighting.
 fn resolve_static_application_path(Path:&str) -> String {
-
 	let Normalized = if Path.starts_with("/Static/Application/") || Path == "/Static/Application" {
 		Path.to_string()
 	} else if Path.starts_with("Static/Application/") || Path == "Static/Application" {
@@ -126,7 +121,6 @@ fn resolve_static_application_path(Path:&str) -> String {
 /// >127 (accented names, CJK, etc.) became private-use codepoints instead
 /// of valid UTF-8 characters, causing silent ENOENTs on every file op.
 pub fn percent_decode(Input:&str) -> String {
-
 	let mut DecodedBytes:Vec<u8> = Vec::with_capacity(Input.len());
 
 	let Bytes = Input.as_bytes();
@@ -157,7 +151,6 @@ pub fn percent_decode(Input:&str) -> String {
 }
 
 fn hex_digit(Byte:u8) -> Option<u8> {
-
 	match Byte {
 		b'0'..=b'9' => Some(Byte - b'0'),
 

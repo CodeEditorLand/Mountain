@@ -13,9 +13,7 @@
 //! change notification arriving from Cocoon.
 
 use CommonLibrary::Error::CommonError::CommonError;
-
 use serde_json::Value;
-
 use url::Url;
 
 use crate::{Environment::Utility, dev_log};
@@ -36,7 +34,6 @@ pub(super) async fn apply_document_changes(
 
 	_is_redoing:bool,
 ) -> Result<(), CommonError> {
-
 	dev_log!("model", "[DocumentProvider] Applying changes to document: {}", uri);
 
 	{
@@ -53,9 +50,7 @@ pub(super) async fn apply_document_changes(
 		} else {
 			dev_log!(
 				"model",
-
 				"warn: [DocumentProvider] Received changes for unknown document: {}",
-
 				uri
 			);
 

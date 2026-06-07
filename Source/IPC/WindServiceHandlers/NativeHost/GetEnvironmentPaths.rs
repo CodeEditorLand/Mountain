@@ -4,11 +4,9 @@
 //! is created on first call so VS Code can write output files immediately.
 
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, Manager};
 
 pub async fn Fn(ApplicationHandle:AppHandle) -> Result<Value, String> {
-
 	let PathResolver = ApplicationHandle.path();
 
 	// Propagate path resolver failures rather than returning empty PathBuf.
@@ -38,13 +36,9 @@ pub async fn Fn(ApplicationHandle:AppHandle) -> Result<Value, String> {
 
 	crate::dev_log!(
 		"config",
-
 		"getEnvironmentPaths: userDataDir={} logsPath={} homeDir={}",
-
 		AppDataDir.display(),
-
 		SessionLogRoot.display(),
-
 		HomeDir.display()
 	);
 

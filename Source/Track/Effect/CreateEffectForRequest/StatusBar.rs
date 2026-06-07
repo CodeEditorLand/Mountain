@@ -1,7 +1,5 @@
 pub fn Matches(MethodName:&str) -> bool {
-
 	MethodName.starts_with("$statusBar:")
-
 		|| MethodName == "$setStatusBarMessage"
 		|| MethodName == "$disposeStatusBarMessage"
 }
@@ -12,9 +10,7 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider},
 };
-
 use serde_json::{Value, json};
-
 use tauri::Runtime;
 
 use crate::Track::Effect::{
@@ -23,7 +19,6 @@ use crate::Track::Effect::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
 		"$statusBar:set" => {
 			crate::effect!(run_time, {

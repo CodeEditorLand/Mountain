@@ -1,5 +1,4 @@
 pub fn Matches(MethodName:&str) -> bool {
-
 	match MethodName {
 		"Clipboard.Read" | "Clipboard.Write" => true,
 
@@ -8,7 +7,6 @@ pub fn Matches(MethodName:&str) -> bool {
 }
 
 use serde_json::{Value, json};
-
 use tauri::Runtime;
 
 use crate::{
@@ -17,7 +15,6 @@ use crate::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
 		"Clipboard.Read" => {
 			crate::effect!(_run_time, {

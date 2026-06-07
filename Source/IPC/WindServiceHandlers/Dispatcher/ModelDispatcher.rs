@@ -1,17 +1,17 @@
 //! Model command dispatcher.
 
-use crate::Model::{
-    ModelClose::Fn as ModelClose,
-    ModelGet::Fn as ModelGet,
-    ModelGetAll::Fn as ModelGetAll,
-    ModelOpen::Fn as ModelOpen,
-    ModelUpdateContent::Fn as ModelUpdateContent,
-    TextfileRead::Fn as TextfileRead,
-    TextfileSave::Fn as TextfileSave,
-    TextfileWrite::Fn as TextfileWrite,
-};
-
 use serde_json::Value;
+
+use crate::Model::{
+	ModelClose::Fn as ModelClose,
+	ModelGet::Fn as ModelGet,
+	ModelGetAll::Fn as ModelGetAll,
+	ModelOpen::Fn as ModelOpen,
+	ModelUpdateContent::Fn as ModelUpdateContent,
+	TextfileRead::Fn as TextfileRead,
+	TextfileSave::Fn as TextfileSave,
+	TextfileWrite::Fn as TextfileWrite,
+};
 
 /// Dispatches model commands.
 ///
@@ -25,30 +25,29 @@ use serde_json::Value;
 /// - `textFile:write`
 /// - `textFile:save`
 pub async fn dispatch_model(
-    runtime: &crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
 
-    command: &str,
+	command:&str,
 
-    arguments: Vec<Value>,
+	arguments:Vec<Value>,
 ) -> Result<Value, String> {
+	match command {
+		"model:open" => ModelOpen(runtime.clone(), arguments).await,
 
-    match command {
-        "model:open" => ModelOpen(runtime.clone(), arguments).await,
+		"model:close" => ModelClose(runtime.clone(), arguments).await,
 
-        "model:close" => ModelClose(runtime.clone(), arguments).await,
+		"model:get" => ModelGet(runtime.clone(), arguments).await,
 
-        "model:get" => ModelGet(runtime.clone(), arguments).await,
+		"model:getAll" => ModelGetAll(runtime.clone()).await,
 
-        "model:getAll" => ModelGetAll(runtime.clone()).await,
+		"model:updateContent" => ModelUpdateContent(runtime.clone(), arguments).await,
 
-        "model:updateContent" => ModelUpdateContent(runtime.clone(), arguments).await,
+		"textFile:read" => TextfileRead(runtime.clone(), arguments).await,
 
-        "textFile:read" => TextfileRead(runtime.clone(), arguments).await,
+		"textFile:write" => TextfileWrite(runtime.clone(), arguments).await,
 
-        "textFile:write" => TextfileWrite(runtime.clone(), arguments).await,
+		"textFile:save" => TextfileSave(runtime.clone(), arguments).await,
 
-        "textFile:save" => TextfileSave(runtime.clone(), arguments).await,
-
-        _ => Err(format!("Unknown model command: {}", command)),
-    }
+		_ => Err(format!("Unknown model command: {}", command)),
+	}
 }

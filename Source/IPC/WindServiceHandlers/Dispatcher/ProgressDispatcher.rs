@@ -1,12 +1,12 @@
 //! Progress command dispatcher.
 
-use crate::UI::{
-    ProgressBegin::Fn as ProgressBegin,
-    ProgressEnd::Fn as ProgressEnd,
-    ProgressReport::Fn as ProgressReport,
-};
-
 use serde_json::Value;
+
+use crate::UI::{
+	ProgressBegin::Fn as ProgressBegin,
+	ProgressEnd::Fn as ProgressEnd,
+	ProgressReport::Fn as ProgressReport,
+};
 
 /// Dispatches progress commands.
 ///
@@ -15,20 +15,19 @@ use serde_json::Value;
 /// - `progress:report`
 /// - `progress:end`
 pub async fn dispatch_progress(
-    app_handle: &tauri::AppHandle,
+	app_handle:&tauri::AppHandle,
 
-    command: &str,
+	command:&str,
 
-    arguments: Vec<Value>,
+	arguments:Vec<Value>,
 ) -> Result<Value, String> {
+	match command {
+		"progress:begin" => ProgressBegin(app_handle.clone(), arguments).await,
 
-    match command {
-        "progress:begin" => ProgressBegin(app_handle.clone(), arguments).await,
+		"progress:report" => ProgressReport(app_handle.clone(), arguments).await,
 
-        "progress:report" => ProgressReport(app_handle.clone(), arguments).await,
+		"progress:end" => ProgressEnd(app_handle.clone(), arguments).await,
 
-        "progress:end" => ProgressEnd(app_handle.clone(), arguments).await,
-
-        _ => Err(format!("Unknown progress command: {}", command)),
-    }
+		_ => Err(format!("Unknown progress command: {}", command)),
+	}
 }

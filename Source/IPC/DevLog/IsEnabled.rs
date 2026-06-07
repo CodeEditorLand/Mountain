@@ -13,52 +13,30 @@ static ENABLED_TAGS:OnceLock<Vec<String>> = OnceLock::new();
 
 const SHORT_MODE_MUTED_TAGS:&[&str] = &[
 	"grpc-verbose",
-
 	"vfs-verbose",
-
 	"fs-route",
-
 	"tauri-invoke",
-
 	"rpc-latency",
-
 	"tree-latency",
-
 	"nls",
-
 	"fs-read",
-
 	"preflight",
-
 	"wsns",
-
 	"storage-verbose",
-
 	"config-prime",
-
 	"cel-dispatch",
-
 	"output-verbose",
-
 	"command-register",
-
 	"provider-register",
-
 	"ext-scan-verbose",
-
 	"channel-stub",
-
 	"commands-verbose",
-
 	"scheme-assets",
-
 	"cocoon-stderr-verbose",
-
 	"vscode-api-gap",
 ];
 
 pub(super) fn EnabledTags() -> &'static Vec<String> {
-
 	ENABLED_TAGS.get_or_init(|| {
 		match std::env::var("Trace") {
 			Ok(Val) => Val.split(',').map(|S| S.trim().to_lowercase()).collect(),
@@ -68,7 +46,6 @@ pub(super) fn EnabledTags() -> &'static Vec<String> {
 }
 
 pub fn Fn(Tag:&str) -> bool {
-
 	let Tags = EnabledTags();
 
 	if Tags.is_empty() {

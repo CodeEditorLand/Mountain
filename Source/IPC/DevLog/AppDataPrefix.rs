@@ -18,7 +18,6 @@ static RESOLVED:OnceLock<String> = OnceLock::new();
 static RETRY:Mutex<bool> = Mutex::new(true);
 
 pub fn Fn() -> Option<&'static str> {
-
 	if let Some(S) = RESOLVED.get() {
 		return Some(S.as_str());
 	}
@@ -45,7 +44,6 @@ pub fn Fn() -> Option<&'static str> {
 }
 
 fn BinarySignature() -> String {
-
 	let PackageName = env!("CARGO_PKG_NAME");
 
 	let Segments:Vec<&str> = PackageName.split('_').collect();
@@ -63,7 +61,6 @@ fn BinarySignature() -> String {
 }
 
 fn SplitPascalCaseIntoWords(Segment:&str) -> Vec<String> {
-
 	let mut Words:Vec<String> = Vec::new();
 
 	let mut Current = String::new();
@@ -99,7 +96,6 @@ fn SplitPascalCaseIntoWords(Segment:&str) -> Vec<String> {
 }
 
 fn DetectAppDataPrefix() -> Option<String> {
-
 	let Home = std::env::var("HOME").ok()?;
 
 	let Base = format!("{}/Library/Application Support", Home);

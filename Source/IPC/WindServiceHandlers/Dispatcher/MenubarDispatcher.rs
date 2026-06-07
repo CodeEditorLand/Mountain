@@ -6,19 +6,16 @@ use serde_json::Value;
 ///
 /// Handled commands:
 /// - `menubar:updateMenubar` (fast-path already handled, this is fallback)
-pub async fn dispatch_menubar(
-    _arguments: Vec<Value>,
-) -> Result<Value, String> {
+pub async fn dispatch_menubar(_arguments:Vec<Value>) -> Result<Value, String> {
+	use std::sync::atomic::{AtomicU64, Ordering as AO};
 
-    use std::sync::atomic::{AtomicU64, Ordering as AO};
+	static MENUBAR_CALLS_FAST:AtomicU64 = AtomicU64::new(0);
 
-    static MENUBAR_CALLS_FAST: AtomicU64 = AtomicU64::new(0);
-    
-    let n = MENUBAR_CALLS_FAST.fetch_add(1, AO::Relaxed) + 1;
+	let n = MENUBAR_CALLS_FAST.fetch_add(1, AO::Relaxed) + 1;
 
-    if n == 1 || n % 100 == 0 {
-        crate::dev_log!("menubar", "menubar:updateMenubar (fast-path call #{})", n);
-    }
+	if n == 1 || n % 100 == 0 {
+		crate::dev_log!("menubar", "menubar:updateMenubar (fast-path call #{})", n);
+	}
 
-    Ok(Value::Null)
+	Ok(Value::Null)
 }

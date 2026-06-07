@@ -5,6 +5,5 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub(super) struct Struct {
-
 	pub(super) path:String,
 }

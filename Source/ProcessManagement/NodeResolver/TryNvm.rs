@@ -7,7 +7,6 @@ use std::path::PathBuf;
 use crate::ProcessManagement::NodeResolver::{NodeExecutableName, NodeSource, ResolvedNode};
 
 pub fn Fn() -> Option<ResolvedNode::Struct> {
-
 	if let Ok(NvmBin) = std::env::var("NVM_BIN") {
 		let Candidate = PathBuf::from(NvmBin).join(NodeExecutableName::Fn());
 

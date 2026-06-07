@@ -1,109 +1,99 @@
 //! NativeHost command dispatcher - Part 1: Dialogs and Environment.
 
-use crate::NativeHost::{
-    PickFolder::Fn as NativePickFolder,
-    ShowOpenDialog::Fn as NativeShowOpenDialog,
-    ShowSaveDialog::Fn as NativeShowSaveDialog,
-    ShowSaveDialogUI::Fn as UserInterfaceShowSaveDialog,
-    ShowMessageBox::Fn as NativeShowMessageBox,
-    GetEnvironmentPaths::Fn as NativeGetEnvironmentPaths,
-    GetColorScheme::Fn as NativeGetColorScheme,
-    GetOSProperties::Fn as NativeOSProperties,
-    GetOSStatistics::Fn as NativeOSStatistics,
-    IsFullscreen::Fn as NativeIsFullscreen,
-    IsMaximized::Fn as NativeIsMaximized,
-};
-
 use serde_json::{Value, json};
+
+use crate::NativeHost::{
+	GetColorScheme::Fn as NativeGetColorScheme,
+	GetEnvironmentPaths::Fn as NativeGetEnvironmentPaths,
+	GetOSProperties::Fn as NativeOSProperties,
+	GetOSStatistics::Fn as NativeOSStatistics,
+	IsFullscreen::Fn as NativeIsFullscreen,
+	IsMaximized::Fn as NativeIsMaximized,
+	PickFolder::Fn as NativePickFolder,
+	ShowMessageBox::Fn as NativeShowMessageBox,
+	ShowOpenDialog::Fn as NativeShowOpenDialog,
+	ShowSaveDialog::Fn as NativeShowSaveDialog,
+	ShowSaveDialogUI::Fn as UserInterfaceShowSaveDialog,
+};
 
 /// Dispatches native host dialog and environment commands.
 pub async fn dispatch_native_host_dialogs(
-    app_handle: &tauri::AppHandle,
+	app_handle:&tauri::AppHandle,
 
-    runtime: &crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
 
-    command: &str,
+	command:&str,
 
-    arguments: Vec<Value>,
+	arguments:Vec<Value>,
 ) -> Result<Value, String> {
+	match command {
+		"nativeHost:pickFolderAndOpen"
+		| "nativeHost:pickFileAndOpen"
+		| "nativeHost:pickFileFolderAndOpen"
+		| "nativeHost:pickWorkspaceAndOpen" => NativePickFolder(app_handle.clone(), arguments).await,
 
-    match command {
-        "nativeHost:pickFolderAndOpen" | "nativeHost:pickFileAndOpen" | "nativeHost:pickFileFolderAndOpen" | "nativeHost:pickWorkspaceAndOpen" => {
-            NativePickFolder(app_handle.clone(), arguments).await
-        },
+		"nativeHost:showOpenDialog" => NativeShowOpenDialog(app_handle.clone(), arguments).await,
 
-        "nativeHost:showOpenDialog" => {
-            NativeShowOpenDialog(app_handle.clone(), arguments).await
-        },
+		"UserInterface.ShowOpenDialog" => {
+			match NativeShowOpenDialog(app_handle.clone(), arguments).await {
+				Ok(response) => {
+					let paths = response
+						.get("filePaths")
+						.and_then(|v| v.as_array())
+						.cloned()
+						.unwrap_or_default();
 
-        "UserInterface.ShowOpenDialog" => {
-            match NativeShowOpenDialog(app_handle.clone(), arguments).await {
-                Ok(response) => {
-                    let paths = response
-                        .get("filePaths")
-                        .and_then(|v| v.as_array())
-                        .cloned()
-                        .unwrap_or_default();
+					Ok(Value::Array(paths))
+				},
 
-                    Ok(Value::Array(paths))
-                },
+				Err(e) => Err(e),
+			}
+		},
 
-                Err(e) => Err(e),
-            }
-        },
+		"nativeHost:showSaveDialog" => NativeShowSaveDialog(app_handle.clone(), arguments).await,
 
-        "nativeHost:showSaveDialog" => {
-            NativeShowSaveDialog(app_handle.clone(), arguments).await
-        },
+		"UserInterface.ShowSaveDialog" => UserInterfaceShowSaveDialog(app_handle.clone(), arguments).await,
 
-        "UserInterface.ShowSaveDialog" => {
-            UserInterfaceShowSaveDialog(app_handle.clone(), arguments).await
-        },
+		"nativeHost:showMessageBox" => NativeShowMessageBox(app_handle.clone(), arguments).await,
 
-        "nativeHost:showMessageBox" => {
-            NativeShowMessageBox(app_handle.clone(), arguments).await
-        },
+		"nativeHost:getEnvironmentPaths" => NativeGetEnvironmentPaths(app_handle.clone()).await,
 
-        "nativeHost:getEnvironmentPaths" => {
-            NativeGetEnvironmentPaths(app_handle.clone()).await
-        },
+		"nativeHost:getOSColorScheme" => {
+			crate::dev_log!("nativehost", "nativeHost:getOSColorScheme");
 
-        "nativeHost:getOSColorScheme" => {
-            crate::dev_log!("nativehost", "nativeHost:getOSColorScheme");
+			NativeGetColorScheme().await
+		},
 
-            NativeGetColorScheme().await
-        },
+		"nativeHost:getOSProperties" => {
+			crate::dev_log!("nativehost", "nativeHost:getOSProperties");
 
-        "nativeHost:getOSProperties" => {
-            crate::dev_log!("nativehost", "nativeHost:getOSProperties");
+			NativeOSProperties().await
+		},
 
-            NativeOSProperties().await
-        },
+		"nativeHost:getOSStatistics" => {
+			crate::dev_log!("nativehost", "nativeHost:getOSStatistics");
 
-        "nativeHost:getOSStatistics" => {
-            crate::dev_log!("nativehost", "nativeHost:getOSStatistics");
+			NativeOSStatistics().await
+		},
 
-            NativeOSStatistics().await
-        },
+		"nativeHost:getOSVirtualMachineHint" => {
+			crate::dev_log!("nativehost", "nativeHost:getOSVirtualMachineHint");
 
-        "nativeHost:getOSVirtualMachineHint" => {
-            crate::dev_log!("nativehost", "nativeHost:getOSVirtualMachineHint");
+			Ok(json!(0))
+		},
 
-            Ok(json!(0))
-        },
+		"nativeHost:isFullScreen" => {
+			crate::dev_log!("window", "nativeHost:isFullScreen");
 
-        "nativeHost:isFullScreen" => {
-            crate::dev_log!("window", "nativeHost:isFullScreen");
+			NativeIsFullscreen(app_handle.clone()).await
+		},
 
-            NativeIsFullscreen(app_handle.clone()).await
-        },
+		"nativeHost:isMaximized" => {
+			crate::dev_log!("window", "nativeHost:isMaximized");
 
-        "nativeHost:isMaximized" => {
-            crate::dev_log!("window", "nativeHost:isMaximized");
+			NativeIsMaximized(app_handle.clone()).await
+		},
 
-            NativeIsMaximized(app_handle.clone()).await
-        },
-
-        _ => Err(format!("Unknown native host dialog command: {}", command)),
-    }
+		_ => Err(format!("Unknown native host dialog command: {}", command)),
+	}
 }

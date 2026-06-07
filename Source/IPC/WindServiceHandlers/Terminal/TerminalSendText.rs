@@ -5,7 +5,6 @@
 use std::sync::Arc;
 
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
-
 use serde_json::Value;
 
 use crate::{
@@ -14,7 +13,6 @@ use crate::{
 };
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let TerminalId = Arguments
 		.first()
 		.and_then(|V| V.as_u64())

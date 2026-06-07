@@ -1,8 +1,8 @@
 //! Logger command dispatcher - handles all logger:* and legacy log:* commands.
 
-use crate::Utilities::JsonValueHelpers::{Fn as v_str, arg_string};
-
 use serde_json::Value;
+
+use crate::Utilities::JsonValueHelpers::{Fn as v_str, arg_string};
 
 /// Dispatches logger and legacy log commands.
 ///
@@ -21,42 +21,37 @@ use serde_json::Value;
 /// - `storage:optimize`, `storage:isUsed`, `storage:close` (stubs)
 /// - `workspaces:onDidChangeWorkspaceFolders`
 /// - `workspaces:onDidChangeWorkspaceName`
-pub async fn dispatch_logger(
-    command: &str,
+pub async fn dispatch_logger(command:&str, arguments:&[Value]) -> Result<Value, String> {
+	// Extract log level from command
+	let level = command.trim_start_matches("logger:").trim_start_matches("log:");
 
-    arguments: &[Value],
-) -> Result<Value, String> {
+	// Build message from arguments
+	let msg = if arguments.len() >= 2 {
+		let tail:Vec<String> = arguments
+			.iter()
+			.skip(1)
+			.filter_map(|v| v.as_str().map(str::to_owned).or_else(|| serde_json::to_string(v).ok()))
+			.collect();
 
-    // Extract log level from command
-    let level = command.trim_start_matches("logger:").trim_start_matches("log:");
-    
-    // Build message from arguments
-    let msg = if arguments.len() >= 2 {
-        let tail: Vec<String> = arguments
-            .iter()
-            .skip(1)
-            .filter_map(|v| v.as_str().map(str::to_owned).or_else(|| serde_json::to_string(v).ok()))
-            .collect();
+		tail.join(" ")
+	} else {
+		arguments
+			.first()
+			.and_then(|v| v.as_str().map(str::to_owned))
+			.unwrap_or_default()
+	};
 
-        tail.join(" ")
-    } else {
-        arguments
-            .first()
-            .and_then(|v| v.as_str().map(str::to_owned))
-            .unwrap_or_default()
-    };
+	if !msg.is_empty() {
+		match level {
+			"error" | "critical" => crate::dev_log!("vscode-log", "[ERROR] {}", msg),
 
-    if !msg.is_empty() {
-        match level {
-            "error" | "critical" => crate::dev_log!("vscode-log", "[ERROR] {}", msg),
+			"warn" => crate::dev_log!("vscode-log", "[WARN] {}", msg),
 
-            "warn" => crate::dev_log!("vscode-log", "[WARN] {}", msg),
+			_ => crate::dev_log!("vscode-log", "{}", msg),
+		}
+	}
 
-            _ => crate::dev_log!("vscode-log", "{}", msg),
-        }
-    }
-
-    Ok(Value::Null)
+	Ok(Value::Null)
 }
 
 /// Dispatches fast-path no-op commands that just return Null.
@@ -74,7 +69,4 @@ pub async fn dispatch_logger(
 /// - `storage:optimize`, `storage:isUsed`, `storage:close`
 /// - `workspaces:onDidChangeWorkspaceFolders`
 /// - `workspaces:onDidChangeWorkspaceName`
-pub async fn dispatch_noop(_command: &str, _arguments: &[Value]) -> Result<Value, String> {
-
-    Ok(Value::Null)
-}
+pub async fn dispatch_noop(_command:&str, _arguments:&[Value]) -> Result<Value, String> { Ok(Value::Null) }

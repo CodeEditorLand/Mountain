@@ -123,7 +123,6 @@ macro_rules! dev_log {
 /// Usage: `otel_span!("file:readFile", StartNano, &[("path", &Path)]);`
 #[macro_export]
 macro_rules! otel_span {
-
 	($Name:expr, $Start:expr, $Attrs:expr) => {
 		$crate::IPC::DevLog::EmitOTLPSpan::Fn($Name, $Start, $crate::IPC::DevLog::NowNano::Fn(), $Attrs)
 	};

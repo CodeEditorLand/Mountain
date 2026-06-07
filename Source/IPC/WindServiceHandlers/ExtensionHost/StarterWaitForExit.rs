@@ -5,7 +5,6 @@
 use serde_json::{Value, json};
 
 pub async fn Fn(_Arguments:Vec<Value>) -> Result<Value, String> {
-
 	crate::dev_log!("exthost", "extensionHostStarter:waitForExit");
 
 	Ok(json!({ "code": null, "signal": null }))

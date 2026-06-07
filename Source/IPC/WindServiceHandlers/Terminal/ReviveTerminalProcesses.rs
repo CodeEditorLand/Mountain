@@ -31,22 +31,18 @@
 use std::sync::Arc;
 
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
-
 use serde_json::{Value, json};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let States:Vec<Value> = match Arguments.first() {
 		Some(Value::Array(Array)) => Array.clone(),
 
 		Some(Other) => {
 			dev_log!(
 				"terminal",
-
 				"warn: [ReviveTerminalProcesses] unexpected argument shape: {:?}",
-
 				Other
 			);
 
@@ -70,7 +66,6 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		if Executable.is_empty() {
 			dev_log!(
 				"terminal",
-
 				"warn: [ReviveTerminalProcesses] skipping entry with empty executable"
 			);
 
@@ -110,9 +105,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 			Err(Error) => {
 				dev_log!(
 					"terminal",
-
 					"warn: [ReviveTerminalProcesses] failed to revive terminal: {}",
-
 					Error
 				);
 			},

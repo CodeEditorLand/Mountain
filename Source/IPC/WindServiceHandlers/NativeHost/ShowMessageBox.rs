@@ -4,15 +4,12 @@
 //! VS Code destructures `result.response` to determine which button was chosen.
 
 use serde_json::{Value, json};
-
 use tauri::AppHandle;
-
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
 use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_val;
 
 pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let Options = arg_val(&Arguments, 0);
 
 	let Message = Options.get("message").and_then(Value::as_str).unwrap_or("").to_string();

@@ -15,7 +15,6 @@ use crate::IPC::DevLog::{AppDataPrefix, IsEnabled, IsShort, SessionTimestamp};
 static LOG_FILE:OnceLock<Mutex<Option<BufWriter<File>>>> = OnceLock::new();
 
 pub fn Fn(Line:&str) {
-
 	let Sink = InitFileSink();
 
 	if let Ok(mut Guard) = Sink.lock() {
@@ -32,7 +31,6 @@ pub fn Fn(Line:&str) {
 }
 
 pub(super) fn InitFileSink() -> &'static Mutex<Option<BufWriter<File>>> {
-
 	LOG_FILE.get_or_init(|| {
 		if !FileSinkEnabled() {
 			return Mutex::new(None);
@@ -54,13 +52,9 @@ pub(super) fn InitFileSink() -> &'static Mutex<Option<BufWriter<File>>> {
 
 				let Header = format!(
 					"# Land dev log - started {}, pid {}, short={}, ipc-enabled={}\n",
-
 					SessionTimestamp::Fn(),
-
 					std::process::id(),
-
 					IsShort::Fn(),
-
 					IsEnabled::Fn("ipc"),
 				);
 
@@ -82,7 +76,6 @@ pub(super) fn InitFileSink() -> &'static Mutex<Option<BufWriter<File>>> {
 }
 
 fn FileSinkEnabled() -> bool {
-
 	static ENABLED:OnceLock<bool> = OnceLock::new();
 
 	*ENABLED.get_or_init(|| {
@@ -94,7 +87,6 @@ fn FileSinkEnabled() -> bool {
 }
 
 fn ResolveLogDirectory() -> PathBuf {
-
 	let Stamp = SessionTimestamp::Fn();
 
 	let Base = match AppDataPrefix::Fn() {
