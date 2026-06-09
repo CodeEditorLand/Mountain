@@ -14,16 +14,7 @@ impl ApplicationRunTime {
 			.ApplicationState
 			.UI
 			.PendingUserInterfaceRequest
-			.lock()
-			.unwrap_or_else(|E| {
-				dev_log!(
-					"lifecycle",
-					"error: [ApplicationRunTime] Failed to lock pending UI requests: {}",
-					E
-				);
-
-				E.into_inner()
-			});
+			.lock();
 
 		for (_RequestIdentifier, Sender) in PendingRequestsGuard.drain() {
 			let _ = Sender.send(Err(CommonError::Unknown {

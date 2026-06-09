@@ -76,8 +76,7 @@ impl DiagnosticManager for MountainEnvironment {
 			.Feature
 			.Diagnostics
 			.DiagnosticsMap
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			.lock();
 
 		let OwnerMap = DiagnosticsMapGuard.entry(Owner.clone()).or_default();
 
@@ -206,8 +205,7 @@ impl DiagnosticManager for MountainEnvironment {
 				.Feature
 				.Diagnostics
 				.DiagnosticsMap
-				.lock()
-				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+				.lock();
 
 			DiagnosticsMapGuard
 				.remove(&Owner)
@@ -277,8 +275,7 @@ impl DiagnosticManager for MountainEnvironment {
 				.Feature
 				.Diagnostics
 				.DiagnosticsMap
-				.lock()
-				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+				.lock();
 
 			DiagnosticsMapGuard.values().cloned().collect()
 		};

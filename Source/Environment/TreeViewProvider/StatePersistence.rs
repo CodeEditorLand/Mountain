@@ -26,8 +26,7 @@ pub(super) async fn persist_tree_view_state(
 		.Feature
 		.TreeViews
 		.ActiveTreeViews
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		.lock();
 
 	let state = tree_views.get(&view_identifier).map(|view| {
 		json!({
@@ -64,8 +63,7 @@ pub(super) async fn restore_tree_view_state(
 		.Feature
 		.TreeViews
 		.ActiveTreeViews
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		.lock();
 
 	if let Some(view_state) = tree_views.get_mut(&view_identifier) {
 		if let Some(title) = state_value.get("Title").and_then(|v| v.as_str()) {

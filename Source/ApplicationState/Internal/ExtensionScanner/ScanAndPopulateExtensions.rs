@@ -31,8 +31,7 @@ pub async fn Fn(
 						let mut Guard = _State
 							.ScannedExtensions
 							.ScannedExtensions
-							.lock()
-							.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+							.lock();
 
 						*Guard = CachedMap;
 
@@ -122,8 +121,7 @@ pub async fn Fn(
 							let mut Guard = _State
 								.ScannedExtensions
 								.ScannedExtensions
-								.lock()
-								.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+								.lock();
 
 							for Found in UserResults {
 								for Extension in Found {
@@ -255,8 +253,7 @@ pub async fn Fn(
 		let mut Guard = _State
 			.ScannedExtensions
 			.ScannedExtensions
-			.lock()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+			.lock();
 
 		*Guard = All; // move - no clone needed
 

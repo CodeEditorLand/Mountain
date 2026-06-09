@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::UI::{
+use crate::IPC::WindServiceHandlers::UI::{
 	QuickInputShowInputBox::Fn as QuickInputShowInputBox,
 	QuickInputShowQuickPick::Fn as QuickInputShowQuickPick,
 };
@@ -13,7 +13,7 @@ use crate::UI::{
 /// - `quickInput:showQuickPick`
 /// - `quickInput:showInputBox`
 pub async fn dispatch_quick_input(
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 

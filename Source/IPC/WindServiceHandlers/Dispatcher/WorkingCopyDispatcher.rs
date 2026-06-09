@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::UI::{
+use crate::IPC::WindServiceHandlers::UI::{
 	WorkingCopyGetAllDirty::Fn as WorkingCopyGetAllDirty,
 	WorkingCopyGetDirtyCount::Fn as WorkingCopyGetDirtyCount,
 	WorkingCopyIsDirty::Fn as WorkingCopyIsDirty,
@@ -11,7 +11,7 @@ use crate::UI::{
 
 /// Dispatches working copy commands.
 pub async fn dispatch_working_copy(
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 

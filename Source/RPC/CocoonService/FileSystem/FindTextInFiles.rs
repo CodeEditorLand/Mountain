@@ -18,13 +18,15 @@ pub async fn Fn(
 
 	dev_log!("cocoon", "[CocoonService] find_text_in_files: pattern='{}'", Request.pattern);
 
-	let Roots:Vec<std::path::PathBuf> = {
-		match Service.environment.ApplicationState.Workspace.WorkspaceFolders.lock() {
-			Ok(Guard) => Guard.iter().map(|F| std::path::PathBuf::from(F.URI.path())).collect(),
-
-			Err(_) => Vec::new(),
-		}
-	};
+	let Roots:Vec<std::path::PathBuf> = Service
+		.environment
+		.ApplicationState
+		.Workspace
+		.WorkspaceFolders
+		.lock()
+		.iter()
+		.map(|F| std::path::PathBuf::from(F.URI.path()))
+		.collect();
 
 	let SearchRoots = if Roots.is_empty() {
 		vec![std::env::current_dir().unwrap_or_default()]

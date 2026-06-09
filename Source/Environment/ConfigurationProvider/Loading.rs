@@ -127,7 +127,6 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 		.Workspace
 		.WorkspaceConfigurationPath
 		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.clone();
 
 	let user_config = read_and_parse_configuration_file(environment, &user_settings_path).await?;
@@ -183,8 +182,7 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 		.ApplicationState
 		.Configuration
 		.GlobalConfiguration
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)? = final_config.Data;
+		.lock() = final_config.Data;
 
 	dev_log!(
 		"config",
@@ -239,7 +237,6 @@ pub(super) fn collect_default_configurations(
 		.ScannedExtensions
 		.ScannedExtensions
 		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.values()
 	{
 		let Some(contributes) = &extension.Contributes else {

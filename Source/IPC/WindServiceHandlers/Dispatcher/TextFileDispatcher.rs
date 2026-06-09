@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::Model::{
+use crate::IPC::WindServiceHandlers::Model::{
 	TextfileRead::Fn as TextfileRead,
 	TextfileSave::Fn as TextfileSave,
 	TextfileWrite::Fn as TextfileWrite,
@@ -10,7 +10,7 @@ use crate::Model::{
 
 /// Dispatches text file commands.
 pub async fn dispatch_text_file(
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 

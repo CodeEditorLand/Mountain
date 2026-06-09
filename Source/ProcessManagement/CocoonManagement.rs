@@ -747,37 +747,31 @@ async fn LaunchAndManageCocoonSideCar(
 				.Workspace
 				.WorkspaceFolders
 				.lock()
-				.ok()
-				.map(|Guard| {
-					Guard
-						.iter()
-						.filter_map(|Folder| Folder.URI.to_file_path().ok())
-						.collect::<Vec<_>>()
-				})
-				.unwrap_or_default();
+				.iter()
+				.filter_map(|Folder| Folder.URI.to_file_path().ok())
+				.collect::<Vec<_>>();
 
-			let Patterns:Vec<String> = AppState
-				.Extension
-				.ScannedExtensions
-				.ScannedExtensions
-				.lock()
-				.ok()
-				.map(|Guard| {
-					let mut Set:std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+			let Patterns:Vec<String> = {
+				let Guard = AppState
+					.Extension
+					.ScannedExtensions
+					.ScannedExtensions
+					.lock();
 
-					for Description in Guard.values() {
-						if let Some(Events) = &Description.ActivationEvents {
-							for Event in Events {
-								if let Some(Pattern) = Event.strip_prefix("workspaceContains:") {
-									Set.insert(Pattern.to_string());
-								}
+				let mut Set:std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+
+				for Description in Guard.values() {
+					if let Some(Events) = &Description.ActivationEvents {
+						for Event in Events {
+							if let Some(Pattern) = Event.strip_prefix("workspaceContains:") {
+								Set.insert(Pattern.to_string());
 							}
 						}
 					}
+				}
 
-					Set.into_iter().collect()
-				})
-				.unwrap_or_default();
+				Set.into_iter().collect()
+			};
 
 			(Folders, Patterns)
 		};

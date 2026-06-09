@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::UI::{
+use crate::IPC::WindServiceHandlers::UI::{
 	KeybindingAdd::Fn as KeybindingAdd,
 	KeybindingGetAll::Fn as KeybindingGetAll,
 	KeybindingLookup::Fn as KeybindingLookup,
@@ -17,7 +17,7 @@ use crate::UI::{
 /// - `keybinding:lookup`
 /// - `keybinding:getAll`
 pub async fn dispatch_keybinding(
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 

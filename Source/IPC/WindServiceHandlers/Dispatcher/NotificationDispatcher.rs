@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::UI::{
+use crate::IPC::WindServiceHandlers::UI::{
 	NotificationEndProgress::Fn as NotificationEndProgress,
 	NotificationShow::Fn as NotificationShow,
 	NotificationShowProgress::Fn as NotificationShowProgress,

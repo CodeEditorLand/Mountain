@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchFindInFiles};
+use crate::IPC::WindServiceHandlers::Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchFindInFiles};
 
 /// Dispatches search commands.
 ///
@@ -11,7 +11,7 @@ use crate::Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchF
 /// - `search:findFiles` / `search:fileSearch` / `search:searchFile`
 /// - `search:cancel` / `search:clearCache` / `search:onDidChangeResult` (stubs)
 pub async fn dispatch_search(
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 

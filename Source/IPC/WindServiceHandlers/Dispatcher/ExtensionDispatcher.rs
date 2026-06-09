@@ -2,7 +2,7 @@
 
 use serde_json::{Value, json};
 
-use crate::Extension::{
+use crate::IPC::WindServiceHandlers::Extension::{
 	ExtensionInstall::Fn as ExtensionInstall,
 	ExtensionUninstall::Fn as ExtensionUninstall,
 	VsixPathFromArgs::Fn as VsixPathFromArgs,
@@ -17,7 +17,7 @@ use crate::Extension::{
 pub async fn dispatch_extension(
 	app_handle:&tauri::AppHandle,
 
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 

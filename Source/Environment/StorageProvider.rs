@@ -146,8 +146,7 @@ impl StorageProvider for MountainEnvironment {
 		};
 
 		let StorageMapGuard = StorageMapMutex
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			.lock();
 
 		Ok(StorageMapGuard.get(Key).cloned())
 	}
@@ -217,7 +216,6 @@ impl StorageProvider for MountainEnvironment {
 					self.ApplicationState
 						.GlobalMementoPath
 						.lock()
-						.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 						.clone(),
 				),
 			)
@@ -227,7 +225,6 @@ impl StorageProvider for MountainEnvironment {
 				self.ApplicationState
 					.WorkspaceMementoPath
 					.lock()
-					.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 					.clone(),
 			)
 		};
@@ -235,8 +232,7 @@ impl StorageProvider for MountainEnvironment {
 		// Perform the in-memory update.
 		let DataToSave = {
 			let mut StorageMapGuard = StorageMapMutex
-				.lock()
-				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+				.lock();
 
 			if let Some(Value) = ValueToSet {
 				StorageMapGuard.insert(Key, Value);
@@ -275,8 +271,7 @@ impl StorageProvider for MountainEnvironment {
 		};
 
 		let StorageMapGuard = StorageMapMutex
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			.lock();
 
 		Ok(serde_json::to_value(&*StorageMapGuard)?)
 	}
@@ -300,7 +295,6 @@ impl StorageProvider for MountainEnvironment {
 					self.ApplicationState
 						.GlobalMementoPath
 						.lock()
-						.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 						.clone(),
 				),
 			)
@@ -310,15 +304,13 @@ impl StorageProvider for MountainEnvironment {
 				self.ApplicationState
 					.WorkspaceMementoPath
 					.lock()
-					.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 					.clone(),
 			)
 		};
 
 		// Update in-memory state
 		*StorageMapMutex
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)? = DeserializedState.clone();
+			.lock() = DeserializedState.clone();
 
 		// Persist to disk via the scope-correct debouncer so a workspace
 		// bulk-save and a global bulk-save never share the same Pending slot.

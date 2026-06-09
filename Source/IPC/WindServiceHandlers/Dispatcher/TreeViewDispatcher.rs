@@ -1,14 +1,18 @@
 //! TreeView dispatcher.
 
 use serde_json::Value;
+use tauri::Emitter;
 
-use crate::TreeView::GetChildren::Fn as TreeGetChildren;
+use crate::IPC::WindServiceHandlers::{
+	TreeView::GetChildren::Fn as TreeGetChildren,
+	Utilities::JsonValueHelpers::{arg_string, arg_val},
+};
 
 /// Dispatches tree view commands.
 pub async fn dispatch_tree_view(
 	app_handle:&tauri::AppHandle,
 
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 
@@ -18,11 +22,11 @@ pub async fn dispatch_tree_view(
 		"tree:getChildren" => TreeGetChildren(app_handle.clone(), runtime.clone(), arguments).await,
 
 		"tree.reveal" | "tree:reveal" => {
-			let view_id = crate::Utilities::JsonValueHelpers::arg_string(&arguments, 0);
+			let view_id = arg_string(&arguments, 0);
 
-			let handle = crate::Utilities::JsonValueHelpers::arg_string(&arguments, 1);
+			let handle = arg_string(&arguments, 1);
 
-			let options = crate::Utilities::JsonValueHelpers::arg_val(&arguments, 2);
+			let options = arg_val(&arguments, 2);
 
 			crate::dev_log!("ipc", "tree.reveal viewId={} handle={}", view_id, handle);
 
@@ -39,7 +43,7 @@ pub async fn dispatch_tree_view(
 		},
 
 		"tree:selectionChanged" | "tree:collapseElement" | "tree:expandElement" | "tree:visibilityChanged" => {
-			let payload = crate::Utilities::JsonValueHelpers::arg_val(&arguments, 0);
+			let payload = arg_val(&arguments, 0);
 
 			let method = match command {
 				"tree:selectionChanged" => "$treeView:selectionChanged",

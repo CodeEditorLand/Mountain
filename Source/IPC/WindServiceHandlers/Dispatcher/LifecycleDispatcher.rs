@@ -1,11 +1,15 @@
 //! Lifecycle command dispatcher.
 
 use serde_json::{Value, json};
+use tauri::Manager;
 
-use crate::UI::{
-	LifecycleGetPhase::Fn as LifecycleGetPhase,
-	LifecycleRequestShutdown::Fn as LifecycleRequestShutdown,
-	LifecycleWhenPhase::Fn as LifecycleWhenPhase,
+use crate::IPC::WindServiceHandlers::{
+	UI::{
+		LifecycleGetPhase::Fn as LifecycleGetPhase,
+		LifecycleRequestShutdown::Fn as LifecycleRequestShutdown,
+		LifecycleWhenPhase::Fn as LifecycleWhenPhase,
+	},
+	Utilities::JsonValueHelpers::arg_u64_or,
 };
 
 /// Dispatches lifecycle commands.
@@ -19,7 +23,7 @@ use crate::UI::{
 pub async fn dispatch_lifecycle(
 	app_handle:&tauri::AppHandle,
 
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 
@@ -35,7 +39,7 @@ pub async fn dispatch_lifecycle(
 		"lifecycle:advancePhase" | "lifecycle:setPhase" => {
 			crate::dev_log!("lifecycle", "{}", command);
 
-			let new_phase = crate::Utilities::JsonValueHelpers::arg_u64_or(&arguments, 0, 1) as u8;
+			let new_phase = arg_u64_or(&arguments, 0, 1) as u8;
 
 			runtime
 				.Environment

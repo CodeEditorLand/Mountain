@@ -1462,8 +1462,7 @@ pub async fn mountain_ipc_invoke(
 						.Workspace
 						.WorkspaceFolders
 						.lock()
-						.map(|G| G.len())
-						.unwrap_or(0);
+						.len();
 
 					Ok(json!({
 						"workspace": { "folderCount": FolderCount },

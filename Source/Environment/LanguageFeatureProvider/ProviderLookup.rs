@@ -5,7 +5,6 @@ use url::Url;
 
 use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
-	Environment::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError,
 	dev_log,
 };
 
@@ -21,16 +20,14 @@ pub(super) async fn get_matching_provider(
 		.Extension
 		.ProviderRegistration
 		.LanguageProviders
-		.lock()
-		.map_err(MapApplicationStateLockErrorToCommonError)?;
+		.lock();
 
 	let open_documents = environment
 		.ApplicationState
 		.Feature
 		.Documents
 		.OpenDocuments
-		.lock()
-		.map_err(MapApplicationStateLockErrorToCommonError)?;
+		.lock();
 
 	// Derive language: prefer DocumentState record, fall back to URI extension.
 	let LanguageId:String = if let Some(Document) = open_documents.get(document_uri.as_str()) {

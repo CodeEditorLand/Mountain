@@ -35,8 +35,7 @@ pub(super) async fn append_to_channel(
 		.Feature
 		.OutputChannels
 		.OutputChannels
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		.lock();
 
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		// Enforce total buffer size limit of 10MB per channel to prevent
@@ -90,8 +89,7 @@ pub(super) async fn replace_channel_content(
 		.Feature
 		.OutputChannels
 		.OutputChannels
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		.lock();
 
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		channel_state.Buffer = value.clone();
@@ -125,8 +123,7 @@ pub(super) async fn clear_channel(
 		.Feature
 		.OutputChannels
 		.OutputChannels
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		.lock();
 
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		channel_state.Buffer.clear();

@@ -2,11 +2,11 @@
 
 use serde_json::Value;
 
-use crate::UI::{ThemesGetActive::Fn as ThemesGetActive, ThemesList::Fn as ThemesList, ThemesSet::Fn as ThemesSet};
+use crate::IPC::WindServiceHandlers::UI::{ThemesGetActive::Fn as ThemesGetActive, ThemesList::Fn as ThemesList, ThemesSet::Fn as ThemesSet};
 
 /// Dispatches theme commands.
 pub async fn dispatch_theme(
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 

@@ -32,62 +32,63 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 	let mut TerminalDataBytes:usize = 0;
 
 	// ── Tree views ────────────────────────────────────────────────────────
-	if let Ok(TreeViews) = RunTime.Environment.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock() {
-		for (ViewId, Dto) in TreeViews.iter() {
-			let Payload = serde_json::json!({
-				"viewId": ViewId,
-				"options": {
-					"canSelectMany": Dto.CanSelectMany,
-					"showCollapseAll": Dto.HasHandleDrag,
-					"title": Dto.Title.clone().unwrap_or_default(),
-				},
-			});
+	let TreeViews = RunTime.Environment.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock();
 
-			if ApplicationHandle.emit("sky://tree-view/create", Payload).is_ok() {
-				TreeViewCount += 1;
-			}
+	for (ViewId, Dto) in TreeViews.iter() {
+		let Payload = serde_json::json!({
+			"viewId": ViewId,
+			"options": {
+				"canSelectMany": Dto.CanSelectMany,
+				"showCollapseAll": Dto.HasHandleDrag,
+				"title": Dto.Title.clone().unwrap_or_default(),
+			},
+		});
+
+		if ApplicationHandle.emit("sky://tree-view/create", Payload).is_ok() {
+			TreeViewCount += 1;
 		}
 	}
+
+	drop(TreeViews);
 
 	// ── SCM providers ─────────────────────────────────────────────────────
 	// Pre-DTO-Identifier-field DTOs default `Identifier` to "" (serde
 	// default); fall back to "git" - the only SCM provider in production
 	// today is `vscode.git` and a stale state file with empty id is the
 	// realistic upgrade-path mismatch.
-	if let Ok(ScmProviders) = RunTime
+	let ScmProvidersGuard = RunTime
 		.Environment
 		.ApplicationState
 		.Feature
 		.Markers
 		.SourceControlManagementProviders
-		.lock()
-	{
-		for (Handle, Dto) in ScmProviders.iter() {
-			let RootUriStr = Dto
-				.RootURI
-				.as_ref()
-				.and_then(|V| V.get("external").or_else(|| V.get("path")))
-				.and_then(serde_json::Value::as_str)
-				.unwrap_or("")
-				.to_string();
+		.lock();
 
-			let ScmId = if Dto.Identifier.is_empty() {
-				"git".to_string()
-			} else {
-				Dto.Identifier.clone()
-			};
+	for (Handle, Dto) in ScmProvidersGuard.iter() {
+		let RootUriStr = Dto
+			.RootURI
+			.as_ref()
+			.and_then(|V| V.get("external").or_else(|| V.get("path")))
+			.and_then(serde_json::Value::as_str)
+			.unwrap_or("")
+			.to_string();
 
-			let Payload = serde_json::json!({
-				"scmId": ScmId,
-				"label": Dto.Label,
-				"rootUri": RootUriStr,
-				"extensionId": "",
-				"handle": *Handle,
-			});
+		let ScmId = if Dto.Identifier.is_empty() {
+			"git".to_string()
+		} else {
+			Dto.Identifier.clone()
+		};
 
-			if ApplicationHandle.emit("sky://scm/register", Payload).is_ok() {
-				ScmCount += 1;
-			}
+		let Payload = serde_json::json!({
+			"scmId": ScmId,
+			"label": Dto.Label,
+			"rootUri": RootUriStr,
+			"extensionId": "",
+			"handle": *Handle,
+		});
+
+		if ApplicationHandle.emit("sky://scm/register", Payload).is_ok() {
+			ScmCount += 1;
 		}
 	}
 
@@ -103,14 +104,15 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 	//
 	// We resolve `scmId` from the providers map (defaulting to "git" if
 	// `Identifier` is empty - matches the provider-replay fallback above).
-	let ProviderIdentifierByHandle:std::collections::HashMap<u32, String> = if let Ok(ScmProviders) = RunTime
-		.Environment
-		.ApplicationState
-		.Feature
-		.Markers
-		.SourceControlManagementProviders
-		.lock()
-	{
+	let ProviderIdentifierByHandle:std::collections::HashMap<u32, String> = {
+		let ScmProviders = RunTime
+			.Environment
+			.ApplicationState
+			.Feature
+			.Markers
+			.SourceControlManagementProviders
+			.lock();
+
 		ScmProviders
 			.iter()
 			.map(|(Handle, Dto)| {
@@ -123,41 +125,40 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 				(*Handle, Id)
 			})
 			.collect()
-	} else {
-		std::collections::HashMap::new()
 	};
 
-	if let Ok(ScmGroups) = RunTime
+	let ScmGroups = RunTime
 		.Environment
 		.ApplicationState
 		.Feature
 		.Markers
 		.SourceControlManagementGroups
-		.lock()
-	{
-		for (ProviderHandle, GroupsByID) in ScmGroups.iter() {
-			let ScmId = ProviderIdentifierByHandle
-				.get(ProviderHandle)
-				.cloned()
-				.unwrap_or_else(|| "git".to_string());
+		.lock();
 
-			for (GroupId, GroupDto) in GroupsByID.iter() {
-				let GroupHandle = format!("{}/{}", ProviderHandle, GroupId);
+	for (ProviderHandle, GroupsByID) in ScmGroups.iter() {
+		let ScmId = ProviderIdentifierByHandle
+			.get(ProviderHandle)
+			.cloned()
+			.unwrap_or_else(|| "git".to_string());
 
-				let Payload = serde_json::json!({
-					"scmId": ScmId,
-					"scmHandle": *ProviderHandle,
-					"groupHandle": GroupHandle,
-					"groupId": GroupId,
-					"label": GroupDto.Label,
-				});
+		for (GroupId, GroupDto) in GroupsByID.iter() {
+			let GroupHandle = format!("{}/{}", ProviderHandle, GroupId);
 
-				if ApplicationHandle.emit("sky://scm/registerGroup", Payload).is_ok() {
-					ScmGroupCount += 1;
-				}
+			let Payload = serde_json::json!({
+				"scmId": ScmId,
+				"scmHandle": *ProviderHandle,
+				"groupHandle": GroupHandle,
+				"groupId": GroupId,
+				"label": GroupDto.Label,
+			});
+
+			if ApplicationHandle.emit("sky://scm/registerGroup", Payload).is_ok() {
+				ScmGroupCount += 1;
 			}
 		}
 	}
+
+	drop(ScmGroups);
 
 	// ── SCM resource updates ──────────────────────────────────────────────
 	// After group registration, replay the most recent resource snapshot for
@@ -165,71 +166,74 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 	// extension's current working-tree state without waiting for the next
 	// `update_scm_group` to land. Without this the panel stays empty until
 	// the user makes a file change that triggers a fresh group update.
-	if let Ok(ScmResources) = RunTime
+	let ScmResources = RunTime
 		.Environment
 		.ApplicationState
 		.Feature
 		.Markers
 		.SourceControlManagementResources
-		.lock()
-	{
-		for (ProviderHandle, GroupsByID) in ScmResources.iter() {
-			let ScmId = ProviderIdentifierByHandle
-				.get(ProviderHandle)
-				.cloned()
-				.unwrap_or_else(|| "git".to_string());
+		.lock();
 
-			for (GroupId, ResourceList) in GroupsByID.iter() {
-				let GroupHandle = format!("{}/{}", ProviderHandle, GroupId);
+	for (ProviderHandle, GroupsByID) in ScmResources.iter() {
+		let ScmId = ProviderIdentifierByHandle
+			.get(ProviderHandle)
+			.cloned()
+			.unwrap_or_else(|| "git".to_string());
 
-				let Payload = serde_json::json!({
-					"scmHandle": *ProviderHandle,
-					"providerId": ScmId,
-					"groupHandle": GroupHandle,
-					"groupId": GroupId,
-					"resourceStates": ResourceList,
-				});
+		for (GroupId, ResourceList) in GroupsByID.iter() {
+			let GroupHandle = format!("{}/{}", ProviderHandle, GroupId);
 
-				if ApplicationHandle.emit("sky://scm/updateGroup", Payload).is_ok() {
-					ScmResourceUpdateCount += 1;
-				}
+			let Payload = serde_json::json!({
+				"scmHandle": *ProviderHandle,
+				"providerId": ScmId,
+				"groupHandle": GroupHandle,
+				"groupId": GroupId,
+				"resourceStates": ResourceList,
+			});
+
+			if ApplicationHandle.emit("sky://scm/updateGroup", Payload).is_ok() {
+				ScmResourceUpdateCount += 1;
 			}
 		}
 	}
+
+	drop(ScmResources);
 
 	// ── Extension commands ────────────────────────────────────────────────
 	// Emit ONE batched event with the whole array. Per-command emits
 	// (one per registered command, ~1000+ during extension boot) saturate
 	// Tauri's shared WKWebView IPC channel and starve keystroke delivery.
 	// SkyBridge accepts `{ commands: [...] }` or `{ id, commandId, kind }`.
-	if let Ok(Commands) = RunTime.Environment.ApplicationState.Extension.Registry.CommandRegistry.lock() {
-		let mut Batch:Vec<serde_json::Value> = Vec::new();
+	let Commands = RunTime.Environment.ApplicationState.Extension.Registry.CommandRegistry.lock();
 
-		for (CommandId, Handler) in Commands.iter() {
-			use crate::Environment::CommandProvider::CommandHandler;
+	let mut Batch:Vec<serde_json::Value> = Vec::new();
 
-			let Kind = match Handler {
-				CommandHandler::Native(_) => continue,
+	for (CommandId, Handler) in Commands.iter() {
+		use crate::Environment::CommandProvider::CommandHandler;
 
-				CommandHandler::Proxied { .. } => "extension",
-			};
+		let Kind = match Handler {
+			CommandHandler::Native(_) => continue,
 
-			Batch.push(serde_json::json!({
-				"id": CommandId,
-				"commandId": CommandId,
-				"kind": Kind,
-			}));
-		}
+			CommandHandler::Proxied { .. } => "extension",
+		};
 
-		if !Batch.is_empty() {
-			let Count = Batch.len();
+		Batch.push(serde_json::json!({
+			"id": CommandId,
+			"commandId": CommandId,
+			"kind": Kind,
+		}));
+	}
 
-			if ApplicationHandle
-				.emit("sky://command/register", serde_json::json!({ "commands": Batch }))
-				.is_ok()
-			{
-				CommandCount = Count;
-			}
+	drop(Commands);
+
+	if !Batch.is_empty() {
+		let Count = Batch.len();
+
+		if ApplicationHandle
+			.emit("sky://command/register", serde_json::json!({ "commands": Batch }))
+			.is_ok()
+		{
+			CommandCount = Count;
 		}
 	}
 

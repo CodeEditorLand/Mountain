@@ -42,8 +42,7 @@ pub(super) async fn apply_document_changes(
 			.Feature
 			.Documents
 			.OpenDocuments
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			.lock();
 
 		if let Some(document) = open_documents_guard.get_mut(uri.as_str()) {
 			document.ApplyChanges(new_version_identifier, &changes_dto_collection)?;

@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::UI::{
+use crate::IPC::WindServiceHandlers::UI::{
 	ProgressBegin::Fn as ProgressBegin,
 	ProgressEnd::Fn as ProgressEnd,
 	ProgressReport::Fn as ProgressReport,

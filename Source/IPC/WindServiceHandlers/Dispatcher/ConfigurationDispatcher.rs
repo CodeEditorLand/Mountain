@@ -6,7 +6,7 @@ use CommonLibrary::Configuration::DTO::{
 };
 use serde_json::{Value, json};
 
-use crate::Configuration::{
+use crate::IPC::WindServiceHandlers::Configuration::{
 	EnvironmentGet::Fn as EnvironmentGet,
 	Get::Fn as ConfigurationGet,
 	Update::Fn as ConfigurationUpdate,
@@ -28,7 +28,7 @@ type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 /// - `environment:get`
 /// - `workbench:getConfiguration`
 pub async fn dispatch_configuration(
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	app_handle:&tauri::AppHandle,
 

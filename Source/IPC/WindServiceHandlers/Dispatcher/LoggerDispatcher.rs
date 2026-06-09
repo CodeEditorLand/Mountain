@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::Utilities::JsonValueHelpers::{Fn as v_str, arg_string};
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{Fn as v_str, arg_string};
 
 /// Dispatches logger and legacy log commands.
 ///

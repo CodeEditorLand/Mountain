@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::Navigation::{
+use crate::IPC::WindServiceHandlers::Navigation::{
 	HistoryCanGoBack::Fn as HistoryCanGoBack,
 	HistoryCanGoForward::Fn as HistoryCanGoForward,
 	HistoryClear::Fn as HistoryClear,
@@ -29,7 +29,7 @@ use crate::Navigation::{
 /// - `label:getWorkspace`
 /// - `label:getBase`
 pub async fn dispatch_navigation(
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 

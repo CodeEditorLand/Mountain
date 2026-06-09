@@ -2,7 +2,9 @@
 
 use serde_json::Value;
 
-use crate::{
+use serde_json::json;
+
+use crate::IPC::WindServiceHandlers::{
 	Commands::{Execute::Fn as CommandsExecute, GetAll::Fn as CommandsGetAll},
 	Extensions::{
 		ExtensionsGet::Fn as ExtensionsGet,
@@ -16,14 +18,14 @@ use crate::{
 		DecorationsGetMany::Fn as DecorationsGetMany,
 		DecorationsSet::Fn as DecorationsSet,
 	},
-	Utilities::JsonValueHelpers::{arg_string, arg_u64, json},
+	Utilities::JsonValueHelpers::{arg_string, arg_u64},
 };
 
 /// Dispatches UI commands.
 pub async fn dispatch_ui_commands(
 	app_handle:&tauri::AppHandle,
 
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 
@@ -110,11 +112,21 @@ pub async fn dispatch_ui_commands(
 		"extensions:resetPinnedStateForAllUserExtensions" => Ok(Value::Null),
 
 		"extensions:install" => {
-			crate::Extension::ExtensionInstall::Fn(app_handle.clone(), runtime.clone(), arguments).await
+			crate::IPC::WindServiceHandlers::Extension::ExtensionInstall::Fn(
+				app_handle.clone(),
+				runtime.clone(),
+				arguments,
+			)
+			.await
 		},
 
 		"extensions:uninstall" => {
-			crate::Extension::ExtensionUninstall::Fn(app_handle.clone(), runtime.clone(), arguments).await
+			crate::IPC::WindServiceHandlers::Extension::ExtensionUninstall::Fn(
+				app_handle.clone(),
+				runtime.clone(),
+				arguments,
+			)
+			.await
 		},
 
 		"extensions:getManifest" => Ok(Value::Null),

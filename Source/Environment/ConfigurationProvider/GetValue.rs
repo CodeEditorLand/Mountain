@@ -41,8 +41,7 @@ pub(super) async fn get_configuration_value(
 		.ApplicationState
 		.Configuration
 		.GlobalConfiguration
-		.lock()
-		.map_err(|e| CommonError::StateLockPoisoned { Context:format!("Failed to lock configuration: {}", e) })?;
+		.lock();
 
 	// Base value from merged config.
 	let base_value = match section.as_deref() {

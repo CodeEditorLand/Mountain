@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::Storage::{
+use crate::IPC::WindServiceHandlers::Storage::{
 	StorageDelete::Fn as StorageDelete,
 	StorageGet::Fn as StorageGet,
 	StorageGetItems::Fn as StorageGetItems,
@@ -26,7 +26,7 @@ use crate::Storage::{
 /// - `storage:onDidChangeItems` (stub)
 /// - `storage:logStorage` (stub)
 pub async fn dispatch_storage(
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 
@@ -69,7 +69,7 @@ pub async fn dispatch_storage(
 
 		"storage:delete" => StorageDelete(runtime.clone(), arguments).await,
 
-		"storage:keys" => StorageKeys(runtime.clone(), arguments).await,
+		"storage:keys" => StorageKeys(runtime.clone()).await,
 
 		"storage:onDidChangeItems" | "storage:logStorage" => {
 			crate::dev_log!("storage-verbose", "{} (stub-ack)", command);

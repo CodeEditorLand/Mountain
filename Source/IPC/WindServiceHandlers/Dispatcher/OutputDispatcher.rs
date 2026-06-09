@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::Output::{
+use crate::IPC::WindServiceHandlers::Output::{
 	OutputAppend::Fn as OutputAppend,
 	OutputAppendLine::Fn as OutputAppendLine,
 	OutputClear::Fn as OutputClear,

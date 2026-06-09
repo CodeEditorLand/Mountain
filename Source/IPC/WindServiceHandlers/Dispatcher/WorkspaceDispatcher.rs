@@ -2,19 +2,22 @@
 
 use serde_json::{Value, json};
 
-use crate::{
+use crate::IPC::WindServiceHandlers::{
 	UI::{
 		WorkspacesAddFolder::Fn as WorkspacesAddFolder,
 		WorkspacesGetFolders::Fn as WorkspacesGetFolders,
 		WorkspacesGetName::Fn as WorkspacesGetName,
 		WorkspacesRemoveFolder::Fn as WorkspacesRemoveFolder,
 	},
-	Utilities::RecentlyOpened::{Mutate::Fn as MutateRecentlyOpened, Read::Fn as ReadRecentlyOpened},
+	Utilities::{
+		JsonValueHelpers::arg_string,
+		RecentlyOpened::{Mutate::Fn as MutateRecentlyOpened, Read::Fn as ReadRecentlyOpened},
+	},
 };
 
 /// Dispatches workspace commands.
 pub async fn dispatch_workspace(
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 
@@ -38,7 +41,7 @@ pub async fn dispatch_workspace(
 		"workspaces:getRecentlyOpened" => ReadRecentlyOpened(),
 
 		"workspaces:removeRecentlyOpened" => {
-			let uri = crate::Utilities::JsonValueHelpers::arg_string(&arguments, 0);
+			let uri = arg_string(&arguments, 0);
 
 			if !uri.is_empty() {
 				MutateRecentlyOpened(|list| {
@@ -80,21 +83,21 @@ pub async fn dispatch_workspace(
 
 						let file = entry.get("fileUri").cloned();
 
-						if let Some(folder_uri) = folder.and_then(|v| v.as_str()) {
+						if let Some(folder_uri) = folder.and_then(|v| v.as_str().map(str::to_owned)) {
 							workspaces.retain(|e| e.get("uri").and_then(|v| v.as_str()).unwrap_or("") != folder_uri);
 
 							let mut item = serde_json::Map::new();
 
-							item.insert("uri".into(), json!(folder_uri));
+							item.insert("uri".into(), json!(&folder_uri));
 
-							if let Some(label) = entry.get("label").and_then(|v| v.as_str()) {
+							if let Some(label) = entry.get("label").and_then(|v| v.as_str().map(str::to_owned)) {
 								item.insert("label".into(), json!(label));
 							}
 
 							workspaces.insert(0, Value::Object(item));
 						}
 
-						if let Some(file_uri) = file.and_then(|v| v.as_str()) {
+						if let Some(file_uri) = file.and_then(|v| v.as_str().map(str::to_owned)) {
 							files.retain(|e| e.get("uri").and_then(|v| v.as_str()).unwrap_or("") != file_uri);
 
 							let mut item = serde_json::Map::new();

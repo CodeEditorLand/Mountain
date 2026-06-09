@@ -303,8 +303,7 @@ impl FileWatcherProvider for MountainEnvironment {
 		{
 			let guard = state
 				.Entries
-				.lock()
-				.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+				.lock().unwrap();
 
 			if guard.contains_key(&Handle) {
 				dev_log!(
@@ -329,8 +328,7 @@ impl FileWatcherProvider for MountainEnvironment {
 		{
 			let DedupGuard = state
 				.DedupIndex
-				.lock()
-				.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+				.lock().unwrap();
 
 			if let Some(PrimaryHandle) = DedupGuard.get(&DedupKeyValue).cloned() {
 				drop(DedupGuard);
@@ -338,7 +336,7 @@ impl FileWatcherProvider for MountainEnvironment {
 				let mut AliasGuard = state
 					.Aliases
 					.lock()
-					.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+					.unwrap();
 
 				AliasGuard
 					.entry(PrimaryHandle.clone())
@@ -347,8 +345,7 @@ impl FileWatcherProvider for MountainEnvironment {
 
 				let mut H2PGuard = state
 					.HandleToPrimary
-					.lock()
-					.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+					.lock().unwrap();
 
 				H2PGuard.insert(Handle.clone(), PrimaryHandle.clone());
 
@@ -475,8 +472,7 @@ impl FileWatcherProvider for MountainEnvironment {
 
 		let mut guard = state
 			.Entries
-			.lock()
-			.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+			.lock().unwrap();
 
 		let _ = CompiledPattern;
 
@@ -558,7 +554,7 @@ impl FileWatcherProvider for MountainEnvironment {
 			let mut H2PGuard = state
 				.HandleToPrimary
 				.lock()
-				.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+				.unwrap();
 
 			H2PGuard.remove(&Handle)
 		};
@@ -566,8 +562,7 @@ impl FileWatcherProvider for MountainEnvironment {
 		if let Some(PrimaryHandle) = MaybePrimary {
 			let mut AliasGuard = state
 				.Aliases
-				.lock()
-				.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+				.lock().unwrap();
 
 			if let Some(AliasList) = AliasGuard.get_mut(&PrimaryHandle) {
 				AliasList.retain(|EntryHandle| EntryHandle != &Handle);
@@ -594,8 +589,7 @@ impl FileWatcherProvider for MountainEnvironment {
 		// stop receiving events.
 		let mut Guard = state
 			.Entries
-			.lock()
-			.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+			.lock().unwrap();
 
 		if Guard.remove(&Handle).is_some() {
 			dev_log!("filewatcher", "[FileWatcherProvider] Unregistered watcher handle={}", Handle);
@@ -608,8 +602,7 @@ impl FileWatcherProvider for MountainEnvironment {
 		// watcher rather than aliasing to a removed handle.
 		let mut DedupGuard = state
 			.DedupIndex
-			.lock()
-			.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+			.lock().unwrap();
 
 		DedupGuard.retain(|_, PrimaryHandle| PrimaryHandle != &Handle);
 

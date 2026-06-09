@@ -319,7 +319,6 @@ impl SearchProvider for MountainEnvironment {
 			.Workspace
 			.WorkspaceFolders
 			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.clone();
 
 		if Folders.is_empty() {
@@ -377,8 +376,7 @@ impl SearchProvider for MountainEnvironment {
 		}
 
 		let FinalMatches = AllMatches
-			.lock()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?
+			.lock().unwrap()
 			.clone();
 
 		let TotalLineMatches:usize = FinalMatches.iter().map(|F| F.matches.len()).sum();

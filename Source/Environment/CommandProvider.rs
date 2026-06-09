@@ -105,7 +105,6 @@ impl CommandExecutor for MountainEnvironment {
 			.Registry
 			.CommandRegistry
 			.lock()
-			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.get(&CommandIdentifier)
 			.cloned();
 
@@ -307,7 +306,6 @@ impl CommandExecutor for MountainEnvironment {
 						.Registry
 						.CommandRegistry
 						.lock()
-						.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 						.get(&CommandIdentifier)
 						.cloned();
 
@@ -382,8 +380,7 @@ impl CommandExecutor for MountainEnvironment {
 			.Extension
 			.Registry
 			.CommandRegistry
-			.lock()
-			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			.lock();
 
 		Registry.insert(
 			CommandIdentifier.clone(),
@@ -402,7 +399,6 @@ impl CommandExecutor for MountainEnvironment {
 			.Registry
 			.CommandRegistry
 			.lock()
-			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.remove(&CommandIdentifier);
 
 		Ok(())
@@ -417,8 +413,7 @@ impl CommandExecutor for MountainEnvironment {
 			.Extension
 			.Registry
 			.CommandRegistry
-			.lock()
-			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			.lock();
 
 		Ok(Registry.keys().cloned().collect())
 	}
@@ -433,17 +428,12 @@ impl CommandExecutor for MountainEnvironment {
 fn LookupCommandContributingExtension(Environment:&MountainEnvironment, CommandIdentifier:&str) -> bool {
 	let Event = format!("onCommand:{}", CommandIdentifier);
 
-	let Guard = match Environment
+	let Guard = Environment
 		.ApplicationState
 		.Extension
 		.ScannedExtensions
 		.ScannedExtensions
-		.lock()
-	{
-		Ok(G) => G,
-
-		Err(_) => return false,
-	};
+		.lock();
 
 	for Description in Guard.values() {
 		if let Some(Events) = &Description.ActivationEvents {

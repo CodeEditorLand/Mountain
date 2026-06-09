@@ -2,11 +2,11 @@
 
 use serde_json::{Value, json};
 
-use crate::NativeHost::{
+use crate::IPC::WindServiceHandlers::NativeHost::{
 	GetColorScheme::Fn as NativeGetColorScheme,
 	GetEnvironmentPaths::Fn as NativeGetEnvironmentPaths,
-	GetOSProperties::Fn as NativeOSProperties,
-	GetOSStatistics::Fn as NativeOSStatistics,
+	OSProperties::Fn as NativeOSProperties,
+	OSStatistics::Fn as NativeOSStatistics,
 	IsFullscreen::Fn as NativeIsFullscreen,
 	IsMaximized::Fn as NativeIsMaximized,
 	PickFolder::Fn as NativePickFolder,
@@ -20,7 +20,7 @@ use crate::NativeHost::{
 pub async fn dispatch_native_host_dialogs(
 	app_handle:&tauri::AppHandle,
 
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 

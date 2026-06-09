@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::Git::{
+use crate::IPC::WindServiceHandlers::Git::{
 	HandleCancel::Fn as GitHandleCancel,
 	HandleCheckout::Fn as GitHandleCheckout,
 	HandleClone::Fn as GitHandleClone,

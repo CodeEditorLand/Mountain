@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::Encryption::{Decrypt::Fn as Decrypt, Encrypt::Fn as Encrypt};
+use crate::IPC::WindServiceHandlers::Encryption::{Decrypt::Fn as Decrypt, Encrypt::Fn as Encrypt};
 
 /// Dispatches encryption commands.
 ///

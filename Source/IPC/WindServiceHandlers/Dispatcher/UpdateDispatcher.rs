@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::Update::{
+use crate::IPC::WindServiceHandlers::Update::{
 	ApplyUpdate::Fn as UpdateApplyUpdate,
 	CheckForUpdates::Fn as UpdateCheckForUpdates,
 	DownloadUpdate::Fn as UpdateDownloadUpdate,

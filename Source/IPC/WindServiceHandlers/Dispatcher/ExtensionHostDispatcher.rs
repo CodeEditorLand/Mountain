@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::ExtensionHost::{
+use crate::IPC::WindServiceHandlers::ExtensionHost::{
 	DebugServiceClose::Fn as ExtensionHostDebugClose,
 	DebugServiceReload::Fn as ExtensionHostDebugReload,
 	StarterCreate::Fn as ExtensionHostStarterCreate,
@@ -84,7 +84,7 @@ pub async fn dispatch_extension_host(
 		"cocoon:extensionHostMessage" => {
 			crate::dev_log!("exthost", "cocoon:extensionHostMessage");
 
-			crate::Cocoon::ExtensionHostMessage::Fn(app_handle.clone(), arguments).await
+			crate::IPC::WindServiceHandlers::Cocoon::ExtensionHostMessage::Fn(app_handle.clone(), arguments).await
 		},
 
 		_ => Err(format!("Unknown extension host command: {}", command)),

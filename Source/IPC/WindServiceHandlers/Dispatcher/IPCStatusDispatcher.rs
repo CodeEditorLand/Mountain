@@ -12,7 +12,7 @@ use serde_json::{Value, json};
 pub async fn dispatch_ipc_status(
 	app_handle:&tauri::AppHandle,
 
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 ) -> Result<Value, String> {

@@ -1,12 +1,22 @@
 //! Language feature command dispatcher - forwards to Cocoon Node.js runtime.
 
-use serde_json::Value;
+use CommonLibrary::LanguageFeature::{
+	DTO::PositionDTO::PositionDTO,
+	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
+};
+use serde_json::{Value, json};
 
-use crate::{LanguageFeature::DTO::PositionDTO::PositionDTO, Utilities::JsonValueHelpers::arg_val};
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_val;
+
+fn cocoon_payload(args:Vec<serde_json::Value>) -> serde_json::Value {
+	match args.len() {
+		0 => serde_json::Value::Null,
+		1 => args.into_iter().next().unwrap(),
+		_ => serde_json::Value::Array(args),
+	}
+}
 
 /// Dispatches language feature commands.
-///
-/// These are forwarded to Cocoon's Node.js runtime.
 ///
 /// Handled commands:
 /// - `language:provideInlineCompletions`
@@ -20,7 +30,7 @@ use crate::{LanguageFeature::DTO::PositionDTO::PositionDTO, Utilities::JsonValue
 /// - `language:provideTypeHierarchySubtypes`
 /// - `language:provideLinkedEditingRanges`
 pub async fn dispatch_language(
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 
@@ -99,8 +109,7 @@ pub async fn dispatch_language(
 		"language:prepareCallHierarchy"
 		| "language:provideCallHierarchyIncomingCalls"
 		| "language:provideCallHierarchyOutgoingCalls" => {
-			// Forward to Cocoon
-			let payload = crate::Cocoon::Request::cocoon_payload(arguments);
+			let payload = cocoon_payload(arguments);
 
 			let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
 
@@ -112,8 +121,7 @@ pub async fn dispatch_language(
 		"language:prepareTypeHierarchy"
 		| "language:provideTypeHierarchySupertypes"
 		| "language:provideTypeHierarchySubtypes" => {
-			// Forward to Cocoon
-			let payload = crate::Cocoon::Request::cocoon_payload(arguments);
+			let payload = cocoon_payload(arguments);
 
 			let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
 
@@ -123,8 +131,7 @@ pub async fn dispatch_language(
 		},
 
 		"language:provideLinkedEditingRanges" => {
-			// Forward to Cocoon
-			let payload = crate::Cocoon::Request::cocoon_payload(arguments);
+			let payload = cocoon_payload(arguments);
 
 			let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
 

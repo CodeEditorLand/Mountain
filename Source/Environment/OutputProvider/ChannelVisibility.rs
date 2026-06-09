@@ -25,8 +25,7 @@ pub(super) async fn reveal_channel(
 		.Feature
 		.OutputChannels
 		.OutputChannels
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		.lock();
 
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		channel_state.IsVisible = true;
@@ -65,8 +64,7 @@ pub(super) async fn close_channel(
 		.Feature
 		.OutputChannels
 		.OutputChannels
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		.lock();
 
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		channel_state.IsVisible = false;

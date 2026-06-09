@@ -280,8 +280,7 @@ impl ExtensionManagementService for MountainEnvironment {
 				.Extension
 				.Registry
 				.ExtensionScanPaths
-				.lock()
-				.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+				.lock();
 
 			ScanPathsGuard.clone()
 		};
@@ -301,8 +300,7 @@ impl ExtensionManagementService for MountainEnvironment {
 			.Extension
 			.ScannedExtensions
 			.ScannedExtensions
-			.lock()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+			.lock();
 
 		ScannedExtensionsGuard.clear();
 
@@ -358,8 +356,7 @@ impl ExtensionManagementService for MountainEnvironment {
 			.Extension
 			.ScannedExtensions
 			.ScannedExtensions
-			.lock()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+			.lock();
 
 		let GuardLen = ScannedExtensionsGuard.len();
 
@@ -390,8 +387,7 @@ impl ExtensionManagementService for MountainEnvironment {
 			.Extension
 			.ScannedExtensions
 			.ScannedExtensions
-			.lock()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+			.lock();
 
 		if let Some(extension_dto) = ScannedExtensionsGuard.get(&id) {
 			// Convert ExtensionDescriptionStateDTO back to JSON Value
