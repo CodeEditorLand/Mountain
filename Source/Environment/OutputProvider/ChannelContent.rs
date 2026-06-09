@@ -30,12 +30,7 @@ pub(super) async fn append_to_channel(
 		});
 	}
 
-	let mut channels_guard = env
-		.ApplicationState
-		.Feature
-		.OutputChannels
-		.OutputChannels
-		.lock();
+	let mut channels_guard = env.ApplicationState.Feature.OutputChannels.OutputChannels.lock();
 
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		// Enforce total buffer size limit of 10MB per channel to prevent
@@ -84,12 +79,7 @@ pub(super) async fn replace_channel_content(
 		channel_identifier
 	);
 
-	let mut channels_guard = env
-		.ApplicationState
-		.Feature
-		.OutputChannels
-		.OutputChannels
-		.lock();
+	let mut channels_guard = env.ApplicationState.Feature.OutputChannels.OutputChannels.lock();
 
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		channel_state.Buffer = value.clone();
@@ -118,12 +108,7 @@ pub(super) async fn clear_channel(
 ) -> Result<(), CommonError> {
 	dev_log!("output", "[OutputProvider] Clearing channel: '{}'", channel_identifier);
 
-	let mut channels_guard = env
-		.ApplicationState
-		.Feature
-		.OutputChannels
-		.OutputChannels
-		.lock();
+	let mut channels_guard = env.ApplicationState.Feature.OutputChannels.OutputChannels.lock();
 
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		channel_state.Buffer.clear();

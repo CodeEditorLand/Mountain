@@ -177,12 +177,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			ProviderHandle
 		);
 
-		let mut ProvidersGuard = self
-			.ApplicationState
-			.Feature
-			.Markers
-			.SourceControlManagementProviders
-			.lock();
+		let mut ProvidersGuard = self.ApplicationState.Feature.Markers.SourceControlManagementProviders.lock();
 
 		if let Some(Provider) = ProvidersGuard.get_mut(&ProviderHandle) {
 			if let Some(count) = UpdateData.Count {
@@ -235,12 +230,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			ProviderHandle
 		);
 
-		let mut GroupsGuard = self
-			.ApplicationState
-			.Feature
-			.Markers
-			.SourceControlManagementGroups
-			.lock();
+		let mut GroupsGuard = self.ApplicationState.Feature.Markers.SourceControlManagementGroups.lock();
 
 		if let Some(ProviderGroups) = GroupsGuard.get_mut(&ProviderHandle) {
 			let Group = ProviderGroups.entry(GroupData.GroupID.clone()).or_insert_with(|| {
@@ -284,12 +274,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			ProviderHandle
 		);
 
-		let mut ProvidersGuard = self
-			.ApplicationState
-			.Feature
-			.Markers
-			.SourceControlManagementProviders
-			.lock();
+		let mut ProvidersGuard = self.ApplicationState.Feature.Markers.SourceControlManagementProviders.lock();
 
 		if let Some(Provider) = ProvidersGuard.get_mut(&ProviderHandle) {
 			Provider.InputBox = Some(InputBoxData);

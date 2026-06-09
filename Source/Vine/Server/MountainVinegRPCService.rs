@@ -219,7 +219,9 @@ struct VineIPCProvider;
 impl ::Vine::Host::IPCProvider for VineIPCProvider {
 	fn SendRequest(
 		&self,
+
 		Channel:&str,
+
 		Payload:serde_json::Value,
 	) -> futures::future::BoxFuture<'_, ::Vine::Error::Result<serde_json::Value>> {
 		let Channel = Channel.to_string();
@@ -254,7 +256,9 @@ impl ::Vine::Host::VineHost for MountainVinegRPCService {
 	}
 
 	fn RendererEmitter(&self) -> Arc<dyn ::Vine::Host::RendererEmitter> {
-		Arc::new(crate::Vine::Server::VineHostImpl::TauriRendererEmitter::New(self.ApplicationHandle.clone()))
+		Arc::new(crate::Vine::Server::VineHostImpl::TauriRendererEmitter::New(
+			self.ApplicationHandle.clone(),
+		))
 	}
 
 	fn IPCProvider(&self) -> Arc<dyn ::Vine::Host::IPCProvider> { Arc::new(VineIPCProvider) }
@@ -275,18 +279,13 @@ impl ::Vine::Host::VineHost for MountainVinegRPCService {
 
 		use crate::Environment::CommandProvider::CommandHandler;
 
-		self.RunTime
-			.Environment
-			.ApplicationState
-			.Extension
-			.Registry
-			.RegisterCommand(
-				CommandId.to_string(),
-				CommandHandler::<Wry>::Proxied {
-					SideCarIdentifier:SideCarIdentifier.to_string(),
-					CommandIdentifier:CommandId.to_string(),
-				},
-			);
+		self.RunTime.Environment.ApplicationState.Extension.Registry.RegisterCommand(
+			CommandId.to_string(),
+			CommandHandler::<Wry>::Proxied {
+				SideCarIdentifier:SideCarIdentifier.to_string(),
+				CommandIdentifier:CommandId.to_string(),
+			},
+		);
 	}
 
 	fn UnregisterCommandInRegistry(&self, CommandId:&str) {
@@ -326,12 +325,10 @@ impl ::Vine::Host::VineHost for MountainVinegRPCService {
 
 	fn CreateTerminal<'a>(
 		&'a self,
+
 		Options:&'a serde_json::Value,
 	) -> futures::future::BoxFuture<'a, Option<serde_json::Value>> {
-		use CommonLibrary::{
-			Environment::Requires::Requires,
-			Terminal::TerminalProvider::TerminalProvider,
-		};
+		use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
 
 		let Options = Options.clone();
 
@@ -349,12 +346,19 @@ impl ::Vine::Host::VineHost for MountainVinegRPCService {
 
 		let Dto = SourceControlManagementProviderDTO {
 			Handle,
+
 			Identifier:ScmId.to_string(),
+
 			Label:Label.to_string(),
+
 			RootURI:None,
+
 			Count:None,
+
 			CommitTemplate:None,
+
 			AcceptInputCommand:None,
+
 			InputBox:None,
 		};
 
@@ -368,10 +372,7 @@ impl ::Vine::Host::VineHost for MountainVinegRPCService {
 			.insert(Handle, Dto);
 	}
 
-	fn CreateSourceControl<'a>(
-		&'a self,
-		Payload:serde_json::Value,
-	) -> futures::future::BoxFuture<'a, ()> {
+	fn CreateSourceControl<'a>(&'a self, Payload:serde_json::Value) -> futures::future::BoxFuture<'a, ()> {
 		use CommonLibrary::{
 			Environment::Requires::Requires,
 			SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider,
@@ -388,7 +389,9 @@ impl ::Vine::Host::VineHost for MountainVinegRPCService {
 
 	fn UpdateSourceControlGroup<'a>(
 		&'a self,
+
 		ScmHandle:u32,
+
 		Payload:serde_json::Value,
 	) -> futures::future::BoxFuture<'a, ()> {
 		use CommonLibrary::{
@@ -412,22 +415,39 @@ impl ::Vine::Host::VineHost for MountainVinegRPCService {
 
 		let ProvType = match TypeName {
 			"hover" => ProviderType::Hover,
+
 			"completion" | "completion_item" => ProviderType::Completion,
+
 			"signature_help" => ProviderType::SignatureHelp,
+
 			"definition" => ProviderType::Definition,
+
 			"reference" | "references" => ProviderType::References,
+
 			"document_symbol" | "document_symbols" => ProviderType::DocumentSymbol,
+
 			"workspace_symbol" | "workspace_symbols" => ProviderType::WorkspaceSymbol,
+
 			"code_action" | "code_actions" => ProviderType::CodeAction,
+
 			"code_lens" => ProviderType::CodeLens,
+
 			"document_highlight" => ProviderType::DocumentHighlight,
+
 			"document_formatting" => ProviderType::DocumentFormatting,
+
 			"document_range_formatting" => ProviderType::DocumentRangeFormatting,
+
 			"rename" => ProviderType::Rename,
+
 			"folding_range" => ProviderType::FoldingRange,
+
 			"selection_range" => ProviderType::SelectionRange,
+
 			"semantic_tokens" => ProviderType::SemanticTokens,
+
 			"inline_completion" | "inline_completions" => ProviderType::InlineCompletion,
+
 			_ => return false,
 		};
 
@@ -445,10 +465,15 @@ impl ::Vine::Host::VineHost for MountainVinegRPCService {
 
 		let Dto = ProviderRegistrationDTO {
 			Handle,
+
 			ProviderType:ProvType,
+
 			Selector,
+
 			SideCarIdentifier:"cocoon-main".to_string(),
+
 			ExtensionIdentifier:ExtId,
+
 			Options:None,
 		};
 

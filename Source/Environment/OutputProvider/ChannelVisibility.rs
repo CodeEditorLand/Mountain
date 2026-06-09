@@ -20,12 +20,7 @@ pub(super) async fn reveal_channel(
 ) -> Result<(), CommonError> {
 	dev_log!("output", "[OutputProvider] Revealing channel: '{}'", channel_identifier);
 
-	let mut channels_guard = env
-		.ApplicationState
-		.Feature
-		.OutputChannels
-		.OutputChannels
-		.lock();
+	let mut channels_guard = env.ApplicationState.Feature.OutputChannels.OutputChannels.lock();
 
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		channel_state.IsVisible = true;
@@ -59,12 +54,7 @@ pub(super) async fn close_channel(
 ) -> Result<(), CommonError> {
 	dev_log!("output", "[OutputProvider] Closing channel: '{}'", channel_identifier);
 
-	let mut channels_guard = env
-		.ApplicationState
-		.Feature
-		.OutputChannels
-		.OutputChannels
-		.lock();
+	let mut channels_guard = env.ApplicationState.Feature.OutputChannels.OutputChannels.lock();
 
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		channel_state.IsVisible = false;

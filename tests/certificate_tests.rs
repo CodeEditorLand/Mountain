@@ -67,12 +67,7 @@ async fn test_multiple_server_certificates() {
 	manager.initialize_ca().await.expect("Failed to initialize CA");
 
 	// Generate multiple server certificates
-	let hostnames = vec![
-		"code.editor.land",
-		"api.editor.land",
-		"cdn.editor.land",
-		"test.editor.land",
-	];
+	let hostnames = vec!["code.editor.land", "api.editor.land", "cdn.editor.land", "test.editor.land"];
 
 	for hostname in hostnames {
 		let server_config = manager

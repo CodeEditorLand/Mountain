@@ -375,12 +375,7 @@ impl CommandExecutor for MountainEnvironment {
 			SideCarIdentifier
 		);
 
-		let mut Registry = self
-			.ApplicationState
-			.Extension
-			.Registry
-			.CommandRegistry
-			.lock();
+		let mut Registry = self.ApplicationState.Extension.Registry.CommandRegistry.lock();
 
 		Registry.insert(
 			CommandIdentifier.clone(),
@@ -408,12 +403,7 @@ impl CommandExecutor for MountainEnvironment {
 	async fn GetAllCommands(&self) -> Result<Vec<String>, CommonError> {
 		dev_log!("commands", "[CommandProvider] Getting all command identifiers.");
 
-		let Registry = self
-			.ApplicationState
-			.Extension
-			.Registry
-			.CommandRegistry
-			.lock();
+		let Registry = self.ApplicationState.Extension.Registry.CommandRegistry.lock();
 
 		Ok(Registry.keys().cloned().collect())
 	}

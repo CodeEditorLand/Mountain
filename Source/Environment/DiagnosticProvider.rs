@@ -71,12 +71,7 @@ impl DiagnosticManager for MountainEnvironment {
 				}
 			})?;
 
-		let mut DiagnosticsMapGuard = self
-			.ApplicationState
-			.Feature
-			.Diagnostics
-			.DiagnosticsMap
-			.lock();
+		let mut DiagnosticsMapGuard = self.ApplicationState.Feature.Diagnostics.DiagnosticsMap.lock();
 
 		let OwnerMap = DiagnosticsMapGuard.entry(Owner.clone()).or_default();
 
@@ -200,12 +195,7 @@ impl DiagnosticManager for MountainEnvironment {
 		);
 
 		let (ClearedCount, ChangedURIKeys):(usize, Vec<String>) = {
-			let mut DiagnosticsMapGuard = self
-				.ApplicationState
-				.Feature
-				.Diagnostics
-				.DiagnosticsMap
-				.lock();
+			let mut DiagnosticsMapGuard = self.ApplicationState.Feature.Diagnostics.DiagnosticsMap.lock();
 
 			DiagnosticsMapGuard
 				.remove(&Owner)
@@ -270,12 +260,7 @@ impl DiagnosticManager for MountainEnvironment {
 			.transpose()?;
 
 		let Snapshot:Vec<std::collections::HashMap<String, Vec<MarkerDataDTO>>> = {
-			let DiagnosticsMapGuard = self
-				.ApplicationState
-				.Feature
-				.Diagnostics
-				.DiagnosticsMap
-				.lock();
+			let DiagnosticsMapGuard = self.ApplicationState.Feature.Diagnostics.DiagnosticsMap.lock();
 
 			DiagnosticsMapGuard.values().cloned().collect()
 		};

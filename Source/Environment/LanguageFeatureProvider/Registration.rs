@@ -3,10 +3,7 @@
 use CommonLibrary::{Error::CommonError::CommonError, LanguageFeature::DTO::ProviderType::ProviderType};
 use serde_json::Value;
 
-use crate::{
-	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
-	dev_log,
-};
+use crate::{ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO, dev_log};
 
 pub(super) async fn register_provider(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,

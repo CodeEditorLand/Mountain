@@ -6,7 +6,8 @@ use tauri::{AppHandle, Emitter};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-/// Tauri-backed renderer emitter that satisfies `::Vine::Host::RendererEmitter`.
+/// Tauri-backed renderer emitter that satisfies
+/// `::Vine::Host::RendererEmitter`.
 pub struct TauriRendererEmitter {
 	Handle:AppHandle,
 }

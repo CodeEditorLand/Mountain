@@ -5,10 +5,10 @@ use serde_json::{Value, json};
 use crate::IPC::WindServiceHandlers::NativeHost::{
 	GetColorScheme::Fn as NativeGetColorScheme,
 	GetEnvironmentPaths::Fn as NativeGetEnvironmentPaths,
-	OSProperties::Fn as NativeOSProperties,
-	OSStatistics::Fn as NativeOSStatistics,
 	IsFullscreen::Fn as NativeIsFullscreen,
 	IsMaximized::Fn as NativeIsMaximized,
+	OSProperties::Fn as NativeOSProperties,
+	OSStatistics::Fn as NativeOSStatistics,
 	PickFolder::Fn as NativePickFolder,
 	ShowMessageBox::Fn as NativeShowMessageBox,
 	ShowOpenDialog::Fn as NativeShowOpenDialog,

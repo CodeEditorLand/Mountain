@@ -3,10 +3,7 @@
 use CommonLibrary::{Error::CommonError::CommonError, LanguageFeature::DTO::ProviderType::ProviderType};
 use url::Url;
 
-use crate::{
-	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
-	dev_log,
-};
+use crate::{ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO, dev_log};
 
 pub(super) async fn get_matching_provider(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
@@ -22,12 +19,7 @@ pub(super) async fn get_matching_provider(
 		.LanguageProviders
 		.lock();
 
-	let open_documents = environment
-		.ApplicationState
-		.Feature
-		.Documents
-		.OpenDocuments
-		.lock();
+	let open_documents = environment.ApplicationState.Feature.Documents.OpenDocuments.lock();
 
 	// Derive language: prefer DocumentState record, fall back to URI extension.
 	let LanguageId:String = if let Some(Document) = open_documents.get(document_uri.as_str()) {

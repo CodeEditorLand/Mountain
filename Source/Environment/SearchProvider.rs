@@ -314,12 +314,7 @@ impl SearchProvider for MountainEnvironment {
 
 		let AllMatches = Arc::new(Mutex::new(Vec::<FileMatch>::new()));
 
-		let Folders = self
-			.ApplicationState
-			.Workspace
-			.WorkspaceFolders
-			.lock()
-			.clone();
+		let Folders = self.ApplicationState.Workspace.WorkspaceFolders.lock().clone();
 
 		if Folders.is_empty() {
 			dev_log!("search", "warn: [SearchProvider] No workspace folders to search in.");
@@ -375,9 +370,7 @@ impl SearchProvider for MountainEnvironment {
 			}
 		}
 
-		let FinalMatches = AllMatches
-			.lock().unwrap()
-			.clone();
+		let FinalMatches = AllMatches.lock().unwrap().clone();
 
 		let TotalLineMatches:usize = FinalMatches.iter().map(|F| F.matches.len()).sum();
 

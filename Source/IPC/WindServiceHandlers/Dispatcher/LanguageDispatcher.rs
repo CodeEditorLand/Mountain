@@ -11,7 +11,9 @@ use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_val;
 fn cocoon_payload(args:Vec<serde_json::Value>) -> serde_json::Value {
 	match args.len() {
 		0 => serde_json::Value::Null,
+
 		1 => args.into_iter().next().unwrap(),
+
 		_ => serde_json::Value::Array(args),
 	}
 }

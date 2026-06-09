@@ -131,7 +131,7 @@ impl ServiceRegistry {
 	/// # Example
 	///
 	/// ```rust
-	/// registry.register("code.editor.land".to_string(), 8080, Some("/health".to_string()));
+	/// registry.register("code.editor.land".to_string(), 8080, Some("/health".to_string())); 
 	/// ```
 	pub fn register(&self, name:String, port:u16, health_check_path:Option<String>) {
 		self.register_with_options(name, port, None, false, health_check_path);

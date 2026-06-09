@@ -74,12 +74,7 @@ pub(super) async fn create_webview_panel_impl(
 
 	// Store the initial state with lifecycle state
 	{
-		let mut webview_guard = env
-			.ApplicationState
-			.Feature
-			.Webviews
-			.ActiveWebviews
-			.lock();
+		let mut webview_guard = env.ApplicationState.Feature.Webviews.ActiveWebviews.lock();
 
 		webview_guard.insert(handle.clone(), state);
 	}
@@ -156,12 +151,7 @@ pub(super) async fn dispose_webview_panel_impl(env:&MountainEnvironment, handle:
 	}
 
 	// Remove state
-	env.ApplicationState
-		.Feature
-		.Webviews
-		.ActiveWebviews
-		.lock()
-		.remove(&handle);
+	env.ApplicationState.Feature.Webviews.ActiveWebviews.lock().remove(&handle);
 
 	// Notify frontend about Webview disposal
 	env.ApplicationHandle
@@ -194,12 +184,7 @@ pub(super) async fn reveal_webview_panel_impl(
 
 		// Update visibility state
 		{
-			let mut webview_guard = env
-				.ApplicationState
-				.Feature
-				.Webviews
-				.ActiveWebviews
-				.lock();
+			let mut webview_guard = env.ApplicationState.Feature.Webviews.ActiveWebviews.lock();
 
 			if let Some(state) = webview_guard.get_mut(&handle) {
 				state.IsVisible = true;

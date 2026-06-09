@@ -2,7 +2,11 @@
 
 use serde_json::Value;
 
-use crate::IPC::WindServiceHandlers::UI::{ThemesGetActive::Fn as ThemesGetActive, ThemesList::Fn as ThemesList, ThemesSet::Fn as ThemesSet};
+use crate::IPC::WindServiceHandlers::UI::{
+	ThemesGetActive::Fn as ThemesGetActive,
+	ThemesList::Fn as ThemesList,
+	ThemesSet::Fn as ThemesSet,
+};
 
 /// Dispatches theme commands.
 pub async fn dispatch_theme(

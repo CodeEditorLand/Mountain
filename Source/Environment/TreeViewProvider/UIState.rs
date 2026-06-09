@@ -25,12 +25,7 @@ pub(super) async fn set_tree_view_message(
 	);
 
 	{
-		let mut tree_view_guard = env
-			.ApplicationState
-			.Feature
-			.TreeViews
-			.ActiveTreeViews
-			.lock();
+		let mut tree_view_guard = env.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock();
 
 		if let Some(view_state) = tree_view_guard.get_mut(&view_identifier) {
 			view_state.Message = message.clone();
@@ -66,12 +61,7 @@ pub(super) async fn set_tree_view_title(
 	);
 
 	{
-		let mut tree_view_guard = env
-			.ApplicationState
-			.Feature
-			.TreeViews
-			.ActiveTreeViews
-			.lock();
+		let mut tree_view_guard = env.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock();
 
 		if let Some(view_state) = tree_view_guard.get_mut(&view_identifier) {
 			view_state.Title = title.clone();
@@ -111,12 +101,7 @@ pub(super) async fn set_tree_view_badge(
 
 	// Update state (badge field may need to be added to TreeViewStateDTO)
 	{
-		let mut tree_view_guard = env
-			.ApplicationState
-			.Feature
-			.TreeViews
-			.ActiveTreeViews
-			.lock();
+		let mut tree_view_guard = env.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock();
 
 		if let Some(view_state) = tree_view_guard.get_mut(&view_identifier) {
 			// Store badge in ViewState

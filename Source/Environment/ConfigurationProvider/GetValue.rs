@@ -37,11 +37,7 @@ pub(super) async fn get_configuration_value(
 		overrides.OverrideIdentifier
 	);
 
-	let configuration_guard = environment
-		.ApplicationState
-		.Configuration
-		.GlobalConfiguration
-		.lock();
+	let configuration_guard = environment.ApplicationState.Configuration.GlobalConfiguration.lock();
 
 	// Base value from merged config.
 	let base_value = match section.as_deref() {

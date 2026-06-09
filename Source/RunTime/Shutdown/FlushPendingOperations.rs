@@ -9,12 +9,7 @@ impl ApplicationRunTime {
 	pub async fn FlushPendingOperations(&self) {
 		dev_log!("lifecycle", "[ApplicationRunTime] Flushing pending operations...");
 
-		let mut PendingRequestsGuard = self
-			.Environment
-			.ApplicationState
-			.UI
-			.PendingUserInterfaceRequest
-			.lock();
+		let mut PendingRequestsGuard = self.Environment.ApplicationState.UI.PendingUserInterfaceRequest.lock();
 
 		for (_RequestIdentifier, Sender) in PendingRequestsGuard.drain() {
 			let _ = Sender.send(Err(CommonError::Unknown {

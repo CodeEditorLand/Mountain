@@ -157,11 +157,7 @@ impl WorkspaceProvider for MountainEnvironment {
 	async fn GetWorkspaceFoldersInfo(&self) -> Result<Vec<(Url, String, usize)>, CommonError> {
 		dev_log!("workspaces", "[WorkspaceProvider] Getting workspace folders info.");
 
-		let FoldersGuard = self
-			.ApplicationState
-			.Workspace
-			.WorkspaceFolders
-			.lock();
+		let FoldersGuard = self.ApplicationState.Workspace.WorkspaceFolders.lock();
 
 		Ok(FoldersGuard.iter().map(|f| (f.URI.clone(), f.Name.clone(), f.Index)).collect())
 	}
@@ -169,11 +165,7 @@ impl WorkspaceProvider for MountainEnvironment {
 	/// Retrieves information for the specific workspace folder that contains a
 	/// given URI.
 	async fn GetWorkspaceFolderInfo(&self, URIToMatch:Url) -> Result<Option<(Url, String, usize)>, CommonError> {
-		let FoldersGuard = self
-			.ApplicationState
-			.Workspace
-			.WorkspaceFolders
-			.lock();
+		let FoldersGuard = self.ApplicationState.Workspace.WorkspaceFolders.lock();
 
 		for Folder in FoldersGuard.iter() {
 			if URIToMatch.as_str().starts_with(Folder.URI.as_str()) {
@@ -191,12 +183,7 @@ impl WorkspaceProvider for MountainEnvironment {
 
 	/// Gets the path to the workspace configuration file (`.code-workspace`).
 	async fn GetWorkspaceConfigurationPath(&self) -> Result<Option<PathBuf>, CommonError> {
-		Ok(self
-			.ApplicationState
-			.Workspace
-			.WorkspaceConfigurationPath
-			.lock()
-			.clone())
+		Ok(self.ApplicationState.Workspace.WorkspaceConfigurationPath.lock().clone())
 	}
 
 	/// Checks if the current workspace is trusted.
@@ -407,9 +394,7 @@ impl WorkspaceProvider for MountainEnvironment {
 		}
 
 		let RoleResolved:SingleFlightRole = {
-			let mut Guard = FindFilesInFlight()
-				.lock()
-				.unwrap();
+			let mut Guard = FindFilesInFlight().lock().unwrap();
 
 			match Guard.get(&CacheKey) {
 				Some(Existing) => SingleFlightRole::Follower(Existing.clone()),
@@ -558,7 +543,8 @@ impl WorkspaceProvider for MountainEnvironment {
 			.map_err(|_| {
 				CommonError::Unknown { Description:"FindFilesInWorkspace: result Arc had outstanding refs".into() }
 			})?
-			.into_inner().unwrap();
+			.into_inner()
+			.unwrap();
 
 		dev_log!(
 			"workspaces",

@@ -145,8 +145,7 @@ impl StorageProvider for MountainEnvironment {
 			&self.ApplicationState.Configuration.MementoWorkspaceStorage
 		};
 
-		let StorageMapGuard = StorageMapMutex
-			.lock();
+		let StorageMapGuard = StorageMapMutex.lock();
 
 		Ok(StorageMapGuard.get(Key).cloned())
 	}
@@ -212,27 +211,18 @@ impl StorageProvider for MountainEnvironment {
 		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
 			(
 				self.ApplicationState.Configuration.MementoGlobalStorage.clone(),
-				Some(
-					self.ApplicationState
-						.GlobalMementoPath
-						.lock()
-						.clone(),
-				),
+				Some(self.ApplicationState.GlobalMementoPath.lock().clone()),
 			)
 		} else {
 			(
 				self.ApplicationState.Configuration.MementoWorkspaceStorage.clone(),
-				self.ApplicationState
-					.WorkspaceMementoPath
-					.lock()
-					.clone(),
+				self.ApplicationState.WorkspaceMementoPath.lock().clone(),
 			)
 		};
 
 		// Perform the in-memory update.
 		let DataToSave = {
-			let mut StorageMapGuard = StorageMapMutex
-				.lock();
+			let mut StorageMapGuard = StorageMapMutex.lock();
 
 			if let Some(Value) = ValueToSet {
 				StorageMapGuard.insert(Key, Value);
@@ -270,8 +260,7 @@ impl StorageProvider for MountainEnvironment {
 			&self.ApplicationState.Configuration.MementoWorkspaceStorage
 		};
 
-		let StorageMapGuard = StorageMapMutex
-			.lock();
+		let StorageMapGuard = StorageMapMutex.lock();
 
 		Ok(serde_json::to_value(&*StorageMapGuard)?)
 	}
@@ -291,26 +280,17 @@ impl StorageProvider for MountainEnvironment {
 		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
 			(
 				self.ApplicationState.Configuration.MementoGlobalStorage.clone(),
-				Some(
-					self.ApplicationState
-						.GlobalMementoPath
-						.lock()
-						.clone(),
-				),
+				Some(self.ApplicationState.GlobalMementoPath.lock().clone()),
 			)
 		} else {
 			(
 				self.ApplicationState.Configuration.MementoWorkspaceStorage.clone(),
-				self.ApplicationState
-					.WorkspaceMementoPath
-					.lock()
-					.clone(),
+				self.ApplicationState.WorkspaceMementoPath.lock().clone(),
 			)
 		};
 
 		// Update in-memory state
-		*StorageMapMutex
-			.lock() = DeserializedState.clone();
+		*StorageMapMutex.lock() = DeserializedState.clone();
 
 		// Persist to disk via the scope-correct debouncer so a workspace
 		// bulk-save and a global bulk-save never share the same Pending slot.

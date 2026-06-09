@@ -37,12 +37,7 @@ pub(super) async fn apply_document_changes(
 	dev_log!("model", "[DocumentProvider] Applying changes to document: {}", uri);
 
 	{
-		let mut open_documents_guard = environment
-			.ApplicationState
-			.Feature
-			.Documents
-			.OpenDocuments
-			.lock();
+		let mut open_documents_guard = environment.ApplicationState.Feature.Documents.OpenDocuments.lock();
 
 		if let Some(document) = open_documents_guard.get_mut(uri.as_str()) {
 			document.ApplyChanges(new_version_identifier, &changes_dto_collection)?;

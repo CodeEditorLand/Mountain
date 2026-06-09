@@ -1,8 +1,6 @@
 //! UI command dispatcher - handles decorations, commands, extensions, etc.
 
-use serde_json::Value;
-
-use serde_json::json;
+use serde_json::{Value, json};
 
 use crate::IPC::WindServiceHandlers::{
 	Commands::{Execute::Fn as CommandsExecute, GetAll::Fn as CommandsGetAll},

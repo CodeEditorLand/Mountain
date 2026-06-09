@@ -752,11 +752,7 @@ async fn LaunchAndManageCocoonSideCar(
 				.collect::<Vec<_>>();
 
 			let Patterns:Vec<String> = {
-				let Guard = AppState
-					.Extension
-					.ScannedExtensions
-					.ScannedExtensions
-					.lock();
+				let Guard = AppState.Extension.ScannedExtensions.ScannedExtensions.lock();
 
 				let mut Set:std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
 

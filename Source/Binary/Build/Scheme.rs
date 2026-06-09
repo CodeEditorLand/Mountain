@@ -27,8 +27,7 @@
 //!
 //! ## SECURITY
 //!
-//! - All responses include Access-Control-Allow-Origin:
-//!   land://code.editor.land
+//! - All responses include Access-Control-Allow-Origin: land://code.editor.land
 //! - Content-Type preserved from local service response
 //! - CORS headers set appropriately for cross-origin requests
 //! - Request validation and sanitization
@@ -162,8 +161,7 @@ fn should_cache(path:&str) -> bool {
 ///
 /// # Parameters
 ///
-/// - `uri`: The land:// URI (e.g.,
-///   "land://code.editor.land/path/to/resource")
+/// - `uri`: The land:// URI (e.g., "land://code.editor.land/path/to/resource")
 ///
 /// # Returns
 ///

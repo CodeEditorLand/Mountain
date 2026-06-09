@@ -275,12 +275,7 @@ impl ExtensionManagementService for MountainEnvironment {
 
 		// Get the extension scan paths from ApplicationState
 		let ScanPaths:Vec<std::path::PathBuf> = {
-			let ScanPathsGuard = self
-				.ApplicationState
-				.Extension
-				.Registry
-				.ExtensionScanPaths
-				.lock();
+			let ScanPathsGuard = self.ApplicationState.Extension.Registry.ExtensionScanPaths.lock();
 
 			ScanPathsGuard.clone()
 		};
@@ -295,12 +290,7 @@ impl ExtensionManagementService for MountainEnvironment {
 		}
 
 		// Update ApplicationState with scanned extensions
-		let mut ScannedExtensionsGuard = self
-			.ApplicationState
-			.Extension
-			.ScannedExtensions
-			.ScannedExtensions
-			.lock();
+		let mut ScannedExtensionsGuard = self.ApplicationState.Extension.ScannedExtensions.ScannedExtensions.lock();
 
 		ScannedExtensionsGuard.clear();
 
@@ -351,12 +341,7 @@ impl ExtensionManagementService for MountainEnvironment {
 	/// serialize (these are logged and skipped rather than causing
 	/// an error).
 	async fn GetExtensions(&self) -> Result<Vec<Value>, CommonError> {
-		let ScannedExtensionsGuard = self
-			.ApplicationState
-			.Extension
-			.ScannedExtensions
-			.ScannedExtensions
-			.lock();
+		let ScannedExtensionsGuard = self.ApplicationState.Extension.ScannedExtensions.ScannedExtensions.lock();
 
 		let GuardLen = ScannedExtensionsGuard.len();
 
@@ -382,12 +367,7 @@ impl ExtensionManagementService for MountainEnvironment {
 	/// Reconstructs the JSON from the stored `ExtensionDescriptionStateDTO`.
 	/// Returns `Ok(None)` if the extension is not found.
 	async fn GetExtension(&self, id:String) -> Result<Option<Value>, CommonError> {
-		let ScannedExtensionsGuard = self
-			.ApplicationState
-			.Extension
-			.ScannedExtensions
-			.ScannedExtensions
-			.lock();
+		let ScannedExtensionsGuard = self.ApplicationState.Extension.ScannedExtensions.ScannedExtensions.lock();
 
 		if let Some(extension_dto) = ScannedExtensionsGuard.get(&id) {
 			// Convert ExtensionDescriptionStateDTO back to JSON Value

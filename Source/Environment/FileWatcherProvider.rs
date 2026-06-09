@@ -301,9 +301,7 @@ impl FileWatcherProvider for MountainEnvironment {
 
 		// De-dup pass 1: same handle re-registered (cheap idempotency).
 		{
-			let guard = state
-				.Entries
-				.lock().unwrap();
+			let guard = state.Entries.lock().unwrap();
 
 			if guard.contains_key(&Handle) {
 				dev_log!(
@@ -326,26 +324,19 @@ impl FileWatcherProvider for MountainEnvironment {
 		let DedupKeyValue:DedupKey = (Root.clone(), IsRecursive, Pattern.clone());
 
 		{
-			let DedupGuard = state
-				.DedupIndex
-				.lock().unwrap();
+			let DedupGuard = state.DedupIndex.lock().unwrap();
 
 			if let Some(PrimaryHandle) = DedupGuard.get(&DedupKeyValue).cloned() {
 				drop(DedupGuard);
 
-				let mut AliasGuard = state
-					.Aliases
-					.lock()
-					.unwrap();
+				let mut AliasGuard = state.Aliases.lock().unwrap();
 
 				AliasGuard
 					.entry(PrimaryHandle.clone())
 					.or_insert_with(Vec::new)
 					.push(Handle.clone());
 
-				let mut H2PGuard = state
-					.HandleToPrimary
-					.lock().unwrap();
+				let mut H2PGuard = state.HandleToPrimary.lock().unwrap();
 
 				H2PGuard.insert(Handle.clone(), PrimaryHandle.clone());
 
@@ -470,9 +461,7 @@ impl FileWatcherProvider for MountainEnvironment {
 		// register once the directory appears, just like in stock VS Code.
 		let WatchResult = watcher.watch(&Root, mode);
 
-		let mut guard = state
-			.Entries
-			.lock().unwrap();
+		let mut guard = state.Entries.lock().unwrap();
 
 		let _ = CompiledPattern;
 
@@ -551,18 +540,13 @@ impl FileWatcherProvider for MountainEnvironment {
 		// just remove it from the alias list and the lookup map. The OS
 		// watcher stays alive because the primary still owns it.
 		let MaybePrimary = {
-			let mut H2PGuard = state
-				.HandleToPrimary
-				.lock()
-				.unwrap();
+			let mut H2PGuard = state.HandleToPrimary.lock().unwrap();
 
 			H2PGuard.remove(&Handle)
 		};
 
 		if let Some(PrimaryHandle) = MaybePrimary {
-			let mut AliasGuard = state
-				.Aliases
-				.lock().unwrap();
+			let mut AliasGuard = state.Aliases.lock().unwrap();
 
 			if let Some(AliasList) = AliasGuard.get_mut(&PrimaryHandle) {
 				AliasList.retain(|EntryHandle| EntryHandle != &Handle);
@@ -587,9 +571,7 @@ impl FileWatcherProvider for MountainEnvironment {
 		// callers requesting a primary unregister while aliases still
 		// exist is unusual but not fatal; the alias entries simply
 		// stop receiving events.
-		let mut Guard = state
-			.Entries
-			.lock().unwrap();
+		let mut Guard = state.Entries.lock().unwrap();
 
 		if Guard.remove(&Handle).is_some() {
 			dev_log!("filewatcher", "[FileWatcherProvider] Unregistered watcher handle={}", Handle);
@@ -600,9 +582,7 @@ impl FileWatcherProvider for MountainEnvironment {
 		// Clear the dedup-index entry pointing at this primary so a
 		// future registration for the same triple opens a fresh OS
 		// watcher rather than aliasing to a removed handle.
-		let mut DedupGuard = state
-			.DedupIndex
-			.lock().unwrap();
+		let mut DedupGuard = state.DedupIndex.lock().unwrap();
 
 		DedupGuard.retain(|_, PrimaryHandle| PrimaryHandle != &Handle);
 
