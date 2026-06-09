@@ -503,14 +503,14 @@ pub fn Fn() {
 					// Register the main code editor service
 					dev_log!(
 						"lifecycle",
-						"[Lifecycle] [Setup] Registering code.land.playform.cloud service on port {}",
+						"[Lifecycle] [Setup] Registering code.editor.land service on port {}",
 						ServerPortForClosure
 					);
 
-					register_land_service("code.land.playform.cloud", ServerPortForClosure);
+					register_land_service("code.editor.land", ServerPortForClosure);
 
 					// Register API editor service (same port for now, can be separate later)
-					register_land_service("api.land.playform.cloud", ServerPortForClosure);
+					register_land_service("api.editor.land", ServerPortForClosure);
 
 					// Register assets editor service (same port for now, can be separate later)
 					register_land_service("assets.editor.land", ServerPortForClosure);
