@@ -358,8 +358,13 @@ impl CertificateManager {
 
 		// Add Subject Alternative Names for the hostname and localhost
 		params.subject_alt_names = vec![
-			rcgen::SanType::DnsName(hostname.to_string()),
-			rcgen::SanType::DnsName("localhost".to_string()),
+			rcgen::SanType::DnsName(
+				rcgen::string::Ia5String::try_from(hostname.to_string())
+					.unwrap_or_else(|_| rcgen::string::Ia5String::try_from("localhost".to_string()).unwrap()),
+			),
+			rcgen::SanType::DnsName(
+				rcgen::string::Ia5String::try_from("localhost".to_string()).unwrap(),
+			),
 			rcgen::SanType::IpAddress(std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST)),
 		];
 

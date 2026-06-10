@@ -58,39 +58,19 @@ pub async fn dispatch_storage(
 			// debounce window.
 			crate::dev_log!("storage", "storage:optimize → flush");
 
-			let GlobalPath = runtime
-				.Environment
-				.ApplicationState
-				.GlobalMementoPath
-				.lock()
-				.ok()
-				.map(|G| G.clone());
+			let GlobalPath =
+				Some((*runtime.Environment.ApplicationState.GlobalMementoPath.lock()).clone());
 
-			let WorkspacePath = runtime
-				.Environment
-				.ApplicationState
-				.WorkspaceMementoPath
-				.lock()
-				.ok()
-				.and_then(|W| W.clone());
+			let WorkspacePath =
+				(*runtime.Environment.ApplicationState.WorkspaceMementoPath.lock()).clone();
 
-			let GlobalData = runtime
-				.Environment
-				.ApplicationState
-				.Configuration
-				.MementoGlobalStorage
-				.lock()
-				.map(|G| G.clone())
-				.unwrap_or_default();
+			let GlobalData =
+				(*runtime.Environment.ApplicationState.Configuration.MementoGlobalStorage.lock())
+					.clone();
 
-			let WorkspaceData = runtime
-				.Environment
-				.ApplicationState
-				.Configuration
-				.MementoWorkspaceStorage
-				.lock()
-				.map(|W| W.clone())
-				.unwrap_or_default();
+			let WorkspaceData =
+				(*runtime.Environment.ApplicationState.Configuration.MementoWorkspaceStorage.lock())
+					.clone();
 
 			crate::Environment::StorageProvider::FlushPendingWrites(
 				GlobalPath,

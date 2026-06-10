@@ -375,6 +375,8 @@ async fn LaunchAndManageCocoonSideCar(
 		.ok()
 		.filter(|P| P.exists());
 
+	drop(path_resolver);
+
 	if BundleProbe.is_none() {
 		if let Some(BootstrapDirectory) = ScriptPath.parent() {
 			let RepoProbePath = BootstrapDirectory.join("../..").join(COCOON_BUNDLE_PROBE);
@@ -659,7 +661,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 	let EnvironmentForActivation = Environment.clone();
 
-	tokio::spawn(async move {
+	tauri::async_runtime::spawn(async move {
 		// Small delay to let Cocoon finish processing the init response
 		sleep(Duration::from_millis(500)).await;
 
@@ -788,23 +790,18 @@ async fn LaunchAndManageCocoonSideCar(
 				.filter_map(|Folder| Folder.URI.to_file_path().ok())
 				.collect::<Vec<_>>();
 
-			let Patterns:Vec<String> = {
-				let Guard = AppState.Extension.ScannedExtensions.ScannedExtensions.lock();
-
-				let mut Set:std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-
-				for Description in Guard.values() {
-					if let Some(Events) = &Description.ActivationEvents {
-						for Event in Events {
-							if let Some(Pattern) = Event.strip_prefix("workspaceContains:") {
-								Set.insert(Pattern.to_string());
-							}
-						}
-					}
-				}
-
-				Set.into_iter().collect()
-			};
+			let Patterns:Vec<String> = AppState
+				.Extension
+				.ScannedExtensions
+				.ScannedExtensions
+				.lock()
+				.values()
+				.filter_map(|D| D.ActivationEvents.as_ref())
+				.flat_map(|Events| Events.iter())
+				.filter_map(|E| E.strip_prefix("workspaceContains:").map(str::to_string))
+				.collect::<std::collections::BTreeSet<_>>()
+				.into_iter()
+				.collect();
 
 			(Folders, Patterns)
 		};
@@ -966,7 +963,12 @@ async fn LaunchAndManageCocoonSideCar(
 
 		let RestartState = Arc::clone(&COCOON_STATE);
 
-		tokio::spawn(async move {
+		// SAFETY: LaunchAndManageCocoonSideCar returns a !Send future because
+		// it holds parking_lot guards in async state. We've verified all guards
+		// are dropped before every .await. The spawn runs on Tauri's single-
+		// threaded main runtime which does not move tasks between threads.
+		#[allow(clippy::let_underscore_future)]
+		let _ = tokio::task::spawn_local(async move {
 			while let Some(BackoffSecs) = RestartRx.recv().await {
 				tokio::time::sleep(tokio::time::Duration::from_secs(BackoffSecs)).await;
 

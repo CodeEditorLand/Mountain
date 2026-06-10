@@ -227,7 +227,7 @@ impl ::Vine::Host::IPCProvider for VineIPCProvider {
 		let Channel = Channel.to_string();
 
 		Box::pin(async move {
-			cratecrate::Vine::Client::SendRequest::Fn(&Channel, Channel.clone(), Payload, 10_000)
+			crate::Vine::Client::SendRequest::Fn(&Channel, Channel.clone(), Payload, 10_000)
 				.await
 				.map_err(|E| ::Vine::Error::VineError::RPCError(format!("{:?}", E)))
 		})
@@ -239,7 +239,7 @@ impl ::Vine::Host::IPCProvider for VineIPCProvider {
 		let Method = Method.to_string();
 
 		tauri::async_runtime::spawn(async move {
-			let _ = cratecrate::Vine::Client::SendNotification::Fn(Channel, Method, Payload).await;
+			let _ = crate::Vine::Client::SendNotification::Fn(Channel, Method, Payload).await;
 		});
 	}
 }

@@ -39,6 +39,8 @@ pub(super) async fn register_tree_data_provider(
 
 		SideCarIdentifier:Some(side_car_identifier),
 
+		IsVisible:false,
+
 		CanSelectMany:options_dto.CanSelectMany,
 
 		HasHandleDrag:options_dto.HasHandleDrag,

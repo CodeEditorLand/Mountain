@@ -17,6 +17,8 @@
 
 use std::sync::Arc;
 
+use tauri::Manager;
+
 // ============ Feature Flags ============
 #[cfg(feature = "Telemetry")]
 use opentelemetry::{KeyValue, global};

@@ -2,6 +2,8 @@
 
 use std::sync::Arc;
 
+use tauri::Emitter;
+
 use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
 	ConfigurationTarget as ConfigurationTargetModule,

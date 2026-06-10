@@ -631,6 +631,8 @@ pub fn RegisterNativeCommands(
 			// This is a native provider
 			SideCarIdentifier:None,
 
+			IsVisible:false,
+
 			CanSelectMany:true,
 
 			HasHandleDrag:false,

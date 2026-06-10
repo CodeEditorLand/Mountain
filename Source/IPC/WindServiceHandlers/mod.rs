@@ -283,7 +283,7 @@ use Utilities::{
 };
 use Echo::Task::Priority::Priority as EchoPriority;
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 // Type aliases for Configuration DTOs to simplify usage
 use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
@@ -719,7 +719,7 @@ pub async fn mountain_ipc_invoke(
 				"configuration:inspect" => {
 					dev_log!("config", "configuration:inspect");
 
-					let Key = arg_string(&Arguments, 0).unwrap_or_default();
+					let Key = arg_string(&Arguments, 0);
 
 					let Inspector:Arc<dyn ConfigurationInspector> = RunTime.Environment.Require();
 
@@ -883,39 +883,32 @@ pub async fn mountain_ipc_invoke(
 					// debounce window.
 					dev_log!("storage", "storage:optimize → flush");
 
-					let GlobalPath = RunTime
-						.Environment
-						.ApplicationState
-						.GlobalMementoPath
-						.lock()
-						.ok()
-						.map(|G| G.clone());
+					let GlobalPath = Some(
+						(*RunTime.Environment.ApplicationState.GlobalMementoPath.lock()).clone(),
+					);
 
-					let WorkspacePath = RunTime
+					let WorkspacePath = (*RunTime
 						.Environment
 						.ApplicationState
 						.WorkspaceMementoPath
-						.lock()
-						.ok()
-						.and_then(|W| W.clone());
+						.lock())
+					.clone();
 
-					let GlobalData = RunTime
+					let GlobalData = (*RunTime
 						.Environment
 						.ApplicationState
 						.Configuration
 						.MementoGlobalStorage
-						.lock()
-						.map(|G| G.clone())
-						.unwrap_or_default();
+						.lock())
+					.clone();
 
-					let WorkspaceData = RunTime
+					let WorkspaceData = (*RunTime
 						.Environment
 						.ApplicationState
 						.Configuration
 						.MementoWorkspaceStorage
-						.lock()
-						.map(|W| W.clone())
-						.unwrap_or_default();
+						.lock())
+					.clone();
 
 					crate::Environment::StorageProvider::FlushPendingWrites(
 						GlobalPath,
@@ -2424,9 +2417,8 @@ pub async fn mountain_ipc_invoke(
 					let PropValue = Arguments.get(2).and_then(Value::as_str).unwrap_or("").to_string();
 
 					if TermId == 0 || PropValue.is_empty() {
-						return Ok(Value::Null);
-					}
-
+						Ok(Value::Null)
+					} else {
 					match PropId {
 						// Title (2) or OverrideName (3): persist + emit to Sky.
 						2 | 3 => {
@@ -2482,6 +2474,7 @@ pub async fn mountain_ipc_invoke(
 					}
 
 					Ok(Value::Null)
+					} // closes else
 				},
 
 				// `ILocalPtyService.freePortKillProcess` - kill whatever process
@@ -2628,15 +2621,20 @@ pub async fn mountain_ipc_invoke(
 					let Cwd = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
 
 					if !Cwd.is_empty() {
-						// Persist CWD in ApplicationState so refreshProperty(0)
-						// can return it without probing the OS process.
-						let mut Guard = RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
-
-						if let Some(StateEntry) = Guard.get(&TermId) {
-							if let mut State = StateEntry.lock() {
-								State.CurrentWorkingDirectory = Some(std::path::PathBuf::from(&Cwd));
-							}
-						}
+						// Persist CWD in ApplicationState. Lock, update, drop immediately.
+						let _CwdPersisted = RunTime
+							.Environment
+							.ApplicationState
+							.Feature
+							.Terminals
+							.ActiveTerminals
+							.lock()
+							.get(&TermId)
+							.map(|E| {
+								E.lock().CurrentWorkingDirectory =
+									Some(std::path::PathBuf::from(&Cwd));
+							})
+							.is_some();
 
 						let _ = crate::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
@@ -2958,10 +2956,10 @@ pub async fn mountain_ipc_invoke(
 
 					if !SessionId.is_empty() {
 						let AlreadyRegistered =
-							RunTime.ApplicationState.Feature.Debug.GetDebugSession(&SessionId).is_some();
+							RunTime.Environment.ApplicationState.Feature.Debug.GetDebugSession(&SessionId).is_some();
 
 						if !AlreadyRegistered {
-							let _ = RunTime.ApplicationState.Feature.Debug.RegisterDebugSession(
+							let _ = RunTime.Environment.ApplicationState.Feature.Debug.RegisterDebugSession(
 								crate::ApplicationState::State::FeatureState::Debug::DebugState::DebugSessionEntry {
 									SessionId:SessionId.clone(),
 									DebugType:"unknown".to_string(),
@@ -2984,7 +2982,7 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("exthost", "extensionhostdebugservice:terminateSession id={}", SessionId);
 
 					if !SessionId.is_empty() {
-						RunTime.ApplicationState.Feature.Debug.UnregisterDebugSession(&SessionId);
+						RunTime.Environment.ApplicationState.Feature.Debug.UnregisterDebugSession(&SessionId);
 					}
 
 					Ok(Value::Null)
@@ -3235,11 +3233,8 @@ pub async fn mountain_ipc_invoke(
 
 					Ok(Value::Null)
 				},
-				"workspaces:createUntitledWorkspace" => {
-					// Create a transient `.code-workspace` file in a dedicated
-					// untitled-workspaces subdirectory of the app data dir.
-					// VS Code uses the returned `{ configPath, id }` to open the
-					// workspace and later to delete it via deleteUntitledWorkspace.
+				"workspaces:createUntitledWorkspace" => async move {
+					// Inner async block so ? propagates to Result, not the () outer block.
 					let PathResolver = ApplicationHandle.path();
 
 					let AppDataDir = PathResolver
@@ -3268,12 +3263,10 @@ pub async fn mountain_ipc_invoke(
 
 					dev_log!("workspaces", "createUntitledWorkspace: id={} path={}", Id, FilePathStr);
 
-					Ok(json!({ "configPath": FilePathStr, "id": Id.to_string() }))
-				},
-				"workspaces:deleteUntitledWorkspace" => {
-					// Remove a previously-created untitled workspace file.
-					// Only paths inside the .untitled-workspaces directory are
-					// accepted to prevent directory-traversal deletions.
+					Ok::<Value, String>(json!({ "configPath": FilePathStr, "id": Id.to_string() }))
+				}.await,
+				"workspaces:deleteUntitledWorkspace" => async move {
+					// Inner async block so ? propagates to Result, not the () outer block.
 					let Arg = arg_val(&Arguments, 0);
 
 					let ConfigPath = Arg
@@ -3284,8 +3277,7 @@ pub async fn mountain_ipc_invoke(
 
 					if ConfigPath.is_empty() {
 						dev_log!("workspaces", "deleteUntitledWorkspace: no configPath");
-
-						return Ok(Value::Null);
+						return Ok::<Value, String>(Value::Null);
 					}
 
 					let PathResolver = ApplicationHandle.path();
@@ -3311,8 +3303,7 @@ pub async fn mountain_ipc_invoke(
 							"deleteUntitledWorkspace: rejected path outside untitled dir: {}",
 							ConfigPath
 						);
-
-						return Ok(Value::Null);
+						return Ok::<Value, String>(Value::Null);
 					}
 
 					tokio::fs::remove_file(&Target)
@@ -3321,8 +3312,8 @@ pub async fn mountain_ipc_invoke(
 
 					dev_log!("workspaces", "deleteUntitledWorkspace: removed {}", ConfigPath);
 
-					Ok(Value::Null)
-				},
+					Ok::<Value, String>(Value::Null)
+				}.await,
 				"workspaces:getWorkspaceIdentifier" => {
 					// Return a stable identifier derived from the first workspace
 					// folder's URI so VS Code's caching (recently-opened, per-workspace
@@ -3994,11 +3985,11 @@ pub async fn mountain_ipc_invoke(
 
 					let FolderUriStr = arg_string_or(&Arguments, 0, "");
 
-					let Config = arg_val(&Arguments, 1).cloned().unwrap_or_else(|| json!({}));
+					let Config = arg_val(&Arguments, 1);
 
 					let DebugStartParams = json!([FolderUriStr, Config]);
 
-					let StartEffect = crate::Track::Effect::CreateEffectForRequest::Debug::CreateEffect(
+					let StartEffect = crate::Track::Effect::CreateEffectForRequest::Debug::CreateEffect::<tauri::Wry>(
 						"Debug.Start",
 						DebugStartParams,
 					);
@@ -4077,7 +4068,7 @@ pub async fn mountain_ipc_invoke(
 							.collect();
 
 						if !Entries.is_empty() {
-							RunTime.ApplicationState.Feature.Debug.AddBreakpoints(Entries);
+							RunTime.Environment.ApplicationState.Feature.Debug.AddBreakpoints(Entries);
 
 							let _ = ApplicationHandle.emit(
 								"sky://debug/breakpointsChanged",
@@ -4098,7 +4089,7 @@ pub async fn mountain_ipc_invoke(
 				"debug:getBreakpoints" => {
 					let _ = TIER_DEBUG;
 
-					let Bps = RunTime.ApplicationState.Feature.Debug.GetBreakpoints();
+					let Bps = RunTime.Environment.ApplicationState.Feature.Debug.GetBreakpoints();
 
 					Ok(json!(Bps))
 				},
@@ -4112,7 +4103,7 @@ pub async fn mountain_ipc_invoke(
 						let Ids:Vec<String> = RawIds.iter().filter_map(|V| V.as_str().map(str::to_string)).collect();
 
 						if !Ids.is_empty() {
-							RunTime.ApplicationState.Feature.Debug.RemoveBreakpoints(&Ids);
+							RunTime.Environment.ApplicationState.Feature.Debug.RemoveBreakpoints(&Ids);
 
 							let _ = ApplicationHandle.emit(
 								"sky://debug/breakpointsChanged",
@@ -4148,7 +4139,7 @@ pub async fn mountain_ipc_invoke(
 				"tasks:getTaskExecution" => {
 					let Id = arg_u64(&Arguments, 0);
 
-					let Result = RunTime.ApplicationState.Feature.Tasks.Get(Id);
+					let Result = RunTime.Environment.ApplicationState.Feature.Tasks.Get(Id);
 
 					Ok(Result.unwrap_or(Value::Null))
 				},

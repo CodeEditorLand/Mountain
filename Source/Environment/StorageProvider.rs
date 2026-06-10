@@ -171,9 +171,7 @@ impl StorageProvider for MountainEnvironment {
 			&self.ApplicationState.Configuration.MementoWorkspaceStorage
 		};
 
-		let StorageMapGuard = StorageMapMutex.lock();
-
-		Ok(StorageMapGuard.get(Key).cloned())
+		Ok(StorageMapMutex.lock().get(Key).cloned())
 	}
 
 	/// Updates or deletes a value in either global or workspace storage.

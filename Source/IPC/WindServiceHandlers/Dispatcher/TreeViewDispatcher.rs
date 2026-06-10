@@ -3,12 +3,9 @@
 use serde_json::Value;
 use tauri::Emitter;
 
-use crate::{
-	IPC::WindServiceHandlers::{
-		TreeView::GetChildren::Fn as TreeGetChildren,
-		Utilities::JsonValueHelpers::{arg_string, arg_val},
-	},
+use crate::IPC::WindServiceHandlers::{
 	TreeView::GetChildren::Fn as TreeGetChildren,
+	Utilities::JsonValueHelpers::{arg_string, arg_val},
 };
 
 /// Dispatches tree view commands.

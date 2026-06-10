@@ -84,6 +84,9 @@ pub struct MountainEnvironment {
 	pub AirClient:Option<AirServiceClient<tonic::transport::Channel>>,
 }
 
+unsafe impl Send for MountainEnvironment {}
+unsafe impl Sync for MountainEnvironment {}
+
 impl MountainEnvironment {
 	/// Creates a new `MountainEnvironment` without an Air client.
 	///
