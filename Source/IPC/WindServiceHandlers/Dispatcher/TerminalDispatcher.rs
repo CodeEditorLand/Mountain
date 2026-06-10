@@ -3,7 +3,27 @@
 use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
 use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::{
+use crate::{
+	IPC::WindServiceHandlers::{
+		Terminal::{
+			AttachToProcess::Fn as AttachToProcess,
+			DetachFromProcess::Fn as DetachFromProcess,
+			LocalPTYCreateProcess::Fn as LocalPTYCreateProcess,
+			LocalPTYFreePortKillProcess::Fn as LocalPTYFreePortKillProcess,
+			LocalPTYGetDefaultShell::Fn as LocalPTYGetDefaultShell,
+			LocalPTYGetEnvironment::Fn as LocalPTYGetEnvironment,
+			LocalPTYGetProfiles::Fn as LocalPTYGetProfiles,
+			LocalPTYResize::Fn as LocalPTYResize,
+			ReviveTerminalProcesses::Fn as ReviveTerminalProcesses,
+			SerializeTerminalState::Fn as SerializeTerminalState,
+			TerminalCreate::Fn as TerminalCreate,
+			TerminalDispose::Fn as TerminalDispose,
+			TerminalHide::Fn as TerminalHide,
+			TerminalSendText::Fn as TerminalSendText,
+			TerminalShow::Fn as TerminalShow,
+		},
+		Utilities::JsonValueHelpers::arg_val,
+	},
 	Terminal::{
 		AttachToProcess::Fn as AttachToProcess,
 		DetachFromProcess::Fn as DetachFromProcess,
@@ -21,25 +41,6 @@ use crate::IPC::WindServiceHandlers::{
 		TerminalSendText::Fn as TerminalSendText,
 		TerminalShow::Fn as TerminalShow,
 	},
-	Utilities::JsonValueHelpers::arg_val,
-};
-
-use crate::Terminal::{
-	AttachToProcess::Fn as AttachToProcess,
-	DetachFromProcess::Fn as DetachFromProcess,
-	LocalPTYCreateProcess::Fn as LocalPTYCreateProcess,
-	LocalPTYFreePortKillProcess::Fn as LocalPTYFreePortKillProcess,
-	LocalPTYGetDefaultShell::Fn as LocalPTYGetDefaultShell,
-	LocalPTYGetEnvironment::Fn as LocalPTYGetEnvironment,
-	LocalPTYGetProfiles::Fn as LocalPTYGetProfiles,
-	LocalPTYResize::Fn as LocalPTYResize,
-	ReviveTerminalProcesses::Fn as ReviveTerminalProcesses,
-	SerializeTerminalState::Fn as SerializeTerminalState,
-	TerminalCreate::Fn as TerminalCreate,
-	TerminalDispose::Fn as TerminalDispose,
-	TerminalHide::Fn as TerminalHide,
-	TerminalSendText::Fn as TerminalSendText,
-	TerminalShow::Fn as TerminalShow,
 };
 
 /// Dispatches terminal commands.

@@ -167,7 +167,19 @@ impl TerminalProvider for MountainEnvironment {
 		// of this snapshot, matching upstream's `mergedCollection.apply`
 		// behaviour where extension-supplied env stacks on the
 		// inherited base.
-		let mut MergedEnv:std::collections::HashMap<String, String> = std::env::vars().collect();
+		//
+		// Filter out internal VS Code / Electron host variables that are
+		// meaningful only inside the extension-host process and would
+		// confuse or break child programs that inherit them:
+		//   VSCODE_*        - extension-host IPC sockets, auth tokens, PID
+		//   ELECTRON_*      - Chromium/Electron renderer flags, node paths
+		//   ELECTRON_RUN_AS_NODE - makes Electron behave as plain Node.js
+		// These are stripped here so a user-facing terminal shell starts
+		// clean, the same way VS Code's upstream ptyService filters them
+		// before spawning shells (ptyService.ts § `getEnvironment`).
+		let mut MergedEnv:std::collections::HashMap<String, String> = std::env::vars()
+			.filter(|(Key, _)| !Key.starts_with("VSCODE_") && !Key.starts_with("ELECTRON_"))
+			.collect();
 
 		// Apply every extension's registered EnvironmentVariableCollection
 		// mutations BEFORE shell integration so the integration's env
@@ -440,7 +452,7 @@ impl TerminalProvider for MountainEnvironment {
 			// B6: Notify Cocoon so vscode.window.terminals removes the entry.
 			// Cocoon's NotificationHandler maps `$acceptTerminalClosed` →
 			// filters `__terminals` by id.
-			let _ = ::Vine::Client::SendNotification::Fn(
+			let _ = crate::Vine::Client::SendNotification::Fn(
 				"cocoon-main".to_string(),
 				"$acceptTerminalClosed".to_string(),
 				serde_json::json!({ "id": TermIDForExit }),
@@ -521,7 +533,7 @@ impl TerminalProvider for MountainEnvironment {
 			// when terminals are created from the UI rather than via the
 			// extension API (createTerminal()). Cocoon's NotificationHandler
 			// maps `$acceptTerminalOpened` → pushes a stub to `__terminals`.
-			if let Err(E) = ::Vine::Client::SendNotification::Fn(
+			if let Err(E) = crate::Vine::Client::SendNotification::Fn(
 				"cocoon-main".to_string(),
 				"$acceptTerminalOpened".to_string(),
 				serde_json::json!({ "id": CreateTermId, "name": CreateName, "pid": CreatePid }),

@@ -1,15 +1,11 @@
 use serde_json::{Value, json};
-
 use tauri::Emitter;
-
 use tonic::Response;
-
 use ::Vine::Generated::GenericResponse;
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;
 
 pub fn Fn(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	let Uri = Params
 		.get("uri")
 		.and_then(|V| V.get("value").or(Some(V)))

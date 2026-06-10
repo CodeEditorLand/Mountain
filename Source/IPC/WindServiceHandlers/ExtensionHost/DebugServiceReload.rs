@@ -13,12 +13,9 @@ pub async fn Fn(ApplicationHandle:AppHandle) -> Result<Value, String> {
 		crate::dev_log!("exthost", "warn: extensionhostdebugservice:reload emit failed: {}", Error);
 	}
 
-	let _ = crate::Vine::Client::SendNotification::Fn(
-		"cocoon-main".to_string(),
-		"extensionHost.reload".to_string(),
-		json!({}),
-	)
-	.await;
+	let _ =
+		crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), "extensionHost.reload".to_string(), json!({}))
+			.await;
 
 	Ok(Value::Null)
 }

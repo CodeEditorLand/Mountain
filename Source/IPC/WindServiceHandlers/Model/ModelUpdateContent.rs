@@ -58,7 +58,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	let VersionForCocoon = NewVersion;
 
 	tokio::spawn(async move {
-		let _ = ::Vine::Client::SendNotification::Fn(
+		let _ = crate::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),
 			"$acceptModelChanged".to_string(),
 			serde_json::json!([

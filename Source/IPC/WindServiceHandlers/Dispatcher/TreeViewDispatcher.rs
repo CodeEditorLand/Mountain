@@ -3,12 +3,13 @@
 use serde_json::Value;
 use tauri::Emitter;
 
-use crate::IPC::WindServiceHandlers::{
+use crate::{
+	IPC::WindServiceHandlers::{
+		TreeView::GetChildren::Fn as TreeGetChildren,
+		Utilities::JsonValueHelpers::{arg_string, arg_val},
+	},
 	TreeView::GetChildren::Fn as TreeGetChildren,
-	Utilities::JsonValueHelpers::{arg_string, arg_val},
 };
-
-use crate::TreeView::GetChildren::Fn as TreeGetChildren;
 
 /// Dispatches tree view commands.
 pub async fn dispatch_tree_view(
@@ -59,8 +60,7 @@ pub async fn dispatch_tree_view(
 
 			tokio::spawn(async move {
 				if let Err(e) =
-					crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), method.to_string(), payload)
-						.await
+					crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), method.to_string(), payload).await
 				{
 					crate::dev_log!("ipc", "warn: [tree] Cocoon notify {} failed: {:?}", method, e);
 				}

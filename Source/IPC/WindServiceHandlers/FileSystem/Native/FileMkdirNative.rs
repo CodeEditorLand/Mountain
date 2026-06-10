@@ -17,7 +17,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let FileUri = format!("file://{}", Path);
 
 	tokio::spawn(async move {
-		if let Err(Error) = ::Vine::Client::SendNotification::Fn(
+		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),
 			"$acceptDidCreateFiles".to_string(),
 			json!({ "files": [{ "uri": FileUri }] }),

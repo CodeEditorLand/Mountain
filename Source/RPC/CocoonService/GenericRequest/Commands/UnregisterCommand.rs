@@ -1,15 +1,11 @@
 use serde_json::{Value, json};
-
 use tonic::Response;
-
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
-
 use ::Vine::Generated::GenericResponse;
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;
 
 pub async fn Fn(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-
 	let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();

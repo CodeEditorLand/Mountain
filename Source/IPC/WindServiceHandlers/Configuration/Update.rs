@@ -42,7 +42,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	// for extensions that react to config changes (rust-analyzer, ESLint,
 	// Prettier, etc.). Send `keys: [key]` - the shape Configuration.ts
 	// expects to invalidate the affected cache entries. Fire-and-forget.
-	let _ = ::Vine::Client::SendNotification::Fn(
+	let _ = crate::Vine::Client::SendNotification::Fn(
 		"cocoon-main".to_string(),
 		"configuration.change".to_string(),
 		serde_json::json!({ "keys": [key] }),

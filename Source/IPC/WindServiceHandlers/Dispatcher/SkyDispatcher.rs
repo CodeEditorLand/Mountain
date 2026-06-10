@@ -3,9 +3,11 @@
 use serde_json::{Value, json};
 use tauri::Emitter;
 
-use crate::IPC::WindServiceHandlers::{Sky::ReplayEvents::Fn as SkyReplayEvents, Utilities::JsonValueHelpers::arg_val};
-
-use crate::{Sky::ReplayEvents::Fn as SkyReplayEvents, Utilities::JsonValueHelpers::arg_val};
+use crate::{
+	IPC::WindServiceHandlers::{Sky::ReplayEvents::Fn as SkyReplayEvents, Utilities::JsonValueHelpers::arg_val},
+	Sky::ReplayEvents::Fn as SkyReplayEvents,
+	Utilities::JsonValueHelpers::arg_val,
+};
 
 /// Dispatches Sky commands.
 ///
@@ -129,8 +131,7 @@ pub async fn dispatch_sky(
 
 			let payload = arg_val(&arguments, 0);
 
-			let _ =
-				crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), method.to_string(), payload).await;
+			let _ = crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), method.to_string(), payload).await;
 
 			Ok(Value::Null)
 		},

@@ -338,10 +338,10 @@ macro_rules! forward_to_cocoon {
 
 		let Payload = cocoon_payload($Arguments);
 
-		let _ = ::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+		let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
 
 		Ok(
-			::Vine::Client::SendRequest::Fn("cocoon-main", $command.clone(), Payload, 10_000)
+			crate::Vine::Client::SendRequest::Fn("cocoon-main", $command.clone(), Payload, 10_000)
 				.await
 				.unwrap_or(Value::Null),
 		)
@@ -688,8 +688,7 @@ pub async fn mountain_ipc_invoke(
 					// the workbench theme/settings UI reflects the new value
 					// without a full reload.
 					if UpdateResult.is_ok() {
-						let _ = ApplicationHandle
-							.emit("sky://configuration/changed", serde_json::json!({}));
+						let _ = ApplicationHandle.emit("sky://configuration/changed", serde_json::json!({}));
 					}
 
 					UpdateResult
@@ -1051,7 +1050,7 @@ pub async fn mountain_ipc_invoke(
 							"extensionId": ExtensionId,
 						});
 
-						let _ = ::Vine::Client::SendNotification::Fn(
+						let _ = crate::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
 							"$activateByEvent".to_string(),
 							Notification,
@@ -1594,7 +1593,7 @@ pub async fn mountain_ipc_invoke(
 					Ok(Config)
 				},
 				"mountain_get_services_status" => {
-					let CocoonConnected = ::Vine::Client::IsClientConnected::Fn("cocoon-main");
+					let CocoonConnected = crate::Vine::Client::IsClientConnected::Fn("cocoon-main");
 
 					Ok(json!({
 						"cocoon": { "connected": CocoonConnected },
@@ -1748,6 +1747,12 @@ pub async fn mountain_ipc_invoke(
 				},
 				"nativeHost:getWindowCount" => Ok(json!(1)),
 
+				// VS Code's `IWindowsMainService.getWindowCount()` equivalent
+				// for the renderer side. Land runs a single window; returning
+				// 1 is accurate and avoids the "last window" guard in VS Code's
+				// lifecycle service from suppressing quit prompts.
+				"window:getActiveWindowCount" => Ok(json!(1)),
+
 				// Auxiliary window spawners. VS Code's `nativeHostMainService.ts`
 				// exposes `openAgentsWindow`, `openDevToolsWindow`, and
 				// `openAuxiliaryWindow`, and Sky/Wind route these through the
@@ -1900,11 +1905,7 @@ pub async fn mountain_ipc_invoke(
 					if let Some(Win) = ApplicationHandle.get_webview_window("main") {
 						if let Ok(Current) = Win.title() {
 							let New = if Edited {
-								if Current.starts_with('•') {
-									Current
-								} else {
-									format!("• {}", Current)
-								}
+								if Current.starts_with('•') { Current } else { format!("• {}", Current) }
 							} else {
 								Current.trim_start_matches('•').trim().to_string()
 							};
@@ -2571,7 +2572,7 @@ pub async fn mountain_ipc_invoke(
 						None => serde_json::json!({ "id": null }),
 					};
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptActiveTerminalChanged".to_string(),
 						Payload,
@@ -2588,7 +2589,7 @@ pub async fn mountain_ipc_invoke(
 				"localPty:setShellIntegrationActive" => {
 					let TermId = Arguments.first().and_then(Value::as_i64).unwrap_or(0) as u64;
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTerminalShellIntegrationActivated".to_string(),
 						serde_json::json!({ "id": TermId }),
@@ -2607,7 +2608,7 @@ pub async fn mountain_ipc_invoke(
 				"localPty:setInteracted" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTerminalStateChanged".to_string(),
 						Payload,
@@ -2637,7 +2638,7 @@ pub async fn mountain_ipc_invoke(
 							}
 						}
 
-						let _ = ::Vine::Client::SendNotification::Fn(
+						let _ = crate::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
 							"$acceptTerminalCwdChange".to_string(),
 							serde_json::json!({ "id": TermId, "cwd": Cwd }),
@@ -2723,7 +2724,7 @@ pub async fn mountain_ipc_invoke(
 				"localPty:shellExecutionStart" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTerminalShellExecutionStart".to_string(),
 						Payload,
@@ -2746,14 +2747,14 @@ pub async fn mountain_ipc_invoke(
 				"localPty:shellExecutionEnd" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTerminalShellExecutionEnd".to_string(),
 						Payload.clone(),
 					)
 					.await;
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptExecutedTerminalCommand".to_string(),
 						Payload,
@@ -3114,19 +3115,15 @@ pub async fn mountain_ipc_invoke(
 
 					let WorkspacePath = if let Some(UriObj) = RawArg.as_object() {
 						// Serialised `vscode.Uri` - prefer the `path` field.
-						UriObj
-							.get("path")
-							.and_then(|V| V.as_str())
-							.map(str::to_string)
-							.or_else(|| {
-								// Sometimes the whole thing is `{ _formatted: "file:///..." }`
-								UriObj
-									.get("_formatted")
-									.and_then(|V| V.as_str())
-									.and_then(|S| url::Url::parse(S).ok())
-									.and_then(|U| U.to_file_path().ok())
-									.map(|P| P.to_string_lossy().into_owned())
-							})
+						UriObj.get("path").and_then(|V| V.as_str()).map(str::to_string).or_else(|| {
+							// Sometimes the whole thing is `{ _formatted: "file:///..." }`
+							UriObj
+								.get("_formatted")
+								.and_then(|V| V.as_str())
+								.and_then(|S| url::Url::parse(S).ok())
+								.and_then(|U| U.to_file_path().ok())
+								.map(|P| P.to_string_lossy().into_owned())
+						})
 					} else {
 						// Plain string argument - may be a `file://…` URI or a
 						// raw POSIX path.
@@ -3148,8 +3145,7 @@ pub async fn mountain_ipc_invoke(
 
 						match tokio::fs::read_to_string(&FilePathBuf).await {
 							Ok(Contents) => {
-								let Parsed:Result<serde_json::Value, _> =
-									serde_json::from_str(&Contents);
+								let Parsed:Result<serde_json::Value, _> = serde_json::from_str(&Contents);
 
 								match Parsed {
 									Ok(Workspace) => {
@@ -3161,15 +3157,12 @@ pub async fn mountain_ipc_invoke(
 													.iter()
 													.enumerate()
 													.filter_map(|(Index, Entry)| {
-														let FolderPath = Entry
-															.get("path")
-															.and_then(|V| V.as_str())?;
+														let FolderPath = Entry.get("path").and_then(|V| V.as_str())?;
 
 														// Resolve relative paths against the
 														// directory that contains the .code-workspace
 														// file.
-														let Resolved = if std::path::Path::new(FolderPath)
-															.is_absolute()
+														let Resolved = if std::path::Path::new(FolderPath).is_absolute()
 														{
 															std::path::PathBuf::from(FolderPath)
 														} else {
@@ -3179,10 +3172,7 @@ pub async fn mountain_ipc_invoke(
 																.join(FolderPath)
 														};
 
-														let UriStr = format!(
-															"file://{}",
-															Resolved.to_string_lossy()
-														);
+														let UriStr = format!("file://{}", Resolved.to_string_lossy());
 
 														let Uri = url::Url::parse(&UriStr).ok()?;
 
@@ -3192,10 +3182,7 @@ pub async fn mountain_ipc_invoke(
 															.unwrap_or("")
 															.to_string();
 
-														WorkspaceFolderStateDTO::New(
-															Uri, Name, Index,
-														)
-														.ok()
+														WorkspaceFolderStateDTO::New(Uri, Name, Index).ok()
 													})
 													.collect()
 											})
@@ -3213,22 +3200,13 @@ pub async fn mountain_ipc_invoke(
 										// context (sidebar tree, title bar, breadcrumb).
 										use tauri::Emitter;
 
-										if let Err(Error) = ApplicationHandle.emit(
-											"sky://workspace/enter",
-											serde_json::json!({ "uri": FilePath }),
-										) {
-											dev_log!(
-												"workspaces",
-												"warn: [enterWorkspace] sky emit failed: {}",
-												Error
-											);
+										if let Err(Error) = ApplicationHandle
+											.emit("sky://workspace/enter", serde_json::json!({ "uri": FilePath }))
+										{
+											dev_log!("workspaces", "warn: [enterWorkspace] sky emit failed: {}", Error);
 										}
 
-										dev_log!(
-											"workspaces",
-											"[enterWorkspace] loaded workspace from {}",
-											FilePath
-										);
+										dev_log!("workspaces", "[enterWorkspace] loaded workspace from {}", FilePath);
 									},
 
 									Err(Error) => {
@@ -3258,12 +3236,90 @@ pub async fn mountain_ipc_invoke(
 					Ok(Value::Null)
 				},
 				"workspaces:createUntitledWorkspace" => {
-					dev_log!("workspaces", "workspaces:createUntitledWorkspace");
+					// Create a transient `.code-workspace` file in a dedicated
+					// untitled-workspaces subdirectory of the app data dir.
+					// VS Code uses the returned `{ configPath, id }` to open the
+					// workspace and later to delete it via deleteUntitledWorkspace.
+					let PathResolver = ApplicationHandle.path();
 
-					Ok(Value::Null)
+					let AppDataDir = PathResolver
+						.app_data_dir()
+						.map_err(|E| format!("workspaces:createUntitledWorkspace app_data_dir: {}", E))?;
+
+					let UntitledDir = AppDataDir.join(".untitled-workspaces");
+
+					tokio::fs::create_dir_all(&UntitledDir)
+						.await
+						.map_err(|E| format!("workspaces:createUntitledWorkspace mkdir: {}", E))?;
+
+					let Id = uuid::Uuid::new_v4();
+
+					let FileName = format!("Untitled-{}.code-workspace", Id);
+
+					let FilePath = UntitledDir.join(&FileName);
+
+					let Content = r#"{"folders":[],"settings":{}}"#;
+
+					tokio::fs::write(&FilePath, Content)
+						.await
+						.map_err(|E| format!("workspaces:createUntitledWorkspace write: {}", E))?;
+
+					let FilePathStr = FilePath.to_string_lossy().to_string();
+
+					dev_log!("workspaces", "createUntitledWorkspace: id={} path={}", Id, FilePathStr);
+
+					Ok(json!({ "configPath": FilePathStr, "id": Id.to_string() }))
 				},
 				"workspaces:deleteUntitledWorkspace" => {
-					dev_log!("workspaces", "workspaces:deleteUntitledWorkspace");
+					// Remove a previously-created untitled workspace file.
+					// Only paths inside the .untitled-workspaces directory are
+					// accepted to prevent directory-traversal deletions.
+					let Arg = arg_val(&Arguments, 0);
+
+					let ConfigPath = Arg
+						.as_str()
+						.or_else(|| Arg.get("configPath").and_then(Value::as_str))
+						.unwrap_or("")
+						.to_string();
+
+					if ConfigPath.is_empty() {
+						dev_log!("workspaces", "deleteUntitledWorkspace: no configPath");
+
+						return Ok(Value::Null);
+					}
+
+					let PathResolver = ApplicationHandle.path();
+
+					let AppDataDir = PathResolver
+						.app_data_dir()
+						.map_err(|E| format!("workspaces:deleteUntitledWorkspace app_data_dir: {}", E))?;
+
+					let UntitledDir = AppDataDir.join(".untitled-workspaces");
+
+					let Target = std::path::PathBuf::from(&ConfigPath);
+
+					let IsInUntitledDir = Target
+						.canonicalize()
+						.ok()
+						.zip(UntitledDir.canonicalize().ok())
+						.map(|(T, U)| T.starts_with(U))
+						.unwrap_or(false);
+
+					if !IsInUntitledDir {
+						dev_log!(
+							"workspaces",
+							"deleteUntitledWorkspace: rejected path outside untitled dir: {}",
+							ConfigPath
+						);
+
+						return Ok(Value::Null);
+					}
+
+					tokio::fs::remove_file(&Target)
+						.await
+						.map_err(|E| format!("workspaces:deleteUntitledWorkspace remove: {}", E))?;
+
+					dev_log!("workspaces", "deleteUntitledWorkspace: removed {}", ConfigPath);
 
 					Ok(Value::Null)
 				},
@@ -3299,6 +3355,13 @@ pub async fn mountain_ipc_invoke(
 						Ok(Value::Null)
 					}
 				},
+				// Returns the display name for the current workspace.
+				// VS Code's `IWorkspaceContextService.getWorkspaceName()` calls
+				// this to populate the window title and the Explorer header.
+				// Delegates to the same LabelGetWorkspace logic used by
+				// `label:getWorkspace` so the name is consistent across callers.
+				"workspaces:getWorkspaceName" => LabelGetWorkspace(RunTime.clone()).await,
+
 				"workspaces:getDirtyWorkspaces" => Ok(json!([])),
 
 				// Git (localGit channel) - implements stock VS Code's
@@ -3429,7 +3492,7 @@ pub async fn mountain_ipc_invoke(
 
 					tokio::spawn(async move {
 						if let Err(E) =
-							::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), Method.to_string(), Payload)
+							crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), Method.to_string(), Payload)
 								.await
 						{
 							dev_log!("ipc", "warn: [tree] Cocoon notify {} failed: {:?}", Method, E);
@@ -3498,7 +3561,7 @@ pub async fn mountain_ipc_invoke(
 					// pane number in split-editor layouts.
 					let Payload = json!({ "uri": Uri, "selections": Selections, "viewColumn": ViewColumn });
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"window.didChangeTextEditorSelection".to_string(),
 						Payload,
@@ -3547,7 +3610,7 @@ pub async fn mountain_ipc_invoke(
 						]);
 
 						tokio::spawn(async move {
-							let _ = ::Vine::Client::SendNotification::Fn(
+							let _ = crate::Vine::Client::SendNotification::Fn(
 								"cocoon-main".to_string(),
 								"$acceptModelChanged".to_string(),
 								Payload2,
@@ -3574,12 +3637,41 @@ pub async fn mountain_ipc_invoke(
 							.SetActiveDocumentURI(Some(Uri.clone()));
 					}
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"window.didChangeActiveTextEditor".to_string(),
 						Payload,
 					)
 					.await;
+
+					// Fire onLanguage:<id> activation event for the newly
+					// active editor so extensions that gate on the language
+					// type (e.g. Rust Analyzer, ESLint, Prettier) activate
+					// without needing an explicit `$activateByEvent` call from
+					// the workbench. The languageId is looked up from the
+					// in-memory document registry; unknown URIs are skipped.
+					if !Uri.is_empty() {
+						let MaybeLanguageId = RunTime
+							.Environment
+							.ApplicationState
+							.Feature
+							.Documents
+							.Get(&Uri)
+							.map(|Doc| Doc.LanguageIdentifier.clone());
+
+						if let Some(LanguageId) = MaybeLanguageId {
+							if !LanguageId.is_empty() && LanguageId != "plaintext" {
+								dev_log!("extensions", "onLanguage:{} activation for uri={}", LanguageId, Uri);
+
+								let _ = crate::Vine::Client::SendNotification::Fn(
+									"cocoon-main".to_string(),
+									"$activateByEvent".to_string(),
+									json!({ "activationEvent": format!("onLanguage:{}", LanguageId) }),
+								)
+								.await;
+							}
+						}
+					}
 
 					Ok(Value::Null)
 				},
@@ -3597,7 +3689,7 @@ pub async fn mountain_ipc_invoke(
 				"sky:editor:visibleChanged" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptVisibleEditorsChanged".to_string(),
 						Payload,
@@ -3619,7 +3711,7 @@ pub async fn mountain_ipc_invoke(
 				"sky:editor:tabsChanged" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTabsChanged".to_string(),
 						Payload,
@@ -3640,7 +3732,7 @@ pub async fn mountain_ipc_invoke(
 				"sky:editor:visibleRangesChanged" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptVisibleRangesChanged".to_string(),
 						Payload,
@@ -3661,7 +3753,7 @@ pub async fn mountain_ipc_invoke(
 				"sky:editor:optionsChanged" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTextEditorOptionsChanged".to_string(),
 						Payload,
@@ -3681,7 +3773,7 @@ pub async fn mountain_ipc_invoke(
 				"sky:editor:diffInformationChanged" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTextEditorDiffInformationChanged".to_string(),
 						Payload,
@@ -3701,7 +3793,7 @@ pub async fn mountain_ipc_invoke(
 				"sky:editor:viewColumnChanged" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"$acceptTextEditorViewColumnChanged".to_string(),
 						Payload,
@@ -3802,10 +3894,10 @@ pub async fn mountain_ipc_invoke(
 					// async block (not just the arm), changing the block's inferred
 					// return type from `()` to `Result<Value, _>` and breaking
 					// Scheduler::Submit's Output = () bound.
-					if !::Vine::Client::IsClientConnected::Fn("cocoon-main") {
+					if !crate::Vine::Client::IsClientConnected::Fn("cocoon-main") {
 						Ok(Value::Array(Vec::new()))
 					} else {
-						Ok(::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 5_000)
+						Ok(crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 5_000)
 							.await
 							.unwrap_or(Value::Array(Vec::new())))
 					}
@@ -4099,9 +4191,9 @@ pub async fn mountain_ipc_invoke(
 
 						dev_log!("ipc", "deferred → Cocoon: {}", command);
 
-						let _ = ::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+						let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
 
-						match ::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 15_000).await {
+						match crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 15_000).await {
 							Ok(Response) => Ok(Response),
 							Err(CocoonError) => {
 								dev_log!(

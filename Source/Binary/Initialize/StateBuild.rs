@@ -136,10 +136,66 @@ pub fn BuildWithConfig(environment:MountainEnvironment, config:StateBuildConfig)
 	Ok(state)
 }
 
-/// Validate required capabilities are available
-fn ValidateCapabilities(_environment:&MountainEnvironment) -> Result<(), String> {
-	// Check critical capabilities
-	// TODO: Implement actual capability checks based on Environment API
+/// Validate required capabilities are available.
+///
+/// Checks are best-effort: failures emit warnings but never propagate an
+/// error to the caller, so a restricted sandbox or a permissions issue
+/// does not prevent the application from starting.
+fn ValidateCapabilities(environment:&MountainEnvironment) -> Result<(), String> {
+	// Verify the app data directory is accessible.
+	let DataDir = environment.ApplicationHandle.path().app_data_dir();
+
+	let DataPath = match DataDir {
+		Ok(P) => {
+			dev_log!("lifecycle", "[StateBuild] App data dir: {}", P.display());
+
+			P
+		},
+
+		Err(Error) => {
+			dev_log!(
+				"lifecycle",
+				"warn: [StateBuild] app_data_dir() unavailable ({}); skipping write check",
+				Error
+			);
+
+			return Ok(());
+		},
+	};
+
+	// Verify we can create (and remove) a probe file in the data directory.
+	// A missing directory is created on-demand; a permissions failure is
+	// logged as a warning without aborting startup.
+	if let Err(Error) = std::fs::create_dir_all(&DataPath) {
+		dev_log!(
+			"lifecycle",
+			"warn: [StateBuild] Cannot create app data dir {}: {}",
+			DataPath.display(),
+			Error
+		);
+
+		return Ok(());
+	}
+
+	let ProbeFile = DataPath.join(".mountain_capability_probe");
+
+	match std::fs::write(&ProbeFile, b"probe") {
+		Ok(()) => {
+			let _ = std::fs::remove_file(&ProbeFile);
+
+			dev_log!("lifecycle", "[StateBuild] App data dir write check passed.");
+		},
+
+		Err(Error) => {
+			dev_log!(
+				"lifecycle",
+				"warn: [StateBuild] App data dir write check failed ({}): {}; continuing in read-only mode",
+				ProbeFile.display(),
+				Error
+			);
+		},
+	}
+
 	Ok(())
 }
 

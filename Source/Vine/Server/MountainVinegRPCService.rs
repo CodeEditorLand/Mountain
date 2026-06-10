@@ -227,7 +227,7 @@ impl ::Vine::Host::IPCProvider for VineIPCProvider {
 		let Channel = Channel.to_string();
 
 		Box::pin(async move {
-			crate::Vine::Client::SendRequest::Fn(&Channel, Channel.clone(), Payload, 10_000)
+			cratecrate::Vine::Client::SendRequest::Fn(&Channel, Channel.clone(), Payload, 10_000)
 				.await
 				.map_err(|E| ::Vine::Error::VineError::RPCError(format!("{:?}", E)))
 		})
@@ -239,7 +239,7 @@ impl ::Vine::Host::IPCProvider for VineIPCProvider {
 		let Method = Method.to_string();
 
 		tauri::async_runtime::spawn(async move {
-			let _ = crate::Vine::Client::SendNotification::Fn(Channel, Method, Payload).await;
+			let _ = cratecrate::Vine::Client::SendNotification::Fn(Channel, Method, Payload).await;
 		});
 	}
 }
@@ -1024,6 +1024,12 @@ impl MountainService for MountainVinegRPCService {
 				::Vine::Server::Notification::OutputReplace::OutputReplace(self, &Parameter).await;
 			},
 
+			"output.coalesce" => {
+				// Coalescence replaces the channel buffer with new content
+				// (similar to replace but may batch multiple replace operations)
+				::Vine::Server::Notification::OutputChannelReplace::OutputChannelReplace(self, &Parameter).await;
+			},
+
 			"outputChannel.create" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
@@ -1167,10 +1173,7 @@ impl MountainService for MountainVinegRPCService {
 					.unwrap_or("unknown")
 					.to_string();
 
-				let Entries = Parameter
-					.get("entries")
-					.cloned()
-					.unwrap_or_else(|| serde_json::json!([]));
+				let Entries = Parameter.get("entries").cloned().unwrap_or_else(|| serde_json::json!([]));
 
 				use CommonLibrary::Diagnostic::DiagnosticManager::DiagnosticManager;
 
@@ -1182,19 +1185,13 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"extension.activating" => {
-				let ExtId = Parameter
-					.get("id")
-					.and_then(serde_json::Value::as_str)
-					.unwrap_or("unknown");
+				let ExtId = Parameter.get("id").and_then(serde_json::Value::as_str).unwrap_or("unknown");
 
 				dev_log!("extensions", "[Vine] extension.activating: {}", ExtId);
 			},
 
 			"task.completed" | "tasks.completed" => {
-				let TaskId = Parameter
-					.get("id")
-					.and_then(serde_json::Value::as_u64)
-					.unwrap_or(0);
+				let TaskId = Parameter.get("id").and_then(serde_json::Value::as_u64).unwrap_or(0);
 
 				// Remove from active executions; the run is finished.
 				self.RunTime.Environment.ApplicationState.Feature.Tasks.Remove(TaskId);

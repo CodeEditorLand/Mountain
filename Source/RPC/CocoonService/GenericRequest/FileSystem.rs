@@ -5,14 +5,11 @@
 use std::time::UNIX_EPOCH;
 
 use serde_json::{Value, json};
-
 use tonic::Response;
-
 use ::Vine::Generated::{GenericResponse, RpcError};
 
 /// Build a successful `GenericResponse` with JSON-serialised value.
 pub fn OkResponse(RequestId:u64, Value:&impl serde::Serialize) -> Response<GenericResponse> {
-
 	let Bytes = serde_json::to_vec(Value).unwrap_or_default();
 
 	Response::new(GenericResponse { request_identifier:RequestId, result:Bytes, error:None })
@@ -20,7 +17,6 @@ pub fn OkResponse(RequestId:u64, Value:&impl serde::Serialize) -> Response<Gener
 
 /// Build an error `GenericResponse`.
 pub fn ErrResponse(RequestId:u64, Code:i32, Message:String) -> Response<GenericResponse> {
-
 	Response::new(GenericResponse {
 		request_identifier:RequestId,
 		result:Vec::new(),
@@ -29,7 +25,6 @@ pub fn ErrResponse(RequestId:u64, Code:i32, Message:String) -> Response<GenericR
 }
 
 pub async fn HandleReadFile(RequestId:u64, Params:Value) -> Response<GenericResponse> {
-
 	let Path = Params
 		.as_str()
 		.or_else(|| Params.get("path").and_then(|V| V.as_str()))
@@ -43,7 +38,6 @@ pub async fn HandleReadFile(RequestId:u64, Params:Value) -> Response<GenericResp
 }
 
 pub async fn HandleReadFileUri(RequestId:u64, Params:Value) -> Response<GenericResponse> {
-
 	let Uri = Params
 		.get("uri")
 		.and_then(|V| V.as_str())
@@ -59,7 +53,6 @@ pub async fn HandleReadFileUri(RequestId:u64, Params:Value) -> Response<GenericR
 }
 
 pub async fn HandleWriteFile(RequestId:u64, Params:Value) -> Response<GenericResponse> {
-
 	let Path = Params.get("path").and_then(|V| V.as_str()).unwrap_or("");
 
 	let Content:Vec<u8> = Params
@@ -76,7 +69,6 @@ pub async fn HandleWriteFile(RequestId:u64, Params:Value) -> Response<GenericRes
 }
 
 pub async fn HandleWriteFileUri(RequestId:u64, Params:Value) -> Response<GenericResponse> {
-
 	let Uri = Params.get("uri").and_then(|V| V.as_str()).unwrap_or("").replace("file://", "");
 
 	let Content:Vec<u8> = Params
@@ -93,7 +85,6 @@ pub async fn HandleWriteFileUri(RequestId:u64, Params:Value) -> Response<Generic
 }
 
 pub async fn HandleStat(RequestId:u64, Params:Value) -> Response<GenericResponse> {
-
 	let Path = Params
 		.as_str()
 		.or_else(|| Params.get("path").and_then(|V| V.as_str()))
@@ -110,7 +101,6 @@ pub async fn HandleStat(RequestId:u64, Params:Value) -> Response<GenericResponse
 
 			OkResponse(
 				RequestId,
-
 				&json!({
 					"type": if Meta.is_dir() { 2 } else { 1 },
 					"is_file": Meta.is_file(),
@@ -126,7 +116,6 @@ pub async fn HandleStat(RequestId:u64, Params:Value) -> Response<GenericResponse
 }
 
 pub async fn HandleStatUri(RequestId:u64, Params:Value) -> Response<GenericResponse> {
-
 	let Uri = Params
 		.get("uri")
 		.and_then(|V| V.as_str())
@@ -145,7 +134,6 @@ pub async fn HandleStatUri(RequestId:u64, Params:Value) -> Response<GenericRespo
 
 			OkResponse(
 				RequestId,
-
 				&json!({
 					"type": if Meta.is_dir() { 2 } else { 1 },
 					"is_file": Meta.is_file(),
@@ -161,7 +149,6 @@ pub async fn HandleStatUri(RequestId:u64, Params:Value) -> Response<GenericRespo
 }
 
 pub async fn HandleReaddir(RequestId:u64, Params:Value) -> Response<GenericResponse> {
-
 	let Path = Params
 		.as_str()
 		.or_else(|| Params.get("path").and_then(|V| V.as_str()))
@@ -187,7 +174,6 @@ pub async fn HandleReaddir(RequestId:u64, Params:Value) -> Response<GenericRespo
 }
 
 pub async fn HandleReaddirUri(RequestId:u64, Params:Value) -> Response<GenericResponse> {
-
 	let Uri = Params
 		.get("uri")
 		.and_then(|V| V.as_str())
@@ -213,7 +199,6 @@ pub async fn HandleReaddirUri(RequestId:u64, Params:Value) -> Response<GenericRe
 }
 
 pub async fn HandleCreateDir(RequestId:u64, Params:Value) -> Response<GenericResponse> {
-
 	let Path = Params
 		.as_str()
 		.or_else(|| Params.get("path").and_then(|V| V.as_str()))
@@ -227,7 +212,6 @@ pub async fn HandleCreateDir(RequestId:u64, Params:Value) -> Response<GenericRes
 }
 
 pub async fn HandleDelete(RequestId:u64, Params:Value) -> Response<GenericResponse> {
-
 	let Path = Params
 		.as_str()
 		.or_else(|| Params.get("path").and_then(|V| V.as_str()))
@@ -247,7 +231,6 @@ pub async fn HandleDelete(RequestId:u64, Params:Value) -> Response<GenericRespon
 }
 
 pub async fn HandleRename(RequestId:u64, Params:Value) -> Response<GenericResponse> {
-
 	let From = Params.get("from").and_then(|V| V.as_str()).unwrap_or("");
 
 	let To = Params.get("to").and_then(|V| V.as_str()).unwrap_or("");

@@ -107,6 +107,7 @@ fn InitializeWsConfig() {
 
 		Bytes.iter().fold(String::new(), |mut S, B| {
 			write!(S, "{:02x}", B).ok();
+
 			S
 		})
 	});
@@ -604,7 +605,7 @@ async fn LaunchAndManageCocoonSideCar(
 		})?;
 
 	// Send initialization request with timeout
-	let Response = ::Vine::Client::SendRequest::Fn(
+	let Response = crate::Vine::Client::SendRequest::Fn(
 		&SideCarIdentifier,
 		"InitializeExtensionHost".to_string(),
 		MainInitializationData,
@@ -664,7 +665,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 		crate::dev_log!("exthost", "Sending $activateByEvent(\"*\") to Cocoon");
 
-		if let Err(Error) = ::Vine::Client::SendRequest::Fn(
+		if let Err(Error) = crate::Vine::Client::SendRequest::Fn(
 			&SideCarId,
 			"$activateByEvent".to_string(),
 			serde_json::json!({ "activationEvent": "*" }),
@@ -710,7 +711,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 						let DeserializeMethod = "ExtHostWebviewPanels$deserializeWebviewPanel".to_string();
 
-						if let Err(Error) = ::Vine::Client::SendRequest::Fn(
+						if let Err(Error) = crate::Vine::Client::SendRequest::Fn(
 							&SideCarId,
 							DeserializeMethod,
 							serde_json::json!([ViewType, serde_json::Value::Null, State]),
@@ -758,7 +759,7 @@ async fn LaunchAndManageCocoonSideCar(
 						"lines": Doc.Lines,
 					});
 
-					let _ = ::Vine::Client::SendNotification::Fn(
+					let _ = crate::Vine::Client::SendNotification::Fn(
 						SideCarId.clone(),
 						"$acceptModelAdded".to_string(),
 						Payload,
@@ -823,7 +824,7 @@ async fn LaunchAndManageCocoonSideCar(
 			for Pattern in Matched {
 				let Event = format!("workspaceContains:{}", Pattern);
 
-				if let Err(Error) = ::Vine::Client::SendRequest::Fn(
+				if let Err(Error) = crate::Vine::Client::SendRequest::Fn(
 					&SideCarId,
 					"$activateByEvent".to_string(),
 					serde_json::json!({ "activationEvent": Event }),
@@ -846,7 +847,7 @@ async fn LaunchAndManageCocoonSideCar(
 		// of startup contributions resolve in the expected order.
 		sleep(Duration::from_millis(2_000)).await;
 
-		if let Err(Error) = ::Vine::Client::SendRequest::Fn(
+		if let Err(Error) = crate::Vine::Client::SendRequest::Fn(
 			&SideCarId,
 			"$activateByEvent".to_string(),
 			serde_json::json!({ "activationEvent": "onStartupFinished" }),
@@ -886,17 +887,44 @@ async fn LaunchAndManageCocoonSideCar(
 					("go.mod", "workspaceContains:go.mod"),
 					("pyproject.toml", "workspaceContains:pyproject.toml"),
 					("CMakeLists.txt", "workspaceContains:CMakeLists.txt"),
+					("build.gradle", "workspaceContains:build.gradle"),
+					("pom.xml", "workspaceContains:pom.xml"),
+					("Dockerfile", "workspaceContains:Dockerfile"),
+					("composer.json", "workspaceContains:composer.json"),
+					("Gemfile", "workspaceContains:Gemfile"),
 				] {
 					let FilePath = First.join(FileName);
 
 					if FilePath.exists() {
-						let _ = ::Vine::Client::SendNotification::Fn(
+						let _ = crate::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
 							"$activateByEvent".to_string(),
 							serde_json::json!({ "activationEvent": Event }),
 						)
 						.await;
 					}
+				}
+
+				// C#/.NET solution files match `**/*.sln` - a glob that
+				// cannot be resolved with a simple path join. Probe the
+				// workspace root for any `.sln` entry directly instead.
+				let HasSln = First
+					.read_dir()
+					.ok()
+					.map(|Entries| {
+						Entries
+							.flatten()
+							.any(|E| E.path().extension().and_then(|X| X.to_str()) == Some("sln"))
+					})
+					.unwrap_or(false);
+
+				if HasSln {
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$activateByEvent".to_string(),
+						serde_json::json!({ "activationEvent": "workspaceContains:**/*.sln" }),
+					)
+					.await;
 				}
 			}
 		}

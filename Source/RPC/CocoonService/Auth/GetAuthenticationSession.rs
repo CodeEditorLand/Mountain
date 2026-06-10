@@ -63,7 +63,9 @@ pub async fn Fn(
 	// VS Code extension-host wire format: [providerId, scopes, options].
 	let Payload = json!([
 		Request.provider_id,
+
 		Request.scopes,
+
 		{
 			"createIfNone": Request.create_if_none,
 			"clearSessionPreference": Request.clear_session_preference,

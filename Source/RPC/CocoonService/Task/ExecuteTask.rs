@@ -6,11 +6,8 @@
 //! then emits the sky event and returns the real ID.
 
 use serde_json::json;
-
 use tauri::Emitter;
-
 use tonic::{Response, Status};
-
 use ::Vine::Generated::{ExecuteTaskRequest, ExecuteTaskResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -20,24 +17,14 @@ pub async fn Fn(
 
 	Request:ExecuteTaskRequest,
 ) -> Result<Response<ExecuteTaskResponse>, Status> {
-
 	// Allocate a stable run-ID from the execution registry.
-	let TaskId = Service
-		.environment
-		.ApplicationState
-		.Feature
-		.Tasks
-		.NextId();
+	let TaskId = Service.environment.ApplicationState.Feature.Tasks.NextId();
 
 	dev_log!(
 		"task",
-
 		"[CocoonService] execute_task: id={} name={} source={}",
-
 		TaskId,
-
 		Request.name,
-
 		Request.source
 	);
 
@@ -66,19 +53,15 @@ pub async fn Fn(
 		.Insert(TaskId, Definition.clone());
 
 	// Notify Sky to start the task in the workbench.
-	let _ = Service
-		.environment
-		.ApplicationHandle
-		.emit(
-			"sky://task/execute",
-
-			json!({
-				"id":         TaskId,
-				"name":       Request.name,
-				"source":     Request.source,
-				"definition": Definition,
-			}),
-		);
+	let _ = Service.environment.ApplicationHandle.emit(
+		"sky://task/execute",
+		json!({
+			"id":         TaskId,
+			"name":       Request.name,
+			"source":     Request.source,
+			"definition": Definition,
+		}),
+	);
 
 	Ok(Response::new(ExecuteTaskResponse { task_id:TaskId as u32, success:true }))
 }

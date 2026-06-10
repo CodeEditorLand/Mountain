@@ -1,13 +1,10 @@
 use std::time::UNIX_EPOCH;
 
 use serde_json::{Value, json};
-
 use tonic::Response;
-
 use ::Vine::Generated::GenericResponse;
 
 pub async fn Fn(RequestId:u64, Params:Value) -> Response<GenericResponse> {
-
 	let Path = Params
 		.as_str()
 		.or_else(|| Params.get("path").and_then(|V| V.as_str()))
@@ -24,7 +21,6 @@ pub async fn Fn(RequestId:u64, Params:Value) -> Response<GenericResponse> {
 
 			super::OkResponse(
 				RequestId,
-
 				&json!({
 					"type": if Meta.is_dir() { 2 } else { 1 },
 					"is_file": Meta.is_file(),

@@ -29,11 +29,11 @@ pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Va
 	// Best-effort webview panel snapshot before the renderer reload wipes
 	// in-memory state. 1.5s budget: a slow serializer can hold up the
 	// reload, but only briefly - past the budget we proceed without state.
-	if ::Vine::Client::IsClientConnected::Fn("cocoon-main") {
+	if crate::Vine::Client::IsClientConnected::Fn("cocoon-main") {
 		let SerializeMethod = "ExtHostWebviewPanels$serializeAllWebviewPanels".to_string();
 
 		let SerializeCall =
-			::Vine::Client::SendRequest::Fn("cocoon-main", SerializeMethod, Value::Array(Vec::new()), 1500);
+			crate::Vine::Client::SendRequest::Fn("cocoon-main", SerializeMethod, Value::Array(Vec::new()), 1500);
 
 		match tokio::time::timeout(Duration::from_millis(1700), SerializeCall).await {
 			Ok(Ok(Snapshot)) if !Snapshot.is_null() => {

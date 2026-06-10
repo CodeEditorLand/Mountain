@@ -8,8 +8,8 @@ use std::sync::Arc;
 use AirLibrary::Vine::Generated::air::{
 	ApplyUpdateRequest,
 	DownloadRequest,
-	air_service_client::AirServiceClient,
 	UpdateCheckRequest,
+	air_service_client::AirServiceClient,
 };
 #[cfg(feature = "AirIntegration")]
 use CommonLibrary::{
@@ -68,38 +68,29 @@ pub async fn Fn(
 					.await?;
 
 				if UserResponse == Some("Install".to_string()) {
-					let _ = ApplicationHandle
-						.emit("sky://update/downloading", json!({ "version": Reply.version }));
+					let _ = ApplicationHandle.emit("sky://update/downloading", json!({ "version": Reply.version }));
 
 					let mut Client = (**AirClient).clone();
 
-					let DownloadReq =
-						tonic::Request::new(DownloadRequest {
-							request_id:uuid::Uuid::new_v4().to_string(),
-							url:Reply.download_url.clone(),
-							destination_path:String::new(),
-							checksum:String::new(),
-							headers:std::collections::HashMap::new(),
-						});
+					let DownloadReq = tonic::Request::new(DownloadRequest {
+						request_id:uuid::Uuid::new_v4().to_string(),
+						url:Reply.download_url.clone(),
+						destination_path:String::new(),
+						checksum:String::new(),
+						headers:std::collections::HashMap::new(),
+					});
 
 					match Client.download_update(DownloadReq).await {
 						Ok(DownloadResponse) => {
 							let Downloaded = DownloadResponse.into_inner();
 
 							if !Downloaded.error.is_empty() {
-								dev_log!(
-									"update",
-									"error: [UpdateService] Air download failed: {}",
-									Downloaded.error
-								);
+								dev_log!("update", "error: [UpdateService] Air download failed: {}", Downloaded.error);
 
 								RunTime
 									.Run(ShowMessage(
 										MessageSeverity::Error,
-										format!(
-											"Update download failed: {}",
-											Downloaded.error
-										),
+										format!("Update download failed: {}", Downloaded.error),
 										json!(null),
 									))
 									.await?;
@@ -109,12 +100,11 @@ pub async fn Fn(
 									json!({ "version": Reply.version, "path": Downloaded.file_path }),
 								);
 
-								let ApplyReq =
-									tonic::Request::new(ApplyUpdateRequest {
-										request_id:uuid::Uuid::new_v4().to_string(),
-										version:Reply.version.clone(),
-										update_path:Downloaded.file_path.clone(),
-									});
+								let ApplyReq = tonic::Request::new(ApplyUpdateRequest {
+									request_id:uuid::Uuid::new_v4().to_string(),
+									version:Reply.version.clone(),
+									update_path:Downloaded.file_path.clone(),
+								});
 
 								match Client.apply_update(ApplyReq).await {
 									Ok(ApplyResponse) => {
@@ -130,18 +120,13 @@ pub async fn Fn(
 											RunTime
 												.Run(ShowMessage(
 													MessageSeverity::Error,
-													format!(
-														"Update install failed: {}",
-														Applied.error
-													),
+													format!("Update install failed: {}", Applied.error),
 													json!(null),
 												))
 												.await?;
 										} else {
-											let _ = ApplicationHandle.emit(
-												"sky://update/applied",
-												json!({ "version": Reply.version }),
-											);
+											let _ = ApplicationHandle
+												.emit("sky://update/applied", json!({ "version": Reply.version }));
 
 											RunTime
 												.Run(ShowMessage(
@@ -166,10 +151,7 @@ pub async fn Fn(
 										RunTime
 											.Run(ShowMessage(
 												MessageSeverity::Error,
-												format!(
-													"Failed to apply update: {}",
-													ApplyStatus
-												),
+												format!("Failed to apply update: {}", ApplyStatus),
 												json!(null),
 											))
 											.await?;
@@ -188,10 +170,7 @@ pub async fn Fn(
 							RunTime
 								.Run(ShowMessage(
 									MessageSeverity::Error,
-									format!(
-										"Failed to download update: {}",
-										DownloadStatus
-									),
+									format!("Failed to download update: {}", DownloadStatus),
 									json!(null),
 								))
 								.await?;

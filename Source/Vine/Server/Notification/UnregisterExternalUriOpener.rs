@@ -7,13 +7,7 @@ pub async fn UnregisterExternalUriOpener(Service:&MountainVinegRPCService, Param
 	// the FeatureState map so `nativeHost:openExternal` stops routing
 	// to a provider whose extension has deactivated.
 	if let Some(OpenerId) = Parameter.get("opener_id").and_then(Value::as_str) {
-		let mut Guard = Service
-			.RunTime()
-			.Environment
-			.ApplicationState
-			.Feature
-			.ExternalUriOpeners
-			.lock();
+		let mut Guard = Service.RunTime().Environment.ApplicationState.Feature.ExternalUriOpeners.lock();
 
 		Guard.retain(|_, Registration| Registration.OpenerId != OpenerId);
 	}

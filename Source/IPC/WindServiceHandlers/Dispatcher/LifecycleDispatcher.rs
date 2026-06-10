@@ -3,19 +3,20 @@
 use serde_json::{Value, json};
 use tauri::Manager;
 
-use crate::IPC::WindServiceHandlers::{
+use crate::{
+	IPC::WindServiceHandlers::{
+		UI::{
+			LifecycleGetPhase::Fn as LifecycleGetPhase,
+			LifecycleRequestShutdown::Fn as LifecycleRequestShutdown,
+			LifecycleWhenPhase::Fn as LifecycleWhenPhase,
+		},
+		Utilities::JsonValueHelpers::arg_u64_or,
+	},
 	UI::{
 		LifecycleGetPhase::Fn as LifecycleGetPhase,
 		LifecycleRequestShutdown::Fn as LifecycleRequestShutdown,
 		LifecycleWhenPhase::Fn as LifecycleWhenPhase,
 	},
-	Utilities::JsonValueHelpers::arg_u64_or,
-};
-
-use crate::UI::{
-	LifecycleGetPhase::Fn as LifecycleGetPhase,
-	LifecycleRequestShutdown::Fn as LifecycleRequestShutdown,
-	LifecycleWhenPhase::Fn as LifecycleWhenPhase,
 };
 
 /// Dispatches lifecycle commands.

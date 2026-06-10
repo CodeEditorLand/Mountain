@@ -15,7 +15,7 @@ pub async fn ExtensionHostDebugReload(ApplicationHandle:AppHandle) -> Result<Val
 	}
 
 	let _ =
-		::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), "extensionHost.reload".to_string(), json!({}))
+		crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), "extensionHost.reload".to_string(), json!({}))
 			.await;
 
 	Ok(Value::Null)
@@ -29,7 +29,7 @@ pub async fn ExtensionHostDebugClose(ApplicationHandle:AppHandle) -> Result<Valu
 	}
 
 	let _ =
-		::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), "extensionHost.close".to_string(), json!({}))
+		crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), "extensionHost.close".to_string(), json!({}))
 			.await;
 
 	Ok(Value::Null)

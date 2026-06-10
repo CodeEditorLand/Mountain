@@ -58,7 +58,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		2i32
 	};
 
-	let _ = ::Vine::Client::SendNotification::Fn(
+	let _ = crate::Vine::Client::SendNotification::Fn(
 		"cocoon-main".to_string(),
 		"$acceptActiveColorTheme".to_string(),
 		json!({ "id": ThemeId, "kind": ThemeKind }),

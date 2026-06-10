@@ -70,7 +70,7 @@ use CommonLibrary::{
 	},
 };
 use serde_json::json;
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, mpsc};
 use tonic::{Request, Response, Status};
 use url::Url;
 use ::Vine::Generated::cocoon_service_server::CocoonService;
@@ -272,10 +272,8 @@ use ::Vine::Generated::{
 	on_did_receive_message_request,
 	post_webview_message_request,
 };
-
 use dashmap::DashMap;
 use lazy_static::lazy_static;
-use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 
 use crate::{
@@ -292,6 +290,7 @@ use crate::dev_log;
 static NEXT_CHANNEL_ID:AtomicU64 = AtomicU64::new(1);
 
 lazy_static! {
+
 	/// Process-wide map from channel_id → outbound `Envelope` sender.
 	/// Callers that hold a channel_id can push frames back to the Cocoon
 	/// peer over the bidirectional stream without touching the original
@@ -430,9 +429,9 @@ impl CocoonServiceImpl {
 impl CocoonService for CocoonServiceImpl {
 	// Bidirectional streaming channel. Cocoon opens this stream and sends
 	// Envelope frames; Mountain reads each frame and routes:
-	//   Notification  → GenericNotification::Dispatcher (same path as the unary endpoint)
-	//   Request       → GenericRequest::Dispatcher; response sent back via out_tx
-	//   Response      → log and ignore (not expected on this direction)
+	//   Notification  → GenericNotification::Dispatcher (same path as the unary
+	// endpoint)   Request       → GenericRequest::Dispatcher; response sent back
+	// via out_tx   Response      → log and ignore (not expected on this direction)
 	//   Cancel        → no-op
 	// Outbound frames are delivered via the mpsc channel whose sender is
 	// stored in CHANNEL_REGISTRY keyed by a per-call channel_id.
@@ -450,8 +449,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:tonic::Request<tonic::Streaming<::Vine::Generated::Envelope>>,
 	) -> Result<tonic::Response<Self::OpenChannelFromMountainStream>, tonic::Status> {
 		use futures_util::StreamExt;
-		use ::Vine::Generated::envelope::Payload;
-		use ::Vine::Generated::{Envelope, GenericResponse, RpcError};
+		use ::Vine::Generated::{Envelope, GenericResponse, RpcError, envelope::Payload};
 
 		let ChannelId = NEXT_CHANNEL_ID.fetch_add(1, Ordering::Relaxed);
 
@@ -475,12 +473,7 @@ impl CocoonService for CocoonServiceImpl {
 					Ok(F) => F,
 
 					Err(Status) => {
-						dev_log!(
-							"cocoon",
-							"[CocoonService] channel_id={} inbound error: {}",
-							ChannelId,
-							Status
-						);
+						dev_log!("cocoon", "[CocoonService] channel_id={} inbound error: {}", ChannelId, Status);
 
 						break;
 					},
@@ -495,11 +488,7 @@ impl CocoonService for CocoonServiceImpl {
 				match Payload {
 					Payload::Notification(N) => {
 						// Reuse the unary notification dispatcher verbatim.
-						let _ = GenericNotification::Dispatcher::Fn(
-							&ServiceClone,
-							tonic::Request::new(N),
-						)
-						.await;
+						let _ = GenericNotification::Dispatcher::Fn(&ServiceClone, tonic::Request::new(N)).await;
 					},
 
 					Payload::Request(R) => {
@@ -513,21 +502,21 @@ impl CocoonService for CocoonServiceImpl {
 							Ok(GrpcResponse) => {
 								let Inner = GrpcResponse.into_inner();
 
-								Envelope {
-									payload:Some(Payload::Response(Inner)),
-								}
+								Envelope { payload:Some(Payload::Response(Inner)) }
 							},
 
-							Err(Status) => Envelope {
-								payload:Some(Payload::Response(GenericResponse {
-									request_identifier:RequestId,
-									result:Vec::new(),
-									error:Some(RpcError {
-										code:Status.code() as i32,
-										message:Status.message().to_string(),
-										data:Vec::new(),
-									}),
-								})),
+							Err(Status) => {
+								Envelope {
+									payload:Some(Payload::Response(GenericResponse {
+										request_identifier:RequestId,
+										result:Vec::new(),
+										error:Some(RpcError {
+											code:Status.code() as i32,
+											message:Status.message().to_string(),
+											data:Vec::new(),
+										}),
+									})),
+								}
 							},
 						};
 
@@ -558,7 +547,11 @@ impl CocoonService for CocoonServiceImpl {
 			// not retained.
 			CHANNEL_REGISTRY.remove(&ChannelId);
 
-			dev_log!("cocoon", "[CocoonService] open_channel_from_mountain channel_id={} closed", ChannelId);
+			dev_log!(
+				"cocoon",
+				"[CocoonService] open_channel_from_mountain channel_id={} closed",
+				ChannelId
+			);
 		});
 
 		let OutboundStream = ReceiverStream::new(OutRx).map(|E| Ok(E));

@@ -228,14 +228,24 @@ impl CertificateManager {
 
 		params.distinguished_name = rcgen::DistinguishedName::new();
 
-		// Set validity period
-		let not_before = rcgen::date_time_ymd(2024, 1, 1);
+		// Set validity period using current date
+		let now = chrono::Utc::now();
+
+		let not_before = rcgen::date_time_ymd(
+			now.format("%Y").to_string().parse::<i32>().unwrap_or(2024),
+			now.format("%m").to_string().parse::<u8>().unwrap_or(1),
+			now.format("%d").to_string().parse::<u8>().unwrap_or(1),
+		);
 
 		params.not_before = not_before;
 
-		let expiry_year:i32 = (2024 + Self::CA_VALIDITY_DAYS / 365) as i32;
+		let expiry = now + chrono::Duration::days(Self::CA_VALIDITY_DAYS as i64);
 
-		let not_after = rcgen::date_time_ymd(expiry_year, 1, 1);
+		let not_after = rcgen::date_time_ymd(
+			expiry.format("%Y").to_string().parse::<i32>().unwrap_or(2025),
+			expiry.format("%m").to_string().parse::<u8>().unwrap_or(1),
+			expiry.format("%d").to_string().parse::<u8>().unwrap_or(1),
+		);
 
 		params.not_after = not_after;
 
@@ -325,27 +335,34 @@ impl CertificateManager {
 
 		params.distinguished_name.push(rcgen::DnType::CommonName, hostname);
 
-		// Get current time for certificate validity - TODO: Fix chrono API usage
+		// Set validity period using current date
 		let now = chrono::Utc::now();
 
-		let current_year = 2024; // Use fixed year for now
-
-		let current_month = 1;
-
-		let current_day = 1;
-
-		let not_before = rcgen::date_time_ymd(current_year, current_month, current_day);
+		let not_before = rcgen::date_time_ymd(
+			now.format("%Y").to_string().parse::<i32>().unwrap_or(2024),
+			now.format("%m").to_string().parse::<u8>().unwrap_or(1),
+			now.format("%d").to_string().parse::<u8>().unwrap_or(1),
+		);
 
 		params.not_before = not_before;
 
-		let not_after = rcgen::date_time_ymd(current_year + 1, current_month, current_day);
+		let expiry = now + chrono::Duration::days(365);
+
+		let not_after = rcgen::date_time_ymd(
+			expiry.format("%Y").to_string().parse::<i32>().unwrap_or(2025),
+			expiry.format("%m").to_string().parse::<u8>().unwrap_or(1),
+			expiry.format("%d").to_string().parse::<u8>().unwrap_or(1),
+		);
 
 		params.not_after = not_after;
 
-		// NOTE: Skipping SAN setup - using default subject alternative names
-		// params.subject_alt_names = vec![
-		// 	rcgen::SanType::DnsName(hostname.to_string()),
-		// ];
+		// Add Subject Alternative Names for the hostname and localhost
+		params.subject_alt_names = vec![
+			rcgen::SanType::DnsName(hostname.to_string()),
+			rcgen::SanType::DnsName("localhost".to_string()),
+			rcgen::SanType::IpAddress(std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST)),
+		];
+
 		params.key_usages = vec![
 			rcgen::KeyUsagePurpose::DigitalSignature,
 			rcgen::KeyUsagePurpose::KeyEncipherment,
@@ -385,10 +402,11 @@ impl CertificateManager {
 
 		let private_key = PrivateKeyDer::Pkcs8(private_key_der);
 
-		// Store empty PEM for now - TODO: Create proper PEM format later
-		let cert_pem:Vec<u8> = Vec::new();
+		// Generate PEM format for storage/display (rcgen provides .pem() and
+		// .serialize_pem())
+		let cert_pem:Vec<u8> = cert.pem().into_bytes();
 
-		let key_pem:Vec<u8> = Vec::new();
+		let key_pem:Vec<u8> = key_pair.serialize_pem().into_bytes();
 
 		let mut server_config = ServerConfig::builder()
 			.with_no_client_auth()

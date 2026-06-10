@@ -11,7 +11,6 @@ use std::{
 };
 
 use parking_lot::Mutex;
-
 use serde_json::Value;
 
 use crate::dev_log;
@@ -19,7 +18,6 @@ use crate::dev_log;
 /// Registry of in-flight task executions.
 #[derive(Clone)]
 pub struct TaskExecutionState {
-
 	/// Active executions: run-ID → task definition JSON.
 	pub ActiveExecutions:Arc<Mutex<HashMap<u64, Value>>>,
 
@@ -28,7 +26,6 @@ pub struct TaskExecutionState {
 }
 
 impl Default for TaskExecutionState {
-
 	fn default() -> Self {
 		dev_log!("task", "[TaskExecutionState] Initializing default task execution state...");
 
@@ -41,7 +38,6 @@ impl Default for TaskExecutionState {
 }
 
 impl TaskExecutionState {
-
 	/// Reserves the next unique run-ID (atomic fetch-add).
 	pub fn NextId(&self) -> u64 { self.NextExecutionId.fetch_add(1, AtomicOrdering::Relaxed) }
 

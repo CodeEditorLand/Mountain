@@ -120,7 +120,7 @@ pub(super) async fn setup_webview_message_listener_impl(
 					"message": Parsed,
 				});
 
-				if let Err(E) = ::Vine::Client::SendNotification::Fn(
+				if let Err(E) = crate::Vine::Client::SendNotification::Fn(
 					"cocoon-main".to_string(),
 					"webview.message".to_string(),
 					Notification,

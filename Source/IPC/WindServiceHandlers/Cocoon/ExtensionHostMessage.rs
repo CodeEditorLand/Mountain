@@ -20,7 +20,7 @@ pub async fn Fn(_ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Va
 
 	tokio::spawn(async move {
 		if let Err(Error) =
-			::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), "extensionHostMessage".to_string(), Payload)
+			crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), "extensionHostMessage".to_string(), Payload)
 				.await
 		{
 			crate::dev_log!("exthost", "cocoon:extensionHostMessage forward failed: {}", Error);

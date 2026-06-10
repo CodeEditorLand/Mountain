@@ -58,9 +58,9 @@ pub async fn Fn(
 	// this wait the first call returns `ClientNotConnected`, the workbench
 	// caches an empty list, and the Explorer never recovers without a manual
 	// refresh. 5000 ms chosen from boot-trace observation.
-	let _ = ::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 5000).await;
+	let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 5000).await;
 
-	match ::Vine::Client::SendRequest::Fn(
+	match crate::Vine::Client::SendRequest::Fn(
 		"cocoon-main",
 		"$provideTreeChildren".to_string(),
 		Parameters,

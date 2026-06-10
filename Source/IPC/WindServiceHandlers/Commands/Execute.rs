@@ -44,7 +44,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	// which the `Commands/Namespace.ts` `onDidExecuteCommand` subscriber
 	// listens to. Fire-and-forget; failure is non-fatal (the Tauri-emit
 	// already reached the renderer-side observers).
-	let _ = ::Vine::Client::SendNotification::Fn(
+	let _ = crate::Vine::Client::SendNotification::Fn(
 		"cocoon-main".to_string(),
 		"$acceptCommandExecuted".to_string(),
 		json!({ "command": CommandId, "arguments": CommandArgs }),

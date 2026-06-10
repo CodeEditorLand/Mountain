@@ -116,7 +116,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	let NotifyVer = Version;
 
 	tokio::spawn(async move {
-		let _ = ::Vine::Client::SendNotification::Fn(
+		let _ = crate::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),
 			"window.didChangeActiveTextEditor".to_string(),
 			serde_json::json!({ "uri": NotifyUri, "languageId": NotifyLang, "version": NotifyVer }),

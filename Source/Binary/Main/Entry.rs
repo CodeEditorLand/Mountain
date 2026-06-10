@@ -58,8 +58,13 @@
 
 use std::sync::{
 	Arc,
-	atomic::{AtomicBool, Ordering},
+	atomic::{AtomicBool, AtomicU64, Ordering},
 };
+
+/// Wall-clock milliseconds at the moment `Fn()` is entered. Set once at
+/// startup; read when the first `RunEvent::Ready` fires to derive elapsed
+/// boot time. `0` means "not yet set".
+static STARTUP_TIME_MS:AtomicU64 = AtomicU64::new(0);
 
 use tauri::{App, Manager, RunEvent, Wry};
 use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
@@ -136,6 +141,18 @@ macro_rules! TraceStep {
 /// 9. Runs the Tauri application
 /// 10. Handles graceful shutdown
 pub fn Fn() {
+	// Record the wall-clock start time (ms since UNIX epoch) for boot
+	// duration tracking. Stored before any other work so the measurement
+	// covers the full startup path including keyring init and env loading.
+	{
+		let NowMs = std::time::SystemTime::now()
+			.duration_since(std::time::UNIX_EPOCH)
+			.map(|D| D.as_millis() as u64)
+			.unwrap_or(0);
+
+		STARTUP_TIME_MS.store(NowMs, Ordering::Relaxed);
+	}
+
 	// Initialize the native keyring store (Keychain on macOS) before any
 	// code path that calls SecretProvider. keyring-core 1.0 requires an
 	// explicit store set via set_default_store() before Entry::new() can
@@ -892,6 +909,34 @@ pub fn Fn() {
 						RunEvent::MainEventsCleared => {},
 						RunEvent::WindowEvent { .. } => {},
 						_ => dev_log!("lifecycle", "[Lifecycle] [RunEvent] {:?}", event),
+					}
+				}
+
+				// Emit startup elapsed time once when the Tauri event loop
+				// signals that the application is ready. Uses the AtomicU64
+				// set at the top of Fn() so the measurement spans the full
+				// boot path. Fires exactly once per process lifetime.
+				if let RunEvent::Ready = &event {
+					static STARTUP_LOGGED:AtomicBool = AtomicBool::new(false);
+
+					if !STARTUP_LOGGED.swap(true, Ordering::SeqCst) {
+						let StartMs = STARTUP_TIME_MS.load(Ordering::Relaxed);
+
+						if StartMs > 0 {
+							let NowMs = std::time::SystemTime::now()
+								.duration_since(std::time::UNIX_EPOCH)
+								.map(|D| D.as_millis() as u64)
+								.unwrap_or(0);
+
+							let ElapsedMs = NowMs.saturating_sub(StartMs);
+
+							dev_log!(
+								"lifecycle",
+								"[Boot] [Perf] Startup ready in {}ms ({}s)",
+								ElapsedMs,
+								ElapsedMs / 1000
+							);
+						}
 					}
 				}
 

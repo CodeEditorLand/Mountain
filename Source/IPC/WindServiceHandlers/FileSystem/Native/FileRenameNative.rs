@@ -21,7 +21,7 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	dev_log!("vfs", "file:rename ok {} -> {}", Source, Target);
 
 	tokio::spawn(async move {
-		if let Err(Error) = ::Vine::Client::SendNotification::Fn(
+		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
 			"cocoon-main".to_string(),
 			"$acceptDidRenameFiles".to_string(),
 			json!({ "files": [{ "oldUri": OldUri, "newUri": NewUri }] }),
