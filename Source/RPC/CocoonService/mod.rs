@@ -44,7 +44,10 @@ pub mod Workspace;
 
 use std::{
 	collections::HashMap,
-	sync::Arc,
+	sync::{
+		Arc,
+		atomic::{AtomicU64, Ordering},
+	},
 	time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -270,6 +273,11 @@ use ::Vine::Generated::{
 	post_webview_message_request,
 };
 
+use dashmap::DashMap;
+use lazy_static::lazy_static;
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::ReceiverStream;
+
 use crate::{
 	ApplicationState::DTO::{
 		ProviderRegistrationDTO::ProviderRegistrationDTO,
@@ -279,6 +287,18 @@ use crate::{
 };
 // Import generated protobuf types
 use crate::dev_log;
+
+/// Monotonic counter for outbound channel slots in `CHANNEL_REGISTRY`.
+static NEXT_CHANNEL_ID:AtomicU64 = AtomicU64::new(1);
+
+lazy_static! {
+	/// Process-wide map from channel_id → outbound `Envelope` sender.
+	/// Callers that hold a channel_id can push frames back to the Cocoon
+	/// peer over the bidirectional stream without touching the original
+	/// `open_channel_from_mountain` future.
+	static ref CHANNEL_REGISTRY:DashMap<u64, mpsc::Sender<::Vine::Generated::Envelope>> =
+		DashMap::new();
+}
 
 /// Implementation of the CocoonService gRPC server
 ///
@@ -408,11 +428,14 @@ impl CocoonServiceImpl {
 #[async_trait]
 
 impl CocoonService for CocoonServiceImpl {
-	// LAND-PATCH B7-S6 P2: bidirectional streaming channel mirror.
-	// Stub matching MountainService::open_channel_from_cocoon. The
-	// multiplexer wiring lands with Patch 14; until then this
-	// returns `Unimplemented` and callers fall back to the unary
-	// methods.
+	// Bidirectional streaming channel. Cocoon opens this stream and sends
+	// Envelope frames; Mountain reads each frame and routes:
+	//   Notification  → GenericNotification::Dispatcher (same path as the unary endpoint)
+	//   Request       → GenericRequest::Dispatcher; response sent back via out_tx
+	//   Response      → log and ignore (not expected on this direction)
+	//   Cancel        → no-op
+	// Outbound frames are delivered via the mpsc channel whose sender is
+	// stored in CHANNEL_REGISTRY keyed by a per-call channel_id.
 	type OpenChannelFromMountainStream = std::pin::Pin<
 		Box<
 			dyn tonic::codegen::tokio_stream::Stream<Item = Result<::Vine::Generated::Envelope, tonic::Status>>
@@ -424,11 +447,123 @@ impl CocoonService for CocoonServiceImpl {
 	async fn open_channel_from_mountain(
 		&self,
 
-		_request:tonic::Request<tonic::Streaming<::Vine::Generated::Envelope>>,
+		request:tonic::Request<tonic::Streaming<::Vine::Generated::Envelope>>,
 	) -> Result<tonic::Response<Self::OpenChannelFromMountainStream>, tonic::Status> {
-		Err(tonic::Status::unimplemented(
-			"OpenChannelFromMountain: streaming multiplexer not yet wired (Patch 14); use unary endpoints",
-		))
+		use futures_util::StreamExt;
+		use ::Vine::Generated::envelope::Payload;
+		use ::Vine::Generated::{Envelope, GenericResponse, RpcError};
+
+		let ChannelId = NEXT_CHANNEL_ID.fetch_add(1, Ordering::Relaxed);
+
+		let (OutTx, OutRx) = mpsc::channel::<Envelope>(1024);
+
+		// Register the outbound sender so other subsystems can push frames
+		// to this stream using the channel_id.
+		CHANNEL_REGISTRY.insert(ChannelId, OutTx.clone());
+
+		dev_log!("cocoon", "[CocoonService] open_channel_from_mountain channel_id={}", ChannelId);
+
+		let mut Inbound = request.into_inner();
+
+		let ServiceClone = self.clone();
+
+		// Spawn the read pump as a detached task so the method returns the
+		// outbound stream immediately and Cocoon can begin receiving frames.
+		tauri::async_runtime::spawn(async move {
+			while let Some(FrameResult) = Inbound.next().await {
+				let Frame = match FrameResult {
+					Ok(F) => F,
+
+					Err(Status) => {
+						dev_log!(
+							"cocoon",
+							"[CocoonService] channel_id={} inbound error: {}",
+							ChannelId,
+							Status
+						);
+
+						break;
+					},
+				};
+
+				let Payload = match Frame.payload {
+					Some(P) => P,
+
+					None => continue,
+				};
+
+				match Payload {
+					Payload::Notification(N) => {
+						// Reuse the unary notification dispatcher verbatim.
+						let _ = GenericNotification::Dispatcher::Fn(
+							&ServiceClone,
+							tonic::Request::new(N),
+						)
+						.await;
+					},
+
+					Payload::Request(R) => {
+						let RequestId = R.request_identifier;
+
+						// Reuse the unary request dispatcher; wrap the result
+						// into a Response envelope and push it back.
+						let Wrapped = tonic::Request::new(R);
+
+						let Response = match GenericRequest::Dispatcher::Fn(&ServiceClone, Wrapped).await {
+							Ok(GrpcResponse) => {
+								let Inner = GrpcResponse.into_inner();
+
+								Envelope {
+									payload:Some(Payload::Response(Inner)),
+								}
+							},
+
+							Err(Status) => Envelope {
+								payload:Some(Payload::Response(GenericResponse {
+									request_identifier:RequestId,
+									result:Vec::new(),
+									error:Some(RpcError {
+										code:Status.code() as i32,
+										message:Status.message().to_string(),
+										data:Vec::new(),
+									}),
+								})),
+							},
+						};
+
+						if OutTx.send(Response).await.is_err() {
+							// Receiver closed - peer disconnected.
+							break;
+						}
+					},
+
+					Payload::Response(_) => {
+						// Responses on the Mountain-inbound direction are
+						// unexpected; drop silently.
+						dev_log!(
+							"cocoon",
+							"[CocoonService] channel_id={} unexpected Response frame; ignored",
+							ChannelId
+						);
+					},
+
+					Payload::Cancel(_) => {
+						// Best-effort cancel; the unary path has no cancel
+						// support so this is a deliberate no-op.
+					},
+				}
+			}
+
+			// Pump exited - remove the registry entry so stale senders are
+			// not retained.
+			CHANNEL_REGISTRY.remove(&ChannelId);
+
+			dev_log!("cocoon", "[CocoonService] open_channel_from_mountain channel_id={} closed", ChannelId);
+		});
+
+		let OutboundStream = ReceiverStream::new(OutRx).map(|E| Ok(E));
+
+		Ok(tonic::Response::new(Box::pin(OutboundStream)))
 	}
 
 	/// Process Mountain requests from Cocoon (generic request-response).
