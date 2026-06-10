@@ -950,6 +950,16 @@ pub async fn mountain_ipc_invoke(
 				// Environment commands
 				"environment:get" => call!(rt, "config", "environment:get", EnvironmentGet, Arguments),
 
+				// `env:asExternalUri` / `env:resolveExternalUri` - VS Code resolves
+				// extension-provided URIs through these before opening them externally
+				// or embedding them in webviews. Without Mountain registering an
+				// opener, the URI passes through unchanged.
+				"env:asExternalUri" | "env:resolveExternalUri" => {
+					let UriStr = arg_string(&Arguments, 0);
+
+					Ok(serde_json::json!({ "uri": UriStr }))
+				},
+
 				// Native host commands
 				"native:showItemInFolder" => ShowItemInFolder(RunTime.clone(), Arguments).await,
 				"native:openExternal" => OpenExternal(RunTime.clone(), Arguments).await,
@@ -1242,11 +1252,20 @@ pub async fn mountain_ipc_invoke(
 						}
 					}
 				},
-				// Reinstall and metadata-update still no-op for now; reinstall needs
-				// a gallery cache (we only have the on-disk unpack), and metadata
-				// update only matters for ratings/icons/readme which Land does not
-				// track. Left as explicit logs so the UI doesn't silently fail.
-				"extensions:reinstall" | "extensions:updateMetadata" => {
+				// `extensions:reinstall` - returns a minimal ILocalExtension envelope
+				// so VS Code's ExtensionManagementService doesn't retry the operation.
+				// No gallery backend is available; the on-disk unpack is unchanged.
+				"extensions:reinstall" => {
+					let ExtId = arg_string(&Arguments, 0);
+
+					dev_log!("extensions", "extensions:reinstall {} (no-op: no gallery)", ExtId);
+
+					Ok(serde_json::json!({ "identifier": { "id": ExtId }, "version": "0.0.0", "type": 0 }))
+				},
+
+				// Metadata update only matters for ratings/icons/readme which Land
+				// does not track. Left as explicit log so the UI doesn't silently fail.
+				"extensions:updateMetadata" => {
 					dev_log!("extensions", "{} (no-op: no gallery backend)", command);
 
 					Ok(Value::Null)
@@ -1501,6 +1520,21 @@ pub async fn mountain_ipc_invoke(
 
 					ModelGetAll(RunTime.clone()).await
 				},
+
+				// `workspace.openTextDocument(uri)` - Sky-side Cocoon call that
+				// asks Mountain to relay the open intent to Sky so Monaco loads
+				// the document and emits `onDidOpenTextDocument`.
+				"text:open" | "workspace:openTextDocument" => {
+					let UriStr = arg_string(&Arguments, 0);
+
+					if !UriStr.is_empty() {
+						let _ = ApplicationHandle
+							.emit("sky://window/showTextDocument", serde_json::json!({ "uri": UriStr }));
+					}
+
+					Ok(Value::Null)
+				},
+
 				"model:updateContent" => {
 					dev_log!("model", "model:updateContent");
 
@@ -1841,11 +1875,43 @@ pub async fn mountain_ipc_invoke(
 					Ok(Value::Null)
 				},
 
-				// `NSWindow.isDocumentEdited` - the ● dirty dot in the macOS
-				// title bar. NSWindow::setDocumentEdited is not exposed by
-				// Tauri 2.x's WebviewWindow API; acknowledged as no-op.
+				// `window:setTitle` / `nativeHost:setTitle` - explicit title
+				// override from extensions or the workbench title service.
+				"window:setTitle" | "nativeHost:setTitle" => {
+					dev_log!("window", "{}", command);
+
+					let Title = arg_string(&Arguments, 0);
+
+					if !Title.is_empty() {
+						if let Some(Win) = ApplicationHandle.get_webview_window("main") {
+							let _ = Win.set_title(&Title);
+						}
+					}
+
+					Ok(Value::Null)
+				},
+
+				// `NSWindow.isDocumentEdited` - the ● dirty dot in the macOS title
+				// bar. Tauri 2.x does not expose NSWindow::setDocumentEdited
+				// directly; prefix the window title with '•' as a visual proxy.
 				"nativeHost:setDocumentEdited" => {
-					let _ = Arguments;
+					let Edited = Arguments.first().and_then(Value::as_bool).unwrap_or(false);
+
+					if let Some(Win) = ApplicationHandle.get_webview_window("main") {
+						if let Ok(Current) = Win.title() {
+							let New = if Edited {
+								if Current.starts_with('•') {
+									Current
+								} else {
+									format!("• {}", Current)
+								}
+							} else {
+								Current.trim_start_matches('•').trim().to_string()
+							};
+
+							let _ = Win.set_title(&New);
+						}
+					}
 
 					Ok(Value::Null)
 				},
@@ -3701,6 +3767,25 @@ pub async fn mountain_ipc_invoke(
 							Err(_) => Ok(json!({ "items": [] })),
 						}
 					}
+				},
+
+				"language:getLanguages" | "languages:getLanguages" => {
+					Ok(serde_json::json!([
+						"plaintext",
+						"typescript",
+						"javascript",
+						"rust",
+						"python",
+						"go",
+						"java",
+						"cpp",
+						"c",
+						"html",
+						"css",
+						"json",
+						"yaml",
+						"markdown"
+					]))
 				},
 
 				"languages:getAll" | "languages:getEncodedLanguageId" => {

@@ -1160,6 +1160,23 @@ impl MountainService for MountainVinegRPCService {
 				.await;
 			},
 
+			"markers.change" | "language.markers.change" => {
+				let Owner = Parameter
+					.get("owner")
+					.and_then(serde_json::Value::as_str)
+					.unwrap_or("unknown")
+					.to_string();
+
+				let Entries = Parameter
+					.get("entries")
+					.cloned()
+					.unwrap_or_else(|| serde_json::json!([]));
+
+				use CommonLibrary::Diagnostic::DiagnosticManager::DiagnosticManager;
+
+				let _ = self.RunTime.Environment.SetDiagnostics(Owner, Entries).await;
+			},
+
 			_ => {
 				dev_log!("grpc", "[MountainVinegRPCService] Cocoon notification: {}", MethodName);
 
