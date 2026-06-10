@@ -25,15 +25,12 @@ use CommonLibrary::{
 	FileSystem::ReadFile::ReadFile,
 	IPC::{IPCProvider::IPCProvider, SkyEvent::SkyEvent},
 };
-
 use serde_json::{Value, json};
-
 // `Emitter` was previously imported here for the now-replaced
 // direct `.emit(...)` calls; emit is now done via `LogSkyEmit`
 // which carries the trait import internally. `Manager` remains
 // because `.state::<…>()` below depends on it.
 use tauri::Manager;
-
 use url::Url;
 
 use crate::{
@@ -56,7 +53,6 @@ pub(super) async fn open_document(
 
 	content:Option<String>,
 ) -> Result<Url, CommonError> {
-
 	let uri = Utility::UriParsing::Fn(&uri_components_dto)?;
 
 	dev_log!("model", "[DocumentProvider] Opening document: {}", uri);
@@ -70,7 +66,6 @@ pub(super) async fn open_document(
 		.lock()
 		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.get(uri.as_str())
-
 	{
 		dev_log!("model", "[DocumentProvider] Document {} is already open.", uri);
 
@@ -79,9 +74,7 @@ pub(super) async fn open_document(
 				if let Err(error) = LogSkyEmit(&environment.ApplicationHandle, SkyEvent::DocumentsOpen.AsStr(), dto) {
 					dev_log!(
 						"model",
-
 						"error: [DocumentProvider] Failed to emit document open event: {}",
-
 						error
 					);
 				}
@@ -90,9 +83,7 @@ pub(super) async fn open_document(
 			Err(error) => {
 				dev_log!(
 					"model",
-
 					"error: [DocumentProvider] Failed to serialize existing document DTO: {}",
-
 					error
 				);
 			},
@@ -122,9 +113,7 @@ pub(super) async fn open_document(
 		// Custom scheme: attempt to resolve from a sidecar provider.
 		dev_log!(
 			"model",
-
 			"[DocumentProvider] Non-native scheme '{}'. Attempting to resolve from sidecar.",
-
 			uri.scheme()
 		);
 
@@ -134,11 +123,8 @@ pub(super) async fn open_document(
 			.SendRequestToSideCar(
 				// In a multi-host world, we'd look this up
 				"cocoon-main".to_string(),
-
 				"$provideTextDocumentContent".to_string(),
-
 				json!([uri_components_dto]),
-
 				10000,
 			)
 			.await?;
@@ -166,16 +152,12 @@ pub(super) async fn open_document(
 
 	if let Err(error) = LogSkyEmit(
 		&environment.ApplicationHandle,
-
 		SkyEvent::DocumentsOpen.AsStr(),
-
 		dto_for_notification.clone(),
 	) {
 		dev_log!(
 			"model",
-
 			"error: [DocumentProvider] Failed to emit document open event: {}",
-
 			error
 		);
 	}

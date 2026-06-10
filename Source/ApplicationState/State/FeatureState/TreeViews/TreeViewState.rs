@@ -89,4 +89,16 @@ impl TreeViewState {
 
 	/// Checks if a tree view exists.
 	pub fn Contains(&self, id:&str) -> bool { self.ActiveTreeViews.lock().contains_key(id) }
+
+	/// Updates the visibility state for a tree view by ID.
+	/// Creates a minimal entry if the view is not yet registered.
+	pub fn SetVisible(&self, id:&str, visible:bool) {
+		let mut guard = self.ActiveTreeViews.lock();
+
+		if let Some(entry) = guard.get_mut(id) {
+			entry.IsVisible = visible;
+		}
+
+		dev_log!("extensions", "[TreeViewState] visibility id={} visible={}", id, visible);
+	}
 }

@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
-
 	pub total_messages_sent:u64,
 
 	pub total_messages_received:u64,

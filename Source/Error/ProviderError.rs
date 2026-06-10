@@ -15,7 +15,6 @@ use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 /// Provider operation error types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ProviderError {
-
 	/// Provider not registered.
 	ProviderNotRegistered { context:ErrorContext, provider_name:String },
 
@@ -36,7 +35,6 @@ pub enum ProviderError {
 }
 
 impl ProviderError {
-
 	/// Get the error context.
 	pub fn context(&self) -> &ErrorContext {
 		match self {
@@ -91,7 +89,6 @@ impl ProviderError {
 		Self::MethodNotImplemented {
 			context:ErrorContext::new(format!(
 				"Method '{}' not implemented in provider '{}'",
-
 				method_name_str, provider_name_str
 			))
 			.with_kind(ErrorKind::Provider)
@@ -110,9 +107,7 @@ impl ProviderError {
 		Self::InvalidConfiguration {
 			context:ErrorContext::new(format!(
 				"Provider '{}' has invalid configuration: {} error(s)",
-
 				provider_name_str,
-
 				errors.len()
 			))
 			.with_kind(ErrorKind::Provider)
@@ -133,7 +128,6 @@ impl ProviderError {
 		Self::Timeout {
 			context:ErrorContext::new(format!(
 				"Provider timeout: {} operation timed out after {}ms",
-
 				provider_name_str, timeout_ms
 			))
 			.with_kind(ErrorKind::Provider)
@@ -167,13 +161,11 @@ impl ProviderError {
 }
 
 impl fmt::Display for ProviderError {
-
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{}", self.context()) }
 }
 
 impl StdError for ProviderError {}
 
 impl From<ProviderError> for MountainError {
-
 	fn from(err:ProviderError) -> Self { MountainError::new(err.context().clone()).with_source(err.to_string()) }
 }

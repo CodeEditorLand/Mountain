@@ -9,7 +9,6 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
-
 use tauri::{State, command};
 
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
@@ -20,7 +19,6 @@ pub async fn GetSCMCommitHistory(
 
 	MaxCount:Option<usize>,
 ) -> Result<Value, String> {
-
 	dev_log!("commands", "getting commit history, max count: {:?}", MaxCount);
 
 	let MaxCommits = MaxCount.unwrap_or(50);

@@ -10,7 +10,6 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, State, Wry, command};
 
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
@@ -27,7 +26,6 @@ pub async fn OnTreeViewExpansionChanged(
 
 	_IsExpanded:bool,
 ) -> Result<Value, String> {
-
 	dev_log!("commands", "warn: OnTreeViewExpansionChanged not implemented");
 
 	Ok(json!({ "success": false, "error": "OnTreeNodeExpanded method not implemented" }))

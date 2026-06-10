@@ -12,7 +12,6 @@ use CommonLibrary::{
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
-
 	pub async fn DisposeTerminalsSafely(&self) -> Result<(), CommonError> {
 		let TerminalProvider:Arc<dyn TerminalProviderTrait> = self.Environment.Require();
 
@@ -29,9 +28,7 @@ impl ApplicationRunTime {
 				Ok(()) => {
 					dev_log!(
 						"lifecycle",
-
 						"[ApplicationRunTime] Terminal {} disposed successfully",
-
 						Identifier
 					)
 				},
@@ -41,11 +38,8 @@ impl ApplicationRunTime {
 
 					dev_log!(
 						"lifecycle",
-
 						"warn: [ApplicationRunTime] Failed to dispose terminal {}: {}",
-
 						Identifier,
-
 						Error
 					);
 				},
@@ -56,9 +50,7 @@ impl ApplicationRunTime {
 			Err(CommonError::Unknown {
 				Description:format!(
 					"Terminal disposal completed with {} errors: {:?}",
-
 					DisposalErrors.len(),
-
 					DisposalErrors
 				),
 			})

@@ -81,6 +81,9 @@ pub struct TreeViewStateDTO {
 
 	/// Badge to display on the tree view (typically a count or string)
 	pub Badge:Option<String>,
+
+	/// Whether the tree view panel is currently visible in the workbench.
+	pub IsVisible:bool,
 }
 
 impl TreeViewStateDTO {
@@ -138,6 +141,7 @@ impl TreeViewStateDTO {
 			Title:None,
 			Description:None,
 			Badge:None,
+			IsVisible:false,
 		})
 	}
 

@@ -9,7 +9,6 @@ use std::time::Duration;
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_ca_certificate_generation() {
-
 	let manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -38,7 +37,6 @@ async fn test_ca_certificate_generation() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_server_certificate_generation() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -61,7 +59,6 @@ async fn test_server_certificate_generation() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_multiple_server_certificates() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -72,11 +69,8 @@ async fn test_multiple_server_certificates() {
 	// Generate multiple server certificates
 	let hostnames = vec![
 		"code.land.playform.cloud",
-
 		"api.land.playform.cloud",
-
 		"cdn.editor.land",
-
 		"test.editor.land",
 	];
 
@@ -96,7 +90,6 @@ async fn test_multiple_server_certificates() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_certificate_renewal() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -132,7 +125,6 @@ async fn test_certificate_renewal() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_certificate_caching() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -161,7 +153,6 @@ async fn test_certificate_caching() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_certificate_info_extraction() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -207,7 +198,6 @@ async fn test_certificate_info_extraction() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_get_all_certificates() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -242,7 +232,6 @@ async fn test_get_all_certificates() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_build_server_config() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -267,7 +256,6 @@ async fn test_build_server_config() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_certificate_validity_checking() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -292,7 +280,6 @@ async fn test_certificate_validity_checking() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_server_certificate_sans() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -322,7 +309,6 @@ async fn test_server_certificate_sans() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_alpn_configuration() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -344,7 +330,6 @@ async fn test_alpn_configuration() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_certificate_chain() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -366,7 +351,6 @@ async fn test_certificate_chain() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_ecdsa_p256_algorithm() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -393,7 +377,6 @@ async fn test_ecdsa_p256_algorithm() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_certificate_manager_without_ca() {
-
 	let manager = Binary::Build::CertificateManager::CertificateManager::new("test-no-ca.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -415,7 +398,6 @@ async fn test_certificate_manager_without_ca() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_concurrent_certificate_generation() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test-concurrent.app")
 		.await
 		.expect("Failed to create certificate manager");
@@ -454,7 +436,6 @@ async fn test_concurrent_certificate_generation() {
 #[tokio::test]
 #[ignore] // Ignored by default as it requires keyring access
 async fn test_certificate_expiry_calculation() {
-
 	let mut manager = Binary::Build::CertificateManager::CertificateManager::new("test-expiry.app")
 		.await
 		.expect("Failed to create certificate manager");

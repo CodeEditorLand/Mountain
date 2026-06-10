@@ -58,16 +58,13 @@
 use std::{collections::HashMap, process::Stdio, sync::Arc, time::Duration};
 
 use once_cell::sync::Lazy;
-
 use CommonLibrary::Error::CommonError::CommonError;
-
 use tauri::{
 	AppHandle,
 	Manager,
 	Wry,
 	path::{BaseDirectory, PathResolver},
 };
-
 use tokio::{
 	io::{AsyncBufReadExt, BufReader},
 	process::{Child, Command},
@@ -76,7 +73,6 @@ use tokio::{
 };
 
 use super::{InitializationData, NodeResolver};
-
 use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 	IPC::Common::HealthStatus::{HealthIssue::Enum as HealthIssue, HealthMonitor::Struct as HealthMonitor},
@@ -89,6 +85,36 @@ use crate::{
 const COCOON_SIDE_CAR_IDENTIFIER:&str = "cocoon-main";
 
 const COCOON_GRPC_PORT:u16 = 50052;
+
+// ============================================================================
+// B7-S6: Per-spawn WebSocket configuration for Sky<->Cocoon direct transport.
+// ============================================================================
+
+use std::sync::OnceLock;
+
+static COCOON_WS_PORT_CELL:OnceLock<u16> = OnceLock::new();
+
+static COCOON_WS_SECRET_CELL:OnceLock<String> = OnceLock::new();
+
+fn InitializeWsConfig() {
+	COCOON_WS_PORT_CELL.get_or_init(|| portpicker::pick_unused_port().unwrap_or(0));
+
+	COCOON_WS_SECRET_CELL.get_or_init(|| {
+		// Generate 32 random bytes as hex string.
+		use std::fmt::Write;
+
+		let Bytes:[u8; 32] = rand::random();
+
+		Bytes.iter().fold(String::new(), |mut S, B| {
+			write!(S, "{:02x}", B).ok();
+			S
+		})
+	});
+}
+
+pub fn WsPort() -> u16 { *COCOON_WS_PORT_CELL.get().unwrap_or(&0) }
+
+pub fn WsSecretHex() -> String { COCOON_WS_SECRET_CELL.get().cloned().unwrap_or_default() }
 
 const MOUNTAIN_GRPC_PORT:u16 = 50051;
 
@@ -128,7 +154,6 @@ const RESTART_WINDOW_SECONDS:u64 = 300;
 
 /// Global state for tracking Cocoon process lifecycle
 struct CocoonProcessState {
-
 	ChildProcess:Option<Child>,
 
 	IsRunning:bool,
@@ -141,7 +166,6 @@ struct CocoonProcessState {
 }
 
 impl Default for CocoonProcessState {
-
 	fn default() -> Self {
 		Self {
 			ChildProcess:None,
@@ -172,7 +196,6 @@ static COCOON_PID:std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::n
 /// Return the Cocoon child process's OS PID, or `None` if Cocoon has not
 /// been spawned (or has exited).
 pub fn GetCocoonPid() -> Option<u32> {
-
 	match COCOON_PID.load(std::sync::atomic::Ordering::Relaxed) {
 		0 => None,
 
@@ -218,7 +241,6 @@ pub async fn InitializeCocoon(
 
 	Environment:&Arc<MountainEnvironment>,
 ) -> Result<(), CommonError> {
-
 	dev_log!("cocoon", "[CocoonManagement] Initializing Cocoon sidecar manager...");
 
 	// Atom N1: `debug-mountain-only` / `release-mountain-only` profiles set
@@ -241,7 +263,6 @@ pub async fn InitializeCocoon(
 	{
 		dev_log!(
 			"cocoon",
-
 			"[CocoonManagement] Cocoon spawn gated off (feature=ExtensionHostCocoon disabled or \
 			 TierExtensionHost=WebWorker)."
 		);
@@ -288,7 +309,6 @@ async fn LaunchAndManageCocoonSideCar(
 
 	Environment:Arc<MountainEnvironment>,
 ) -> Result<(), CommonError> {
-
 	let SideCarIdentifier = COCOON_SIDE_CAR_IDENTIFIER.to_string();
 
 	let path_resolver:PathResolver<Wry> = ApplicationHandle.path().clone();
@@ -314,7 +334,6 @@ async fn LaunchAndManageCocoonSideCar(
 			CommonError::FileSystemNotFound(
 				format!(
 					"Cocoon bootstrap script '{}' not found in resources or relative to executable",
-
 					BOOTSTRAP_SCRIPT_PATH
 				)
 				.into(),
@@ -323,9 +342,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 	dev_log!(
 		"cocoon",
-
 		"[CocoonManagement] Found bootstrap script at: {}",
-
 		ScriptPath.display()
 	);
 
@@ -371,9 +388,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 			dev_log!(
 				"cocoon",
-
 				"[CocoonManagement] pre-flight OK: bundle at {} (repo)",
-
 				RepoProbePath.display()
 			);
 		}
@@ -414,9 +429,7 @@ async fn LaunchAndManageCocoonSideCar(
 				"Failed to spawn Cocoon with node={} (source={}): {}. Override with Pick=/absolute/path or install \
 				 Node.js.",
 				ResolvedNodeBinary.Path.display(),
-
 				ResolvedNodeBinary.Source.AsLabel(),
-
 				Error
 			),
 		}
@@ -454,11 +467,8 @@ async fn LaunchAndManageCocoonSideCar(
 
 	dev_log!(
 		"cocoon",
-
 		"[CocoonManagement] Connecting to Cocoon gRPC at {} (exponential backoff, budget={}ms)...",
-
 		GRPCAddress,
-
 		GRPC_CONNECT_BUDGET_MS
 	);
 
@@ -473,13 +483,9 @@ async fn LaunchAndManageCocoonSideCar(
 
 		crate::dev_log!(
 			"grpc",
-
 			"connecting to Cocoon at {} (attempt {}, elapsed={}ms)",
-
 			GRPCAddress,
-
 			ConnectAttempt,
-
 			ConnectStart.elapsed().as_millis()
 		);
 
@@ -487,11 +493,8 @@ async fn LaunchAndManageCocoonSideCar(
 			Ok(()) => {
 				crate::dev_log!(
 					"grpc",
-
 					"connected to Cocoon on attempt {} (elapsed={}ms)",
-
 					ConnectAttempt,
-
 					ConnectStart.elapsed().as_millis()
 				);
 
@@ -510,13 +513,10 @@ async fn LaunchAndManageCocoonSideCar(
 
 						crate::dev_log!(
 							"grpc",
-
 							"attempt {} aborted: Cocoon Node process exited with code={} after {}ms - stderr above \
 							 (if any) explains why",
 							ConnectAttempt,
-
 							ExitCode,
-
 							ConnectStart.elapsed().as_millis()
 						);
 
@@ -547,13 +547,9 @@ async fn LaunchAndManageCocoonSideCar(
 				if Elapsed >= GRPC_CONNECT_BUDGET_MS {
 					crate::dev_log!(
 						"grpc",
-
 						"attempt {} timed out (budget {}ms exhausted): {}",
-
 						ConnectAttempt,
-
 						GRPC_CONNECT_BUDGET_MS,
-
 						Error
 					);
 
@@ -569,13 +565,9 @@ async fn LaunchAndManageCocoonSideCar(
 
 				crate::dev_log!(
 					"grpc",
-
 					"attempt {} pending (Cocoon still booting): {}, backing off {}ms",
-
 					ConnectAttempt,
-
 					Error,
-
 					CurrentDelayMs
 				);
 
@@ -591,7 +583,6 @@ async fn LaunchAndManageCocoonSideCar(
 
 	dev_log!(
 		"cocoon",
-
 		"[CocoonManagement] Connected to Cocoon. Sending initialization data..."
 	);
 
@@ -609,11 +600,8 @@ async fn LaunchAndManageCocoonSideCar(
 	// Send initialization request with timeout
 	let Response = ::Vine::Client::SendRequest::Fn(
 		&SideCarIdentifier,
-
 		"InitializeExtensionHost".to_string(),
-
 		MainInitializationData,
-
 		HANDSHAKE_TIMEOUT_MS,
 	)
 	.await
@@ -628,7 +616,6 @@ async fn LaunchAndManageCocoonSideCar(
 		Some("initialized") => {
 			dev_log!(
 				"cocoon",
-
 				"[CocoonManagement] Cocoon handshake complete. Extension host is ready."
 			);
 		},
@@ -673,11 +660,8 @@ async fn LaunchAndManageCocoonSideCar(
 
 		if let Err(Error) = ::Vine::Client::SendRequest::Fn(
 			&SideCarId,
-
 			"$activateByEvent".to_string(),
-
 			serde_json::json!({ "activationEvent": "*" }),
-
 			30_000,
 		)
 		.await
@@ -704,9 +688,7 @@ async fn LaunchAndManageCocoonSideCar(
 					if !Entries.is_empty() {
 						dev_log!(
 							"cocoon",
-
 							"[CocoonManagement] Restoring {} webview panel(s) from previous reload",
-
 							Entries.len()
 						);
 					}
@@ -724,22 +706,16 @@ async fn LaunchAndManageCocoonSideCar(
 
 						if let Err(Error) = ::Vine::Client::SendRequest::Fn(
 							&SideCarId,
-
 							DeserializeMethod,
-
 							serde_json::json!([ViewType, serde_json::Value::Null, State]),
-
 							5_000,
 						)
 						.await
 						{
 							dev_log!(
 								"cocoon",
-
 								"warn: [CocoonManagement] deserializeWebviewPanel({}) failed: {:?}",
-
 								ViewType,
-
 								Error
 							);
 						}
@@ -764,9 +740,7 @@ async fn LaunchAndManageCocoonSideCar(
 			if !OpenDocs.is_empty() {
 				dev_log!(
 					"exthost",
-
 					"[CocoonManagement] Seeding {} open document(s) to Cocoon",
-
 					OpenDocs.len()
 				);
 
@@ -780,9 +754,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						SideCarId.clone(),
-
 						"$acceptModelAdded".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -847,11 +819,8 @@ async fn LaunchAndManageCocoonSideCar(
 
 			dev_log!(
 				"exthost",
-
 				"[CocoonManagement] workspaceContains scan: {} pattern(s) matched across {} folder(s)",
-
 				Matched.len(),
-
 				WorkspaceFolders.len()
 			);
 
@@ -860,22 +829,16 @@ async fn LaunchAndManageCocoonSideCar(
 
 				if let Err(Error) = ::Vine::Client::SendRequest::Fn(
 					&SideCarId,
-
 					"$activateByEvent".to_string(),
-
 					serde_json::json!({ "activationEvent": Event }),
-
 					30_000,
 				)
 				.await
 				{
 					dev_log!(
 						"cocoon",
-
 						"warn: [CocoonManagement] $activateByEvent({}) failed: {}",
-
 						Event,
-
 						Error
 					);
 				}
@@ -889,20 +852,15 @@ async fn LaunchAndManageCocoonSideCar(
 
 		if let Err(Error) = ::Vine::Client::SendRequest::Fn(
 			&SideCarId,
-
 			"$activateByEvent".to_string(),
-
 			serde_json::json!({ "activationEvent": "onStartupFinished" }),
-
 			30_000,
 		)
 		.await
 		{
 			dev_log!(
 				"cocoon",
-
 				"warn: [CocoonManagement] $activateByEvent(onStartupFinished) failed: {}",
-
 				Error
 			);
 		} else {
@@ -949,7 +907,6 @@ async fn LaunchAndManageCocoonSideCar(
 /// flooding the log with "No Cocoon process to monitor" every 5s, which
 /// was rendering the dev log unreadable after any Cocoon crash.
 async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
-
 	loop {
 		tokio::time::sleep(Duration::from_secs(HEALTH_CHECK_INTERVAL_SECONDS)).await;
 
@@ -976,13 +933,9 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 
 					dev_log!(
 						"cocoon",
-
 						"warn: [CocoonHealth] Cocoon process crashed [PID: {}] [Exit Code: {}] [Uptime: {}s]",
-
 						process_id.unwrap_or(0),
-
 						exit_code_num,
-
 						uptime
 					);
 
@@ -1005,7 +958,6 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 					// Log that automatic restart would be needed
 					dev_log!(
 						"cocoon",
-
 						"warn: [CocoonHealth] CRASH DETECTED: Cocoon process has crashed and must be restarted \
 						 manually or via application reinitialization"
 					);
@@ -1015,9 +967,7 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 					// Process is still running
 					dev_log!(
 						"cocoon",
-
 						"[CocoonHealth] Cocoon process is healthy [PID: {}]",
-
 						process_id.unwrap_or(0)
 					);
 				},
@@ -1059,7 +1009,6 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 /// Call AFTER the graceful $shutdown attempt - we don't want to race the
 /// child's own cleanup. Safe to call with no stored child (no-op).
 pub async fn HardKillCocoon() {
-
 	let mut State = COCOON_STATE.lock().await;
 
 	if let Some(mut Child) = State.ChildProcess.take() {
@@ -1073,9 +1022,7 @@ pub async fn HardKillCocoon() {
 			Ok(None) => {
 				dev_log!(
 					"cocoon",
-
 					"[CocoonShutdown] Child PID {} still alive after $shutdown; sending SIGKILL.",
-
 					Pid
 				);
 
@@ -1102,90 +1049,48 @@ pub async fn HardKillCocoon() {
 /// every `Product*`/`Tier*`/`Network*` var, the PascalCase Land allow-list
 /// (PostHog, Extensions, kernel flags), and NODE_ENV / TAURI_ENV_DEBUG.
 fn BuildCocoonEnvironment() -> HashMap<String, String> {
-
 	const LAND_ENV_ALLOW_LIST:&[&str] = &[
 		"Authorize",
-
 		"Beam",
-
 		"Report",
-
 		"Brand",
-
 		"Replay",
-
 		"Ask",
-
 		"Throttle",
-
 		"Buffer",
-
 		"Batch",
-
 		"Cap",
-
 		"Capture",
-
 		"Pipe",
-
 		"Emit",
-
 		"Pick",
-
 		"Require",
-
 		"Lodge",
-
 		"Extend",
-
 		"Probe",
-
 		"Ship",
-
 		"Wire",
-
 		"Install",
-
 		"Mute",
-
 		"Skip",
-
 		"Spawn",
-
 		"Render",
-
 		"Walk",
-
 		"Trace",
-
 		"Record",
-
 		"Profile",
-
 		"Diagnose",
-
 		"Resolve",
-
 		"Open",
-
 		"Warn",
-
 		"Catch",
-
 		"Source",
-
 		"Track",
-
 		"Defer",
-
 		"Boot",
-
 		"Pack",
-
 		"DebugServer",
-
 		"DebugServerPortMountain",
-
 		"DebugServerPortCocoon",
 	];
 
@@ -1201,6 +1106,17 @@ fn BuildCocoonEnvironment() -> HashMap<String, String> {
 
 	Env.insert("COCOON_GRPC_PORT".into(), COCOON_GRPC_PORT.to_string());
 
+	// B7-S6: WebSocket transport config.
+	InitializeWsConfig();
+
+	let WsPort = WsPort();
+
+	if WsPort > 0 {
+		Env.insert("COCOON_WS_PORT".into(), WsPort.to_string());
+
+		Env.insert("COCOON_WS_SECRET".into(), WsSecretHex());
+	}
+
 	for Key in ["PATH", "HOME"] {
 		if let Ok(V) = std::env::var(Key) {
 			Env.insert(Key.into(), V);
@@ -1209,13 +1125,9 @@ fn BuildCocoonEnvironment() -> HashMap<String, String> {
 
 	for (Key, Value) in std::env::vars() {
 		if Key.starts_with("Product")
-
 			|| Key.starts_with("Tier")
-
 			|| Key.starts_with("Network")
-
 			|| LAND_ENV_ALLOW_LIST.contains(&Key.as_str())
-
 		{
 			Env.insert(Key, Value);
 		}
@@ -1238,14 +1150,10 @@ fn BuildCocoonEnvironment() -> HashMap<String, String> {
 /// live on the same runtime handle that Tauri owns, ensuring they are polled
 /// even while the calling async task is awaiting elsewhere.
 fn SpawnCocoonIoForwarders(Process:&mut tokio::process::Child) {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonIO] Spawning IO forwarder tasks (stdout={}, stderr={})",
-
 		Process.stdout.is_some(),
-
 		Process.stderr.is_some()
 	);
 
@@ -1307,23 +1215,15 @@ fn SpawnCocoonIoForwarders(Process:&mut tokio::process::Child) {
 						SuppressStack = false;
 
 						let Benign = Line.contains(": is already signed")
-
 							|| Line.contains(": replacing existing signature")
-
 							|| Line.contains("DeprecationWarning:")
-
 							|| Line.contains("--trace-deprecation")
-
 							|| Line.contains("--trace-warnings");
 
 						let BenignHead = Line.contains("EntryNotFound (FileSystemError):")
-
 							|| Line.contains("FileNotFound (FileSystemError):")
-
 							|| Line.contains("[LandFix:UnhandledRejection]")
-
 							|| Line.starts_with("[Patcher] unhandledRejection:")
-
 							|| Line.starts_with("[Patcher] uncaughtException:");
 
 						if BenignHead {
@@ -1370,7 +1270,6 @@ fn SpawnCocoonIoForwarders(Process:&mut tokio::process::Child) {
 /// - Best-effort: failures don't abort Mountain boot. A real EADDRINUSE later
 ///   will surface via Cocoon's own bootstrap error.
 fn SweepStaleCocoon(Port:u16) {
-
 	use std::{net::TcpStream, time::Duration};
 
 	let Addr = format!("127.0.0.1:{}", Port);
@@ -1388,9 +1287,7 @@ fn SweepStaleCocoon(Port:u16) {
 
 	dev_log!(
 		"cocoon",
-
 		"[CocoonSweep] Port {} has a listener - attempting to resolve owner via lsof.",
-
 		Port
 	);
 
@@ -1405,9 +1302,7 @@ fn SweepStaleCocoon(Port:u16) {
 		Err(Error) => {
 			dev_log!(
 				"cocoon",
-
 				"warn: [CocoonSweep] lsof unavailable ({}). Skipping sweep; Cocoon spawn may fail with EADDRINUSE.",
-
 				Error
 			);
 
@@ -1428,9 +1323,7 @@ fn SweepStaleCocoon(Port:u16) {
 	if Pids.is_empty() {
 		dev_log!(
 			"cocoon",
-
 			"warn: [CocoonSweep] Port {} answered but lsof found no LISTEN PID - giving up.",
-
 			Port
 		);
 
@@ -1445,11 +1338,8 @@ fn SweepStaleCocoon(Port:u16) {
 		if Pid == SelfPid {
 			dev_log!(
 				"cocoon",
-
 				"warn: [CocoonSweep] Port {} owned by Mountain itself (PID {}); refusing to kill.",
-
 				Port,
-
 				Pid
 			);
 
@@ -1498,7 +1388,6 @@ fn SweepStaleCocoon(Port:u16) {
 /// deeper is rare for activation-event triggers; the trade-off is
 /// documented in VS Code's own `ExtensionService.scanExtensions`.
 fn FindMatchingWorkspaceContainsPatterns(Folders:&[std::path::PathBuf], Patterns:&[String]) -> Vec<String> {
-
 	use std::collections::HashSet;
 
 	const MAX_DEPTH:usize = 3;
@@ -1571,7 +1460,6 @@ fn FindMatchingWorkspaceContainsPatterns(Folders:&[std::path::PathBuf], Patterns
 /// Supports literal paths, `*` (one path segment), and `**` (zero or more
 /// segments). Case-sensitive per the VS Code spec.
 fn PatternMatchesAnyEntry(Pattern:&str, Entries:&[String]) -> bool {
-
 	let HasWildcard = Pattern.contains('*') || Pattern.contains('?');
 
 	if !HasWildcard {
@@ -1586,7 +1474,6 @@ fn PatternMatchesAnyEntry(Pattern:&str, Entries:&[String]) -> bool {
 }
 
 fn SegmentMatch(Pattern:&[&str], Entry:&[&str]) -> bool {
-
 	if Pattern.is_empty() {
 		return Entry.is_empty();
 	}
@@ -1616,7 +1503,6 @@ fn SegmentMatch(Pattern:&[&str], Entry:&[&str]) -> bool {
 }
 
 fn SingleSegmentMatch(Pattern:&str, Segment:&str) -> bool {
-
 	if Pattern == "*" {
 		return true;
 	}
@@ -1656,9 +1542,7 @@ fn SingleSegmentMatch(Pattern:&str, Segment:&str) -> bool {
 	}
 
 	if let Some(Last) = Fragments.last()
-
 		&& !Last.is_empty()
-
 	{
 		return Segment.ends_with(Last);
 	}

@@ -5,7 +5,6 @@
 use serde_json::{Value, json};
 
 pub async fn Fn() -> Result<Value, String> {
-
 	#[cfg(target_os = "macos")]
 	{
 		// sysctl.proc_translated is stable for the process lifetime.

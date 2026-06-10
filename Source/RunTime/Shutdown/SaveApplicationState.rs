@@ -6,7 +6,6 @@ use CommonLibrary::Error::CommonError::CommonError;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
-
 	pub async fn SaveApplicationState(&self) -> Result<(), CommonError> {
 		dev_log!("lifecycle", "[ApplicationRunTime] Saving application state...");
 

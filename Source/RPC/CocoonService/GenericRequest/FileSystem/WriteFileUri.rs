@@ -1,8 +1,11 @@
 use serde_json::Value;
+
 use tonic::Response;
+
 use ::Vine::Generated::GenericResponse;
 
 pub async fn Fn(RequestId:u64, Params:Value) -> Response<GenericResponse> {
+
 	let Uri = Params.get("uri").and_then(|V| V.as_str()).unwrap_or("").replace("file://", "");
 
 	let Content:Vec<u8> = Params

@@ -5,13 +5,11 @@
 use std::sync::Arc;
 
 use CommonLibrary::Storage::StorageProvider::StorageProvider;
-
 use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-
 	let Storage = RunTime
 		.Environment
 		.GetAllStorage(true)

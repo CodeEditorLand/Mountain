@@ -9,15 +9,11 @@ use CommonLibrary::{
 		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	},
 };
-
 use serde_json::Value;
-
 use tauri::{AppHandle, Wry};
-
 use url::Url;
 
 use super::{InvokeProvider::invoke_provider, Validation::validate_language_feature_request};
-
 use crate::dev_log;
 
 /// Implementation of hover command - called by the command wrapper in the
@@ -29,7 +25,6 @@ pub(super) async fn provide_hover_impl(
 
 	position:Value,
 ) -> Result<Value, String> {
-
 	dev_log!("commands", "[Language Feature] Providing hover for: {} at {:?}", uri, position);
 
 	validate_language_feature_request("hover", &uri, &position)?;

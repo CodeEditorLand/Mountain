@@ -19,14 +19,12 @@ static DERIVED_KEY:OnceLock<Option<[u8; 32]>> = OnceLock::new();
 /// that callers can propagate the failure instead of encrypting with a
 /// predictable constant.
 pub fn Fn() -> Result<[u8; 32], String> {
-
 	DERIVED_KEY
 		.get_or_init(ComputeKey)
 		.ok_or_else(|| "encryption unavailable: machine ID lookup failed".to_string())
 }
 
 fn ComputeKey() -> Option<[u8; 32]> {
-
 	let MachineId = ReadMachineId()?;
 
 	let Input = format!("Land-Encryption-v1{}", MachineId);
@@ -41,13 +39,11 @@ fn ComputeKey() -> Option<[u8; 32]> {
 }
 
 fn ReadMachineId() -> Option<String> {
-
 	#[cfg(target_os = "macos")]
 	{
 		if let Ok(Out) = std::process::Command::new("ioreg")
 			.args(["-rd1", "-c", "IOPlatformExpertDevice"])
 			.output()
-
 		{
 			let S = String::from_utf8_lossy(&Out.stdout);
 
@@ -91,7 +87,6 @@ fn ReadMachineId() -> Option<String> {
 		if let Ok(Out) = Command::new("reg")
 			.args(["query", "HKLM\\SOFTWARE\\Microsoft\\Cryptography", "/v", "MachineGuid"])
 			.output()
-
 		{
 			let S = String::from_utf8_lossy(&Out.stdout);
 

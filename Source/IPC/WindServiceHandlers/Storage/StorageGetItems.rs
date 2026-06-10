@@ -7,13 +7,11 @@
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
-
 use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, _Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
 
 	match provider.GetAllStorage(true).await {

@@ -31,22 +31,18 @@
 use std::sync::Arc;
 
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
-
 use serde_json::{Value, json};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let States:Vec<Value> = match Arguments.first() {
 		Some(Value::Array(Array)) => Array.clone(),
 
 		Some(Other) => {
 			dev_log!(
 				"terminal",
-
 				"warn: [ReviveTerminalProcesses] unexpected argument shape: {:?}",
-
 				Other
 			);
 
@@ -70,7 +66,6 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		if Executable.is_empty() {
 			dev_log!(
 				"terminal",
-
 				"warn: [ReviveTerminalProcesses] skipping entry with empty executable"
 			);
 
@@ -100,19 +95,40 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 			"name":      Name,
 		});
 
+		let OldId = State.get("id").and_then(Value::as_u64).unwrap_or(0);
+
 		match RunTime.Environment.CreateTerminal(Options).await {
 			Ok(Response) => {
 				let NewId = Response.get("id").and_then(Value::as_u64).unwrap_or(0);
 
-				dev_log!("terminal", "[ReviveTerminalProcesses] revived terminal new_id={}", NewId);
+				dev_log!(
+					"terminal",
+					"[ReviveTerminalProcesses] revived terminal old_id={} new_id={}",
+					OldId,
+					NewId
+				);
+
+				// Store the old→new mapping so `getRevivedPtyNewId` can
+				// return it when the workbench remaps its internal `_ptys`
+				// table. The entry is consumed (popped) on first lookup to
+				// keep the map small across multiple reloads.
+				if OldId != 0 && NewId != 0 {
+					RunTime
+						.Environment
+						.ApplicationState
+						.Feature
+						.Terminals
+						.RevivedIdMap
+						.lock()
+						.insert(OldId, NewId);
+				}
 			},
 
 			Err(Error) => {
 				dev_log!(
 					"terminal",
-
-					"warn: [ReviveTerminalProcesses] failed to revive terminal: {}",
-
+					"warn: [ReviveTerminalProcesses] failed to revive terminal old_id={}: {}",
+					OldId,
 					Error
 				);
 			},

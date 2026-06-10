@@ -6,7 +6,6 @@
 use std::path::Path;
 
 pub fn Fn(NodePath:&Path) -> Option<String> {
-
 	let Output = std::process::Command::new(NodePath).arg("--version").output().ok()?;
 
 	if !Output.status.success() {

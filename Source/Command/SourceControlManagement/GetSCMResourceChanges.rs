@@ -5,7 +5,6 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
-
 use tauri::{State, command};
 
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
@@ -16,7 +15,6 @@ pub async fn GetSCMResourceChanges(
 
 	ProviderIdentifier:String,
 ) -> Result<Value, String> {
-
 	dev_log!("commands", "getting resource changes for provider: {}", ProviderIdentifier);
 
 	let resources_map = State.Feature.Markers.SourceControlManagementResources.lock().clone();

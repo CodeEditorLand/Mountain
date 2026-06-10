@@ -1,16 +1,12 @@
 pub fn Matches(MethodName:&str) -> bool {
-
 	MethodName == "$resolveCustomEditor" || MethodName.starts_with("$webview:") || MethodName.starts_with("webview.")
 }
 
 use std::sync::Arc;
 
 use CommonLibrary::{CustomEditor::CustomEditorProvider::CustomEditorProvider, Environment::Requires::Requires};
-
 use serde_json::{Value, json};
-
 use tauri::Runtime;
-
 use url::Url;
 
 use crate::{
@@ -24,7 +20,6 @@ use crate::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
 		"$webview:create"
 		| "webview.create"
@@ -126,9 +121,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				if resource_uri_str.is_empty() {
 					dev_log!(
 						"grpc",
-
 						"warn: [$resolveCustomEditor] empty resource URI view_type={}",
-
 						view_type
 					);
 
@@ -140,19 +133,14 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					Err(parse_err) => {
 						dev_log!(
 							"grpc",
-
 							"warn: [$resolveCustomEditor] invalid URI uri={} err={} view_type={}",
-
 							resource_uri_str,
-
 							parse_err,
-
 							view_type
 						);
 
 						return Err(format!(
 							"$resolveCustomEditor: invalid resource URI '{}': {}",
-
 							resource_uri_str, parse_err
 						));
 					},
@@ -163,17 +151,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				if webview_handle.is_empty() {
 					dev_log!(
 						"grpc",
-
 						"warn: [$resolveCustomEditor] empty webview handle uri={} view_type={}",
-
 						resource_uri_str,
-
 						view_type
 					);
 
 					return Err(format!(
 						"$resolveCustomEditor: empty webview handle for view_type={} uri={}",
-
 						view_type, resource_uri_str
 					));
 				}

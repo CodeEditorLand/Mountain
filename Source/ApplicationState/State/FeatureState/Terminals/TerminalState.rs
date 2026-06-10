@@ -43,6 +43,26 @@ use parking_lot::Mutex;
 
 use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, dev_log};
 
+/// Auto-reply rule stored by `localPty:installAutoReply`.
+///
+/// When the PTY reader task encounters a line containing `Match`, it
+/// immediately writes `Answer` back to the PTY input channel. This is
+/// used by VS Code's shell-integration layer for pseudo-tty prompts
+/// (e.g. sudo password prompts that fire before the shell prompt is
+/// restored). `UseCustomAnswer` is advisory metadata forwarded from
+/// the workbench; Mountain always uses `Answer`.
+#[derive(Clone, Debug)]
+pub struct AutoReplyRule {
+	/// Text fragment to match against PTY output lines.
+	pub Match:String,
+
+	/// Response text to write back when `Match` is found.
+	pub Answer:String,
+
+	/// Whether the answer was provided by the user (vs. a default).
+	pub UseCustomAnswer:bool,
+}
+
 /// Active terminals state containing terminals by ID with next identifier
 /// counter.
 #[derive(Clone)]
@@ -52,6 +72,20 @@ pub struct TerminalState {
 
 	/// Counter for generating unique terminal identifiers.
 	pub NextTerminalIdentifier:Arc<AtomicU64>,
+
+	/// Map from old (pre-reload) terminal ID to newly assigned ID.
+	///
+	/// Populated by `localPty:reviveTerminalProcesses`; consumed by
+	/// `localPty:getRevivedPtyNewId`. Each entry is popped on first
+	/// read so the map stays small across reloads.
+	pub RevivedIdMap:Arc<Mutex<HashMap<u64, u64>>>,
+
+	/// Auto-reply rules installed via `localPty:installAutoReply`.
+	///
+	/// Shared across all terminals for the session. The PTY output
+	/// reader in `TerminalProvider` checks every output chunk against
+	/// these rules and writes the answer back when a match is found.
+	pub AutoReplies:Arc<Mutex<Vec<AutoReplyRule>>>,
 }
 
 impl Default for TerminalState {
@@ -62,6 +96,10 @@ impl Default for TerminalState {
 			ActiveTerminals:Arc::new(Mutex::new(HashMap::new())),
 
 			NextTerminalIdentifier:Arc::new(AtomicU64::new(1)),
+
+			RevivedIdMap:Arc::new(Mutex::new(HashMap::new())),
+
+			AutoReplies:Arc::new(Mutex::new(Vec::new())),
 		}
 	}
 }

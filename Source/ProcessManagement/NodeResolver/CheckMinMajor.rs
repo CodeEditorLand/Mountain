@@ -6,7 +6,6 @@
 use crate::dev_log;
 
 pub fn Fn(VersionString:&str) {
-
 	let Trimmed = VersionString.trim_start_matches('v');
 
 	let MajorToken = Trimmed.split('.').next().unwrap_or("");
@@ -22,11 +21,9 @@ pub fn Fn(VersionString:&str) {
 	if Major < Required {
 		dev_log!(
 			"cocoon",
-
 			"warn: [NodeResolver] Node {} is below Require={}; extension host may fail to boot. Override via Pick or \
 			 upgrade Node.",
 			VersionString,
-
 			Required
 		);
 	}

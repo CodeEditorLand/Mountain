@@ -31,7 +31,6 @@ use serde_json::{Value, json};
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-
 	let Terminals = RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
 
 	let NowMs = std::time::SystemTime::now()

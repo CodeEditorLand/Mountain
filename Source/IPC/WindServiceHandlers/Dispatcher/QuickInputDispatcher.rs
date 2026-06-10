@@ -1,11 +1,11 @@
 //! QuickInput command dispatcher.
 
-use crate::UI::{
-    QuickInputShowInputBox::Fn as QuickInputShowInputBox,
-    QuickInputShowQuickPick::Fn as QuickInputShowQuickPick,
-};
-
 use serde_json::Value;
+
+use crate::UI::{
+	QuickInputShowInputBox::Fn as QuickInputShowInputBox,
+	QuickInputShowQuickPick::Fn as QuickInputShowQuickPick,
+};
 
 /// Dispatches quick input commands.
 ///
@@ -13,18 +13,17 @@ use serde_json::Value;
 /// - `quickInput:showQuickPick`
 /// - `quickInput:showInputBox`
 pub async fn dispatch_quick_input(
-    runtime: &crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
 
-    command: &str,
+	command:&str,
 
-    arguments: Vec<Value>,
+	arguments:Vec<Value>,
 ) -> Result<Value, String> {
+	match command {
+		"quickInput:showQuickPick" => QuickInputShowQuickPick(runtime.clone(), arguments).await,
 
-    match command {
-        "quickInput:showQuickPick" => QuickInputShowQuickPick(runtime.clone(), arguments).await,
+		"quickInput:showInputBox" => QuickInputShowInputBox(runtime.clone(), arguments).await,
 
-        "quickInput:showInputBox" => QuickInputShowInputBox(runtime.clone(), arguments).await,
-
-        _ => Err(format!("Unknown quick input command: {}", command)),
-    }
+		_ => Err(format!("Unknown quick input command: {}", command)),
+	}
 }

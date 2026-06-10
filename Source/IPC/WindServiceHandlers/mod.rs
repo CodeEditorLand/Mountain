@@ -62,7 +62,6 @@ use Cocoon::{
 	Notify::Fn as CocoonNotify,
 	Request::Fn as CocoonRequest,
 };
-
 use ExtensionHost::{
 	DebugServiceClose::Fn as ExtensionHostDebugClose,
 	DebugServiceReload::Fn as ExtensionHostDebugReload,
@@ -72,11 +71,8 @@ use ExtensionHost::{
 	StarterStart::Fn as ExtensionHostStarterStart,
 	StarterWaitForExit::Fn as ExtensionHostStarterWaitForExit,
 };
-
 use Sky::ReplayEvents::Fn as SkyReplayEvents;
-
 use TreeView::GetChildren::Fn as TreeGetChildren;
-
 use Update::{
 	ApplyUpdate::Fn as UpdateApplyUpdate,
 	CheckForUpdates::Fn as UpdateCheckForUpdates,
@@ -85,25 +81,20 @@ use Update::{
 	IsLatestVersion::Fn as UpdateIsLatestVersion,
 	QuitAndInstall::Fn as UpdateQuitAndInstall,
 };
-
 use Commands::{Execute::Fn as CommandsExecute, GetAll::Fn as CommandsGetAll};
-
 use Configuration::{
 	EnvironmentGet::Fn as EnvironmentGet,
 	Get::Fn as ConfigurationGet,
 	Update::Fn as ConfigurationUpdate,
 	Workbench::Fn as WorkbenchConfiguration,
 };
-
 use Encryption::{Decrypt::Fn as Decrypt, Encrypt::Fn as Encrypt};
-
 use Extensions::{
 	ExtensionsGet::Fn as ExtensionsGet,
 	ExtensionsGetAll::Fn as ExtensionsGetAll,
 	ExtensionsGetInstalled::Fn as ExtensionsGetInstalled,
 	ExtensionsIsActive::Fn as ExtensionsIsActive,
 };
-
 use FileSystem::{
 	Managed::{
 		FileCopy::Fn as FileCopy,
@@ -135,7 +126,6 @@ use FileSystem::{
 		FileWriteNative::Fn as FileWriteNative,
 	},
 };
-
 use Model::{
 	ModelClose::Fn as ModelClose,
 	ModelGet::Fn as ModelGet,
@@ -146,7 +136,6 @@ use Model::{
 	TextfileSave::Fn as TextfileSave,
 	TextfileWrite::Fn as TextfileWrite,
 };
-
 use NativeHost::{
 	ClipboardHas::Fn as NativeHasClipboard,
 	ClipboardReadBuffer::Fn as NativeReadClipboardBuffer,
@@ -183,7 +172,6 @@ use NativeHost::{
 	ToggleDevTools::Fn as ToggleDevTools,
 	UninstallShellCommand::Fn as UninstallShellCommand,
 };
-
 use Navigation::{
 	HistoryCanGoBack::Fn as HistoryCanGoBack,
 	HistoryCanGoForward::Fn as HistoryCanGoForward,
@@ -196,7 +184,6 @@ use Navigation::{
 	LabelGetURI::Fn as LabelGetURI,
 	LabelGetWorkspace::Fn as LabelGetWorkspace,
 };
-
 use Output::{
 	OutputAppend::Fn as OutputAppend,
 	OutputAppendLine::Fn as OutputAppendLine,
@@ -204,9 +191,7 @@ use Output::{
 	OutputCreate::Fn as OutputCreate,
 	OutputShow::Fn as OutputShow,
 };
-
 use Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchFindInFiles};
-
 use Storage::{
 	StorageDelete::Fn as StorageDelete,
 	StorageGet::Fn as StorageGet,
@@ -215,7 +200,6 @@ use Storage::{
 	StorageSet::Fn as StorageSet,
 	StorageUpdateItems::Fn as StorageUpdateItems,
 };
-
 use Terminal::{
 	AttachToProcess::Fn as AttachToProcess,
 	DetachFromProcess::Fn as DetachFromProcess,
@@ -233,7 +217,6 @@ use Terminal::{
 	TerminalSendText::Fn as TerminalSendText,
 	TerminalShow::Fn as TerminalShow,
 };
-
 use UI::{
 	DecorationsClear::Fn as DecorationsClear,
 	DecorationsGet::Fn as DecorationsGet,
@@ -267,7 +250,6 @@ use UI::{
 	WorkspacesGetName::Fn as WorkspacesGetName,
 	WorkspacesRemoveFolder::Fn as WorkspacesRemoveFolder,
 };
-
 use Utilities::{
 	ApplicationRoot::{Get::Fn as get_static_application_root, Set::Fn as set_static_application_root},
 	ChannelPriority::Fn as ResolveChannelPriority,
@@ -299,13 +281,9 @@ use Utilities::{
 		Set::Fn as set_userdata_base_dir,
 	},
 };
-
 use Echo::Task::Priority::Priority as EchoPriority;
-
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, Manager};
-
 // Type aliases for Configuration DTOs to simplify usage
 use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
@@ -320,7 +298,7 @@ type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 
 use CommonLibrary::{
 	Command::CommandExecutor::CommandExecutor,
-	Configuration::ConfigurationProvider::ConfigurationProvider,
+	Configuration::{ConfigurationInspector::ConfigurationInspector, ConfigurationProvider::ConfigurationProvider},
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
@@ -345,7 +323,6 @@ use crate::{
 };
 
 fn cocoon_payload(args:Vec<Value>) -> Value {
-
 	match args.len() {
 		0 => Value::Null,
 
@@ -356,7 +333,6 @@ fn cocoon_payload(args:Vec<Value>) -> Value {
 }
 
 macro_rules! forward_to_cocoon {
-
 	($tag:literal, $command:ident, $Arguments:ident) => {{
 		dev_log!("ipc", "{}: {} (→ Cocoon)", $tag, $command);
 
@@ -424,7 +400,6 @@ const TIER_WEBSOCKET:&str = env!("TierWebSocket", "Disabled");
 
 #[inline]
 fn tier_routes_to_node(BakedConst:&'static str, EnvKey:&str) -> bool {
-
 	let Resolved = std::env::var(EnvKey).unwrap_or_else(|_| BakedConst.to_string());
 
 	Resolved == "Node"
@@ -437,12 +412,10 @@ pub async fn mountain_ipc_invoke(
 
 	Arguments:Vec<Value>,
 ) -> Result<Value, String> {
-
 	// Determine high-frequency status first - used to skip OTLP timing,
 	// dev-logs, span emission, and PostHog capture for noisy calls.
 	let IsHighFrequencyCommand = matches!(
 		command.as_str(),
-
 		"logger:log"
 			| "logger:info"
 			| "logger:debug"
@@ -478,6 +451,7 @@ pub async fn mountain_ipc_invoke(
 			// Storage - polled constantly by VS Code services
 			| "storage:getItems"
 			| "storage:updateItems"
+			| "storage:keys"
 			// Configuration - scoped-lookup hot path
 			| "configuration:lookup"
 			| "configuration:inspect"
@@ -727,27 +701,62 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				// `configuration:inspect` is `IConfigurationService.inspect(key)`.
-				// The workbench destructures `{ value, default, user, workspace,
-				// workspaceFolder }` from the result unconditionally; returning a
-				// plain value or null crashes the Settings UI. We surface the
-				// current effective value in both `value` and `default` (since
-				// Mountain has no per-scope override layer yet) and null for the
-				// remaining scopes. VS Code treats null scopes as "not set",
-				// which is correct for Land where no user/workspace JSON overrides
-				// exist.
+				// VS Code destructures `{ value, defaultValue, userValue,
+				// workspaceValue, workspaceFolderValue, memoryValue }` from
+				// the result. `InspectConfigurationValue` reads each scope
+				// individually (default extensions, user settings.json,
+				// workspace settings.json) so the Settings UI can show which
+				// scope is overriding a given key.
 				"configuration:inspect" => {
 					dev_log!("config", "configuration:inspect");
 
-					let CurrentValue = ConfigurationGet(RunTime.clone(), Arguments).await.unwrap_or(Value::Null);
+					let Key = arg_string(&Arguments, 0).unwrap_or_default();
 
-					Ok(json!({
-						"value": CurrentValue,
-						"default": CurrentValue,
-						"user": Value::Null,
-						"workspace": Value::Null,
-						"workspaceFolder": Value::Null,
-						"memory": Value::Null,
-					}))
+					let Inspector:Arc<dyn ConfigurationInspector> = RunTime.Environment.Require();
+
+					match Inspector
+						.InspectConfigurationValue(Key.clone(), ConfigurationOverridesDTO::default())
+						.await
+					{
+						Ok(Some(Result)) => {
+							Ok(json!({
+								"value": Result.EffectiveValue,
+								"defaultValue": Result.DefaultValue,
+								"userValue": Result.UserValue,
+								"workspaceValue": Result.WorkspaceValue,
+								"workspaceFolderValue": Result.WorkspaceFolderValue,
+								"memoryValue": Result.MemoryValue,
+							}))
+						},
+
+						Ok(None) => {
+							// Key not found in any scope - fall back to merged value
+							// so the Settings UI gets `undefined` rather than crashing.
+							let Fallback = ConfigurationGet(RunTime.clone(), Arguments).await.unwrap_or(Value::Null);
+
+							Ok(json!({
+								"value": Fallback,
+								"defaultValue": Fallback,
+								"userValue": Value::Null,
+								"workspaceValue": Value::Null,
+								"workspaceFolderValue": Value::Null,
+								"memoryValue": Value::Null,
+							}))
+						},
+
+						Err(Error) => {
+							dev_log!("config", "warn: configuration:inspect error for '{}': {}", Key, Error);
+
+							Ok(json!({
+								"value": Value::Null,
+								"defaultValue": Value::Null,
+								"userValue": Value::Null,
+								"workspaceValue": Value::Null,
+								"workspaceFolderValue": Value::Null,
+								"memoryValue": Value::Null,
+							}))
+						},
+					}
 				},
 
 				// Logger commands - all logger:* are high-frequency and handled in the
@@ -788,8 +797,11 @@ pub async fn mountain_ipc_invoke(
 				| "logger:createLogger"
 				| "logger:registerLogger"
 				| "logger:deregisterLogger"
-				| "logger:getRegisteredLoggers"
 				| "logger:setVisibility" => Ok(Value::Null),
+
+				// Return an empty array so the VS Code Output view can
+				// iterate the result without crashing on null.
+				"logger:getRegisteredLoggers" => Ok(json!([])),
 
 				// File system commands - use native handlers with URI support.
 				//
@@ -856,7 +868,53 @@ pub async fn mountain_ipc_invoke(
 					call!(rt, "storage-verbose", "storage:updateItems", StorageUpdateItems, Arguments)
 				},
 				"storage:optimize" => {
-					dev_log!("storage", "storage:optimize");
+					// Flush pending debounced writes for both scopes immediately.
+					// VS Code calls this before workspace close and hot-reload to
+					// ensure state is fully persisted without waiting for the 100 ms
+					// debounce window.
+					dev_log!("storage", "storage:optimize → flush");
+
+					let GlobalPath = RunTime
+						.Environment
+						.ApplicationState
+						.GlobalMementoPath
+						.lock()
+						.ok()
+						.map(|G| G.clone());
+
+					let WorkspacePath = RunTime
+						.Environment
+						.ApplicationState
+						.WorkspaceMementoPath
+						.lock()
+						.ok()
+						.and_then(|W| W.clone());
+
+					let GlobalData = RunTime
+						.Environment
+						.ApplicationState
+						.Configuration
+						.MementoGlobalStorage
+						.lock()
+						.map(|G| G.clone())
+						.unwrap_or_default();
+
+					let WorkspaceData = RunTime
+						.Environment
+						.ApplicationState
+						.Configuration
+						.MementoWorkspaceStorage
+						.lock()
+						.map(|W| W.clone())
+						.unwrap_or_default();
+
+					crate::Environment::StorageProvider::FlushPendingWrites(
+						GlobalPath,
+						WorkspacePath,
+						GlobalData,
+						WorkspaceData,
+					)
+					.await;
 
 					Ok(Value::Null)
 				},
@@ -975,9 +1033,7 @@ pub async fn mountain_ipc_invoke(
 
 						let _ = ::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
-
 							"$activateByEvent".to_string(),
-
 							Notification,
 						)
 						.await;
@@ -1166,11 +1222,8 @@ pub async fn mountain_ipc_invoke(
 							Err(Error) => {
 								dev_log!(
 									"extensions",
-
 									"warn: [WindServiceHandlers] extensions:getManifest failed for '{}': {}",
-
 									VsixPath,
-
 									Error
 								);
 
@@ -1217,39 +1270,27 @@ pub async fn mountain_ipc_invoke(
 				"notification:showProgress" => {
 					call!(
 						app,
-
 						"notification",
-
 						"notification:showProgress",
-
 						NotificationShowProgress,
-
 						Arguments
 					)
 				},
 				"notification:updateProgress" => {
 					call!(
 						app,
-
 						"notification",
-
 						"notification:updateProgress",
-
 						NotificationUpdateProgress,
-
 						Arguments
 					)
 				},
 				"notification:endProgress" => {
 					call!(
 						app,
-
 						"notification",
-
 						"notification:endProgress",
-
 						NotificationEndProgress,
-
 						Arguments
 					)
 				},
@@ -1300,11 +1341,28 @@ pub async fn mountain_ipc_invoke(
 				"search:findFiles" | "search:fileSearch" | "search:searchFile" => {
 					call!(rt, "search", SearchFindFiles, Arguments)
 				},
-				// Cancellation / onProgress channel methods: workbench's
-				// SearchService listens for these. We have no streaming
-				// search yet, so ack with Null and let the workbench
-				// treat the call as a no-op.
-				"search:cancel" | "search:clearCache" | "search:onDidChangeResult" => {
+				// Abort an in-flight text-search task by search_id.
+				"search:cancel" => {
+					if let Some(SearchId) = Arguments.first().and_then(|V| V.as_u64()) {
+						let ActiveSearches = &RunTime.Environment.ApplicationState.Feature.ActiveSearches;
+
+						if let Some((_, Handle)) = ActiveSearches.remove(&SearchId) {
+							Handle.abort();
+
+							dev_log!("search", "search:cancel aborted id={}", SearchId);
+						} else {
+							dev_log!("search", "search:cancel id={} not found (already done?)", SearchId);
+						}
+					} else {
+						dev_log!("search", "search:cancel (no id, ignoring)");
+					}
+
+					Ok(Value::Null)
+				},
+
+				// No-op acks for search channel methods that have no
+				// server-side state.
+				"search:clearCache" | "search:onDidChangeResult" => {
 					dev_log!("search", "{} (stub-ack)", command);
 
 					Ok(Value::Null)
@@ -1375,19 +1433,14 @@ pub async fn mountain_ipc_invoke(
 								if let Err(Error) = MainWindow.show() {
 									dev_log!(
 										"lifecycle",
-
 										"warn: [Lifecycle] main window show() failed on phase {}: {}",
-
 										NewPhase,
-
 										Error
 									);
 								} else {
 									dev_log!(
 										"lifecycle",
-
 										"[Lifecycle] main window revealed on phase {} (hidden-until-ready)",
-
 										NewPhase
 									);
 
@@ -1570,6 +1623,13 @@ pub async fn mountain_ipc_invoke(
 
 				// Environment paths - delegated to atomic handler.
 				"nativeHost:getEnvironmentPaths" => NativeGetEnvironmentPaths(ApplicationHandle.clone()).await,
+
+				// B7-S6: WebSocket config for direct Sky<->Cocoon transport.
+				"nativeHost:getWebSocketConfig" => {
+					use crate::ProcessManagement::CocoonManagement::{WsPort, WsSecretHex};
+
+					Ok(serde_json::json!({ "port": WsPort(), "secret": WsSecretHex() }))
+				},
 
 				// OS info
 				"nativeHost:getOSColorScheme" => {
@@ -1971,7 +2031,8 @@ pub async fn mountain_ipc_invoke(
 						_ => Ok(json!("DIRECT")),
 					}
 				},
-				"nativeHost:lookupAuthorization" => Ok(Value::Null),
+				// Return empty credentials so the proxy layer's JSON parse succeeds.
+				"nativeHost:lookupAuthorization" => Ok(json!({"username":"","password":""})),
 				"nativeHost:lookupKerberosAuthorization" => Ok(Value::Null),
 				"nativeHost:loadCertificates" => Ok(json!([])),
 
@@ -2249,9 +2310,83 @@ pub async fn mountain_ipc_invoke(
 					}
 				},
 
-				// `ILocalPtyService.updateProperty` - workbench sets icon/title
-				// on a running PTY; acknowledged, no Mountain-side state change.
-				"localPty:updateProperty" => Ok(Value::Null),
+				// `ILocalPtyService.updateProperty` - workbench notifies Mountain
+				// of a property change on a running PTY. Property enum:
+				//   2 = Title (dynamic title from shell escape)
+				//   3 = OverrideName (user-renamed tab)
+				//   5 = ShellType (detected shell identifier)
+				// Title / OverrideName are persisted in TerminalStateDTO and
+				// forwarded to Sky so the xterm tab label updates live.
+				// ShellType is stored for later `refreshProperty` lookups.
+				"localPty:updateProperty" => {
+					use CommonLibrary::IPC::SkyEvent::SkyEvent;
+
+					let TermId = arg_u64(&Arguments, 0);
+
+					let PropId = arg_u64(&Arguments, 1);
+
+					let PropValue = Arguments.get(2).and_then(Value::as_str).unwrap_or("").to_string();
+
+					if TermId == 0 || PropValue.is_empty() {
+						return Ok(Value::Null);
+					}
+
+					match PropId {
+						// Title (2) or OverrideName (3): persist + emit to Sky.
+						2 | 3 => {
+							{
+								let Guard =
+									RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
+
+								if let Some(Entry) = Guard.get(&TermId) {
+									Entry.lock().Title = PropValue.clone();
+								}
+							}
+
+							dev_log!(
+								"terminal",
+								"localPty:updateProperty id={} prop={} title='{}'",
+								TermId,
+								PropId,
+								PropValue
+							);
+
+							let _ = RunTime.Environment.ApplicationHandle.emit(
+								SkyEvent::TerminalPropertyChanged.AsStr(),
+								json!({
+									"id": TermId,
+									"property": PropId,
+									"value": PropValue,
+								}),
+							);
+						},
+
+						// ShellType (5): store only; workbench derives its own icon.
+						5 => {
+							{
+								let Guard =
+									RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
+
+								if let Some(Entry) = Guard.get(&TermId) {
+									Entry.lock().ShellType = Some(PropValue.clone());
+								}
+							}
+
+							dev_log!("terminal", "localPty:updateProperty id={} shell_type='{}'", TermId, PropValue);
+						},
+
+						Other => {
+							dev_log!(
+								"terminal",
+								"localPty:updateProperty id={} unknown_prop={} (no-op)",
+								TermId,
+								Other
+							);
+						},
+					}
+
+					Ok(Value::Null)
+				},
 
 				// `ILocalPtyService.freePortKillProcess` - kill whatever process
 				// is listening on a port so a new terminal can bind it.
@@ -2277,24 +2412,39 @@ pub async fn mountain_ipc_invoke(
 				"localPty:reviveTerminalProcesses" => {
 					dev_log!(
 						"terminal",
-
 						"localPty:reviveTerminalProcesses count={}",
-
 						Arguments.first().and_then(|V| V.as_array()).map(|A| A.len()).unwrap_or(0)
 					);
 
 					ReviveTerminalProcesses(RunTime.clone(), Arguments).await
 				},
 
-				// `ILocalPtyService.getRevivedPtyNewId` - allocate a fresh
-				// terminal ID for a revived PTY. The workbench calls this before
-				// `reviveTerminalProcesses` to pre-assign an integer it can use
-				// to key into `_ptys`. Returning the next atomic counter value
-				// keeps IDs unique and collision-free across reloads.
+				// `ILocalPtyService.getRevivedPtyNewId` - return the new terminal
+				// ID assigned to an old (pre-reload) ID during
+				// `reviveTerminalProcesses`. Arguments: `[workspaceId, oldId]`.
+				// The mapping is populated by `ReviveTerminalProcesses` and
+				// consumed here on first lookup. Falls back to a fresh ID so a
+				// missing entry never hangs the workbench.
 				"localPty:getRevivedPtyNewId" => {
-					let NewId = RunTime.Environment.ApplicationState.GetNextTerminalIdentifier();
+					let OldId = arg_u64(&Arguments, 1);
 
-					dev_log!("terminal", "localPty:getRevivedPtyNewId id={}", NewId);
+					let MaybeNewId = if OldId != 0 {
+						RunTime
+							.Environment
+							.ApplicationState
+							.Feature
+							.Terminals
+							.RevivedIdMap
+							.lock()
+							.remove(&OldId)
+					} else {
+						None
+					};
+
+					let NewId =
+						MaybeNewId.unwrap_or_else(|| RunTime.Environment.ApplicationState.GetNextTerminalIdentifier());
+
+					dev_log!("terminal", "localPty:getRevivedPtyNewId old_id={} new_id={}", OldId, NewId);
 
 					Ok(json!(NewId))
 				},
@@ -2328,9 +2478,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"$acceptActiveTerminalChanged".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -2347,9 +2495,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"$acceptTerminalShellIntegrationActivated".to_string(),
-
 						serde_json::json!({ "id": TermId }),
 					)
 					.await;
@@ -2368,9 +2514,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"$acceptTerminalStateChanged".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -2400,9 +2544,7 @@ pub async fn mountain_ipc_invoke(
 
 						let _ = ::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
-
 							"$acceptTerminalCwdChange".to_string(),
-
 							serde_json::json!({ "id": TermId, "cwd": Cwd }),
 						)
 						.await;
@@ -2422,13 +2564,59 @@ pub async fn mountain_ipc_invoke(
 					call!(rt, "terminal", TerminalSendText, Arguments)
 				},
 				// Remaining `localPty:*` - no Mountain-side state needed.
-				// `installAutoReply` / `uninstallAllAutoReplies`: shell-integration
-				// auto-reply triggers (e.g. sudo password prompts) - not implemented.
-				"localPty:orphanQuestionReply"
-				| "localPty:updateTitle"
-				| "localPty:updateIcon"
-				| "localPty:installAutoReply"
-				| "localPty:uninstallAllAutoReplies" => Ok(Value::Null),
+				"localPty:orphanQuestionReply" | "localPty:updateTitle" | "localPty:updateIcon" => Ok(Value::Null),
+
+				// `ILocalPtyService.installAutoReply` - store an auto-reply rule
+				// so the PTY reader can respond automatically to matching output
+				// (e.g. password prompts, Y/N confirmations).
+				// Payload: `{ answer, match, useCustomAnswer }`.
+				"localPty:installAutoReply" => {
+					use crate::ApplicationState::State::FeatureState::Terminals::TerminalState::AutoReplyRule;
+
+					let Payload = arg_val(&Arguments, 0);
+
+					let Answer = Payload.get("answer").and_then(Value::as_str).unwrap_or("").to_string();
+
+					let MatchStr = Payload.get("match").and_then(Value::as_str).unwrap_or("").to_string();
+
+					let UseCustom = Payload.get("useCustomAnswer").and_then(Value::as_bool).unwrap_or(false);
+
+					if !Answer.is_empty() && !MatchStr.is_empty() {
+						RunTime
+							.Environment
+							.ApplicationState
+							.Feature
+							.Terminals
+							.AutoReplies
+							.lock()
+							.push(AutoReplyRule {
+								Match:MatchStr.clone(),
+								Answer:Answer.clone(),
+								UseCustomAnswer:UseCustom,
+							});
+
+						dev_log!("terminal", "localPty:installAutoReply match='{}' answer='{}'", MatchStr, Answer);
+					}
+
+					Ok(Value::Null)
+				},
+
+				// `ILocalPtyService.uninstallAllAutoReplies` - clear every
+				// installed auto-reply rule for the current session.
+				"localPty:uninstallAllAutoReplies" => {
+					RunTime
+						.Environment
+						.ApplicationState
+						.Feature
+						.Terminals
+						.AutoReplies
+						.lock()
+						.clear();
+
+					dev_log!("terminal", "localPty:uninstallAllAutoReplies cleared");
+
+					Ok(Value::Null)
+				},
 
 				// `localPty:shellExecutionStart` - Sky fires this when it
 				// detects OSC 633 ; C (command-output-begins) in terminal
@@ -2442,9 +2630,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"$acceptTerminalShellExecutionStart".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -2467,18 +2653,14 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"$acceptTerminalShellExecutionEnd".to_string(),
-
 						Payload.clone(),
 					)
 					.await;
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"$acceptExecutedTerminalCommand".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -2508,7 +2690,44 @@ pub async fn mountain_ipc_invoke(
 				// URL handler
 				// =====================================================================
 				"url:registerExternalUriOpener" => {
-					dev_log!("url", "url:registerExternalUriOpener");
+					// Arguments shape (ExtHostUrls.registerExternalUriOpener):
+					//   [0] opener_id: String
+					//   [1] schemes: String | String[]
+					//   [2] extension_id: String
+					let OpenerId = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_owned();
+
+					let ExtensionId = Arguments.get(2).and_then(|V| V.as_str()).unwrap_or("").to_owned();
+
+					let Schemes:Vec<String> = match Arguments.get(1) {
+						Some(Value::Array(Arr)) => Arr.iter().filter_map(|V| V.as_str().map(str::to_owned)).collect(),
+						Some(Value::String(S)) => vec![S.clone()],
+						_ => vec![],
+					};
+
+					dev_log!(
+						"url",
+						"url:registerExternalUriOpener: id={} ext={} schemes={:?}",
+						OpenerId,
+						ExtensionId,
+						Schemes
+					);
+
+					{
+						use crate::ApplicationState::State::FeatureState::State::ExternalUriOpenerRegistration;
+
+						let mut Guard = RunTime.Environment.ApplicationState.Feature.ExternalUriOpeners.lock();
+
+						for Scheme in Schemes {
+							Guard.insert(
+								Scheme.clone(),
+								ExternalUriOpenerRegistration {
+									Scheme,
+									ExtensionId:ExtensionId.clone(),
+									OpenerId:OpenerId.clone(),
+								},
+							);
+						}
+					}
 
 					Ok(Value::Null)
 				},
@@ -2622,8 +2841,55 @@ pub async fn mountain_ipc_invoke(
 
 					ExtensionHostDebugClose(ApplicationHandle.clone()).await
 				},
-				"extensionhostdebugservice:attachSession" | "extensionhostdebugservice:terminateSession" => {
-					dev_log!("exthost", "{}", command);
+				// `attachSession`: Wind signals that the extension-host debug
+				// side-channel is ready for session `sessionId` on `port`.
+				// Record a lightweight session entry in DebugState so
+				// Mountain-side DAP routing can find the sidecar.
+				"extensionhostdebugservice:attachSession" => {
+					let SessionId = arg_string(&Arguments, 0);
+
+					let Port = arg_u64(&Arguments, 1);
+
+					let SubId = arg_string_or(&Arguments, 2, "cocoon-main");
+
+					dev_log!(
+						"exthost",
+						"extensionhostdebugservice:attachSession id={} port={} sub={}",
+						SessionId,
+						Port,
+						SubId
+					);
+
+					if !SessionId.is_empty() {
+						let AlreadyRegistered =
+							RunTime.ApplicationState.Feature.Debug.GetDebugSession(&SessionId).is_some();
+
+						if !AlreadyRegistered {
+							let _ = RunTime.ApplicationState.Feature.Debug.RegisterDebugSession(
+								crate::ApplicationState::State::FeatureState::Debug::DebugState::DebugSessionEntry {
+									SessionId:SessionId.clone(),
+									DebugType:"unknown".to_string(),
+									SideCarIdentifier:SubId,
+									StdinSender:None,
+									ChildPid:None,
+								},
+							);
+						}
+					}
+
+					Ok(Value::Null)
+				},
+
+				// `terminateSession`: Wind signals session end. Remove from
+				// DebugState so stale entries don't accumulate.
+				"extensionhostdebugservice:terminateSession" => {
+					let SessionId = arg_string(&Arguments, 0);
+
+					dev_log!("exthost", "extensionhostdebugservice:terminateSession id={}", SessionId);
+
+					if !SessionId.is_empty() {
+						RunTime.ApplicationState.Feature.Debug.UnregisterDebugSession(&SessionId);
+					}
 
 					Ok(Value::Null)
 				},
@@ -2875,7 +3141,6 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ApplicationHandle.emit(
 						"sky://tree-view/reveal",
-
 						json!({
 							"viewId": ViewId,
 							"handle": Handle,
@@ -2898,6 +3163,23 @@ pub async fn mountain_ipc_invoke(
 						"tree:expandElement" => "$treeView:expandElement",
 						_ => "$treeView:visibilityChanged",
 					};
+
+					// Mirror visibility state into ApplicationState so native
+					// queries (sky:replay-events, treeView.visible getter) read
+					// the current value without a Cocoon round-trip.
+					if command == "tree:visibilityChanged" {
+						if let (Some(ViewId), Some(Visible)) = (
+							Payload.get("viewId").and_then(|v| v.as_str()),
+							Payload.get("visible").and_then(|v| v.as_bool()),
+						) {
+							RunTime
+								.Environment
+								.ApplicationState
+								.Feature
+								.TreeViews
+								.SetVisible(ViewId, Visible);
+						}
+					}
 
 					tokio::spawn(async move {
 						if let Err(E) =
@@ -2972,9 +3254,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"window.didChangeTextEditorSelection".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -3023,9 +3303,7 @@ pub async fn mountain_ipc_invoke(
 						tokio::spawn(async move {
 							let _ = ::Vine::Client::SendNotification::Fn(
 								"cocoon-main".to_string(),
-
 								"$acceptModelChanged".to_string(),
-
 								Payload2,
 							)
 							.await;
@@ -3052,9 +3330,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"window.didChangeActiveTextEditor".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -3077,9 +3353,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"$acceptVisibleEditorsChanged".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -3101,9 +3375,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"$acceptTabsChanged".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -3124,9 +3396,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"$acceptVisibleRangesChanged".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -3147,9 +3417,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"$acceptTextEditorOptionsChanged".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -3169,9 +3437,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"$acceptTextEditorDiffInformationChanged".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -3191,9 +3457,7 @@ pub async fn mountain_ipc_invoke(
 
 					let _ = ::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
-
 						"$acceptTextEditorViewColumnChanged".to_string(),
-
 						Payload,
 					)
 					.await;
@@ -3314,28 +3578,200 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				// =====================================================================
-				// SCM - forward to Cocoon's vscode.scm namespace
+				// SCM - Mountain-native reads; mutations forwarded to Cocoon
 				// =====================================================================
-				"scm:createSourceControl" | "scm:getSourceControls" | "scm:setActiveProvider" => {
+
+				// Returns the serialized list of all registered SCM providers
+				// directly from ApplicationState, avoiding a Cocoon round-trip.
+				"scm:getSourceControls" => {
+					let Providers:Vec<_> = RunTime
+						.Environment
+						.ApplicationState
+						.Feature
+						.Markers
+						.SourceControlManagementProviders
+						.lock()
+						.values()
+						.cloned()
+						.collect();
+
+					Ok(json!(Providers))
+				},
+
+				// Records the active provider handle in ApplicationState so
+				// sky:replay-events and future Mountain-native SCM queries can
+				// surface the current focus without a Cocoon round-trip.
+				"scm:setActiveProvider" => {
+					use std::sync::atomic::Ordering as AtomicOrdering;
+
+					let Handle = arg_u64(&Arguments, 0) as u32;
+
+					RunTime
+						.Environment
+						.ApplicationState
+						.Feature
+						.Markers
+						.ActiveSourceControlManagementProvider
+						.store(Handle, AtomicOrdering::Relaxed);
+
+					dev_log!("scm", "scm:setActiveProvider handle={}", Handle);
+
+					Ok(json!(null))
+				},
+
+				"scm:createSourceControl" => {
 					forward_to_cocoon!("scm", command, Arguments)
 				},
 
 				// =====================================================================
-				// Debug - forward to Cocoon's vscode.debug namespace
+				// Debug - Mountain-native pre-processing + Cocoon forward
 				// =====================================================================
-				// TierDebug gate: stays a Cocoon-routed surface today because
-				// Mountain has no native VS Code-equivalent debug-session
-				// orchestrator (the DebugProvider handles adapter spawn only,
-				// not session graph state). When/if Mountain grows a typed
-				// `DebugService::*` host, flip the default to "Mountain" and
-				// add a Mountain-native arm here gated on
-				// `tier_routes_to_node(TIER_DEBUG, "TierDebug") == false`.
-				"debug:startDebugging"
-				| "debug:stopDebugging"
-				| "debug:getSessions"
-				| "debug:getBreakpoints"
-				| "debug:addBreakpoints"
-				| "debug:removeBreakpoints" => {
+
+				// `debug:startDebugging`: call DebugProvider::StartDebugging
+				// (via the Debug.Start effect) to register the session and
+				// optionally spawn the DAP adapter before forwarding to
+				// Cocoon so vscode.debug extension listeners see a live
+				// session.
+				"debug:startDebugging" => {
+					let _ = TIER_DEBUG;
+
+					let FolderUriStr = arg_string_or(&Arguments, 0, "");
+
+					let Config = arg_val(&Arguments, 1).cloned().unwrap_or_else(|| json!({}));
+
+					let DebugStartParams = json!([FolderUriStr, Config]);
+
+					let StartEffect = crate::Track::Effect::CreateEffectForRequest::Debug::CreateEffect(
+						"Debug.Start",
+						DebugStartParams,
+					);
+
+					if let Some(EffectResult) = StartEffect {
+						match EffectResult {
+							Ok(task) => {
+								if let Err(e) = task(RunTime.clone()).await {
+									dev_log!("exthost", "warn: debug:startDebugging effect failed: {}", e);
+								}
+							},
+
+							Err(e) => {
+								dev_log!("exthost", "warn: debug:startDebugging effect build error: {}", e);
+							},
+						}
+					}
+
+					forward_to_cocoon!("debug", command, Arguments)
+				},
+
+				// `debug:addBreakpoints`: store in ApplicationState and emit
+				// sky://debug/breakpointsChanged for renderer decorations,
+				// then forward to Cocoon for onDidChangeBreakpoints.
+				"debug:addBreakpoints" => {
+					let _ = TIER_DEBUG;
+
+					if let Some(serde_json::Value::Array(RawBreakpoints)) = Arguments.first() {
+						let Entries:Vec<
+							crate::ApplicationState::State::FeatureState::Debug::DebugState::BreakpointEntry,
+						> = RawBreakpoints
+							.iter()
+							.filter_map(|Raw| {
+								let Id = Raw
+									.get("id")
+									.or_else(|| Raw.get("Id"))
+									.and_then(serde_json::Value::as_str)
+									.map(str::to_string)?;
+
+								let Kind = Raw
+									.get("type")
+									.or_else(|| Raw.get("kind"))
+									.and_then(serde_json::Value::as_str)
+									.unwrap_or("source")
+									.to_string();
+
+								let Uri = Raw
+									.get("uri")
+									.or_else(|| Raw.get("source").and_then(|S| S.get("uri")))
+									.and_then(serde_json::Value::as_str)
+									.unwrap_or("")
+									.to_string();
+
+								let Line = Raw
+									.get("lineNumber")
+									.or_else(|| Raw.get("line"))
+									.and_then(serde_json::Value::as_u64)
+									.unwrap_or(0);
+
+								let Column = Raw.get("column").and_then(serde_json::Value::as_u64);
+
+								let Enabled = Raw.get("enabled").and_then(serde_json::Value::as_bool).unwrap_or(true);
+
+								Some(
+									crate::ApplicationState::State::FeatureState::Debug::DebugState::BreakpointEntry {
+										id:Id,
+										kind:Kind,
+										uri:Uri,
+										line:Line,
+										column:Column,
+										enabled:Enabled,
+										raw:Raw.clone(),
+									},
+								)
+							})
+							.collect();
+
+						if !Entries.is_empty() {
+							RunTime.ApplicationState.Feature.Debug.AddBreakpoints(Entries);
+
+							let _ = ApplicationHandle.emit(
+								"sky://debug/breakpointsChanged",
+								json!({
+									"added": RawBreakpoints,
+									"removed": [],
+									"changed": [],
+								}),
+							);
+						}
+					}
+
+					forward_to_cocoon!("debug", command, Arguments)
+				},
+
+				// `debug:getBreakpoints`: served from Mountain's local store;
+				// no Cocoon round-trip needed.
+				"debug:getBreakpoints" => {
+					let _ = TIER_DEBUG;
+
+					let Bps = RunTime.ApplicationState.Feature.Debug.GetBreakpoints();
+
+					Ok(json!(Bps))
+				},
+
+				// `debug:removeBreakpoints`: evict from local store and emit
+				// change event, then forward to Cocoon.
+				"debug:removeBreakpoints" => {
+					let _ = TIER_DEBUG;
+
+					if let Some(serde_json::Value::Array(RawIds)) = Arguments.first() {
+						let Ids:Vec<String> = RawIds.iter().filter_map(|V| V.as_str().map(str::to_string)).collect();
+
+						if !Ids.is_empty() {
+							RunTime.ApplicationState.Feature.Debug.RemoveBreakpoints(&Ids);
+
+							let _ = ApplicationHandle.emit(
+								"sky://debug/breakpointsChanged",
+								json!({
+									"added": [],
+									"removed": RawIds,
+									"changed": [],
+								}),
+							);
+						}
+					}
+
+					forward_to_cocoon!("debug", command, Arguments)
+				},
+
+				"debug:stopDebugging" | "debug:getSessions" => {
 					let _ = TIER_DEBUG;
 
 					forward_to_cocoon!("debug", command, Arguments)
@@ -3344,14 +3780,26 @@ pub async fn mountain_ipc_invoke(
 				// =====================================================================
 				// Tasks - forward to Cocoon's vscode.tasks namespace
 				// =====================================================================
-				"tasks:executeTask" | "tasks:getTasks" | "tasks:getTaskExecution" => {
+				"tasks:executeTask" | "tasks:getTasks" => {
 					forward_to_cocoon!("tasks", command, Arguments)
+				},
+
+				// Look up an active task execution by run-ID from the
+				// in-process registry. Returns the stored definition JSON
+				// or null if the ID is unknown (task already ended or never
+				// started via Mountain's gRPC path).
+				"tasks:getTaskExecution" => {
+					let Id = arg_u64(&Arguments, 0);
+
+					let Result = RunTime.ApplicationState.Feature.Tasks.Get(Id);
+
+					Ok(Result.unwrap_or(Value::Null))
 				},
 
 				// =====================================================================
 				// Authentication - forward to Cocoon's vscode.authentication namespace
 				// =====================================================================
-				"auth:getSessions" | "auth:createSession" | "auth:removeSession" => {
+				"auth:getSessions" | "auth:createSession" | "auth:removeSession" | "auth:validateToken" => {
 					forward_to_cocoon!("auth", command, Arguments)
 				},
 
@@ -3393,11 +3841,8 @@ pub async fn mountain_ipc_invoke(
 							Err(CocoonError) => {
 								dev_log!(
 									"ipc",
-
 									"warn: [NodeDeferred] {} deferred but Cocoon rejected: {:?}",
-
 									command,
-
 									CocoonError
 								);
 
@@ -3409,9 +3854,7 @@ pub async fn mountain_ipc_invoke(
 							Ok(KnownChannel) => {
 								dev_log!(
 									"ipc",
-
 									"error: [WindServiceHandlers] Channel {:?} is registered but has no dispatch arm",
-
 									KnownChannel
 								);
 
@@ -3430,12 +3873,10 @@ pub async fn mountain_ipc_invoke(
 			if ResultSender.send(MatchResult).is_err() {
 				dev_log!(
 					"ipc",
-
 					"warn: [WindServiceHandlers] IPC result receiver dropped before dispatch completed"
 				);
 			}
 		},
-
 		CommandPriority,
 	);
 
@@ -3445,7 +3886,6 @@ pub async fn mountain_ipc_invoke(
 		Err(_) => {
 			dev_log!(
 				"ipc",
-
 				"error: [WindServiceHandlers] IPC task cancelled before producing a result"
 			);
 
@@ -3495,7 +3935,6 @@ pub async fn mountain_ipc_invoke(
 }
 
 pub fn register_wind_ipc_handlers(ApplicationHandle:&tauri::AppHandle) -> Result<(), String> {
-
 	dev_log!("lifecycle", "registering IPC handlers");
 
 	// Note: These handlers are automatically registered when included in the

@@ -89,6 +89,18 @@ pub struct TerminalStateDTO {
 	/// Whether this is a PTY terminal
 	pub IsPTY:bool,
 
+	/// Dynamic title set by `localPty:updateProperty` (property 2 = Title,
+	/// 3 = OverrideName). Starts as empty; non-empty values override
+	/// the `Name` shown in the workbench tab.
+	#[serde(skip_serializing_if = "String::is_empty")]
+	pub Title:String,
+
+	/// Shell type identifier forwarded by the workbench via
+	/// `localPty:updateProperty` (property 5 = ShellType). Free-form
+	/// string label e.g. `"bash"`, `"zsh"`, `"fish"`, `"pwsh"`.
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub ShellType:Option<String>,
+
 	// --- Runtime Handles ---
 	/// Channel for sending input to PTY
 	#[serde(skip)]
@@ -179,6 +191,8 @@ impl TerminalStateDTO {
 			EnvironmentVariables:EnvVars,
 			OSProcessIdentifier:None,
 			IsPTY:true,
+			Title:String::new(),
+			ShellType:None,
 			PTYInputTransmitter:None,
 			ReaderTaskHandle:None,
 			ProcessWaitHandle:None,
@@ -225,6 +239,8 @@ impl std::fmt::Debug for TerminalStateDTO {
 			.field("CurrentWorkingDirectory", &self.CurrentWorkingDirectory)
 			.field("EnvironmentVariables", &self.EnvironmentVariables)
 			.field("IsPTY", &self.IsPTY)
+			.field("Title", &self.Title)
+			.field("ShellType", &self.ShellType)
 			.field("PTYInputTransmitter", &self.PTYInputTransmitter.as_ref().map(|_| "<channel>"))
 			.field("ReaderTaskHandle", &self.ReaderTaskHandle.as_ref().map(|_| "<task>"))
 			.field("ProcessWaitHandle", &self.ProcessWaitHandle.as_ref().map(|_| "<task>"))

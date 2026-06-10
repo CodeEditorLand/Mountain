@@ -8,7 +8,6 @@
 use std::sync::Arc;
 
 use serde_json::Value;
-
 use tauri::{AppHandle, Manager};
 
 use crate::{
@@ -23,7 +22,6 @@ use crate::{
 };
 
 pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
-
 	use std::path::PathBuf;
 
 	use tauri_plugin_dialog::DialogExt;
@@ -61,9 +59,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Va
 						Err(Error) => {
 							dev_log!(
 								"folder",
-
 								"warn: [pickFolderAndOpen] WorkspaceFolderStateDTO::New failed: {}",
-
 								Error
 							);
 						},
@@ -71,16 +67,13 @@ pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Va
 				} else {
 					dev_log!(
 						"folder",
-
 						"warn: [pickFolderAndOpen] path → file URI conversion failed for {}",
-
 						PathStr
 					);
 				}
 			} else {
 				dev_log!(
 					"folder",
-
 					"warn: [pickFolderAndOpen] ApplicationState not managed by Tauri - delta skipped"
 				);
 			}

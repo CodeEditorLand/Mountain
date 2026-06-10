@@ -52,7 +52,6 @@
 use std::sync::Arc;
 
 use serde_json::Value;
-
 use tauri::{AppHandle, Manager, Runtime, State, command};
 
 use crate::{
@@ -74,7 +73,6 @@ pub async fn DispatchFrontendCommand<R:Runtime>(
 
 	Argument:Value,
 ) -> Result<Value, String> {
-
 	dev_log!("ipc", "[Track/FrontendCommand] Dispatching frontend command: {}", Command);
 
 	match CreateEffectForRequest(&ApplicationHandle, &Command, Argument) {
@@ -87,11 +85,8 @@ pub async fn DispatchFrontendCommand<R:Runtime>(
 		Err(Error) => {
 			dev_log!(
 				"ipc",
-
 				"error: [Track/FrontendCommand] Failed to create effect for command '{}': {}",
-
 				Command,
-
 				Error
 			);
 

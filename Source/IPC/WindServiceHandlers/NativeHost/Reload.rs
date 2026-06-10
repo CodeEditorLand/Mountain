@@ -16,9 +16,7 @@
 use std::{sync::Arc, time::Duration};
 
 use CommonLibrary::Storage::StorageProvider::StorageProvider;
-
 use serde_json::Value;
-
 use tauri::{AppHandle, Manager};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
@@ -26,7 +24,6 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 const PANEL_STATE_KEY:&str = "__webview_panel_state__";
 
 pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
-
 	dev_log!("lifecycle", "nativeHost:reload - reloading webview");
 
 	// Best-effort webview panel snapshot before the renderer reload wipes
@@ -49,9 +46,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Va
 					{
 						dev_log!(
 							"lifecycle",
-
 							"warn: [Reload] Failed to persist webview panel snapshot: {:?}",
-
 							StoreError
 						);
 					}
@@ -69,7 +64,6 @@ pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Va
 			Err(_) => {
 				dev_log!(
 					"lifecycle",
-
 					"warn: [Reload] serializeAllWebviewPanels timed out - proceeding without panel state"
 				);
 			},

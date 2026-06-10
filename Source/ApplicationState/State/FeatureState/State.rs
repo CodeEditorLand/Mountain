@@ -35,10 +35,16 @@
 //! - [ ] Implement feature lifecycle events
 //! - [ ] Add feature state metrics collection
 
-use std::sync::{
-	Arc,
-	atomic::{AtomicU32, Ordering as AtomicOrdering},
+use std::{
+	collections::HashMap,
+	sync::{
+		Arc,
+		atomic::{AtomicU32, AtomicU64, Ordering as AtomicOrdering},
+	},
 };
+
+use dashmap::DashMap;
+use parking_lot::Mutex;
 
 use super::{
 	Debug::DebugState::DebugState,
@@ -50,6 +56,7 @@ use super::{
 	Markers::MarkerState::MarkerState,
 	NavigationHistory::NavigationHistoryState::NavigationHistoryState,
 	OutputChannels::OutputChannelState::OutputChannelState,
+	Tasks::TaskExecutionState::TaskExecutionState,
 	Terminals::TerminalState::TerminalState,
 	TreeViews::TreeViewState::TreeViewState,
 	Webviews::WebviewState::WebviewState,
@@ -87,6 +94,9 @@ pub struct State {
 	/// Output channel state.
 	pub OutputChannels:OutputChannelState,
 
+	/// Active task execution registry.
+	pub Tasks:TaskExecutionState,
+
 	/// Terminal instances state.
 	pub Terminals:TerminalState,
 
@@ -102,6 +112,32 @@ pub struct State {
 	/// Source-control provider handle counter, owned here
 	/// (not delegated to MarkerState) so the domain boundary is explicit.
 	pub SCMHandleCounter:Arc<AtomicU32>,
+
+	/// External URI opener registrations keyed by URI scheme.
+	/// Populated by `url:registerExternalUriOpener`; consulted by
+	/// `nativeHost:openExternal` before falling back to the OS default.
+	pub ExternalUriOpeners:Arc<Mutex<HashMap<String, ExternalUriOpenerRegistration>>>,
+
+	/// Active text-search task abort handles, keyed by search_id.
+	/// Populated when a `search:findInFiles` task is spawned;
+	/// `search:cancel` looks up by ID and calls `abort()`.
+	pub ActiveSearches:Arc<DashMap<u64, tokio::task::AbortHandle>>,
+
+	/// Monotonically increasing counter for minting search IDs.
+	pub SearchIdCounter:Arc<AtomicU64>,
+}
+
+/// Registration entry for a `vscode.window.registerExternalUriOpener` call.
+#[derive(Clone, Debug)]
+pub struct ExternalUriOpenerRegistration {
+	/// URI scheme this opener handles (e.g. `"http"`, `"https"`).
+	pub Scheme:String,
+
+	/// Extension identifier that registered the opener.
+	pub ExtensionId:String,
+
+	/// Opener identifier supplied by the extension.
+	pub OpenerId:String,
 }
 
 impl Default for State {
@@ -127,6 +163,8 @@ impl Default for State {
 
 			OutputChannels:Default::default(),
 
+			Tasks:Default::default(),
+
 			Terminals:Default::default(),
 
 			TreeViews:Default::default(),
@@ -136,6 +174,12 @@ impl Default for State {
 			WorkingCopy:Default::default(),
 
 			SCMHandleCounter:Arc::new(AtomicU32::new(1)),
+
+			ExternalUriOpeners:Arc::new(Mutex::new(HashMap::new())),
+
+			ActiveSearches:Arc::new(DashMap::new()),
+
+			SearchIdCounter:Arc::new(AtomicU64::new(1)),
 		}
 	}
 }

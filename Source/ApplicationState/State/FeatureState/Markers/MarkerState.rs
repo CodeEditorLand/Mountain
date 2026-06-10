@@ -75,6 +75,9 @@ pub struct MarkerState {
 
 	/// Counter for generating unique SCM provider handles.
 	pub NextSourceControlManagementProviderHandle:Arc<AtomicU32>,
+
+	/// Handle of the currently active SCM provider (0 = none selected).
+	pub ActiveSourceControlManagementProvider:Arc<AtomicU32>,
 }
 
 impl Default for MarkerState {
@@ -93,6 +96,8 @@ impl Default for MarkerState {
 			SourceControlManagementResources:Arc::new(Mutex::new(HashMap::new())),
 
 			NextSourceControlManagementProviderHandle:Arc::new(AtomicU32::new(1)),
+
+			ActiveSourceControlManagementProvider:Arc::new(AtomicU32::new(0)),
 		}
 	}
 }

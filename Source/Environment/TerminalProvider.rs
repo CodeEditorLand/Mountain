@@ -224,6 +224,10 @@ impl TerminalProvider for MountainEnvironment {
 
 		let (InputTransmitter, mut InputReceiver) = TokioMPSC::channel::<String>(32);
 
+		// Clone the sender before moving it into TerminalState so the PTY
+		// output reader task can auto-reply to matching output chunks.
+		let AutoReplySender = InputTransmitter.clone();
+
 		TerminalState.PTYInputTransmitter = Some(InputTransmitter);
 
 		let TermIDForInput = TerminalIdentifier;
@@ -265,6 +269,10 @@ impl TerminalProvider for MountainEnvironment {
 
 		let AppHandleForOutput = self.ApplicationHandle.clone();
 
+		// Arc clone so the reader task can read auto-reply rules without
+		// holding any locks across await points.
+		let AutoRepliesForOutput = Arc::clone(&self.ApplicationState.Feature.Terminals.AutoReplies);
+
 		tokio::spawn(async move {
 			let mut Buffer = [0u8; 8192];
 
@@ -280,6 +288,24 @@ impl TerminalProvider for MountainEnvironment {
 						AppendTerminalOutput(TermIDForOutput, &Buffer[..count]);
 
 						let DataString = String::from_utf8_lossy(&Buffer[..count]).to_string();
+
+						// Auto-reply: scan the output chunk for any registered
+						// match strings and write the answer back synchronously.
+						// The check is intentionally cheap (snapshot + linear
+						// scan): auto-reply lists are tiny (<10 entries) and
+						// the hot path is the empty-list case (single  +
+						//  check = ~10 ns on an M-series core).
+						{
+							let Rules = AutoRepliesForOutput.lock();
+
+							if !Rules.is_empty() {
+								for Rule in Rules.iter() {
+									if DataString.contains(&Rule.Match) {
+										let _ = AutoReplySender.try_send(Rule.Answer.clone());
+									}
+								}
+							}
+						}
 
 						// Fan out in two directions so both consumers see
 						// the bytes:

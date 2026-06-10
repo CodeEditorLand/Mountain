@@ -24,6 +24,43 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 	dev_log!("lifecycle", "openExternal: {}", url_str);
 
+	// Check whether an extension registered an opener for this scheme.
+	// If so, forward the URI to Cocoon so the extension can handle it.
+	let url_scheme = url_str.splitn(2, ':').next().unwrap_or("").to_lowercase();
+
+	let registered_opener = RunTime
+		.Environment
+		.ApplicationState
+		.Feature
+		.ExternalUriOpeners
+		.lock()
+		.get(&url_scheme)
+		.cloned();
+
+	if let Some(Reg) = registered_opener {
+		dev_log!(
+			"lifecycle",
+			"openExternal: scheme '{}' handled by opener '{}' (ext {})",
+			url_scheme,
+			Reg.OpenerId,
+			Reg.ExtensionId
+		);
+
+		let Payload = serde_json::json!({
+			"openerId": Reg.OpenerId,
+			"uri": url_str,
+		});
+
+		if let Err(E) =
+			crate::Vine::Client::SendNotification::Fn("cocoon-main".to_owned(), "url:openExternal".to_owned(), Payload)
+				.await
+		{
+			dev_log!("lifecycle", "warn: openExternal notify failed: {}", E);
+		}
+
+		return Ok(Value::Bool(true));
+	}
+
 	// Allowlist of safe protocols. Block `file://` (arbitrary filesystem
 	// access) and bare shell commands. Everything else that parses as a
 	// valid URI scheme is forwarded to the OS default handler.

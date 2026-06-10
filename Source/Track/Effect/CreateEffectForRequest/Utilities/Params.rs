@@ -11,7 +11,6 @@ pub fn str_at(p:&Value, n:usize) -> &str { p.get(n).and_then(Value::as_str).unwr
 pub fn string_at(p:&Value, n:usize) -> String { str_at(p, n).to_string() }
 
 pub fn string_at_or(p:&Value, n:usize, default:&str) -> String {
-
 	p.get(n).and_then(Value::as_str).unwrap_or(default).to_string()
 }
 
@@ -38,7 +37,6 @@ pub fn obj_bool(p:&Value, key:&str) -> bool { p.get(key).and_then(Value::as_bool
 pub fn obj_f64(p:&Value, key:&str) -> Option<f64> { p.get(key).and_then(Value::as_f64) }
 
 pub fn str_obj_or_pos<'a>(p:&'a Value, key:&str, n:usize) -> &'a str {
-
 	if let Some(obj) = p.as_object() {
 		obj.get(key).and_then(Value::as_str).unwrap_or("")
 	} else {
@@ -53,7 +51,6 @@ pub fn array_unwrap(p:&Value) -> Value { if p.is_array() { p.get(0).cloned().unw
 
 /// Extract a URI parameter that may arrive as `[uri]`, `{uri:…}`, or bare.
 pub fn uri_from_params(p:&Value) -> Value {
-
 	if p.is_array() {
 		p.get(0).cloned().unwrap_or_default()
 	} else {
@@ -67,7 +64,6 @@ pub fn ensure_array(p:&Value) -> Value { if p.is_array() { p.clone() } else { js
 /// Strip a leading `file://` or `file:///` scheme. Handles the
 /// `file://localhost/...` form by removing the host segment.
 pub fn strip_file_uri(input:&str) -> &str {
-
 	if let Some(rest) = input.strip_prefix("file://") {
 		if rest.starts_with('/') {
 			return rest;

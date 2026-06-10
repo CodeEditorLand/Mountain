@@ -8,16 +8,13 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 };
-
 use Echo::Task::Priority::Priority;
-
 use async_trait::async_trait;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 #[async_trait]
 impl ApplicationRunTimeTrait for ApplicationRunTime {
-
 	async fn Run<TCapabilityProvider, TError, TOutput>(
 		&self,
 
@@ -25,12 +22,9 @@ impl ApplicationRunTimeTrait for ApplicationRunTime {
 	) -> Result<TOutput, TError>
 	where
 		TCapabilityProvider: ?Sized + Send + Sync + 'static,
-
 		<Self as CommonLibrary::Environment::HasEnvironment::HasEnvironment>::EnvironmentType:
 			Requires<TCapabilityProvider>,
-
 		TError: From<CommonError> + Send + Sync + 'static,
-
 		TOutput: Send + Sync + 'static, {
 		let (ResultSender, ResultReceiver) = tokio::sync::oneshot::channel::<Result<TOutput, TError>>();
 
@@ -42,7 +36,6 @@ impl ApplicationRunTimeTrait for ApplicationRunTime {
 			if ResultSender.send(Result).is_err() {
 				dev_log!(
 					"lifecycle",
-
 					"error: [ApplicationRunTime] Failed to send effect result; receiver was dropped."
 				);
 			}

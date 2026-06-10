@@ -15,7 +15,6 @@ use crate::{
 };
 
 pub async fn TerminalEnvCollectionDispatch(_Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
-
 	let Suffix = MethodName.strip_prefix("terminal.envCollection.").unwrap_or(MethodName);
 
 	let (ExtensionId, Variable, ValueStr) = TerminalEnvCollection::ParsePayload(Parameter);
@@ -26,9 +25,7 @@ pub async fn TerminalEnvCollectionDispatch(_Service:&MountainVinegRPCService, Me
 		// extension can ever clear; refuse rather than corrupt state.
 		dev_log!(
 			"terminal",
-
 			"warn: [EnvCollection] {} called without extensionId - dropped",
-
 			Suffix
 		);
 

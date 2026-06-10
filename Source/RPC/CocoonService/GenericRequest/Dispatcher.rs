@@ -8,8 +8,11 @@
 use std::time::UNIX_EPOCH;
 
 use serde_json::json;
+
 use tonic::{Request, Response, Status};
+
 use url::Url;
+
 use CommonLibrary::{
 	Command::CommandExecutor::CommandExecutor,
 	LanguageFeature::{
@@ -17,6 +20,7 @@ use CommonLibrary::{
 		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	},
 };
+
 use ::Vine::Generated::{GenericRequest as GenericRequestMsg, GenericResponse, RpcError};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -26,14 +30,18 @@ pub async fn Fn(
 
 	request:Request<GenericRequestMsg>,
 ) -> Result<Response<GenericResponse>, Status> {
+
 	let Req = request.into_inner();
 
 	let RequestId = Req.request_identifier;
 
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] generic request: method={} id={}",
+
 		Req.method,
+
 		RequestId
 	);
 
@@ -108,6 +116,7 @@ pub async fn Fn(
 
 					Ok(OkResponse(
 						RequestId,
+
 						&json!({
 							"type": if Meta.is_dir() { 2 } else { 1 },
 							"is_file": Meta.is_file(),
@@ -374,6 +383,7 @@ pub async fn Fn(
 
 			let _ = Service.environment.ApplicationHandle.emit(
 				"sky://editor/openDocument",
+
 				json!({ "uri": Uri, "viewColumn": ViewColumn, "preserveFocus": PreserveFocus }),
 			);
 
@@ -463,6 +473,7 @@ pub async fn Fn(
 			// register.
 			let _ = Service.environment.ApplicationHandle.emit(
 				"sky://statusbar/set-entry",
+
 				json!({ "id": Id, "text": Text, "tooltip": Tooltip }),
 			);
 
@@ -553,6 +564,7 @@ pub async fn Fn(
 				Ok(Urls) => {
 					Ok(OkResponse(
 						RequestId,
+
 						&json!({ "uris": Urls.into_iter().map(|U| U.to_string()).collect::<Vec<_>>() }),
 					))
 				},
@@ -740,6 +752,7 @@ pub async fn Fn(
 
 					Ok(OkResponse(
 						RequestId,
+
 						&json!({ "type": if Meta.is_dir() { 2 } else { 1 }, "is_file": Meta.is_file(), "is_directory": Meta.is_dir(), "size": Meta.len(), "mtime": Mtime }),
 					))
 				},

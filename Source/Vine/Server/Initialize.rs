@@ -38,16 +38,13 @@
 use std::{net::SocketAddr, sync::Arc};
 
 use tauri::{AppHandle, Manager};
-
 use tonic::transport::Server;
-
 use ::Vine::{
 	Error::VineError,
 	Generated::{cocoon_service_server::CocoonServiceServer, mountain_service_server::MountainServiceServer},
 };
 
 use super::MountainVinegRPCService::MountainVinegRPCService;
-
 use crate::{RPC::CocoonService::CocoonServiceImpl, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Server configuration constants
@@ -81,11 +78,9 @@ mod ServerConfig {
 /// - `Ok(SocketAddr)`: Validated and parsed socket address
 /// - `Err(VineError)`: Invalid address format
 fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAddr, VineError> {
-
 	if AddressString.is_empty() {
 		return Err(VineError::InvalidMessageFormat(format!(
 			"{} address cannot be empty",
-
 			ServerName
 		)));
 	}
@@ -93,7 +88,6 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 	if AddressString.len() > 256 {
 		return Err(VineError::InvalidMessageFormat(format!(
 			"{} address exceeds maximum length (256 characters)",
-
 			ServerName
 		)));
 	}
@@ -104,11 +98,8 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 			if addr.port() < 1024 {
 				dev_log!(
 					"grpc",
-
 					"warn: [VineServer] {} using privileged port {}, this may require elevated privileges",
-
 					ServerName,
-
 					addr.port()
 				);
 			}
@@ -170,7 +161,6 @@ pub fn Initialize(
 
 	CocoonAddressString:String,
 ) -> Result<(), VineError> {
-
 	dev_log!("grpc", "[VineServer] Initializing Vine gRPC servers...");
 
 	crate::dev_log!("grpc", "initializing Vine gRPC servers");
@@ -184,9 +174,7 @@ pub fn Initialize(
 
 	dev_log!(
 		"grpc",
-
 		"[VineServer] Cocoon expected on: {} (started by Cocoon process)",
-
 		CocoonAddress
 	);
 
@@ -221,9 +209,7 @@ pub fn Initialize(
 	tokio::spawn(async move {
 		dev_log!(
 			"grpc",
-
 			"[VineServer] Starting MountainService gRPC server on {}",
-
 			MountainServerName
 		);
 
@@ -256,9 +242,7 @@ pub fn Initialize(
 
 	dev_log!(
 		"grpc",
-
 		"[VineServer] MountainService gRPC server initialized on {}",
-
 		MountainAddress
 	);
 

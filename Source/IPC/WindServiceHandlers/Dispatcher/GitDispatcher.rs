@@ -1,18 +1,18 @@
 //! Git command dispatcher.
 
-use crate::Git::{
-    HandleCancel::Fn as GitHandleCancel,
-    HandleCheckout::Fn as GitHandleCheckout,
-    HandleClone::Fn as GitHandleClone,
-    HandleExec::Fn as GitHandleExec,
-    HandleFetch::Fn as GitHandleFetch,
-    HandleIsAvailable::Fn as GitHandleIsAvailable,
-    HandlePull::Fn as GitHandlePull,
-    HandleRevListCount::Fn as GitHandleRevListCount,
-    HandleRevParse::Fn as GitHandleRevParse,
-};
-
 use serde_json::Value;
+
+use crate::Git::{
+	HandleCancel::Fn as GitHandleCancel,
+	HandleCheckout::Fn as GitHandleCheckout,
+	HandleClone::Fn as GitHandleClone,
+	HandleExec::Fn as GitHandleExec,
+	HandleFetch::Fn as GitHandleFetch,
+	HandleIsAvailable::Fn as GitHandleIsAvailable,
+	HandlePull::Fn as GitHandlePull,
+	HandleRevListCount::Fn as GitHandleRevListCount,
+	HandleRevParse::Fn as GitHandleRevParse,
+};
 
 /// Dispatches git commands.
 ///
@@ -26,67 +26,62 @@ use serde_json::Value;
 /// - `git:revListCount`
 /// - `git:cancel`
 /// - `git:isAvailable`
-pub async fn dispatch_git(
-    command: &str,
+pub async fn dispatch_git(command:&str, arguments:Vec<Value>) -> Result<Value, String> {
+	match command {
+		"git:exec" => {
+			crate::dev_log!("git", "git:exec");
 
-    arguments: Vec<Value>,
-) -> Result<Value, String> {
+			GitHandleExec(arguments).await
+		},
 
-    match command {
-        "git:exec" => {
-            crate::dev_log!("git", "git:exec");
+		"git:clone" => {
+			crate::dev_log!("git", "git:clone");
 
-            GitHandleExec(arguments).await
-        },
+			GitHandleClone(arguments).await
+		},
 
-        "git:clone" => {
-            crate::dev_log!("git", "git:clone");
+		"git:pull" => {
+			crate::dev_log!("git", "git:pull");
 
-            GitHandleClone(arguments).await
-        },
+			GitHandlePull(arguments).await
+		},
 
-        "git:pull" => {
-            crate::dev_log!("git", "git:pull");
+		"git:checkout" => {
+			crate::dev_log!("git", "git:checkout");
 
-            GitHandlePull(arguments).await
-        },
+			GitHandleCheckout(arguments).await
+		},
 
-        "git:checkout" => {
-            crate::dev_log!("git", "git:checkout");
+		"git:revParse" => {
+			crate::dev_log!("git", "git:revParse");
 
-            GitHandleCheckout(arguments).await
-        },
+			GitHandleRevParse(arguments).await
+		},
 
-        "git:revParse" => {
-            crate::dev_log!("git", "git:revParse");
+		"git:fetch" => {
+			crate::dev_log!("git", "git:fetch");
 
-            GitHandleRevParse(arguments).await
-        },
+			GitHandleFetch(arguments).await
+		},
 
-        "git:fetch" => {
-            crate::dev_log!("git", "git:fetch");
+		"git:revListCount" => {
+			crate::dev_log!("git", "git:revListCount");
 
-            GitHandleFetch(arguments).await
-        },
+			GitHandleRevListCount(arguments).await
+		},
 
-        "git:revListCount" => {
-            crate::dev_log!("git", "git:revListCount");
+		"git:cancel" => {
+			crate::dev_log!("git", "git:cancel");
 
-            GitHandleRevListCount(arguments).await
-        },
+			GitHandleCancel(arguments).await
+		},
 
-        "git:cancel" => {
-            crate::dev_log!("git", "git:cancel");
+		"git:isAvailable" => {
+			crate::dev_log!("git", "git:isAvailable");
 
-            GitHandleCancel(arguments).await
-        },
+			GitHandleIsAvailable(arguments).await
+		},
 
-        "git:isAvailable" => {
-            crate::dev_log!("git", "git:isAvailable");
-
-            GitHandleIsAvailable(arguments).await
-        },
-
-        _ => Err(format!("Unknown git command: {}", command)),
-    }
+		_ => Err(format!("Unknown git command: {}", command)),
+	}
 }

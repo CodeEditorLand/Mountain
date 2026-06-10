@@ -1,13 +1,13 @@
 //! Keybinding command dispatcher.
 
-use crate::UI::{
-    KeybindingAdd::Fn as KeybindingAdd,
-    KeybindingGetAll::Fn as KeybindingGetAll,
-    KeybindingLookup::Fn as KeybindingLookup,
-    KeybindingRemove::Fn as KeybindingRemove,
-};
-
 use serde_json::Value;
+
+use crate::UI::{
+	KeybindingAdd::Fn as KeybindingAdd,
+	KeybindingGetAll::Fn as KeybindingGetAll,
+	KeybindingLookup::Fn as KeybindingLookup,
+	KeybindingRemove::Fn as KeybindingRemove,
+};
 
 /// Dispatches keybinding commands.
 ///
@@ -17,22 +17,21 @@ use serde_json::Value;
 /// - `keybinding:lookup`
 /// - `keybinding:getAll`
 pub async fn dispatch_keybinding(
-    runtime: &crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
 
-    command: &str,
+	command:&str,
 
-    arguments: Vec<Value>,
+	arguments:Vec<Value>,
 ) -> Result<Value, String> {
+	match command {
+		"keybinding:add" => KeybindingAdd(runtime.clone(), arguments).await,
 
-    match command {
-        "keybinding:add" => KeybindingAdd(runtime.clone(), arguments).await,
+		"keybinding:remove" => KeybindingRemove(runtime.clone(), arguments).await,
 
-        "keybinding:remove" => KeybindingRemove(runtime.clone(), arguments).await,
+		"keybinding:lookup" => KeybindingLookup(runtime.clone(), arguments).await,
 
-        "keybinding:lookup" => KeybindingLookup(runtime.clone(), arguments).await,
+		"keybinding:getAll" => KeybindingGetAll(runtime.clone()).await,
 
-        "keybinding:getAll" => KeybindingGetAll(runtime.clone()).await,
-
-        _ => Err(format!("Unknown keybinding command: {}", command)),
-    }
+		_ => Err(format!("Unknown keybinding command: {}", command)),
+	}
 }

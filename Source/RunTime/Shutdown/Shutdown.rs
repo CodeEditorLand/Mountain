@@ -8,7 +8,6 @@ use tauri::Emitter;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
-
 	pub async fn Shutdown(&self) {
 		dev_log!("lifecycle", "[ApplicationRunTime] Initiating graceful shutdown of services...");
 
@@ -16,13 +15,10 @@ impl ApplicationRunTime {
 			.Environment
 			.ApplicationHandle
 			.emit("sky://lifecycle/willShutdown", serde_json::json!({ "reason": "quit" }))
-
 		{
 			dev_log!(
 				"lifecycle",
-
 				"warn: [ApplicationRunTime] sky://lifecycle/willShutdown emit failed: {}",
-
 				Error
 			);
 		}
@@ -31,7 +27,6 @@ impl ApplicationRunTime {
 			Ok(()) => {
 				dev_log!(
 					"lifecycle",
-
 					"[ApplicationRunTime] Service shutdown tasks completed successfully."
 				)
 			},
@@ -39,9 +34,7 @@ impl ApplicationRunTime {
 			Err(Error) => {
 				dev_log!(
 					"lifecycle",
-
 					"error: [ApplicationRunTime] Service shutdown completed with errors: {}",
-
 					Error
 				)
 			},

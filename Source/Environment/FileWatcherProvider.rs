@@ -37,17 +37,12 @@ use CommonLibrary::{
 	FileSystem::FileWatcherProvider::{FileWatcherProvider, WatchEvent, WatchEventKind},
 	IPC::{IPCProvider::IPCProvider, SkyEvent::SkyEvent},
 };
-
 use async_trait::async_trait;
-
 use notify::{EventKind, RecommendedWatcher, RecursiveMode, Watcher};
-
 use serde_json::json;
-
 use tokio::sync::mpsc as TokioMPSC;
 
 use super::MountainEnvironment::MountainEnvironment;
-
 use crate::dev_log;
 
 /// Interval below which a second (path, kind) event for the same handle is
@@ -58,7 +53,6 @@ const DebounceWindow:Duration = Duration::from_millis(100);
 /// be kept alive for the lifetime of the registration; dropping it releases
 /// the OS resources.
 pub struct WatcherEntry {
-
 	Watcher:RecommendedWatcher,
 
 	LastSeen:HashMap<(PathBuf, &'static str), Instant>,
@@ -77,7 +71,6 @@ type DedupKey = (PathBuf, bool, Option<String>);
 /// event-forwarder task are singletons keyed on the MountainEnvironment
 /// handle. Access through `WatcherState::Get`.
 pub struct WatcherState {
-
 	pub Entries:Arc<StandardMutex<HashMap<String, WatcherEntry>>>,
 
 	pub EventSender:TokioMPSC::UnboundedSender<WatchEvent>,
@@ -101,7 +94,6 @@ pub struct WatcherState {
 }
 
 impl WatcherState {
-
 	/// Obtain (or create) the global WatcherState. The forwarder task is
 	/// spawned on first access. Must be called from within a tokio runtime.
 	pub fn Get(env:&MountainEnvironment) -> Arc<WatcherState> {
@@ -158,24 +150,18 @@ impl WatcherState {
 							if let Err(error) = ipc_provider
 								.SendNotificationToSideCar(
 									"cocoon-main".to_string(),
-
 									"$fileWatcher:event".to_string(),
-
 									payload.clone(),
 								)
 								.await
 							{
 								dev_log!(
 									"filewatcher",
-
 									"warn: [FileWatcherProvider] Failed to forward event handle={} kind={} path={:?}: \
 									 {:?}",
 									RecipientHandle,
-
 									Kind.AsString(),
-
 									Path,
-
 									error
 								);
 							}
@@ -190,13 +176,10 @@ impl WatcherState {
 							// listeners on the Sky side fire correctly.
 							if let Err(Error) =
 								env_clone.ApplicationHandle.emit(SkyEvent::VFSFileChange.AsStr(), &payload)
-
 							{
 								dev_log!(
 									"filewatcher",
-
 									"warn: [FileWatcherProvider] sky://vfs/fileChange emit failed: {}",
-
 									Error
 								);
 							}
@@ -211,7 +194,6 @@ impl WatcherState {
 }
 
 fn MapEventKind(raw:&EventKind) -> Option<WatchEventKind> {
-
 	match raw {
 		EventKind::Create(_) => Some(WatchEventKind::Create),
 
@@ -230,7 +212,6 @@ fn MapEventKind(raw:&EventKind) -> Option<WatchEventKind> {
 /// `{…,…}` alternation) - exactly what TypeScript-language-features and
 /// the other ship-time extensions rely on.
 fn CompileGlobToRegex(Pattern:&str) -> Option<regex::Regex> {
-
 	let mut Regex = String::with_capacity(Pattern.len() * 2 + 4);
 
 	// Case-insensitive on macOS + Windows where the OS is typically
@@ -305,7 +286,6 @@ fn CompileGlobToRegex(Pattern:&str) -> Option<regex::Regex> {
 
 #[async_trait]
 impl FileWatcherProvider for MountainEnvironment {
-
 	async fn RegisterWatcher(
 		&self,
 
@@ -329,9 +309,7 @@ impl FileWatcherProvider for MountainEnvironment {
 			if guard.contains_key(&Handle) {
 				dev_log!(
 					"filewatcher",
-
 					"[FileWatcherProvider] handle={} already registered; skipping duplicate",
-
 					Handle
 				);
 
@@ -376,15 +354,10 @@ impl FileWatcherProvider for MountainEnvironment {
 
 				dev_log!(
 					"filewatcher",
-
 					"[FileWatcherProvider] dedup hit; handle={} aliased to primary={} root={} pattern={:?}",
-
 					Handle,
-
 					PrimaryHandle,
-
 					Root.display(),
-
 					Pattern
 				);
 
@@ -522,15 +495,10 @@ impl FileWatcherProvider for MountainEnvironment {
 
 				dev_log!(
 					"filewatcher",
-
 					"[FileWatcherProvider] Registered watcher handle={} root={} recursive={} pattern={:?}",
-
 					Handle,
-
 					Root.display(),
-
 					IsRecursive,
-
 					Pattern
 				);
 
@@ -541,27 +509,18 @@ impl FileWatcherProvider for MountainEnvironment {
 				let ErrorString = error.to_string().to_lowercase();
 
 				let IsBenignAbsent = ErrorString.contains("no path was found")
-
 					|| ErrorString.contains("no such file or directory")
-
 					|| ErrorString.contains("entity not found")
-
 					|| ErrorString.contains("path not found")
-
 					|| ErrorString.contains("os error 2")
-
 					|| !Root.exists();
 
 				if IsBenignAbsent {
 					dev_log!(
 						"filewatcher",
-
 						"[FileWatcherProvider] watch path absent (deferred) handle={} root={} err={}",
-
 						Handle,
-
 						Root.display(),
-
 						error
 					);
 
@@ -579,15 +538,10 @@ impl FileWatcherProvider for MountainEnvironment {
 
 		dev_log!(
 			"filewatcher",
-
 			"[FileWatcherProvider] Registered watcher handle={} root={} recursive={} pattern={:?}",
-
 			Handle,
-
 			Root.display(),
-
 			IsRecursive,
-
 			Pattern
 		);
 
@@ -625,11 +579,8 @@ impl FileWatcherProvider for MountainEnvironment {
 
 			dev_log!(
 				"filewatcher",
-
 				"[FileWatcherProvider] Unregistered alias handle={} primary={}",
-
 				Handle,
-
 				PrimaryHandle
 			);
 

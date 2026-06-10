@@ -29,6 +29,8 @@ pub mod State;
 
 pub mod Terminals;
 
+pub mod Tasks;
+
 pub mod TreeViews;
 
 pub mod Webviews;

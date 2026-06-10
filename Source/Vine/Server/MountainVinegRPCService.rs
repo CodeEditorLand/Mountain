@@ -36,13 +36,9 @@
 use std::{collections::HashMap, sync::Arc};
 
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, Emitter};
-
 use tokio::sync::RwLock;
-
 use tonic::{Request, Response, Status};
-
 use ::Vine::Generated::{
 	CancelOperationRequest,
 	Empty,
@@ -74,7 +70,6 @@ mod ServiceConfig {
 /// validating requests, dispatching to appropriate handlers, and returning
 /// responses in the expected gRPC format.
 pub struct MountainVinegRPCService {
-
 	/// Tauri application handle for VS Code integration
 	ApplicationHandle:AppHandle,
 
@@ -89,7 +84,6 @@ pub struct MountainVinegRPCService {
 }
 
 impl MountainVinegRPCService {
-
 	/// Accessor for Tauri `AppHandle` - used by the per-wire-method atoms
 	/// in `Vine::Server::Notification::*` that need to emit
 	/// `sky://` / `cocoon:*` events downstream. Kept as a thin read so the
@@ -105,7 +99,6 @@ impl MountainVinegRPCService {
 }
 
 impl MountainVinegRPCService {
-
 	/// Creates a new instance of the Mountain gRPC service.
 	///
 	/// # Parameters
@@ -142,9 +135,7 @@ impl MountainVinegRPCService {
 
 		dev_log!(
 			"grpc",
-
 			"[MountainVinegRPCService] Registered operation {} for cancellation",
-
 			request_id
 		);
 
@@ -179,7 +170,6 @@ impl MountainVinegRPCService {
 		if request.method.len() > ServiceConfig::MAX_METHOD_NAME_LENGTH {
 			return Err(Status::invalid_argument(format!(
 				"Method name exceeds maximum length of {} characters",
-
 				ServiceConfig::MAX_METHOD_NAME_LENGTH
 			)));
 		}
@@ -212,11 +202,8 @@ impl MountainVinegRPCService {
 
 				return Self::CreateErrorResponse(
 					RequestIdentifier,
-
 					-32603,
-
 					"Failed to serialize response".to_string(),
-
 					None,
 				);
 			},
@@ -228,15 +215,12 @@ impl MountainVinegRPCService {
 
 #[tonic::async_trait]
 impl MountainService for MountainVinegRPCService {
-
 	type OpenChannelFromCocoonStream = std::pin::Pin<
 		Box<
 			dyn tonic::codegen::tokio_stream::Stream<Item = Result<::Vine::Generated::Envelope, tonic::Status>>
 				+ Send
 				+ 'static,
-
 		>,
-
 	>;
 
 	async fn open_channel_from_cocoon(
@@ -271,19 +255,14 @@ impl MountainService for MountainVinegRPCService {
 
 		dev_log!(
 			"grpc-verbose",
-
 			"[MountainVinegRPCService] recv id={} method={} size={}B",
-
 			RequestIdentifier,
-
 			MethodName,
-
 			RequestData.parameter.len()
 		);
 
 		let IsHotRpc = matches!(
 			MethodName.as_str(),
-
 			"$tree:register" | "tree.register" | "Configuration.Inspect" | "Command.Execute"
 		);
 
@@ -295,15 +274,10 @@ impl MountainService for MountainVinegRPCService {
 
 			dev_log!(
 				"rpc-latency",
-
 				"[LandFix:RPC] grpc-recv method={} id={} size={} t_ns={}",
-
 				MethodName,
-
 				RequestIdentifier,
-
 				RequestData.parameter.len(),
-
 				InstrumentRecvNs
 			);
 		}
@@ -313,11 +287,8 @@ impl MountainService for MountainVinegRPCService {
 
 			return Ok(Response::new(Self::CreateErrorResponse(
 				RequestIdentifier,
-
 				-32602,
-
 				status.message().to_string(),
-
 				None,
 			)));
 		}
@@ -336,13 +307,9 @@ impl MountainService for MountainVinegRPCService {
 
 		let DispatchResult = Track::SideCarRequest::DispatchSideCarRequest::DispatchSideCarRequest(
 			self.ApplicationHandle.clone(),
-
 			self.RunTime.clone(),
-
 			"cocoon-main",
-
 			MethodName.clone(),
-
 			ParametersValue,
 		)
 		.await;
@@ -352,22 +319,16 @@ impl MountainService for MountainVinegRPCService {
 				if IsHotRpc {
 					dev_log!(
 						"rpc-latency",
-
 						"[LandFix:RPC] dispatched method={} id={} elapsed={}ms",
-
 						MethodName,
-
 						RequestIdentifier,
-
 						ReceiveInstant.elapsed().as_millis()
 					);
 				}
 
 				dev_log!(
 					"grpc-verbose",
-
 					"[MountainVinegRPCService] Request [ID: {}] completed successfully",
-
 					RequestIdentifier
 				);
 
@@ -380,7 +341,6 @@ impl MountainService for MountainVinegRPCService {
 				let LooksLike404 = (MethodName == "FileSystem.ReadFile"
 					|| MethodName == "FileSystem.Stat"
 					|| MethodName == "FileSystem.ReadDirectory")
-
 					&& (LowerError.contains("resource not found")
 						|| LowerError.contains("not found")
 						|| LowerError.contains("enoent")
@@ -394,23 +354,16 @@ impl MountainService for MountainVinegRPCService {
 				if LooksLike404 {
 					dev_log!(
 						"grpc-verbose",
-
 						"[LandFix:MountainVinegRPC] Request [ID: {}] {} 404 (benign): {}",
-
 						RequestIdentifier,
-
 						MethodName,
-
 						ErrorString
 					);
 				} else {
 					dev_log!(
 						"grpc",
-
 						"error: [MountainVinegRPCService] Request [ID: {}] failed: {}",
-
 						RequestIdentifier,
-
 						ErrorString
 					);
 				}
@@ -419,11 +372,8 @@ impl MountainService for MountainVinegRPCService {
 
 				Ok(Response::new(Self::CreateErrorResponse(
 					RequestIdentifier,
-
 					ErrorCode,
-
 					ErrorString,
-
 					None,
 				)))
 			},
@@ -437,16 +387,13 @@ impl MountainService for MountainVinegRPCService {
 
 		dev_log!(
 			"grpc-verbose",
-
 			"[MountainVinegRPCService] Received gRPC Notification: Method='{}'",
-
 			MethodName
 		);
 
 		if MethodName.is_empty() {
 			dev_log!(
 				"grpc",
-
 				"warn: [MountainVinegRPCService] Received notification with empty method name"
 			);
 
@@ -463,13 +410,9 @@ impl MountainService for MountainVinegRPCService {
 			"extensionHostMessage" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"cocoon:extensionHostReply",
-
 					&Parameter,
-
 					"",
-
 					"",
 				);
 			},
@@ -477,13 +420,9 @@ impl MountainService for MountainVinegRPCService {
 			"ExtensionActivated" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"cocoon:extensionActivated",
-
 					&Parameter,
-
 					"",
-
 					"",
 				);
 			},
@@ -491,9 +430,7 @@ impl MountainService for MountainVinegRPCService {
 			"ExtensionDeactivated" => {
 				dev_log!(
 					"grpc",
-
 					"[Extension] deactivated id={}",
-
 					Parameter.get("extensionId").and_then(Value::as_str).unwrap_or("?")
 				);
 			},
@@ -501,9 +438,7 @@ impl MountainService for MountainVinegRPCService {
 			"WebviewReady" => {
 				dev_log!(
 					"grpc",
-
 					"[Webview] ready handle={}",
-
 					Parameter.get("handle").and_then(Value::as_str).unwrap_or("?")
 				);
 			},
@@ -523,41 +458,23 @@ impl MountainService for MountainVinegRPCService {
 			"languages.setDocumentLanguage" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://languages/setDocumentLanguage",
-
 					&Parameter,
-
 					"grpc",
-
 					"",
 				);
 			},
 
 			"workspace.applyEdit" => {
-				::Vine::Server::Notification::Support::RelayToSky::Fn(
-					self,
-
-					"sky://workspace/applyEdit",
-
-					&Parameter,
-
-					"",
-
-					"",
-				);
+				::Vine::Server::Notification::WorkspaceApplyEdit::WorkspaceApplyEdit(self, &Parameter).await;
 			},
 
 			"window.showTextDocument" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://window/showTextDocument",
-
 					&Parameter,
-
 					"",
-
 					"",
 				);
 			},
@@ -582,13 +499,9 @@ impl MountainService for MountainVinegRPCService {
 			"tree.refresh" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://tree-view/refresh",
-
 					&Parameter,
-
 					"grpc",
-
 					"[Tree] refresh",
 				);
 			},
@@ -602,9 +515,7 @@ impl MountainService for MountainVinegRPCService {
 			| "terminal.envCollection.setDescription" => {
 				super::Notification::TerminalEnvCollection::TerminalEnvCollectionDispatch(
 					self,
-
 					&MethodName,
-
 					&Parameter,
 				)
 				.await;
@@ -613,9 +524,7 @@ impl MountainService for MountainVinegRPCService {
 			"window.createTextEditorDecorationType" | "window.disposeTextEditorDecorationType" => {
 				::Vine::Server::Notification::DecorationTypeLifecycle::DecorationTypeLifecycle(
 					self,
-
 					&MethodName,
-
 					&Parameter,
 				)
 				.await;
@@ -658,9 +567,7 @@ impl MountainService for MountainVinegRPCService {
 			"unregister_authentication_provider" => {
 				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
 					self,
-
 					&Parameter,
-
 					"authentication",
 				);
 			},
@@ -668,9 +575,7 @@ impl MountainService for MountainVinegRPCService {
 			"unregister_debug_adapter" => {
 				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
 					self,
-
 					&Parameter,
-
 					"debug_adapter",
 				);
 			},
@@ -678,9 +583,7 @@ impl MountainService for MountainVinegRPCService {
 			"unregister_debug_configuration_provider" => {
 				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
 					self,
-
 					&Parameter,
-
 					"debug_configuration",
 				);
 			},
@@ -688,9 +591,7 @@ impl MountainService for MountainVinegRPCService {
 			"unregister_external_uri_opener" => {
 				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
 					self,
-
 					&Parameter,
-
 					"external_uri_opener",
 				);
 			},
@@ -698,9 +599,7 @@ impl MountainService for MountainVinegRPCService {
 			"unregister_remote_authority_resolver" => {
 				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
 					self,
-
 					&Parameter,
-
 					"remote_authority_resolver",
 				);
 			},
@@ -712,17 +611,13 @@ impl MountainService for MountainVinegRPCService {
 			"unregister_file_system_provider" => {
 				dev_log!(
 					"provider-register",
-
 					"[ProviderUnregister] file_system scheme={}",
-
 					Parameter.get("scheme").and_then(Value::as_str).unwrap_or("")
 				);
 
 				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
 					self,
-
 					&Parameter,
-
 					"file_system",
 				);
 			},
@@ -734,17 +629,13 @@ impl MountainService for MountainVinegRPCService {
 			"unregister_uri_handler" => {
 				dev_log!(
 					"provider-register",
-
 					"[ProviderUnregister] uri_handler scheme={}",
-
 					Parameter.get("scheme").and_then(Value::as_str).unwrap_or("")
 				);
 
 				::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(
 					self,
-
 					&Parameter,
-
 					"uri_handler",
 				);
 			},
@@ -765,13 +656,9 @@ impl MountainService for MountainVinegRPCService {
 			"progress.update" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://notification/progress-update",
-
 					&Parameter,
-
 					"grpc",
-
 					"[Progress] update",
 				);
 			},
@@ -779,13 +666,9 @@ impl MountainService for MountainVinegRPCService {
 			"progress.complete" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://progress/complete",
-
 					&Parameter,
-
 					"grpc",
-
 					"[Progress] complete",
 				);
 			},
@@ -801,13 +684,9 @@ impl MountainService for MountainVinegRPCService {
 			"output.create" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://output/create",
-
 					&Parameter,
-
 					"grpc",
-
 					"[Output] create",
 				);
 			},
@@ -815,13 +694,9 @@ impl MountainService for MountainVinegRPCService {
 			"output.append" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://output/append",
-
 					&Parameter,
-
 					"grpc",
-
 					"[Output] append",
 				);
 			},
@@ -833,13 +708,9 @@ impl MountainService for MountainVinegRPCService {
 			"output.clear" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://output/clear",
-
 					&Parameter,
-
 					"grpc",
-
 					"[Output] clear",
 				);
 			},
@@ -847,13 +718,9 @@ impl MountainService for MountainVinegRPCService {
 			"output.show" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://output/show",
-
 					&Parameter,
-
 					"grpc",
-
 					"[Output] show",
 				);
 			},
@@ -861,13 +728,9 @@ impl MountainService for MountainVinegRPCService {
 			"output.dispose" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://output/dispose",
-
 					&Parameter,
-
 					"grpc",
-
 					"[Output] dispose",
 				);
 			},
@@ -879,13 +742,9 @@ impl MountainService for MountainVinegRPCService {
 			"outputChannel.create" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://output/create",
-
 					&Parameter,
-
 					"output-verbose",
-
 					"[OutputChannel] create",
 				);
 			},
@@ -897,13 +756,9 @@ impl MountainService for MountainVinegRPCService {
 			"outputChannel.clear" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://output/clear",
-
 					&Parameter,
-
 					"grpc",
-
 					"[OutputChannel] clear",
 				);
 			},
@@ -911,13 +766,9 @@ impl MountainService for MountainVinegRPCService {
 			"outputChannel.replace" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://output/replace",
-
 					&Parameter,
-
 					"grpc",
-
 					"[OutputChannel] replace",
 				);
 			},
@@ -925,13 +776,9 @@ impl MountainService for MountainVinegRPCService {
 			"outputChannel.show" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://output/show",
-
 					&Parameter,
-
 					"grpc",
-
 					"[OutputChannel] show",
 				);
 			},
@@ -943,13 +790,9 @@ impl MountainService for MountainVinegRPCService {
 			"outputChannel.dispose" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
-
 					"sky://output/dispose",
-
 					&Parameter,
-
 					"grpc",
-
 					"[OutputChannel] dispose",
 				);
 			},
@@ -1026,9 +869,7 @@ impl MountainService for MountainVinegRPCService {
 			| "register_workspace_symbol_provider" => {
 				let _ = ::Vine::Server::Notification::RegisterLanguageProvider::RegisterLanguageProvider(
 					self,
-
 					&MethodName,
-
 					&Parameter,
 				)
 				.await;
@@ -1047,15 +888,10 @@ impl MountainService for MountainVinegRPCService {
 
 				dev_log!(
 					"notif-drop",
-
 					"[NotifDrop] method={} payload_bytes={} preview={:?} (falls through to cocoon:{} event)",
-
 					MethodName,
-
 					NotificationData.parameter.len(),
-
 					PayloadPreview,
-
 					MethodName
 				);
 
@@ -1075,11 +911,8 @@ impl MountainService for MountainVinegRPCService {
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
 					dev_log!(
 						"grpc",
-
 						"warn: [MountainVinegRPCService] Failed to emit {}: {}",
-
 						EventName,
-
 						Error
 					);
 				}
@@ -1096,9 +929,7 @@ impl MountainService for MountainVinegRPCService {
 
 		dev_log!(
 			"grpc",
-
 			"[MountainVinegRPCService] Received CancelOperation request for RequestID: {}",
-
 			RequestIdentifierToCancel
 		);
 
@@ -1116,9 +947,7 @@ impl MountainService for MountainVinegRPCService {
 
 				dev_log!(
 					"grpc",
-
 					"[MountainVinegRPCService] Successfully initiated cancellation for operation {}",
-
 					RequestIdentifierToCancel
 				);
 
@@ -1128,7 +957,6 @@ impl MountainService for MountainVinegRPCService {
 			None => {
 				dev_log!(
 					"grpc",
-
 					"warn: [MountainVinegRPCService] Cannot cancel operation {}: operation not found (may have \
 					 already completed)",
 					RequestIdentifierToCancel

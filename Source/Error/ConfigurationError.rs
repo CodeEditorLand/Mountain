@@ -13,7 +13,6 @@ use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 /// Configuration operation error types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ConfigurationError {
-
 	/// Configuration key not found.
 	KeyNotFound { context:ErrorContext, key:String, section:Option<String> },
 
@@ -40,7 +39,6 @@ pub enum ConfigurationError {
 }
 
 impl ConfigurationError {
-
 	/// Get the error context.
 	pub fn context(&self) -> &ErrorContext {
 		match self {
@@ -92,7 +90,6 @@ impl ConfigurationError {
 		Self::InvalidValue {
 			context:ErrorContext::new(format!(
 				"Invalid value for key '{}': expected type '{}'",
-
 				key_str, expected_type_str
 			))
 			.with_kind(ErrorKind::Configuration)
@@ -154,13 +151,11 @@ impl ConfigurationError {
 }
 
 impl fmt::Display for ConfigurationError {
-
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{}", self.context()) }
 }
 
 impl StdError for ConfigurationError {}
 
 impl From<ConfigurationError> for MountainError {
-
 	fn from(err:ConfigurationError) -> Self { MountainError::new(err.context().clone()).with_source(err.to_string()) }
 }

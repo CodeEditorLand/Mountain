@@ -1,7 +1,6 @@
 //! Returns the userdata base directory, falling back to platform defaults.
 
 pub fn Fn() -> String {
-
 	if let Some(Dir) = super::BASE_DIR.get() {
 		return Dir.clone();
 	}

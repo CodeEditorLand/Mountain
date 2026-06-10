@@ -6,7 +6,6 @@ use CommonLibrary::Error::CommonError::CommonError;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
-
 	pub async fn FlushPendingOperations(&self) {
 		dev_log!("lifecycle", "[ApplicationRunTime] Flushing pending operations...");
 
@@ -19,9 +18,7 @@ impl ApplicationRunTime {
 			.unwrap_or_else(|E| {
 				dev_log!(
 					"lifecycle",
-
 					"error: [ApplicationRunTime] Failed to lock pending UI requests: {}",
-
 					E
 				);
 

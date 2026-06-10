@@ -7,7 +7,6 @@
 use serde_json::{Value, json};
 
 pub async fn Fn() -> Result<Value, String> {
-
 	#[cfg(unix)]
 	{
 		let Shell = std::env::var("SHELL").unwrap_or_else(|_| {
@@ -35,7 +34,6 @@ pub async fn Fn() -> Result<Value, String> {
 
 		Ok(json!(format!(
 			"{}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-
 			SystemRoot
 		)))
 	}

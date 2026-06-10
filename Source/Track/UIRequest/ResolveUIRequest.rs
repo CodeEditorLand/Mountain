@@ -52,7 +52,6 @@
 use std::sync::Arc;
 
 use serde_json::Value;
-
 use tauri::{State, command};
 
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
@@ -67,7 +66,6 @@ pub async fn ResolveUIRequest(
 
 	Result:Value,
 ) -> Result<(), String> {
-
 	dev_log!("ipc", "[Track/UIRequest] Resolving UI request ID: {}", RequestID);
 
 	let Sender = {
@@ -87,9 +85,7 @@ pub async fn ResolveUIRequest(
 	} else {
 		dev_log!(
 			"ipc",
-
 			"warn: [Track/UIRequest] Received a result for an unknown or timed-out UI request ID: {}",
-
 			RequestID
 		);
 	}

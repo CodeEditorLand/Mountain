@@ -1,19 +1,19 @@
 //! Navigation command dispatcher.
 
-use crate::Navigation::{
-    HistoryCanGoBack::Fn as HistoryCanGoBack,
-    HistoryCanGoForward::Fn as HistoryCanGoForward,
-    HistoryClear::Fn as HistoryClear,
-    HistoryGetStack::Fn as HistoryGetStack,
-    HistoryGoBack::Fn as HistoryGoBack,
-    HistoryGoForward::Fn as HistoryGoForward,
-    HistoryPush::Fn as HistoryPush,
-    LabelGetBase::Fn as LabelGetBase,
-    LabelGetURI::Fn as LabelGetURI,
-    LabelGetWorkspace::Fn as LabelGetWorkspace,
-};
-
 use serde_json::Value;
+
+use crate::Navigation::{
+	HistoryCanGoBack::Fn as HistoryCanGoBack,
+	HistoryCanGoForward::Fn as HistoryCanGoForward,
+	HistoryClear::Fn as HistoryClear,
+	HistoryGetStack::Fn as HistoryGetStack,
+	HistoryGoBack::Fn as HistoryGoBack,
+	HistoryGoForward::Fn as HistoryGoForward,
+	HistoryPush::Fn as HistoryPush,
+	LabelGetBase::Fn as LabelGetBase,
+	LabelGetURI::Fn as LabelGetURI,
+	LabelGetWorkspace::Fn as LabelGetWorkspace,
+};
 
 /// Dispatches navigation commands.
 ///
@@ -29,34 +29,33 @@ use serde_json::Value;
 /// - `label:getWorkspace`
 /// - `label:getBase`
 pub async fn dispatch_navigation(
-    runtime: &crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
 
-    command: &str,
+	command:&str,
 
-    arguments: Vec<Value>,
+	arguments:Vec<Value>,
 ) -> Result<Value, String> {
+	match command {
+		"history:goBack" => HistoryGoBack(runtime.clone()).await,
 
-    match command {
-        "history:goBack" => HistoryGoBack(runtime.clone()).await,
+		"history:goForward" => HistoryGoForward(runtime.clone()).await,
 
-        "history:goForward" => HistoryGoForward(runtime.clone()).await,
+		"history:canGoBack" => HistoryCanGoBack(runtime.clone()).await,
 
-        "history:canGoBack" => HistoryCanGoBack(runtime.clone()).await,
+		"history:canGoForward" => HistoryCanGoForward(runtime.clone()).await,
 
-        "history:canGoForward" => HistoryCanGoForward(runtime.clone()).await,
+		"history:push" => HistoryPush(runtime.clone(), arguments).await,
 
-        "history:push" => HistoryPush(runtime.clone(), arguments).await,
+		"history:clear" => HistoryClear(runtime.clone()).await,
 
-        "history:clear" => HistoryClear(runtime.clone()).await,
+		"history:getStack" => HistoryGetStack(runtime.clone()).await,
 
-        "history:getStack" => HistoryGetStack(runtime.clone()).await,
+		"label:getUri" => LabelGetURI(runtime.clone(), arguments).await,
 
-        "label:getUri" => LabelGetURI(runtime.clone(), arguments).await,
+		"label:getWorkspace" => LabelGetWorkspace(runtime.clone()).await,
 
-        "label:getWorkspace" => LabelGetWorkspace(runtime.clone()).await,
+		"label:getBase" => LabelGetBase(arguments).await,
 
-        "label:getBase" => LabelGetBase(arguments).await,
-
-        _ => Err(format!("Unknown navigation command: {}", command)),
-    }
+		_ => Err(format!("Unknown navigation command: {}", command)),
+	}
 }

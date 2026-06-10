@@ -14,7 +14,6 @@ use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 /// File system operation error types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FileSystemError {
-
 	/// File not found.
 	FileNotFound { context:ErrorContext, path:PathBuf },
 
@@ -41,7 +40,6 @@ pub enum FileSystemError {
 }
 
 impl FileSystemError {
-
 	/// Get the error context.
 	pub fn context(&self) -> &ErrorContext {
 		match self {
@@ -141,7 +139,6 @@ impl FileSystemError {
 }
 
 impl fmt::Display for FileSystemError {
-
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.context())?;
 
@@ -156,11 +153,9 @@ impl fmt::Display for FileSystemError {
 impl StdError for FileSystemError {}
 
 impl From<FileSystemError> for MountainError {
-
 	fn from(err:FileSystemError) -> Self { MountainError::new(err.context().clone()).with_source(err.to_string()) }
 }
 
 impl From<std::io::Error> for FileSystemError {
-
 	fn from(err:std::io::Error) -> Self { Self::io_error("I/O operation", None, err.to_string()) }
 }

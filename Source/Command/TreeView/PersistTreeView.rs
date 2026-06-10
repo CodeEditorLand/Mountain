@@ -10,7 +10,6 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, State, Wry, command};
 
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
@@ -23,7 +22,6 @@ pub async fn PersistTreeView(
 
 	_ViewId:String,
 ) -> Result<Value, String> {
-
 	dev_log!("commands", "warn: PersistTreeView not implemented");
 
 	Ok(json!({ "success": false, "error": "PersistTreeViewState method not implemented" }))

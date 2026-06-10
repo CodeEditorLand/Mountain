@@ -35,11 +35,8 @@ use CommonLibrary::{
 	IPC::SkyEvent::SkyEvent,
 	UserInterface::{DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO, ShowSaveDialog::ShowSaveDialog},
 };
-
 use serde_json::json;
-
 use tauri::{Emitter, Manager};
-
 use url::Url;
 
 use crate::{
@@ -54,7 +51,6 @@ pub(super) async fn save_document(
 
 	uri:Url,
 ) -> Result<bool, CommonError> {
-
 	dev_log!("model", "[DocumentProvider] Saving document: {}", uri);
 
 	let (content_bytes, file_path) = {
@@ -65,9 +61,7 @@ pub(super) async fn save_document(
 			if uri.scheme() != "file" {
 				dev_log!(
 					"model",
-
 					"[DocumentProvider] Saving non-file URI '{}' to temporary location",
-
 					uri
 				);
 			}
@@ -76,7 +70,6 @@ pub(super) async fn save_document(
 
 			(
 				document.GetText().into_bytes(),
-
 				uri.to_file_path().map_err(|_| {
 					CommonError::InvalidArgument {
 						ArgumentName:"URI".into(),
@@ -96,13 +89,10 @@ pub(super) async fn save_document(
 	if let Err(error) = environment
 		.ApplicationHandle
 		.emit(SkyEvent::DocumentsSaved.AsStr(), json!({ "uri": uri.to_string() }))
-
 	{
 		dev_log!(
 			"model",
-
 			"error: [DocumentProvider] Failed to emit document saved event: {}",
-
 			error
 		);
 	}
@@ -120,7 +110,6 @@ pub(super) async fn save_document_as(
 
 	new_target_uri:Option<Url>,
 ) -> Result<Option<Url>, CommonError> {
-
 	dev_log!("model", "[DocumentProvider] Saving document as: {}", original_uri);
 
 	let runtime = environment.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
@@ -174,14 +163,11 @@ pub(super) async fn save_document_as(
 
 	if let Err(error) = environment.ApplicationHandle.emit(
 		SkyEvent::DocumentsRenamed.AsStr(),
-
 		json!({ "oldUri": original_uri.to_string(), "newUri": new_uri.to_string() }),
 	) {
 		dev_log!(
 			"model",
-
 			"error: [DocumentProvider] Failed to emit document renamed event: {}",
-
 			error
 		);
 	}
@@ -195,12 +181,9 @@ pub(super) async fn save_all_documents(
 
 	include_untitled:bool,
 ) -> Result<Vec<bool>, CommonError> {
-
 	dev_log!(
 		"model",
-
 		"[DocumentProvider] SaveAllDocuments called (IncludeUntitled: {})",
-
 		include_untitled
 	);
 

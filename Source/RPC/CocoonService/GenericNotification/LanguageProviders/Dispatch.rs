@@ -2,11 +2,13 @@
 //! Returns `true` if recognised.
 
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
+
 use serde_json::Value;
 
 use crate::RPC::CocoonService::CocoonServiceImpl;
 
 pub fn Fn(Method:&str, Params:Value, Service:&CocoonServiceImpl) -> bool {
+
 	let ProvType = match Method {
 		"register_hover_provider" => ProviderType::Hover,
 

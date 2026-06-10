@@ -1,7 +1,8 @@
 //! Domain dispatchers - each module handles a group of related IPC commands.
 //! The main `mountain_ipc_invoke` delegates to these dispatchers.
 //!
-//! Each dispatcher receives: `RunTime`, `ApplicationHandle`, `command`, `Arguments`.
+//! Each dispatcher receives: `RunTime`, `ApplicationHandle`, `command`,
+//! `Arguments`.
 
 pub mod ConfigurationDispatcher;
 

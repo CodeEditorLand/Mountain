@@ -124,11 +124,8 @@ use CommonLibrary::{
 	UserInterface::ShowOpenDialog::ShowOpenDialog,
 	Workspace::ApplyWorkspaceEdit::ApplyWorkspaceEdit,
 };
-
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, WebviewWindow, Wry};
-
 use url::Url;
 
 use crate::{
@@ -151,7 +148,6 @@ fn CommandHelloWorld(
 
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 	Box::pin(async move {
 		dev_log!("commands", "[Native Command] Hello from Mountain!");
 
@@ -169,7 +165,6 @@ fn CommandOpenFile(
 
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 	Box::pin(async move {
 		dev_log!("commands", "[Native Command] Executing Open File...");
 
@@ -200,7 +195,6 @@ fn CommandFormatDocument(
 
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 	Box::pin(async move {
 		dev_log!("commands", "[Native Command] Executing Format Document...");
 
@@ -237,7 +231,6 @@ fn CommandFormatDocument(
 			let WorkspaceEdit = WorkspaceEditDTO {
 				Edits:vec![(
 					serde_json::to_value(&URI).map_err(|Error| Error.to_string())?,
-
 					Edits
 						.into_iter()
 						.map(serde_json::to_value)
@@ -271,7 +264,6 @@ fn CommandSaveDocument(
 
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 	Box::pin(async move {
 		dev_log!("commands", "[Native Command] Executing Save Document...");
 
@@ -308,7 +300,6 @@ fn CommandCloseDocument(
 
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 	Box::pin(async move {
 		dev_log!("commands", "[Native Command] Executing Close Document...");
 
@@ -349,7 +340,6 @@ fn CommandSetContext(
 
 	Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 	Box::pin(async move {
 		// setContext fires on every UI state change (focus, view toggle,
 		// gitlens mode, SCM repo change). ~130 calls per session. Route
@@ -375,7 +365,6 @@ fn CommandOpenWalkthrough(
 
 	Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 	Box::pin(async move {
 		dev_log!("commands", "[Native Command] openWalkthrough (no-op): {}", Argument);
 
@@ -393,7 +382,6 @@ fn CommandReloadWindow(
 
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 	Box::pin(async move {
 		dev_log!("commands", "[Native Command] Executing Reload Window...");
 
@@ -422,7 +410,6 @@ fn CommandVscodeOpen(
 
 	Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 	Box::pin(async move {
 		use tauri::Emitter;
 
@@ -447,9 +434,7 @@ fn CommandVscodeOpen(
 				if let Some(External) = Object.get("external").and_then(Value::as_str) {
 					External.to_string()
 				} else if let Some(Scheme) = Object.get("scheme").and_then(Value::as_str)
-
 					&& !Scheme.is_empty()
-
 				{
 					let Authority = Object.get("authority").and_then(Value::as_str).unwrap_or("");
 
@@ -500,9 +485,7 @@ fn CommandVscodeOpen(
 			if let Err(Error) = ApplicationHandle.emit("sky://window/showTextDocument", json!({ "uri": UriString })) {
 				dev_log!(
 					"commands",
-
 					"warn: [vscode.open] sky://window/showTextDocument emit failed: {}",
-
 					Error
 				);
 			}
@@ -529,7 +512,6 @@ fn CommandVscodeOpen(
 
 /// Validates command parameters before execution.
 fn ValidateCommandParameters(CommandName:&str, Arguments:&Value) -> Result<(), String> {
-
 	match CommandName {
 		"mountain.openFile" | "workbench.action.files.openFile" => {
 			// No specific validation needed for open file
@@ -553,7 +535,6 @@ pub fn RegisterNativeCommands(
 
 	ApplicationState:&Arc<ApplicationState>,
 ) -> Result<(), CommonError> {
-
 	// --- Command Registration ---
 	let mut CommandRegistry = ApplicationState.Extension.Registry.CommandRegistry.lock();
 
@@ -566,31 +547,26 @@ pub fn RegisterNativeCommands(
 
 	CommandRegistry.insert(
 		"workbench.action.files.openFile".to_string(),
-
 		CommandHandler::Native(CommandOpenFile),
 	);
 
 	CommandRegistry.insert(
 		"editor.action.formatDocument".to_string(),
-
 		CommandHandler::Native(CommandFormatDocument),
 	);
 
 	CommandRegistry.insert(
 		"workbench.action.files.save".to_string(),
-
 		CommandHandler::Native(CommandSaveDocument),
 	);
 
 	CommandRegistry.insert(
 		"workbench.action.closeActiveEditor".to_string(),
-
 		CommandHandler::Native(CommandCloseDocument),
 	);
 
 	CommandRegistry.insert(
 		"workbench.action.reloadWindow".to_string(),
-
 		CommandHandler::Native(CommandReloadWindow),
 	);
 
@@ -614,13 +590,11 @@ pub fn RegisterNativeCommands(
 	// extension activation doesn't surface "command not found" errors.
 	CommandRegistry.insert(
 		"workbench.action.openWalkthrough".to_string(),
-
 		CommandHandler::Native(CommandOpenWalkthrough),
 	);
 
 	CommandRegistry.insert(
 		"claude-vscode.openWalkthrough".to_string(),
-
 		CommandHandler::Native(CommandOpenWalkthrough),
 	);
 
@@ -649,7 +623,6 @@ pub fn RegisterNativeCommands(
 
 	TreeViewRegistry.insert(
 		ExplorerViewID.clone(),
-
 		TreeViewStateDTO {
 			ViewIdentifier:ExplorerViewID,
 
@@ -676,9 +649,7 @@ pub fn RegisterNativeCommands(
 
 	dev_log!(
 		"commands",
-
 		"[Bootstrap] {} native tree view providers registered.",
-
 		TreeViewRegistry.len()
 	);
 

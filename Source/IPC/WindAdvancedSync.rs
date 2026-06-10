@@ -289,11 +289,6 @@ use crate::{
 	dev_log,
 };
 
-// TEMPORARY: MountainIPC module not yet implemented
-// This import is needed for full document synchronization with Mountain
-// backend. TODO: Create MountainIPC module and implement document operations.
-// // use crate::IPC::MountainIPC::MountainIPC;
-
 /// Synchronization status
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct SyncStatus {

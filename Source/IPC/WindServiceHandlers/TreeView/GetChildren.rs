@@ -12,7 +12,6 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
-
 use tauri::AppHandle;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
@@ -24,7 +23,6 @@ pub async fn Fn(
 
 	Arguments:Vec<Value>,
 ) -> Result<Value, String> {
-
 	let ViewId = Arguments
 		.first()
 		.and_then(|V| V.get("viewId").or_else(|| V.get(0)))
@@ -41,11 +39,8 @@ pub async fn Fn(
 
 	crate::dev_log!(
 		"tree-view",
-
 		"[TreeView] invoke:getChildren view={} parent={}",
-
 		ViewId,
-
 		ItemHandle
 	);
 
@@ -67,11 +62,8 @@ pub async fn Fn(
 
 	match ::Vine::Client::SendRequest::Fn(
 		"cocoon-main",
-
 		"$provideTreeChildren".to_string(),
-
 		Parameters,
-
 		// 15000 ms: warm tree calls take 1-50 ms but cold scans can
 		// blow well past 5 s on first activation (`npm` walks every
 		// `package.json` in the workspace; `vscode.git` enumerates
@@ -101,12 +93,9 @@ pub async fn Fn(
 			// nodes from a misbehaving extension.
 			crate::IPC::DevLog::DebugOnce::Fn(
 				"tree-view",
-
 				&format!("get-children-error:{}", ViewId),
-
 				&format!(
 					"[TreeView] invoke:getChildren error view={} err={:?} (further occurrences silenced)",
-
 					ViewId, Error
 				),
 			);

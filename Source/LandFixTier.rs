@@ -40,46 +40,28 @@ use crate::dev_log;
 /// `Binary::Main::Entry::Fn`, after the logging infrastructure is ready
 /// and before the Tokio runtime spawns any tasks.
 pub fn LogResolvedTiers() {
-
 	// Build-baked tiers use env!() - values are baked from .env.Land at build time.
 	dev_log!(
 		"lifecycle",
-
 		"[LandFix:Tier] Mountain tiers: RemoteProcedureCall={} HTTPProxy={} Logger={} FileSystem={} FindFiles={} \
 		 Glob={} FileWatcher={} SchemeAssets={} Configuration={} Diagnostics={} Clipboard={} OpenExternal={} \
 		 DocumentMirror={} ExtensionActivation={} ExtensionScan={} ModuleCache={} Telemetry={}",
 		env!("TierRemoteProcedureCall"),
-
 		env!("TierHTTPProxy"),
-
 		env!("TierLogger"),
-
 		env!("TierFileSystem"),
-
 		env!("TierFindFiles"),
-
 		env!("TierGlob"),
-
 		env!("TierFileWatcher"),
-
 		env!("TierSchemeAssets"),
-
 		env!("TierConfiguration"),
-
 		env!("TierDiagnostics"),
-
 		env!("TierClipboard"),
-
 		env!("TierOpenExternal"),
-
 		env!("TierDocumentMirror"),
-
 		env!("TierExtensionActivation"),
-
 		env!("TierExtensionScan"),
-
 		env!("TierModuleCache"),
-
 		env!("TierTelemetry"),
 	);
 
@@ -127,42 +109,25 @@ pub fn LogResolvedTiers() {
 
 	dev_log!(
 		"lifecycle",
-
 		"[LandFix:Tier] Runtime: IPC={} Terminal={} SCM={} Debug={} LanguageFeatures={} Search={} OutputChannel={} \
 		 NativeHost={} TreeView={} Storage={} Model={} Tasks={} Auth={} Encryption={} ExtensionHost={} WebSocket={} \
 		 CommandEventBroadcast={}",
 		IPC,
-
 		Terminal,
-
 		SCM,
-
 		Debug,
-
 		LanguageFeatures,
-
 		Search,
-
 		OutputChannel,
-
 		NativeHost,
-
 		TreeView,
-
 		Storage,
-
 		Model,
-
 		Tasks,
-
 		Auth,
-
 		Encryption,
-
 		ExtensionHost,
-
 		WebSocket,
-
 		CommandEventBroadcast,
 	);
 }

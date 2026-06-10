@@ -9,15 +9,11 @@ use CommonLibrary::{
 		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	},
 };
-
 use serde_json::Value;
-
 use tauri::{AppHandle, Wry};
-
 use url::Url;
 
 use super::{InvokeProvider::invoke_provider, Validation::validate_language_feature_request};
-
 use crate::dev_log;
 
 /// Implementation of document highlights command - called by the command
@@ -29,14 +25,10 @@ pub(super) async fn provide_document_highlights_impl(
 
 	position:Value,
 ) -> Result<Value, String> {
-
 	dev_log!(
 		"commands",
-
 		"[Language Feature] Providing document highlights for: {} at {:?}",
-
 		uri,
-
 		position
 	);
 

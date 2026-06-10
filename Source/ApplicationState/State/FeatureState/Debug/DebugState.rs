@@ -85,6 +85,41 @@ pub struct DebugSessionEntry {
 	pub ChildPid:Option<u32>,
 }
 
+/// A single breakpoint stored in Mountain's debug state. Mirrors the
+/// shape VS Code's `debug:addBreakpoints` IPC argument carries.
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct BreakpointEntry {
+	/// Opaque identifier assigned by VS Code (a UUID string).
+	pub id:String,
+
+	/// Breakpoint kind: `"source"`, `"function"`, `"data"`, etc.
+	#[serde(default)]
+	pub kind:String,
+
+	/// Source URI string (present for source breakpoints).
+	#[serde(default)]
+	pub uri:String,
+
+	/// 1-based line number (present for source breakpoints).
+	#[serde(default)]
+	pub line:u64,
+
+	/// 1-based column (optional, source breakpoints).
+	#[serde(default)]
+	pub column:Option<u64>,
+
+	/// Whether the breakpoint is currently enabled.
+	#[serde(default = "default_true")]
+	pub enabled:bool,
+
+	/// Raw JSON value of the full breakpoint payload, preserved so
+	/// `debug:getBreakpoints` can round-trip the original shape.
+	#[serde(skip)]
+	pub raw:serde_json::Value,
+}
+
+fn default_true() -> bool { true }
+
 /// Debug state containing debug provider registrations.
 #[derive(Clone)]
 pub struct DebugState {
@@ -100,6 +135,12 @@ pub struct DebugState {
 	/// or when the adapter exits. `SendCommand` reads this map to find
 	/// the writer for the targeted session.
 	pub DebugSessions:Arc<Mutex<HashMap<String, DebugSessionEntry>>>,
+
+	/// Breakpoints registered via `debug:addBreakpoints`, keyed by
+	/// breakpoint id. Mountain keeps this as the authoritative store so
+	/// `debug:getBreakpoints` can be served locally without a Cocoon
+	/// round-trip.
+	pub Breakpoints:Arc<Mutex<HashMap<String, BreakpointEntry>>>,
 }
 
 impl Default for DebugState {
@@ -112,6 +153,8 @@ impl Default for DebugState {
 			DebugAdapterDescriptorFactories:Arc::new(Mutex::new(HashMap::new())),
 
 			DebugSessions:Arc::new(Mutex::new(HashMap::new())),
+
+			Breakpoints:Arc::new(Mutex::new(HashMap::new())),
 		}
 	}
 }
@@ -216,4 +259,30 @@ impl DebugState {
 	/// Snapshot of all active sessions. Used by diagnostic dev_log surfaces
 	/// and the reverse-RPC dispatch when no session-id is supplied.
 	pub fn GetAllDebugSessions(&self) -> HashMap<String, DebugSessionEntry> { self.DebugSessions.lock().clone() }
+
+	/// Inserts or replaces breakpoints from a `debug:addBreakpoints` call.
+	/// Each entry's `raw` field is set to the original JSON value so
+	/// `GetBreakpoints` can round-trip the full payload shape VS Code expects.
+	pub fn AddBreakpoints(&self, Entries:Vec<BreakpointEntry>) {
+		let mut Guard = self.Breakpoints.lock();
+
+		for Entry in Entries {
+			Guard.insert(Entry.id.clone(), Entry);
+		}
+	}
+
+	/// Removes breakpoints by id. Ids not present are silently skipped.
+	pub fn RemoveBreakpoints(&self, Ids:&[String]) {
+		let mut Guard = self.Breakpoints.lock();
+
+		for Id in Ids {
+			Guard.remove(Id.as_str());
+		}
+	}
+
+	/// Returns the raw JSON values for all stored breakpoints, suitable for
+	/// returning directly from `debug:getBreakpoints`.
+	pub fn GetBreakpoints(&self) -> Vec<serde_json::Value> {
+		self.Breakpoints.lock().values().map(|E| E.raw.clone()).collect()
+	}
 }

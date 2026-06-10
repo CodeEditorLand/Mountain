@@ -109,6 +109,32 @@ fn GetWorkspaceDebouncer() -> Arc<StorageWriteDebouncer> {
 	WORKSPACE_DEBOUNCER.get_or_init(StorageWriteDebouncer::new).clone()
 }
 
+/// Immediately flush any pending write for both global and workspace storage
+/// to disk, bypassing the 100 ms debounce window. Called by `storage:optimize`
+/// so extensions and VS Code storage services can force a checkpoint before a
+/// hot-reload or workspace close.
+pub async fn FlushPendingWrites(
+	GlobalPath:Option<std::path::PathBuf>,
+
+	WorkspacePath:Option<std::path::PathBuf>,
+
+	GlobalData:HashMap<String, Value>,
+
+	WorkspaceData:HashMap<String, Value>,
+) {
+	if let Some(Path) = GlobalPath {
+		if !GlobalData.is_empty() {
+			SaveStorageToDisk(Path, GlobalData).await;
+		}
+	}
+
+	if let Some(Path) = WorkspacePath {
+		if !WorkspaceData.is_empty() {
+			SaveStorageToDisk(Path, WorkspaceData).await;
+		}
+	}
+}
+
 // TODO: storage quotas per extension, encryption for sensitive values,
 // compression for large datasets, migration/versioning, atomic writes
 // (temp+rename), storage change notifications/watchers, TTL / auto-expiry,

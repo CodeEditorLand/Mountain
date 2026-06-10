@@ -7,7 +7,6 @@
 use std::sync::OnceLock;
 
 pub fn Fn() -> String {
-
 	static STAMP:OnceLock<String> = OnceLock::new();
 
 	STAMP

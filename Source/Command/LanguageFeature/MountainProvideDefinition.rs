@@ -2,7 +2,6 @@
 //! `LanguageFeature::Definition::provide_definition_impl`.
 
 use serde_json::Value;
-
 use tauri::{AppHandle, Wry, command};
 
 use crate::{Command::LanguageFeature::Definition, dev_log};
@@ -15,14 +14,10 @@ pub async fn MountainProvideDefinition(
 
 	position:Value,
 ) -> Result<Value, String> {
-
 	dev_log!(
 		"commands",
-
 		"[Language Feature] Providing definition for: {} at {:?}",
-
 		uri,
-
 		position
 	);
 

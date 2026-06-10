@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
-
 	pub total_connections:usize,
 
 	pub active_connections:usize,
