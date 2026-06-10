@@ -963,12 +963,22 @@ async fn LaunchAndManageCocoonSideCar(
 
 		let RestartState = Arc::clone(&COCOON_STATE);
 
-		// SAFETY: LaunchAndManageCocoonSideCar returns a !Send future because
-		// it holds parking_lot guards in async state. We've verified all guards
-		// are dropped before every .await. The spawn runs on Tauri's single-
-		// threaded main runtime which does not move tasks between threads.
-		#[allow(clippy::let_underscore_future)]
-		let _ = tokio::task::spawn_local(async move {
+		// `LaunchAndManageCocoonSideCar` is `!Send` (parking_lot guards held
+		// across .await). We give it a dedicated current-thread runtime
+		// wrapped in a `LocalSet` so `spawn_local` works and no cross-thread
+		// move is required. `RestartRx`, `AppHandle`, and `Arc<MountainEnvironment>`
+		// are all `Send`, so they cross the thread boundary without issue.
+		let _ = std::thread::Builder::new()
+			.name("cocoon-restart".into())
+			.spawn(move || {
+				let rt = tokio::runtime::Builder::new_current_thread()
+					.enable_all()
+					.build()
+					.expect("cocoon-restart runtime");
+
+				let local = tokio::task::LocalSet::new();
+
+				local.block_on(&rt, async move {
 			while let Some(BackoffSecs) = RestartRx.recv().await {
 				tokio::time::sleep(tokio::time::Duration::from_secs(BackoffSecs)).await;
 
@@ -994,7 +1004,9 @@ async fn LaunchAndManageCocoonSideCar(
 					},
 				}
 			}
-		});
+				});
+			})
+			.expect("cocoon-restart thread");
 	}
 
 	// Start background health monitoring
