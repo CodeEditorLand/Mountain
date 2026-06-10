@@ -45,13 +45,7 @@ pub(super) async fn inspect_configuration_value(
 		.map(|p| p.join("settings.json"))
 		.ok();
 
-	let workspace_settings_path = environment
-		.ApplicationState
-		.Workspace
-		.WorkspaceConfigurationPath
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-		.clone();
+	let workspace_settings_path = environment.ApplicationState.Workspace.WorkspaceConfigurationPath.lock().clone();
 
 	// Read each configuration layer individually.
 	let default_config = super::Loading::collect_default_configurations(&environment.ApplicationState)?;

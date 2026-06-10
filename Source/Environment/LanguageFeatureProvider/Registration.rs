@@ -3,11 +3,7 @@
 use CommonLibrary::{Error::CommonError::CommonError, LanguageFeature::DTO::ProviderType::ProviderType};
 use serde_json::Value;
 
-use crate::{
-	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
-	Environment::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError,
-	dev_log,
-};
+use crate::{ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO, dev_log};
 
 pub(super) async fn register_provider(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
@@ -44,7 +40,6 @@ pub(super) async fn register_provider(
 		.ProviderRegistration
 		.LanguageProviders
 		.lock()
-		.map_err(MapApplicationStateLockErrorToCommonError)?
 		.insert(handle, new_registration);
 
 	Ok(handle)
@@ -60,8 +55,7 @@ pub(super) async fn unregister_provider(
 		.Extension
 		.ProviderRegistration
 		.LanguageProviders
-		.lock()
-		.map_err(MapApplicationStateLockErrorToCommonError)?;
+		.lock();
 
 	if providers.remove(&handle).is_none() {
 		dev_log!(

@@ -463,7 +463,7 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 	// two scalars needed for logging before moving `FoldersWire` into
 	// `WorkspaceDTO` - no clone required.
 	let WorkspaceDTO = {
-		let Guard = ApplicationState.Workspace.WorkspaceFolders.lock().unwrap();
+		let Guard = ApplicationState.Workspace.WorkspaceFolders.lock();
 
 		// Cocoon's `WorkspaceNamespace/Index.ts` reads
 		// `ExtensionHostInitData.workspace.folders` at shim construction time,
@@ -509,8 +509,8 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 				"id": ApplicationState.GetWorkspaceIdentifier()?,
 				"name": WorkspaceName,
 				"folders": FoldersWire, // moved in - zero extra allocation
-				"configuration": ApplicationState.Workspace.WorkspaceConfigurationPath.lock().unwrap().as_ref().map(|p| p.to_string_lossy()),
-				"isUntitled": ApplicationState.Workspace.WorkspaceConfigurationPath.lock().unwrap().is_none(),
+				"configuration": ApplicationState.Workspace.WorkspaceConfigurationPath.lock().as_ref().map(|p| p.to_string_lossy()),
+				"isUntitled": ApplicationState.Workspace.WorkspaceConfigurationPath.lock().is_none(),
 				"transient": false
 			})
 		}

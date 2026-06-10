@@ -157,12 +157,7 @@ impl WorkspaceProvider for MountainEnvironment {
 	async fn GetWorkspaceFoldersInfo(&self) -> Result<Vec<(Url, String, usize)>, CommonError> {
 		dev_log!("workspaces", "[WorkspaceProvider] Getting workspace folders info.");
 
-		let FoldersGuard = self
-			.ApplicationState
-			.Workspace
-			.WorkspaceFolders
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		let FoldersGuard = self.ApplicationState.Workspace.WorkspaceFolders.lock();
 
 		Ok(FoldersGuard.iter().map(|f| (f.URI.clone(), f.Name.clone(), f.Index)).collect())
 	}
@@ -170,12 +165,7 @@ impl WorkspaceProvider for MountainEnvironment {
 	/// Retrieves information for the specific workspace folder that contains a
 	/// given URI.
 	async fn GetWorkspaceFolderInfo(&self, URIToMatch:Url) -> Result<Option<(Url, String, usize)>, CommonError> {
-		let FoldersGuard = self
-			.ApplicationState
-			.Workspace
-			.WorkspaceFolders
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		let FoldersGuard = self.ApplicationState.Workspace.WorkspaceFolders.lock();
 
 		for Folder in FoldersGuard.iter() {
 			if URIToMatch.as_str().starts_with(Folder.URI.as_str()) {
@@ -193,13 +183,7 @@ impl WorkspaceProvider for MountainEnvironment {
 
 	/// Gets the path to the workspace configuration file (`.code-workspace`).
 	async fn GetWorkspaceConfigurationPath(&self) -> Result<Option<PathBuf>, CommonError> {
-		Ok(self
-			.ApplicationState
-			.Workspace
-			.WorkspaceConfigurationPath
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-			.clone())
+		Ok(self.ApplicationState.Workspace.WorkspaceConfigurationPath.lock().clone())
 	}
 
 	/// Checks if the current workspace is trusted.
@@ -342,7 +326,6 @@ impl WorkspaceProvider for MountainEnvironment {
 			.Workspace
 			.WorkspaceFolders
 			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.iter()
 			.filter_map(|Folder| Folder.URI.to_file_path().ok())
 			.collect();
@@ -411,9 +394,7 @@ impl WorkspaceProvider for MountainEnvironment {
 		}
 
 		let RoleResolved:SingleFlightRole = {
-			let mut Guard = FindFilesInFlight()
-				.lock()
-				.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+			let mut Guard = FindFilesInFlight().lock().unwrap();
 
 			match Guard.get(&CacheKey) {
 				Some(Existing) => SingleFlightRole::Follower(Existing.clone()),
@@ -474,7 +455,7 @@ impl WorkspaceProvider for MountainEnvironment {
 		let Cap = Cap;
 
 		for Root in WalkRoots {
-			if Results.lock().len() >= Cap {
+			if Results.lock().unwrap().len() >= Cap {
 				break;
 			}
 
@@ -508,7 +489,7 @@ impl WorkspaceProvider for MountainEnvironment {
 				let ResultsArc = ResultsArc.clone();
 
 				Box::new(move |EntryResult| {
-					if ResultsArc.lock().len() >= Cap {
+					if ResultsArc.lock().unwrap().len() >= Cap {
 						return ignore::WalkState::Quit;
 					}
 
@@ -563,7 +544,7 @@ impl WorkspaceProvider for MountainEnvironment {
 				CommonError::Unknown { Description:"FindFilesInWorkspace: result Arc had outstanding refs".into() }
 			})?
 			.into_inner()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+			.unwrap();
 
 		dev_log!(
 			"workspaces",

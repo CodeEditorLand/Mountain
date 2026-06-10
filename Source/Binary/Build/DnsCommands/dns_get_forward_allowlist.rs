@@ -11,5 +11,5 @@ pub fn dns_get_forward_allowlist(dns_port:State<DnsPort>) -> Result<ForwardAllow
 		return Err("DNS server is not running".to_string());
 	}
 
-	Ok(ForwardAllowList { domains:vec!["update.land.playform.cloud.".to_string()] })
+	Ok(ForwardAllowList { domains:vec!["update.editor.land.".to_string()] })
 }

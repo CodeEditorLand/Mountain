@@ -9,8 +9,8 @@
 //! ```text
 //! Root CA (stored in keyring)
 //!   └── Server Certificates (cached, per hostname)
-//!        ├── code.land.playform.cloud
-//!        ├── api.land.playform.cloud
+//!        ├── code.editor.land
+//!        ├── api.editor.land
 //!        └── ...other services
 //! ```
 //!
@@ -32,7 +32,7 @@
 //! 	cert_manager.initialize_ca().await?;
 //!
 //! 	// Get server configuration for a service
-//! 	let server_config = cert_manager.get_server_cert("code.land.playform.cloud").await?;
+//! 	let server_config = cert_manager.get_server_cert("code.editor.land").await?;
 //!
 //! 	// Get CA certificate PEM for webview installation
 //! 	let ca_cert = cert_manager.get_ca_cert_pem().unwrap();
@@ -262,7 +262,7 @@ impl CertificateManager {
 	///
 	/// # Arguments
 	///
-	/// * `hostname` - The hostname (e.g., "code.land.playform.cloud")
+	/// * `hostname` - The hostname (e.g., "code.editor.land")
 	///
 	/// # Returns
 	///
@@ -275,7 +275,7 @@ impl CertificateManager {
 	/// # async fn example() -> anyhow::Result<()> {
 	/// let mut cert_manager = CertificateManager::new("myapp").await?;
 	/// cert_manager.initialize_ca().await?;
-	/// let server_config = cert_manager.get_server_cert("code.land.playform.cloud").await?;
+	/// let server_config = cert_manager.get_server_cert("code.editor.land").await?;
 	/// # Ok(())
 	/// # }
 	/// ```
@@ -497,7 +497,7 @@ impl CertificateManager {
 	/// # async fn example() -> anyhow::Result<()> {
 	/// let mut cert_manager = CertificateManager::new("myapp").await?;
 	/// cert_manager.initialize_ca().await?;
-	/// cert_manager.renew_certificate("code.land.playform.cloud").await?;
+	/// cert_manager.renew_certificate("code.editor.land").await?;
 	/// # Ok(())
 	/// # }
 	/// ```
@@ -530,7 +530,7 @@ impl CertificateManager {
 	///
 	/// # Arguments
 	///
-	/// * `hostname` - The hostname (e.g., "code.land.playform.cloud")
+	/// * `hostname` - The hostname (e.g., "code.editor.land")
 	///
 	/// # Example
 	///
@@ -539,7 +539,7 @@ impl CertificateManager {
 	/// # async fn example() -> anyhow::Result<()> {
 	/// let mut cert_manager = CertificateManager::new("myapp").await?;
 	/// cert_manager.initialize_ca().await?;
-	/// let server_config = cert_manager.build_server_config("code.land.playform.cloud").await?;
+	/// let server_config = cert_manager.build_server_config("code.editor.land").await?;
 	/// # Ok(())
 	/// # }
 	/// ```
@@ -574,7 +574,7 @@ impl CertificateManager {
 	///
 	/// # Arguments
 	///
-	/// * `hostname` - The hostname (e.g., "code.land.playform.cloud")
+	/// * `hostname` - The hostname (e.g., "code.editor.land")
 	///
 	/// # Returns
 	///
@@ -587,8 +587,8 @@ impl CertificateManager {
 	/// # async fn example() -> anyhow::Result<()> {
 	/// let mut cert_manager = CertificateManager::new("myapp").await?;
 	/// cert_manager.initialize_ca().await?;
-	/// cert_manager.get_server_cert("code.land.playform.cloud").await?;
-	/// let info = cert_manager.get_server_cert_info("code.land.playform.cloud").unwrap();
+	/// cert_manager.get_server_cert("code.editor.land").await?;
+	/// let info = cert_manager.get_server_cert_info("code.editor.land").unwrap();
 	/// println!("Certificate valid until: {}", info.valid_until);
 	/// # Ok(())
 	/// # }
@@ -612,8 +612,8 @@ impl CertificateManager {
 	/// # async fn example() -> anyhow::Result<()> {
 	/// let mut cert_manager = CertificateManager::new("myapp").await?;
 	/// cert_manager.initialize_ca().await?;
-	/// cert_manager.get_server_cert("code.land.playform.cloud").await?;
-	/// cert_manager.get_server_cert("api.land.playform.cloud").await?;
+	/// cert_manager.get_server_cert("code.editor.land").await?;
+	/// cert_manager.get_server_cert("api.editor.land").await?;
 	/// let all_certs = cert_manager.get_all_certs();
 	/// for (hostname, info) in all_certs {
 	/// 	println!("{}: valid until {}", hostname, info.valid_until);

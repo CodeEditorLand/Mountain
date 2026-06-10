@@ -1,5 +1,5 @@
 //! `dns_get_zone_info` Tauri command - returns the static
-//! `land.playform.cloud` zone snapshot (records + DNSSEC flag) used by
+//! `editor.land` zone snapshot (records + DNSSEC flag) used by
 //! the diagnostic panel.
 
 use tauri::State;
@@ -53,7 +53,7 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 			data:"127.0.0.1".to_string(),
 		},
 		ZoneRecord {
-			name:"code.land.playform.cloud.".to_string(),
+			name:"code.editor.land.".to_string(),
 
 			record_type:"A".to_string(),
 
@@ -62,7 +62,7 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 			data:"127.0.0.1".to_string(),
 		},
 		ZoneRecord {
-			name:"api.land.playform.cloud.".to_string(),
+			name:"api.editor.land.".to_string(),
 
 			record_type:"A".to_string(),
 
@@ -88,7 +88,7 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 			name:"editor.land.".to_string(),
 			record_type:"RRSIG".to_string(),
 			ttl:432000,
-			data:format!("{} 13 2 432000 {} {} {} land.playform.cloud.", rtype, 0, 0, 0),
+			data:format!("{} 13 2 432000 {} {} {} editor.land.", rtype, 0, 0, 0),
 		});
 	}
 

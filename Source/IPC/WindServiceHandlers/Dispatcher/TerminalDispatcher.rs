@@ -1,6 +1,32 @@
 //! Terminal command dispatcher.
 
+<<<<<<< HEAD
 use serde_json::Value;
+=======
+use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
+use serde_json::{Value, json};
+
+use crate::IPC::WindServiceHandlers::{
+	Terminal::{
+		AttachToProcess::Fn as AttachToProcess,
+		DetachFromProcess::Fn as DetachFromProcess,
+		LocalPTYCreateProcess::Fn as LocalPTYCreateProcess,
+		LocalPTYFreePortKillProcess::Fn as LocalPTYFreePortKillProcess,
+		LocalPTYGetDefaultShell::Fn as LocalPTYGetDefaultShell,
+		LocalPTYGetEnvironment::Fn as LocalPTYGetEnvironment,
+		LocalPTYGetProfiles::Fn as LocalPTYGetProfiles,
+		LocalPTYResize::Fn as LocalPTYResize,
+		ReviveTerminalProcesses::Fn as ReviveTerminalProcesses,
+		SerializeTerminalState::Fn as SerializeTerminalState,
+		TerminalCreate::Fn as TerminalCreate,
+		TerminalDispose::Fn as TerminalDispose,
+		TerminalHide::Fn as TerminalHide,
+		TerminalSendText::Fn as TerminalSendText,
+		TerminalShow::Fn as TerminalShow,
+	},
+	Utilities::JsonValueHelpers::arg_val,
+};
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 use crate::Terminal::{
 	AttachToProcess::Fn as AttachToProcess,
@@ -24,7 +50,11 @@ use crate::Terminal::{
 pub async fn dispatch_terminal(
 	app_handle:&tauri::AppHandle,
 
+<<<<<<< HEAD
 	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+=======
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 	command:&str,
 
@@ -46,11 +76,17 @@ pub async fn dispatch_terminal(
 		"localPty:getDefaultSystemShell" => LocalPTYGetDefaultShell().await,
 
 		"localPty:getTerminalLayoutInfo" => {
+<<<<<<< HEAD
 			// Storage query
 			let provider:std::sync::Arc<dyn crate::CommonLibrary::Storage::StorageProvider::StorageProvider> =
 				runtime.Environment.Require();
 
 			match provider.GetStorageValue(true, "terminal:layoutInfo".to_string()).await {
+=======
+			let provider:std::sync::Arc<dyn StorageProvider> = runtime.Environment.Require();
+
+			match provider.GetStorageValue(true, "terminal:layoutInfo").await {
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 				Ok(Some(stored)) => Ok(stored),
 
 				Ok(None) => Ok(Value::Null),
@@ -64,10 +100,16 @@ pub async fn dispatch_terminal(
 		},
 
 		"localPty:setTerminalLayoutInfo" => {
+<<<<<<< HEAD
 			let provider:std::sync::Arc<dyn crate::CommonLibrary::Storage::StorageProvider::StorageProvider> =
 				runtime.Environment.Require();
 
 			let payload = crate::Utilities::JsonValueHelpers::arg_val(&arguments, 0);
+=======
+			let provider:std::sync::Arc<dyn StorageProvider> = runtime.Environment.Require();
+
+			let payload = arg_val(&arguments, 0);
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 			let _ = provider
 				.UpdateStorageValue(true, "terminal:layoutInfo".to_string(), Some(payload))
@@ -125,7 +167,10 @@ pub async fn dispatch_terminal(
 		"localPty:detachFromProcess" => DetachFromProcess(runtime.clone(), arguments).await,
 
 		"localPty:setActive" => {
+<<<<<<< HEAD
 			// Forward to Cocoon
+=======
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 			let _ = crate::Vine::Client::SendNotification::Fn(
 				"cocoon-main".to_string(),
 				"$acceptActiveTerminalChanged".to_string(),
@@ -150,7 +195,11 @@ pub async fn dispatch_terminal(
 		},
 
 		"localPty:setInteracted" => {
+<<<<<<< HEAD
 			let payload = crate::Utilities::JsonValueHelpers::arg_val(&arguments, 0);
+=======
+			let payload = arg_val(&arguments, 0);
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 			let _ = crate::Vine::Client::SendNotification::Fn(
 				"cocoon-main".to_string(),

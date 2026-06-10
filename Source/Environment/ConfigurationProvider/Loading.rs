@@ -122,13 +122,7 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 		.map(|p| p.join("settings.json"))
 		.ok();
 
-	let workspace_settings_path = environment
-		.ApplicationState
-		.Workspace
-		.WorkspaceConfigurationPath
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-		.clone();
+	let workspace_settings_path = environment.ApplicationState.Workspace.WorkspaceConfigurationPath.lock().clone();
 
 	let user_config = read_and_parse_configuration_file(environment, &user_settings_path).await?;
 
@@ -179,12 +173,7 @@ pub async fn Fn(environment:&crate::Environment::MountainEnvironment::MountainEn
 
 	let final_config = MergedConfigurationStateDTO::Create(Value::Object(merged));
 
-	*environment
-		.ApplicationState
-		.Configuration
-		.GlobalConfiguration
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)? = final_config.Data;
+	*environment.ApplicationState.Configuration.GlobalConfiguration.lock() = final_config.Data;
 
 	dev_log!(
 		"config",
@@ -234,14 +223,7 @@ pub(super) fn collect_default_configurations(
 ) -> Result<Value, CommonError> {
 	let mut default_config = Map::new();
 
-	for extension in application_state
-		.Extension
-		.ScannedExtensions
-		.ScannedExtensions
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-		.values()
-	{
+	for extension in application_state.Extension.ScannedExtensions.ScannedExtensions.lock().values() {
 		let Some(contributes) = &extension.Contributes else {
 			continue;
 		};

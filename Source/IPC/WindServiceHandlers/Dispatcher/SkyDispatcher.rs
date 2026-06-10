@@ -1,6 +1,13 @@
 //! Sky dispatcher - handles sky:* and editor:* commands.
 
+<<<<<<< HEAD
 use serde_json::Value;
+=======
+use serde_json::{Value, json};
+use tauri::Emitter;
+
+use crate::IPC::WindServiceHandlers::{Sky::ReplayEvents::Fn as SkyReplayEvents, Utilities::JsonValueHelpers::arg_val};
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 use crate::{Sky::ReplayEvents::Fn as SkyReplayEvents, Utilities::JsonValueHelpers::arg_val};
 
@@ -21,7 +28,11 @@ use crate::{Sky::ReplayEvents::Fn as SkyReplayEvents, Utilities::JsonValueHelper
 pub async fn dispatch_sky(
 	app_handle:&tauri::AppHandle,
 
+<<<<<<< HEAD
 	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+=======
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 	command:&str,
 
@@ -79,7 +90,10 @@ pub async fn dispatch_sky(
 		},
 
 		"sky:model:contentChanged" => {
+<<<<<<< HEAD
 			// Forward to Cocoon
+=======
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 			let payload = arg_val(&arguments, 0);
 
 			let _ = crate::Vine::Client::SendNotification::Fn(

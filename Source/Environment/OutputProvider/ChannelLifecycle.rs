@@ -47,13 +47,7 @@ pub(super) async fn register_channel(
 
 	let channel_identifier = name.clone();
 
-	let mut channels_guard = env
-		.ApplicationState
-		.Feature
-		.OutputChannels
-		.OutputChannels
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+	let mut channels_guard = env.ApplicationState.Feature.OutputChannels.OutputChannels.lock();
 
 	channels_guard.entry(channel_identifier.clone()).or_insert_with(|| {
 		OutputChannelStateDTO::Create(&name, language_identifier.clone()).unwrap_or_else(|e| {
@@ -87,7 +81,6 @@ pub(super) async fn dispose_channel(
 		.OutputChannels
 		.OutputChannels
 		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.remove(&channel_identifier);
 
 	env.ApplicationHandle

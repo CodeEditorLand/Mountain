@@ -22,13 +22,7 @@ pub(super) async fn set_status_bar_entry_impl(
 ) -> Result<(), CommonError> {
 	dev_log!("lifecycle", "[StatusBarProvider] Setting entry: {}", entry.EntryIdentifier);
 
-	let mut items_guard = env
-		.ApplicationState
-		.Feature
-		.Markers
-		.ActiveStatusBarItems
-		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+	let mut items_guard = env.ApplicationState.Feature.Markers.ActiveStatusBarItems.lock();
 
 	items_guard.insert(entry.EntryIdentifier.clone(), entry.clone());
 
@@ -67,7 +61,6 @@ pub(super) async fn dispose_status_bar_entry_impl(
 		.Markers
 		.ActiveStatusBarItems
 		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.remove(&entry_identifier);
 
 	env.ApplicationHandle

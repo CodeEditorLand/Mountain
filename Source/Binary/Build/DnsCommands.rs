@@ -64,7 +64,7 @@ mod tests {
 	#[test]
 	fn ZoneRecordSerialization() {
 		let record = ZoneRecord {
-			name:"code.land.playform.cloud.".to_string(),
+			name:"code.editor.land.".to_string(),
 
 			record_type:"A".to_string(),
 
@@ -77,7 +77,7 @@ mod tests {
 
 		let deserialized:ZoneRecord = serde_json::from_str(&json).unwrap();
 
-		assert_eq!(deserialized.name, "code.land.playform.cloud.");
+		assert_eq!(deserialized.name, "code.editor.land.");
 
 		assert_eq!(deserialized.record_type, "A");
 
@@ -127,7 +127,7 @@ mod tests {
 	#[test]
 	fn DnsResolutionResultSerialization() {
 		let result = DnsResolutionResult {
-			domain:"code.land.playform.cloud.".to_string(),
+			domain:"code.editor.land.".to_string(),
 
 			record_type:"A".to_string(),
 
@@ -144,7 +144,7 @@ mod tests {
 
 		let deserialized:DnsResolutionResult = serde_json::from_str(&json).unwrap();
 
-		assert_eq!(deserialized.domain, "code.land.playform.cloud.");
+		assert_eq!(deserialized.domain, "code.editor.land.");
 
 		assert_eq!(deserialized.record_type, "A");
 

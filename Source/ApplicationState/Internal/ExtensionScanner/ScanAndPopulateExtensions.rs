@@ -28,11 +28,7 @@ pub async fn Fn(
 					let CachedLen = CachedMap.len();
 
 					let PostWriteCount = {
-						let mut Guard = _State
-							.ScannedExtensions
-							.ScannedExtensions
-							.lock()
-							.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+						let mut Guard = _State.ScannedExtensions.ScannedExtensions.lock();
 
 						*Guard = CachedMap;
 
@@ -119,11 +115,7 @@ pub async fn Fn(
 						let mut UserMerged = 0usize;
 
 						{
-							let mut Guard = _State
-								.ScannedExtensions
-								.ScannedExtensions
-								.lock()
-								.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+							let mut Guard = _State.ScannedExtensions.ScannedExtensions.lock();
 
 							for Found in UserResults {
 								for Extension in Found {
@@ -252,11 +244,7 @@ pub async fn Fn(
 	let AllLen = All.len();
 
 	let PostWriteCount = {
-		let mut Guard = _State
-			.ScannedExtensions
-			.ScannedExtensions
-			.lock()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+		let mut Guard = _State.ScannedExtensions.ScannedExtensions.lock();
 
 		*Guard = All; // move - no clone needed
 

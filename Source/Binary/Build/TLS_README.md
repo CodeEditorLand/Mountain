@@ -15,8 +15,8 @@ HTTPS connections for local development and testing.
 Root CA Certificate (stored in OS keyring)
 └── ECDSA P-256 private key (secure storage)
     └── Server Certificates (cached per hostname)
-        ├── code.land.playform.cloud
-        ├── api.land.playform.cloud
+        ├── code.editor.land
+        ├── api.editor.land
         └── ...other services
             ├── Certificate chain (server cert + CA cert)
             └── ECDSA P-256 private key
@@ -43,7 +43,7 @@ Root CA Certificate (stored in OS keyring)
 - **Algorithm**: ECDSA P-256 for consistency
 - **Validity**: 1 year (auto-renewable)
 - **Subject Alternative Names**:
-    - DNS: hostname (e.g., "code.land.playform.cloud")
+    - DNS: hostname (e.g., "code.editor.land")
     - IP: 127.0.0.1 (IPv4 localhost)
     - IP: ::1 (IPv6 localhost)
 
@@ -113,7 +113,7 @@ let registry = ServiceRegistry::with_tls(cert_manager.clone());
 
 // Register HTTPS service
 registry.register_with_options(
-    "code.land.playform.cloud".to_string(),
+    "code.editor.land".to_string(),
     8080,   // HTTP port
     Some(8443),  // TLS port
     true,   // Enable TLS
@@ -134,7 +134,7 @@ registry.register_with_options(
 ```rust
 // Get TLS configuration for HTTPS server
 let server_config = cert_manager
-    .build_server_config("code.land.playform.cloud")
+    .build_server_config("code.editor.land")
     .await?;
 
 // Use with rustls-based server
@@ -147,7 +147,7 @@ let listener = tokio_rustls::TlsListener::bind(addr, server_config).await?;
 // Check if renewal is needed
 if cert_manager.should_renew(&cert_pem) {
     // Force renewal
-    cert_manager.renew_certificate("code.land.playform.cloud").await?;
+    cert_manager.renew_certificate("code.editor.land").await?;
 }
 ```
 
@@ -184,18 +184,18 @@ console.log("CA Certificate:", caCert);
 
 // Get server certificate info
 const certInfo = await invoke("tls_get_server_cert_info", {
-	hostname: "code.land.playform.cloud",
+	hostname: "code.editor.land",
 });
 console.log("Valid until:", certInfo.valid_until);
 
 // Check certificate status
 const status = await invoke("tls_check_cert_status", {
-	hostname: "code.land.playform.cloud",
+	hostname: "code.editor.land",
 });
 if (status.needs_renewal) {
 	console.log("Certificate needs renewal");
 	await invoke("tls_renew_certificate", {
-		hostname: "code.land.playform.cloud",
+		hostname: "code.editor.land",
 	});
 }
 

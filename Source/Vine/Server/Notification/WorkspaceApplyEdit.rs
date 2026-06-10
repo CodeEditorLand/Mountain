@@ -14,6 +14,7 @@ use serde_json::Value;
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn WorkspaceApplyEdit(Service:&MountainVinegRPCService, Parameter:&Value) {
+<<<<<<< HEAD
 	let RunTime = Arc::clone(Service.RunTime());
 
 	let Payload = Parameter.clone();
@@ -39,4 +40,7 @@ pub async fn WorkspaceApplyEdit(Service:&MountainVinegRPCService, Parameter:&Val
 			},
 		}
 	});
+=======
+	::Vine::Server::Notification::WorkspaceApplyEdit::WorkspaceApplyEdit(Service, Parameter).await;
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 }

@@ -64,7 +64,6 @@ pub(super) async fn open_document(
 		.Documents
 		.OpenDocuments
 		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.get(uri.as_str())
 	{
 		dev_log!("model", "[DocumentProvider] Document {} is already open.", uri);
@@ -147,7 +146,6 @@ pub(super) async fn open_document(
 		.Documents
 		.OpenDocuments
 		.lock()
-		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.insert(uri.to_string(), new_document);
 
 	if let Err(error) = LogSkyEmit(

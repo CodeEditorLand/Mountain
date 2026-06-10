@@ -76,7 +76,7 @@ impl TestController for MountainEnvironment {
 			SupportedTestTypes:vec!["unit".to_string(), "integration".to_string()],
 		};
 
-		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
+		let mut StateGuard = self.ApplicationState.TestProviderState.write();
 
 		StateGuard.Controllers.insert(ControllerId.clone(), ControllerState);
 
@@ -109,7 +109,7 @@ impl TestController for MountainEnvironment {
 		);
 
 		let ControllerState = {
-			let StateGuard = self.ApplicationState.TestProviderState.read().await;
+			let StateGuard = self.ApplicationState.TestProviderState.read();
 
 			StateGuard.Controllers.get(&ControllerIdentifier).cloned().ok_or_else(|| {
 				CommonError::TestControllerNotFound { ControllerIdentifier:ControllerIdentifier.clone() }
@@ -131,7 +131,7 @@ impl TestController for MountainEnvironment {
 		};
 
 		{
-			let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
+			let mut StateGuard = self.ApplicationState.TestProviderState.write();
 
 			StateGuard.ActiveRuns.insert(RunIdentifier.clone(), TestRunRecord);
 		}
@@ -224,7 +224,7 @@ impl MountainEnvironment {
 	}
 
 	async fn UpdateRunStatus(&self, RunIdentifier:&str, Status:TestRunStatus::Enum) -> Result<(), CommonError> {
-		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
+		let mut StateGuard = self.ApplicationState.TestProviderState.write();
 
 		if let Some(TestRunRecord) = StateGuard.ActiveRuns.get_mut(RunIdentifier) {
 			TestRunRecord.Status = Status;
@@ -247,7 +247,7 @@ impl MountainEnvironment {
 	}
 
 	async fn StoreTestResults(&self, RunIdentifier:&str, Results:Vec<TestResult::Struct>) -> Result<(), CommonError> {
-		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
+		let mut StateGuard = self.ApplicationState.TestProviderState.write();
 
 		if let Some(TestRunRecord) = StateGuard.ActiveRuns.get_mut(RunIdentifier) {
 			for Result in Results {
@@ -261,7 +261,7 @@ impl MountainEnvironment {
 	}
 
 	async fn CalculateRunStatus(&self, RunIdentifier:&str) -> TestRunStatus::Enum {
-		let StateGuard = self.ApplicationState.TestProviderState.read().await;
+		let StateGuard = self.ApplicationState.TestProviderState.read();
 
 		if let Some(TestRunRecord) = StateGuard.ActiveRuns.get(RunIdentifier) {
 			if TestRunRecord.Results.is_empty() {

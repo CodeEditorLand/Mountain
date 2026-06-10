@@ -105,7 +105,6 @@ impl CommandExecutor for MountainEnvironment {
 			.Registry
 			.CommandRegistry
 			.lock()
-			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.get(&CommandIdentifier)
 			.cloned();
 
@@ -307,7 +306,6 @@ impl CommandExecutor for MountainEnvironment {
 						.Registry
 						.CommandRegistry
 						.lock()
-						.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 						.get(&CommandIdentifier)
 						.cloned();
 
@@ -377,13 +375,7 @@ impl CommandExecutor for MountainEnvironment {
 			SideCarIdentifier
 		);
 
-		let mut Registry = self
-			.ApplicationState
-			.Extension
-			.Registry
-			.CommandRegistry
-			.lock()
-			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		let mut Registry = self.ApplicationState.Extension.Registry.CommandRegistry.lock();
 
 		Registry.insert(
 			CommandIdentifier.clone(),
@@ -402,7 +394,6 @@ impl CommandExecutor for MountainEnvironment {
 			.Registry
 			.CommandRegistry
 			.lock()
-			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.remove(&CommandIdentifier);
 
 		Ok(())
@@ -412,13 +403,7 @@ impl CommandExecutor for MountainEnvironment {
 	async fn GetAllCommands(&self) -> Result<Vec<String>, CommonError> {
 		dev_log!("commands", "[CommandProvider] Getting all command identifiers.");
 
-		let Registry = self
-			.ApplicationState
-			.Extension
-			.Registry
-			.CommandRegistry
-			.lock()
-			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		let Registry = self.ApplicationState.Extension.Registry.CommandRegistry.lock();
 
 		Ok(Registry.keys().cloned().collect())
 	}
@@ -433,17 +418,12 @@ impl CommandExecutor for MountainEnvironment {
 fn LookupCommandContributingExtension(Environment:&MountainEnvironment, CommandIdentifier:&str) -> bool {
 	let Event = format!("onCommand:{}", CommandIdentifier);
 
-	let Guard = match Environment
+	let Guard = Environment
 		.ApplicationState
 		.Extension
 		.ScannedExtensions
 		.ScannedExtensions
-		.lock()
-	{
-		Ok(G) => G,
-
-		Err(_) => return false,
-	};
+		.lock();
 
 	for Description in Guard.values() {
 		if let Some(Events) = &Description.ActivationEvents {

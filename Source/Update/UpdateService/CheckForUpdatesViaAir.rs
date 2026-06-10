@@ -5,12 +5,16 @@
 use std::sync::Arc;
 
 #[cfg(feature = "AirIntegration")]
+<<<<<<< HEAD
 use AirLibrary::Vine::Generated::air::{
 	ApplyUpdateRequest,
 	DownloadRequest,
 	air_service_client::AirServiceClient,
 	air_service_server::UpdateCheckRequest,
 };
+=======
+use AirLibrary::Vine::Generated::air::{air_service_client::AirServiceClient, air_service_server::UpdateCheckRequest};
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 #[cfg(feature = "AirIntegration")]
 use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
@@ -68,6 +72,7 @@ pub async fn Fn(
 					.await?;
 
 				if UserResponse == Some("Install".to_string()) {
+<<<<<<< HEAD
 					let DownloadUrl = Reply.download_url.clone();
 
 					let Version = Reply.version.clone();
@@ -176,6 +181,16 @@ pub async fn Fn(
 								.await?;
 						},
 					}
+=======
+					// TODO: call Air's download_update endpoint, track progress, install.
+					RunTime
+						.Run(ShowMessage(
+							MessageSeverity::Info,
+							"Update download via Air is not yet implemented. Please update manually.".to_string(),
+							json!(null),
+						))
+						.await?;
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 				}
 			} else if NotifyNoUpdate {
 				RunTime

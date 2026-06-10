@@ -122,7 +122,6 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			.Markers
 			.SourceControlManagementProviders
 			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.insert(Handle, ProviderState.clone());
 
 		self.ApplicationState
@@ -130,7 +129,6 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			.Markers
 			.SourceControlManagementGroups
 			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.insert(Handle, Default::default());
 
 		self.ApplicationHandle
@@ -154,7 +152,6 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			.Markers
 			.SourceControlManagementProviders
 			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.remove(&ProviderHandle);
 
 		self.ApplicationState
@@ -162,7 +159,6 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			.Markers
 			.SourceControlManagementGroups
 			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.remove(&ProviderHandle);
 
 		self.ApplicationHandle
@@ -181,13 +177,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			ProviderHandle
 		);
 
-		let mut ProvidersGuard = self
-			.ApplicationState
-			.Feature
-			.Markers
-			.SourceControlManagementProviders
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		let mut ProvidersGuard = self.ApplicationState.Feature.Markers.SourceControlManagementProviders.lock();
 
 		if let Some(Provider) = ProvidersGuard.get_mut(&ProviderHandle) {
 			if let Some(count) = UpdateData.Count {
@@ -240,13 +230,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			ProviderHandle
 		);
 
-		let mut GroupsGuard = self
-			.ApplicationState
-			.Feature
-			.Markers
-			.SourceControlManagementGroups
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		let mut GroupsGuard = self.ApplicationState.Feature.Markers.SourceControlManagementGroups.lock();
 
 		if let Some(ProviderGroups) = GroupsGuard.get_mut(&ProviderHandle) {
 			let Group = ProviderGroups.entry(GroupData.GroupID.clone()).or_insert_with(|| {
@@ -290,13 +274,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			ProviderHandle
 		);
 
-		let mut ProvidersGuard = self
-			.ApplicationState
-			.Feature
-			.Markers
-			.SourceControlManagementProviders
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		let mut ProvidersGuard = self.ApplicationState.Feature.Markers.SourceControlManagementProviders.lock();
 
 		if let Some(Provider) = ProvidersGuard.get_mut(&ProviderHandle) {
 			Provider.InputBox = Some(InputBoxData);

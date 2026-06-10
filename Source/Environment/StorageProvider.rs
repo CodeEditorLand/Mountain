@@ -171,9 +171,7 @@ impl StorageProvider for MountainEnvironment {
 			&self.ApplicationState.Configuration.MementoWorkspaceStorage
 		};
 
-		let StorageMapGuard = StorageMapMutex
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		let StorageMapGuard = StorageMapMutex.lock();
 
 		Ok(StorageMapGuard.get(Key).cloned())
 	}
@@ -239,30 +237,18 @@ impl StorageProvider for MountainEnvironment {
 		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
 			(
 				self.ApplicationState.Configuration.MementoGlobalStorage.clone(),
-				Some(
-					self.ApplicationState
-						.GlobalMementoPath
-						.lock()
-						.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-						.clone(),
-				),
+				Some(self.ApplicationState.GlobalMementoPath.lock().clone()),
 			)
 		} else {
 			(
 				self.ApplicationState.Configuration.MementoWorkspaceStorage.clone(),
-				self.ApplicationState
-					.WorkspaceMementoPath
-					.lock()
-					.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-					.clone(),
+				self.ApplicationState.WorkspaceMementoPath.lock().clone(),
 			)
 		};
 
 		// Perform the in-memory update.
 		let DataToSave = {
-			let mut StorageMapGuard = StorageMapMutex
-				.lock()
-				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			let mut StorageMapGuard = StorageMapMutex.lock();
 
 			if let Some(Value) = ValueToSet {
 				StorageMapGuard.insert(Key, Value);
@@ -300,9 +286,7 @@ impl StorageProvider for MountainEnvironment {
 			&self.ApplicationState.Configuration.MementoWorkspaceStorage
 		};
 
-		let StorageMapGuard = StorageMapMutex
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		let StorageMapGuard = StorageMapMutex.lock();
 
 		Ok(serde_json::to_value(&*StorageMapGuard)?)
 	}
@@ -322,29 +306,17 @@ impl StorageProvider for MountainEnvironment {
 		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
 			(
 				self.ApplicationState.Configuration.MementoGlobalStorage.clone(),
-				Some(
-					self.ApplicationState
-						.GlobalMementoPath
-						.lock()
-						.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-						.clone(),
-				),
+				Some(self.ApplicationState.GlobalMementoPath.lock().clone()),
 			)
 		} else {
 			(
 				self.ApplicationState.Configuration.MementoWorkspaceStorage.clone(),
-				self.ApplicationState
-					.WorkspaceMementoPath
-					.lock()
-					.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-					.clone(),
+				self.ApplicationState.WorkspaceMementoPath.lock().clone(),
 			)
 		};
 
 		// Update in-memory state
-		*StorageMapMutex
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)? = DeserializedState.clone();
+		*StorageMapMutex.lock() = DeserializedState.clone();
 
 		// Persist to disk via the scope-correct debouncer so a workspace
 		// bulk-save and a global bulk-save never share the same Pending slot.

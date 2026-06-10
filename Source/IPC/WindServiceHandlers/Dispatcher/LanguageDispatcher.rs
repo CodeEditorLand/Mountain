@@ -1,12 +1,30 @@
 //! Language feature command dispatcher - forwards to Cocoon Node.js runtime.
 
+<<<<<<< HEAD
 use serde_json::Value;
+=======
+use CommonLibrary::LanguageFeature::{
+	DTO::PositionDTO::PositionDTO,
+	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
+};
+use serde_json::{Value, json};
+
+use crate::IPC::WindServiceHandlers::Utilities::JsonValueHelpers::arg_val;
+
+fn cocoon_payload(args:Vec<serde_json::Value>) -> serde_json::Value {
+	match args.len() {
+		0 => serde_json::Value::Null,
+
+		1 => args.into_iter().next().unwrap(),
+
+		_ => serde_json::Value::Array(args),
+	}
+}
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 use crate::{LanguageFeature::DTO::PositionDTO::PositionDTO, Utilities::JsonValueHelpers::arg_val};
 
 /// Dispatches language feature commands.
-///
-/// These are forwarded to Cocoon's Node.js runtime.
 ///
 /// Handled commands:
 /// - `language:provideInlineCompletions`
@@ -20,7 +38,11 @@ use crate::{LanguageFeature::DTO::PositionDTO::PositionDTO, Utilities::JsonValue
 /// - `language:provideTypeHierarchySubtypes`
 /// - `language:provideLinkedEditingRanges`
 pub async fn dispatch_language(
+<<<<<<< HEAD
 	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+=======
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 	command:&str,
 
@@ -99,8 +121,12 @@ pub async fn dispatch_language(
 		"language:prepareCallHierarchy"
 		| "language:provideCallHierarchyIncomingCalls"
 		| "language:provideCallHierarchyOutgoingCalls" => {
+<<<<<<< HEAD
 			// Forward to Cocoon
 			let payload = crate::Cocoon::Request::cocoon_payload(arguments);
+=======
+			let payload = cocoon_payload(arguments);
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 			let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
 
@@ -112,8 +138,12 @@ pub async fn dispatch_language(
 		"language:prepareTypeHierarchy"
 		| "language:provideTypeHierarchySupertypes"
 		| "language:provideTypeHierarchySubtypes" => {
+<<<<<<< HEAD
 			// Forward to Cocoon
 			let payload = crate::Cocoon::Request::cocoon_payload(arguments);
+=======
+			let payload = cocoon_payload(arguments);
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 			let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
 
@@ -123,8 +153,12 @@ pub async fn dispatch_language(
 		},
 
 		"language:provideLinkedEditingRanges" => {
+<<<<<<< HEAD
 			// Forward to Cocoon
 			let payload = crate::Cocoon::Request::cocoon_payload(arguments);
+=======
+			let payload = cocoon_payload(arguments);
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 			let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
 

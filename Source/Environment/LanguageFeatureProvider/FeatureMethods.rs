@@ -487,8 +487,7 @@ pub(super) async fn provide_workspace_symbols(
 			.Extension
 			.ProviderRegistration
 			.LanguageProviders
-			.lock()
-			.map_err(crate::Environment::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			.lock();
 
 		providers
 			.values()

@@ -6,7 +6,11 @@ use CommonLibrary::Configuration::DTO::{
 };
 use serde_json::{Value, json};
 
+<<<<<<< HEAD
 use crate::Configuration::{
+=======
+use crate::IPC::WindServiceHandlers::Configuration::{
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 	EnvironmentGet::Fn as EnvironmentGet,
 	Get::Fn as ConfigurationGet,
 	Update::Fn as ConfigurationUpdate,
@@ -28,7 +32,11 @@ type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 /// - `environment:get`
 /// - `workbench:getConfiguration`
 pub async fn dispatch_configuration(
+<<<<<<< HEAD
 	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+=======
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 	app_handle:&tauri::AppHandle,
 
@@ -46,6 +54,7 @@ pub async fn dispatch_configuration(
 		"configuration:lookup" => ConfigurationGet(runtime.clone(), arguments).await,
 
 		"configuration:inspect" => {
+<<<<<<< HEAD
 			// Return the per-scope breakdown VS Code expects.
 			// Field names match IConfigurationService.inspect() result shape:
 			// value / defaultValue / userValue / workspaceValue / workspaceFolderValue /
@@ -61,6 +70,17 @@ pub async fn dispatch_configuration(
 				"workspaceValue": Value::Null,
 				"workspaceFolderValue": Value::Null,
 				"memoryValue": Value::Null,
+=======
+			let current_value = ConfigurationGet(runtime.clone(), arguments).await.unwrap_or(Value::Null);
+
+			Ok(json!({
+				"value": current_value,
+				"default": current_value,
+				"user": Value::Null,
+				"workspace": Value::Null,
+				"workspaceFolder": Value::Null,
+				"memory": Value::Null,
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 			}))
 		},
 

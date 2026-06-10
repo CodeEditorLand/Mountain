@@ -2,7 +2,11 @@
 
 use serde_json::Value;
 
+<<<<<<< HEAD
 use crate::Model::{
+=======
+use crate::IPC::WindServiceHandlers::Model::{
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 	ModelClose::Fn as ModelClose,
 	ModelGet::Fn as ModelGet,
 	ModelGetAll::Fn as ModelGetAll,
@@ -25,7 +29,11 @@ use crate::Model::{
 /// - `textFile:write`
 /// - `textFile:save`
 pub async fn dispatch_model(
+<<<<<<< HEAD
 	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+=======
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 	command:&str,
 

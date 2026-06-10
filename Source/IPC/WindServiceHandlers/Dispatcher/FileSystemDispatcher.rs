@@ -2,7 +2,11 @@
 
 use serde_json::Value;
 
+<<<<<<< HEAD
 use crate::FileSystem::{
+=======
+use crate::IPC::WindServiceHandlers::FileSystem::{
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 	Managed::{
 		FileCopy::Fn as FileCopy,
 		FileDelete::Fn as FileDelete,
@@ -55,7 +59,11 @@ use crate::FileSystem::{
 /// - `file:close` -> FileCloseFd
 /// - `file:cloneFile` -> FileCloneNative
 pub async fn dispatch_filesystem(
+<<<<<<< HEAD
 	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
+=======
+	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 	command:&str,
 

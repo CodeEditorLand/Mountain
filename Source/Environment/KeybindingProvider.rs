@@ -73,7 +73,6 @@ impl KeybindingProvider for MountainEnvironment {
 			.ScannedExtensions
 			.ScannedExtensions
 			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.clone();
 
 		for Extension in Extensions.values() {

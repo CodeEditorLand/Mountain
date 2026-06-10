@@ -213,6 +213,285 @@ impl MountainVinegRPCService {
 	}
 }
 
+/// Thin IPC provider that bridges Vine notifications to the gRPC client.
+struct VineIPCProvider;
+
+impl ::Vine::Host::IPCProvider for VineIPCProvider {
+	fn SendRequest(
+		&self,
+
+		Channel:&str,
+
+		Payload:serde_json::Value,
+	) -> futures::future::BoxFuture<'_, ::Vine::Error::Result<serde_json::Value>> {
+		let Channel = Channel.to_string();
+
+		Box::pin(async move {
+			crate::Vine::Client::SendRequest::Fn(&Channel, Channel.clone(), Payload, 10_000)
+				.await
+				.map_err(|E| ::Vine::Error::VineError::RPCError(format!("{:?}", E)))
+		})
+	}
+
+	fn SendNotification(&self, Channel:&str, Method:&str, Payload:serde_json::Value) {
+		let Channel = Channel.to_string();
+
+		let Method = Method.to_string();
+
+		tauri::async_runtime::spawn(async move {
+			let _ = crate::Vine::Client::SendNotification::Fn(Channel, Method, Payload).await;
+		});
+	}
+}
+
+impl ::Vine::Host::ApplicationStateAccess for MountainVinegRPCService {
+	fn EmbedderName(&self) -> &'static str { "Mountain" }
+}
+
+impl ::Vine::Host::VineHost for MountainVinegRPCService {
+	fn ApplicationState(&self) -> &dyn ::Vine::Host::ApplicationStateAccess { self }
+
+	fn EmitToRenderer(&self, Channel:&str, Payload:serde_json::Value) {
+		let _ = self.ApplicationHandle.emit(Channel, Payload);
+	}
+
+	fn RendererEmitter(&self) -> Arc<dyn ::Vine::Host::RendererEmitter> {
+		Arc::new(crate::Vine::Server::VineHostImpl::TauriRendererEmitter::New(
+			self.ApplicationHandle.clone(),
+		))
+	}
+
+	fn IPCProvider(&self) -> Arc<dyn ::Vine::Host::IPCProvider> { Arc::new(VineIPCProvider) }
+
+	fn UnregisterProvider(&self, Handle:u32) {
+		self.RunTime
+			.Environment
+			.ApplicationState
+			.Extension
+			.ProviderRegistration
+			.LanguageProviders
+			.lock()
+			.remove(&Handle);
+	}
+
+	fn RegisterCommandInRegistry(&self, CommandId:&str, SideCarIdentifier:&str) {
+		use tauri::Wry;
+
+		use crate::Environment::CommandProvider::CommandHandler;
+
+		self.RunTime.Environment.ApplicationState.Extension.Registry.RegisterCommand(
+			CommandId.to_string(),
+			CommandHandler::<Wry>::Proxied {
+				SideCarIdentifier:SideCarIdentifier.to_string(),
+				CommandIdentifier:CommandId.to_string(),
+			},
+		);
+	}
+
+	fn UnregisterCommandInRegistry(&self, CommandId:&str) {
+		self.RunTime
+			.Environment
+			.ApplicationState
+			.Extension
+			.Registry
+			.CommandRegistry
+			.lock()
+			.remove(CommandId);
+	}
+
+	fn SpawnSendTextToTerminal(&self, TerminalId:u64, Text:String) {
+		let RunTime = self.RunTime.clone();
+
+		tauri::async_runtime::spawn(async move {
+			let _ = crate::IPC::WindServiceHandlers::Terminal::TerminalSendText::Fn(
+				RunTime,
+				vec![serde_json::json!(TerminalId), serde_json::json!(Text)],
+			)
+			.await;
+		});
+	}
+
+	fn SpawnDisposeTerminal(&self, TerminalId:u64) {
+		let RunTime = self.RunTime.clone();
+
+		tauri::async_runtime::spawn(async move {
+			let _ = crate::IPC::WindServiceHandlers::Terminal::TerminalDispose::Fn(
+				RunTime,
+				vec![serde_json::json!(TerminalId)],
+			)
+			.await;
+		});
+	}
+
+	fn CreateTerminal<'a>(
+		&'a self,
+
+		Options:&'a serde_json::Value,
+	) -> futures::future::BoxFuture<'a, Option<serde_json::Value>> {
+		use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
+
+		let Options = Options.clone();
+
+		let Env = self.RunTime.Environment.clone();
+
+		Box::pin(async move {
+			let Provider:Arc<dyn TerminalProvider> = Env.Require();
+
+			Provider.CreateTerminal(Options).await.ok()
+		})
+	}
+
+	fn RegisterScmInRegistry(&self, Handle:u32, ScmId:&str, Label:&str, _ExtId:&str) {
+		use CommonLibrary::SourceControlManagement::DTO::SourceControlManagementProviderDTO::SourceControlManagementProviderDTO;
+
+		let Dto = SourceControlManagementProviderDTO {
+			Handle,
+
+			Identifier:ScmId.to_string(),
+
+			Label:Label.to_string(),
+
+			RootURI:None,
+
+			Count:None,
+
+			CommitTemplate:None,
+
+			AcceptInputCommand:None,
+
+			InputBox:None,
+		};
+
+		self.RunTime
+			.Environment
+			.ApplicationState
+			.Feature
+			.Markers
+			.SourceControlManagementProviders
+			.lock()
+			.insert(Handle, Dto);
+	}
+
+	fn CreateSourceControl<'a>(&'a self, Payload:serde_json::Value) -> futures::future::BoxFuture<'a, ()> {
+		use CommonLibrary::{
+			Environment::Requires::Requires,
+			SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider,
+		};
+
+		let Env = self.RunTime.Environment.clone();
+
+		Box::pin(async move {
+			let Provider:Arc<dyn SourceControlManagementProvider> = Env.Require();
+
+			let _ = Provider.CreateSourceControl(Payload).await;
+		})
+	}
+
+	fn UpdateSourceControlGroup<'a>(
+		&'a self,
+
+		ScmHandle:u32,
+
+		Payload:serde_json::Value,
+	) -> futures::future::BoxFuture<'a, ()> {
+		use CommonLibrary::{
+			Environment::Requires::Requires,
+			SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider,
+		};
+
+		let Env = self.RunTime.Environment.clone();
+
+		Box::pin(async move {
+			let Provider:Arc<dyn SourceControlManagementProvider> = Env.Require();
+
+			let _ = Provider.UpdateSourceControlGroup(ScmHandle, Payload).await;
+		})
+	}
+
+	fn RegisterLanguageProvider(&self, Handle:u32, TypeName:&str, Payload:&serde_json::Value) -> bool {
+		use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
+
+		use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
+
+		let ProvType = match TypeName {
+			"hover" => ProviderType::Hover,
+
+			"completion" | "completion_item" => ProviderType::Completion,
+
+			"signature_help" => ProviderType::SignatureHelp,
+
+			"definition" => ProviderType::Definition,
+
+			"reference" | "references" => ProviderType::References,
+
+			"document_symbol" | "document_symbols" => ProviderType::DocumentSymbol,
+
+			"workspace_symbol" | "workspace_symbols" => ProviderType::WorkspaceSymbol,
+
+			"code_action" | "code_actions" => ProviderType::CodeAction,
+
+			"code_lens" => ProviderType::CodeLens,
+
+			"document_highlight" => ProviderType::DocumentHighlight,
+
+			"document_formatting" => ProviderType::DocumentFormatting,
+
+			"document_range_formatting" => ProviderType::DocumentRangeFormatting,
+
+			"rename" => ProviderType::Rename,
+
+			"folding_range" => ProviderType::FoldingRange,
+
+			"selection_range" => ProviderType::SelectionRange,
+
+			"semantic_tokens" => ProviderType::SemanticTokens,
+
+			"inline_completion" | "inline_completions" => ProviderType::InlineCompletion,
+
+			_ => return false,
+		};
+
+		let Selector = Payload
+			.get("languageSelector")
+			.or_else(|| Payload.get("language_selector"))
+			.cloned()
+			.unwrap_or(serde_json::json!([{"language":"*"}]));
+
+		let ExtId = Payload
+			.get("extensionId")
+			.or_else(|| Payload.get("extension_id"))
+			.cloned()
+			.unwrap_or(serde_json::Value::Null);
+
+		let Dto = ProviderRegistrationDTO {
+			Handle,
+
+			ProviderType:ProvType,
+
+			Selector,
+
+			SideCarIdentifier:"cocoon-main".to_string(),
+
+			ExtensionIdentifier:ExtId,
+
+			Options:None,
+		};
+
+		self.RunTime
+			.Environment
+			.ApplicationState
+			.Extension
+			.ProviderRegistration
+			.RegisterProvider(Handle, Dto);
+
+		true
+	}
+
+	fn UpdateScmGroupMarkers(&self, ScmHandle:u32, GroupId:&str, ResourceStates:&serde_json::Value) {
+		crate::Vine::Server::VineHostImpl::UpdateScmGroupMarkers(&self.RunTime, ScmHandle, GroupId, ResourceStates);
+	}
+}
+
 #[tonic::async_trait]
 impl MountainService for MountainVinegRPCService {
 	type OpenChannelFromCocoonStream = std::pin::Pin<
@@ -466,7 +745,17 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"workspace.applyEdit" => {
+<<<<<<< HEAD
 				::Vine::Server::Notification::WorkspaceApplyEdit::WorkspaceApplyEdit(self, &Parameter).await;
+=======
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://workspace/applyEdit",
+					&Parameter,
+					"",
+					"",
+				);
+>>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 			},
 
 			"window.showTextDocument" => {

@@ -83,7 +83,6 @@ pub(super) async fn update_configuration_value(
 				.Workspace
 				.WorkspaceConfigurationPath
 				.lock()
-				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 				.clone()
 				.ok_or_else(|| {
 					CommonError::ConfigurationLoad { Description:"No workspace configuration path set".into() }
@@ -96,12 +95,7 @@ pub(super) async fn update_configuration_value(
 		// in `_overrides.resource`; until that's plumbed through the
 		// trait the first folder is the closest stable approximation.
 		ConfigurationTarget::WorkspaceFolder => {
-			let FoldersGuard = environment
-				.ApplicationState
-				.Workspace
-				.WorkspaceFolders
-				.lock()
-				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+			let FoldersGuard = environment.ApplicationState.Workspace.WorkspaceFolders.lock();
 
 			let First = FoldersGuard.first().ok_or_else(|| {
 				CommonError::ConfigurationLoad {

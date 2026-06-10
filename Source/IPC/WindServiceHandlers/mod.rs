@@ -1558,14 +1558,7 @@ pub async fn mountain_ipc_invoke(
 					}))
 				},
 				"mountain_get_state" => {
-					let FolderCount = RunTime
-						.Environment
-						.ApplicationState
-						.Workspace
-						.WorkspaceFolders
-						.lock()
-						.map(|G| G.len())
-						.unwrap_or(0);
+					let FolderCount = RunTime.Environment.ApplicationState.Workspace.WorkspaceFolders.lock().len();
 
 					Ok(json!({
 						"workspace": { "folderCount": FolderCount },

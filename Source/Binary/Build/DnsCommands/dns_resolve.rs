@@ -1,7 +1,7 @@
 //! `dns_resolve` Tauri command - manual resolution helper used
 //! by the diagnostic panel and by `dns_test_resolution`.
 //!
-//! `land.playform.cloud` zone names resolve to 127.0.0.1; allowlisted
+//! `editor.land` zone names resolve to 127.0.0.1; allowlisted
 //! external domains return a TEST-NET-1 placeholder; everything
 //! else fails with `error="Domain not in forward allowlist"`.
 
@@ -15,7 +15,7 @@ pub fn dns_resolve(domain:String, dns_port:State<DnsPort>) -> Result<DnsResoluti
 		return Err("DNS server is not running".to_string());
 	}
 
-	if domain.ends_with("land.playform.cloud") || domain.ends_with("editor.land.") {
+	if domain.ends_with("editor.land") || domain.ends_with("editor.land.") {
 		return Ok(DnsResolutionResult {
 			domain:domain.clone(),
 			record_type:"A".to_string(),
