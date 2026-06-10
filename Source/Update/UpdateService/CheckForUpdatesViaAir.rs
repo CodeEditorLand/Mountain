@@ -5,16 +5,12 @@
 use std::sync::Arc;
 
 #[cfg(feature = "AirIntegration")]
-<<<<<<< HEAD
 use AirLibrary::Vine::Generated::air::{
 	ApplyUpdateRequest,
 	DownloadRequest,
 	air_service_client::AirServiceClient,
-	air_service_server::UpdateCheckRequest,
+	UpdateCheckRequest,
 };
-=======
-use AirLibrary::Vine::Generated::air::{air_service_client::AirServiceClient, air_service_server::UpdateCheckRequest};
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 #[cfg(feature = "AirIntegration")]
 use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
@@ -72,125 +68,135 @@ pub async fn Fn(
 					.await?;
 
 				if UserResponse == Some("Install".to_string()) {
-<<<<<<< HEAD
-					let DownloadUrl = Reply.download_url.clone();
+					let _ = ApplicationHandle
+						.emit("sky://update/downloading", json!({ "version": Reply.version }));
 
-					let Version = Reply.version.clone();
+					let mut Client = (**AirClient).clone();
 
-					let DownloadDest = std::env::temp_dir()
-						.join(format!("mountain-update-{}.pkg", Version))
-						.to_string_lossy()
-						.into_owned();
+					let DownloadReq =
+						tonic::Request::new(DownloadRequest {
+							request_id:uuid::Uuid::new_v4().to_string(),
+							url:Reply.download_url.clone(),
+							destination_path:String::new(),
+							checksum:String::new(),
+							headers:std::collections::HashMap::new(),
+						});
 
-					let _ = ApplicationHandle.emit(
-						"sky://update/downloading",
-						json!({ "version": Version, "download_url": DownloadUrl }),
-					);
+					match Client.download_update(DownloadReq).await {
+						Ok(DownloadResponse) => {
+							let Downloaded = DownloadResponse.into_inner();
 
-					let DownloadReq = tonic::Request::new(DownloadRequest {
-						request_id:RequestID.clone(),
-						url:DownloadUrl,
-						destination_path:DownloadDest.clone(),
-						checksum:String::new(),
-						headers:std::collections::HashMap::new(),
-					});
+							if !Downloaded.error.is_empty() {
+								dev_log!(
+									"update",
+									"error: [UpdateService] Air download failed: {}",
+									Downloaded.error
+								);
 
-					match AirClient.download_update(DownloadReq).await {
-						Ok(DownloadResp) => {
-							let DownloadReply = DownloadResp.into_inner();
-
-							if !DownloadReply.success {
 								RunTime
 									.Run(ShowMessage(
 										MessageSeverity::Error,
-										format!("Update download failed: {}", DownloadReply.error),
+										format!(
+											"Update download failed: {}",
+											Downloaded.error
+										),
 										json!(null),
 									))
 									.await?;
+							} else {
+								let _ = ApplicationHandle.emit(
+									"sky://update/downloaded",
+									json!({ "version": Reply.version, "path": Downloaded.file_path }),
+								);
 
-								return Ok(());
-							}
+								let ApplyReq =
+									tonic::Request::new(ApplyUpdateRequest {
+										request_id:uuid::Uuid::new_v4().to_string(),
+										version:Reply.version.clone(),
+										update_path:Downloaded.file_path.clone(),
+									});
 
-							let FilePath = DownloadReply.file_path;
+								match Client.apply_update(ApplyReq).await {
+									Ok(ApplyResponse) => {
+										let Applied = ApplyResponse.into_inner();
 
-							let _ = ApplicationHandle.emit("sky://update/downloaded", json!({ "version": Version }));
+										if !Applied.error.is_empty() {
+											dev_log!(
+												"update",
+												"error: [UpdateService] Air apply failed: {}",
+												Applied.error
+											);
 
-							let ApplyReq = tonic::Request::new(ApplyUpdateRequest {
-								request_id:RequestID.clone(),
-								version:Version.clone(),
-								update_path:FilePath,
-							});
+											RunTime
+												.Run(ShowMessage(
+													MessageSeverity::Error,
+													format!(
+														"Update install failed: {}",
+														Applied.error
+													),
+													json!(null),
+												))
+												.await?;
+										} else {
+											let _ = ApplicationHandle.emit(
+												"sky://update/applied",
+												json!({ "version": Reply.version }),
+											);
 
-							match AirClient.apply_update(ApplyReq).await {
-								Ok(ApplyResp) => {
-									let ApplyReply = ApplyResp.into_inner();
+											RunTime
+												.Run(ShowMessage(
+													MessageSeverity::Info,
+													format!(
+														"v{} is ready. Restart Mountain to finish the update.",
+														Reply.version
+													),
+													json!(null),
+												))
+												.await?;
+										}
+									},
 
-									if ApplyReply.success {
+									Err(ApplyStatus) => {
+										dev_log!(
+											"update",
+											"error: [UpdateService] Air apply_update RPC failed: {}",
+											ApplyStatus
+										);
+
 										RunTime
 											.Run(ShowMessage(
-												MessageSeverity::Info,
+												MessageSeverity::Error,
 												format!(
-													"Mountain v{} is ready. Please restart to apply the update.",
-													Version
+													"Failed to apply update: {}",
+													ApplyStatus
 												),
 												json!(null),
 											))
 											.await?;
-									} else {
-										RunTime
-											.Run(ShowMessage(
-												MessageSeverity::Error,
-												format!("Update installation failed: {}", ApplyReply.error),
-												json!(null),
-											))
-											.await?;
-									}
-								},
-
-								Err(ApplyStatus) => {
-									dev_log!(
-										"update",
-										"error: [UpdateService] apply_update RPC failed: {}",
-										ApplyStatus
-									);
-
-									RunTime
-										.Run(ShowMessage(
-											MessageSeverity::Error,
-											format!("Failed to apply update: {}", ApplyStatus),
-											json!(null),
-										))
-										.await?;
-								},
+									},
+								}
 							}
 						},
 
 						Err(DownloadStatus) => {
 							dev_log!(
 								"update",
-								"error: [UpdateService] download_update RPC failed: {}",
+								"error: [UpdateService] Air download_update RPC failed: {}",
 								DownloadStatus
 							);
 
 							RunTime
 								.Run(ShowMessage(
 									MessageSeverity::Error,
-									format!("Failed to download update: {}", DownloadStatus),
+									format!(
+										"Failed to download update: {}",
+										DownloadStatus
+									),
 									json!(null),
 								))
 								.await?;
 						},
 					}
-=======
-					// TODO: call Air's download_update endpoint, track progress, install.
-					RunTime
-						.Run(ShowMessage(
-							MessageSeverity::Info,
-							"Update download via Air is not yet implemented. Please update manually.".to_string(),
-							json!(null),
-						))
-						.await?;
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 				}
 			} else if NotifyNoUpdate {
 				RunTime

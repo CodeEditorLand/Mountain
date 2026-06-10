@@ -62,18 +62,6 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 		.Feature
 		.Markers
 		.SourceControlManagementProviders
-<<<<<<< HEAD
-		.lock()
-	{
-		for (Handle, Dto) in ScmProviders.iter() {
-			let RootUriStr = Dto
-				.RootURI
-				.as_ref()
-				.and_then(|V| V.get("external").or_else(|| V.get("path")))
-				.and_then(serde_json::Value::as_str)
-				.unwrap_or("")
-				.to_string();
-=======
 		.lock();
 
 	for (Handle, Dto) in ScmProvidersGuard.iter() {
@@ -84,7 +72,6 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 			.and_then(serde_json::Value::as_str)
 			.unwrap_or("")
 			.to_string();
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 		let ScmId = if Dto.Identifier.is_empty() {
 			"git".to_string()
@@ -117,16 +104,6 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 	//
 	// We resolve `scmId` from the providers map (defaulting to "git" if
 	// `Identifier` is empty - matches the provider-replay fallback above).
-<<<<<<< HEAD
-	let ProviderIdentifierByHandle:std::collections::HashMap<u32, String> = if let Ok(ScmProviders) = RunTime
-		.Environment
-		.ApplicationState
-		.Feature
-		.Markers
-		.SourceControlManagementProviders
-		.lock()
-	{
-=======
 	let ProviderIdentifierByHandle:std::collections::HashMap<u32, String> = {
 		let ScmProviders = RunTime
 			.Environment
@@ -136,7 +113,6 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 			.SourceControlManagementProviders
 			.lock();
 
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 		ScmProviders
 			.iter()
 			.map(|(Handle, Dto)| {
@@ -157,15 +133,6 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 		.Feature
 		.Markers
 		.SourceControlManagementGroups
-<<<<<<< HEAD
-		.lock()
-	{
-		for (ProviderHandle, GroupsByID) in ScmGroups.iter() {
-			let ScmId = ProviderIdentifierByHandle
-				.get(ProviderHandle)
-				.cloned()
-				.unwrap_or_else(|| "git".to_string());
-=======
 		.lock();
 
 	for (ProviderHandle, GroupsByID) in ScmGroups.iter() {
@@ -173,7 +140,6 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 			.get(ProviderHandle)
 			.cloned()
 			.unwrap_or_else(|| "git".to_string());
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 		for (GroupId, GroupDto) in GroupsByID.iter() {
 			let GroupHandle = format!("{}/{}", ProviderHandle, GroupId);
@@ -206,15 +172,6 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 		.Feature
 		.Markers
 		.SourceControlManagementResources
-<<<<<<< HEAD
-		.lock()
-	{
-		for (ProviderHandle, GroupsByID) in ScmResources.iter() {
-			let ScmId = ProviderIdentifierByHandle
-				.get(ProviderHandle)
-				.cloned()
-				.unwrap_or_else(|| "git".to_string());
-=======
 		.lock();
 
 	for (ProviderHandle, GroupsByID) in ScmResources.iter() {
@@ -222,7 +179,6 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 			.get(ProviderHandle)
 			.cloned()
 			.unwrap_or_else(|| "git".to_string());
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 		for (GroupId, ResourceList) in GroupsByID.iter() {
 			let GroupHandle = format!("{}/{}", ProviderHandle, GroupId);
@@ -268,14 +224,6 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 		}));
 	}
 
-<<<<<<< HEAD
-			if ApplicationHandle
-				.emit("sky://command/register", serde_json::json!({ "commands": Batch }))
-				.is_ok()
-			{
-				CommandCount = Count;
-			}
-=======
 	drop(Commands);
 
 	if !Batch.is_empty() {
@@ -286,7 +234,6 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 			.is_ok()
 		{
 			CommandCount = Count;
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 		}
 	}
 

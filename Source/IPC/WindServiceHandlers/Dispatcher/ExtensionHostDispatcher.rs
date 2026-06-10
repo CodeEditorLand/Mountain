@@ -2,11 +2,7 @@
 
 use serde_json::Value;
 
-<<<<<<< HEAD
-use crate::ExtensionHost::{
-=======
 use crate::IPC::WindServiceHandlers::ExtensionHost::{
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 	DebugServiceClose::Fn as ExtensionHostDebugClose,
 	DebugServiceReload::Fn as ExtensionHostDebugReload,
 	StarterCreate::Fn as ExtensionHostStarterCreate,
@@ -79,13 +75,6 @@ pub async fn dispatch_extension_host(
 			ExtensionHostDebugClose(app_handle.clone()).await
 		},
 
-<<<<<<< HEAD
-		// `attachSession` / `terminateSession` require RunTime (for
-		// DebugState writes). The primary wired arms live in mod.rs.
-		// This dispatcher path is reached only from legacy callers that
-		// supply an AppHandle but not a RunTime; acknowledge and no-op.
-=======
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 		"extensionhostdebugservice:attachSession" | "extensionhostdebugservice:terminateSession" => {
 			crate::dev_log!("exthost", "{}", command);
 
@@ -95,11 +84,7 @@ pub async fn dispatch_extension_host(
 		"cocoon:extensionHostMessage" => {
 			crate::dev_log!("exthost", "cocoon:extensionHostMessage");
 
-<<<<<<< HEAD
-			crate::Cocoon::ExtensionHostMessage::Fn(app_handle.clone(), arguments).await
-=======
 			crate::IPC::WindServiceHandlers::Cocoon::ExtensionHostMessage::Fn(app_handle.clone(), arguments).await
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 		},
 
 		_ => Err(format!("Unknown extension host command: {}", command)),

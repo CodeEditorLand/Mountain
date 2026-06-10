@@ -2,15 +2,6 @@
 
 use serde_json::{Value, json};
 
-<<<<<<< HEAD
-use crate::NativeHost::{
-	GetColorScheme::Fn as NativeGetColorScheme,
-	GetEnvironmentPaths::Fn as NativeGetEnvironmentPaths,
-	GetOSProperties::Fn as NativeOSProperties,
-	GetOSStatistics::Fn as NativeOSStatistics,
-	IsFullscreen::Fn as NativeIsFullscreen,
-	IsMaximized::Fn as NativeIsMaximized,
-=======
 use crate::IPC::WindServiceHandlers::NativeHost::{
 	GetColorScheme::Fn as NativeGetColorScheme,
 	GetEnvironmentPaths::Fn as NativeGetEnvironmentPaths,
@@ -18,7 +9,6 @@ use crate::IPC::WindServiceHandlers::NativeHost::{
 	IsMaximized::Fn as NativeIsMaximized,
 	OSProperties::Fn as NativeOSProperties,
 	OSStatistics::Fn as NativeOSStatistics,
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 	PickFolder::Fn as NativePickFolder,
 	ShowMessageBox::Fn as NativeShowMessageBox,
 	ShowOpenDialog::Fn as NativeShowOpenDialog,
@@ -30,11 +20,7 @@ use crate::IPC::WindServiceHandlers::NativeHost::{
 pub async fn dispatch_native_host_dialogs(
 	app_handle:&tauri::AppHandle,
 
-<<<<<<< HEAD
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
-=======
 	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 	command:&str,
 

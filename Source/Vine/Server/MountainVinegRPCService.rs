@@ -745,9 +745,6 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"workspace.applyEdit" => {
-<<<<<<< HEAD
-				::Vine::Server::Notification::WorkspaceApplyEdit::WorkspaceApplyEdit(self, &Parameter).await;
-=======
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,
 					"sky://workspace/applyEdit",
@@ -755,7 +752,6 @@ impl MountainService for MountainVinegRPCService {
 					"",
 					"",
 				);
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 			},
 
 			"window.showTextDocument" => {

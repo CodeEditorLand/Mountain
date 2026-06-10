@@ -2,34 +2,22 @@
 
 use serde_json::{Value, json};
 
-<<<<<<< HEAD
-use crate::{
-=======
 use crate::IPC::WindServiceHandlers::{
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 	UI::{
 		WorkspacesAddFolder::Fn as WorkspacesAddFolder,
 		WorkspacesGetFolders::Fn as WorkspacesGetFolders,
 		WorkspacesGetName::Fn as WorkspacesGetName,
 		WorkspacesRemoveFolder::Fn as WorkspacesRemoveFolder,
 	},
-<<<<<<< HEAD
-	Utilities::RecentlyOpened::{Mutate::Fn as MutateRecentlyOpened, Read::Fn as ReadRecentlyOpened},
-=======
 	Utilities::{
 		JsonValueHelpers::arg_string,
 		RecentlyOpened::{Mutate::Fn as MutateRecentlyOpened, Read::Fn as ReadRecentlyOpened},
 	},
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 };
 
 /// Dispatches workspace commands.
 pub async fn dispatch_workspace(
-<<<<<<< HEAD
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
-=======
 	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 	command:&str,
 
@@ -53,11 +41,7 @@ pub async fn dispatch_workspace(
 		"workspaces:getRecentlyOpened" => ReadRecentlyOpened(),
 
 		"workspaces:removeRecentlyOpened" => {
-<<<<<<< HEAD
-			let uri = crate::Utilities::JsonValueHelpers::arg_string(&arguments, 0);
-=======
 			let uri = arg_string(&arguments, 0);
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 			if !uri.is_empty() {
 				MutateRecentlyOpened(|list| {
@@ -99,35 +83,21 @@ pub async fn dispatch_workspace(
 
 						let file = entry.get("fileUri").cloned();
 
-<<<<<<< HEAD
-						if let Some(folder_uri) = folder.and_then(|v| v.as_str()) {
-=======
 						if let Some(folder_uri) = folder.and_then(|v| v.as_str().map(str::to_owned)) {
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 							workspaces.retain(|e| e.get("uri").and_then(|v| v.as_str()).unwrap_or("") != folder_uri);
 
 							let mut item = serde_json::Map::new();
 
-<<<<<<< HEAD
-							item.insert("uri".into(), json!(folder_uri));
-
-							if let Some(label) = entry.get("label").and_then(|v| v.as_str()) {
-=======
 							item.insert("uri".into(), json!(&folder_uri));
 
 							if let Some(label) = entry.get("label").and_then(|v| v.as_str().map(str::to_owned)) {
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 								item.insert("label".into(), json!(label));
 							}
 
 							workspaces.insert(0, Value::Object(item));
 						}
 
-<<<<<<< HEAD
-						if let Some(file_uri) = file.and_then(|v| v.as_str()) {
-=======
 						if let Some(file_uri) = file.and_then(|v| v.as_str().map(str::to_owned)) {
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 							files.retain(|e| e.get("uri").and_then(|v| v.as_str()).unwrap_or("") != file_uri);
 
 							let mut item = serde_json::Map::new();

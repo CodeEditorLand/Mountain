@@ -1,12 +1,10 @@
 //! Storage command dispatcher - handles storage:* commands.
 
+use std::sync::Arc;
+
 use serde_json::Value;
 
-<<<<<<< HEAD
-use crate::Storage::{
-=======
 use crate::IPC::WindServiceHandlers::Storage::{
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 	StorageDelete::Fn as StorageDelete,
 	StorageGet::Fn as StorageGet,
 	StorageGetItems::Fn as StorageGetItems,
@@ -24,17 +22,13 @@ use crate::IPC::WindServiceHandlers::Storage::{
 /// - `storage:updateItems` -> StorageUpdateItems
 /// - `storage:delete` -> StorageDelete
 /// - `storage:keys` -> StorageKeys
-/// - `storage:optimize` (stub)
+/// - `storage:optimize` → flush pending writes
 /// - `storage:isUsed` (stub)
 /// - `storage:close` (stub)
 /// - `storage:onDidChangeItems` (stub)
 /// - `storage:logStorage` (stub)
 pub async fn dispatch_storage(
-<<<<<<< HEAD
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
-=======
-	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
+	runtime:Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 
@@ -58,7 +52,53 @@ pub async fn dispatch_storage(
 		"storage:updateItems" => StorageUpdateItems(runtime.clone(), arguments).await,
 
 		"storage:optimize" => {
-			crate::dev_log!("storage", "storage:optimize");
+			// Flush pending debounced writes for both scopes immediately.
+			// VS Code calls this before workspace close and hot-reload to
+			// ensure state is fully persisted without waiting for the 100 ms
+			// debounce window.
+			crate::dev_log!("storage", "storage:optimize → flush");
+
+			let GlobalPath = runtime
+				.Environment
+				.ApplicationState
+				.GlobalMementoPath
+				.lock()
+				.ok()
+				.map(|G| G.clone());
+
+			let WorkspacePath = runtime
+				.Environment
+				.ApplicationState
+				.WorkspaceMementoPath
+				.lock()
+				.ok()
+				.and_then(|W| W.clone());
+
+			let GlobalData = runtime
+				.Environment
+				.ApplicationState
+				.Configuration
+				.MementoGlobalStorage
+				.lock()
+				.map(|G| G.clone())
+				.unwrap_or_default();
+
+			let WorkspaceData = runtime
+				.Environment
+				.ApplicationState
+				.Configuration
+				.MementoWorkspaceStorage
+				.lock()
+				.map(|W| W.clone())
+				.unwrap_or_default();
+
+			crate::Environment::StorageProvider::FlushPendingWrites(
+				GlobalPath,
+				WorkspacePath,
+				GlobalData,
+				WorkspaceData,
+			)
+			.await;
 
 			Ok(Value::Null)
 		},
@@ -77,11 +117,7 @@ pub async fn dispatch_storage(
 
 		"storage:delete" => StorageDelete(runtime.clone(), arguments).await,
 
-<<<<<<< HEAD
-		"storage:keys" => StorageKeys(runtime.clone(), arguments).await,
-=======
 		"storage:keys" => StorageKeys(runtime.clone()).await,
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 		"storage:onDidChangeItems" | "storage:logStorage" => {
 			crate::dev_log!("storage-verbose", "{} (stub-ack)", command);

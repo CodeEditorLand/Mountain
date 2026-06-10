@@ -1,12 +1,10 @@
 //! Search command dispatcher.
 
+use std::sync::Arc;
+
 use serde_json::Value;
 
-<<<<<<< HEAD
-use crate::Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchFindInFiles};
-=======
 use crate::IPC::WindServiceHandlers::Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchFindInFiles};
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 /// Dispatches search commands.
 ///
@@ -16,11 +14,7 @@ use crate::IPC::WindServiceHandlers::Search::{FindFiles::Fn as SearchFindFiles, 
 /// - `search:cancel` - aborts an in-flight search task by search_id
 /// - `search:clearCache` / `search:onDidChangeResult` (no-op acks)
 pub async fn dispatch_search(
-<<<<<<< HEAD
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
-=======
-	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
+	runtime:Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
 
@@ -35,7 +29,6 @@ pub async fn dispatch_search(
 			SearchFindFiles(runtime.clone(), arguments).await
 		},
 
-<<<<<<< HEAD
 		"search:cancel" => {
 			// VS Code sends the search_id as arg[0] (number).
 			// Look it up in the active-search map and abort the task.
@@ -62,14 +55,6 @@ pub async fn dispatch_search(
 			Ok(Value::Null)
 		},
 
-=======
-		"search:cancel" | "search:clearCache" | "search:onDidChangeResult" => {
-			crate::dev_log!("search", "{} (stub-ack)", command);
-
-			Ok(Value::Null)
-		},
-
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 		_ => Err(format!("Unknown search command: {}", command)),
 	}
 }

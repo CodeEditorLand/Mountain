@@ -127,12 +127,8 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 			Err(Error) => {
 				dev_log!(
 					"terminal",
-<<<<<<< HEAD
 					"warn: [ReviveTerminalProcesses] failed to revive terminal old_id={}: {}",
 					OldId,
-=======
-					"warn: [ReviveTerminalProcesses] failed to revive terminal: {}",
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 					Error
 				);
 			},

@@ -29,11 +29,7 @@ use crate::UI::{
 pub async fn dispatch_lifecycle(
 	app_handle:&tauri::AppHandle,
 
-<<<<<<< HEAD
-	runtime:&crate::RunTime::ApplicationRunTime::ApplicationRunTime,
-=======
 	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 	command:&str,
 
@@ -49,11 +45,7 @@ pub async fn dispatch_lifecycle(
 		"lifecycle:advancePhase" | "lifecycle:setPhase" => {
 			crate::dev_log!("lifecycle", "{}", command);
 
-<<<<<<< HEAD
-			let new_phase = crate::Utilities::JsonValueHelpers::arg_u64_or(&arguments, 0, 1) as u8;
-=======
 			let new_phase = arg_u64_or(&arguments, 0, 1) as u8;
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 			runtime
 				.Environment

@@ -1,13 +1,8 @@
-<<<<<<< HEAD
-fn UpdateScmGroupMarkers(&self, ScmHandle:u32, GroupId:&str, ResourceStates:&Value) {
-	use std::collections::HashMap;
-=======
 use std::{collections::HashMap, sync::Arc};
 
 use CommonLibrary::SourceControlManagement::DTO::SourceControlManagementResourceDTO::SourceControlManagementResourceDTO;
 use serde_json::Value;
 use tauri::{AppHandle, Emitter};
->>>>>>> 8e05e904fef6242d1b7fe4804dd9ac660dc91867
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
