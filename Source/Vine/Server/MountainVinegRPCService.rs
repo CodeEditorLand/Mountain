@@ -1177,6 +1177,50 @@ impl MountainService for MountainVinegRPCService {
 				let _ = self.RunTime.Environment.SetDiagnostics(Owner, Entries).await;
 			},
 
+			"languageClient.status" | "languageServer.status" => {
+				let _ = self.ApplicationHandle.emit("sky://language/server-status", Parameter.clone());
+			},
+
+			"extension.activating" => {
+				let ExtId = Parameter
+					.get("id")
+					.and_then(serde_json::Value::as_str)
+					.unwrap_or("unknown");
+
+				dev_log!("extensions", "[Vine] extension.activating: {}", ExtId);
+			},
+
+			"task.completed" | "tasks.completed" => {
+				let TaskId = Parameter
+					.get("id")
+					.and_then(serde_json::Value::as_u64)
+					.unwrap_or(0);
+
+				// Remove from active executions; the run is finished.
+				self.RunTime.Environment.ApplicationState.Feature.Tasks.Remove(TaskId);
+
+				let _ = self.ApplicationHandle.emit("sky://task/completed", Parameter.clone());
+			},
+
+			"debug.session.stopped" | "debug.stopped" => {
+				let SessionId = Parameter
+					.get("sessionId")
+					.and_then(serde_json::Value::as_str)
+					.unwrap_or("")
+					.to_string();
+
+				if !SessionId.is_empty() {
+					self.RunTime
+						.Environment
+						.ApplicationState
+						.Feature
+						.Debug
+						.UnregisterDebugSession(&SessionId);
+				}
+
+				let _ = self.ApplicationHandle.emit("sky://debug/stopped", Parameter.clone());
+			},
+
 			_ => {
 				dev_log!("grpc", "[MountainVinegRPCService] Cocoon notification: {}", MethodName);
 

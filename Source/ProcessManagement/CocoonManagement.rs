@@ -163,6 +163,10 @@ struct CocoonProcessState {
 	RestartCount:u32,
 
 	LastRestartTime:Option<tokio::time::Instant>,
+
+	/// Channel used by the health monitor to schedule an automatic restart.
+	/// Each send carries the backoff duration in seconds.
+	RestartTx:Option<tokio::sync::mpsc::Sender<u64>>,
 }
 
 impl Default for CocoonProcessState {
@@ -177,6 +181,8 @@ impl Default for CocoonProcessState {
 			RestartCount:0,
 
 			LastRestartTime:None,
+
+			RestartTx:None,
 		}
 	}
 }
@@ -856,6 +862,44 @@ async fn LaunchAndManageCocoonSideCar(
 		} else {
 			dev_log!("cocoon", "[CocoonManagement] onStartupFinished activation triggered");
 		}
+
+		// Supplementary workspaceContains check for common root-level config
+		// files. Phase 2 fires pattern-based events from extension manifests;
+		// this block fires well-known events that extensions may declare via
+		// exact filenames rather than glob patterns, ensuring activations aren't
+		// missed when the manifest scan completes before the workspace is open.
+		let WorkspaceFolders:Vec<std::path::PathBuf> = EnvironmentForActivation
+			.ApplicationState
+			.Workspace
+			.WorkspaceFolders
+			.lock()
+			.iter()
+			.filter_map(|Folder| Folder.URI.to_file_path().ok())
+			.collect();
+
+		if !WorkspaceFolders.is_empty() {
+			if let Some(First) = WorkspaceFolders.first() {
+				for (FileName, Event) in [
+					("Cargo.toml", "workspaceContains:Cargo.toml"),
+					("package.json", "workspaceContains:package.json"),
+					("tsconfig.json", "workspaceContains:tsconfig.json"),
+					("go.mod", "workspaceContains:go.mod"),
+					("pyproject.toml", "workspaceContains:pyproject.toml"),
+					("CMakeLists.txt", "workspaceContains:CMakeLists.txt"),
+				] {
+					let FilePath = First.join(FileName);
+
+					if FilePath.exists() {
+						let _ = ::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							"$activateByEvent".to_string(),
+							serde_json::json!({ "activationEvent": Event }),
+						)
+						.await;
+					}
+				}
+			}
+		}
 	});
 
 	// Store process handle for health monitoring and management
@@ -878,6 +922,49 @@ async fn LaunchAndManageCocoonSideCar(
 		health.ClearIssues();
 
 		dev_log!("cocoon", "[CocoonManagement] Health monitor reset to active state");
+	}
+
+	// Wire up the automatic-restart channel. The health monitor sends a
+	// backoff duration (in seconds) on crash; the handler task sleeps then
+	// calls LaunchAndManageCocoonSideCar to respawn Cocoon.
+	{
+		let (RestartTx, mut RestartRx) = tokio::sync::mpsc::channel::<u64>(1);
+
+		COCOON_STATE.lock().await.RestartTx = Some(RestartTx);
+
+		let RestartAppHandle = ApplicationHandle.clone();
+
+		let RestartEnv = Environment.clone();
+
+		let RestartState = Arc::clone(&COCOON_STATE);
+
+		tokio::spawn(async move {
+			while let Some(BackoffSecs) = RestartRx.recv().await {
+				tokio::time::sleep(tokio::time::Duration::from_secs(BackoffSecs)).await;
+
+				dev_log!("cocoon", "[CocoonRestart] Restarting Cocoon after {}s backoff...", BackoffSecs);
+
+				{
+					let mut Guard = RestartState.lock().await;
+
+					Guard.IsRunning = false;
+
+					Guard.ChildProcess = None;
+				}
+
+				match LaunchAndManageCocoonSideCar(RestartAppHandle.clone(), RestartEnv.clone()).await {
+					Ok(()) => {
+						dev_log!("cocoon", "[CocoonRestart] Cocoon restarted successfully");
+
+						RestartState.lock().await.RestartCount = 0;
+					},
+
+					Err(Error) => {
+						dev_log!("cocoon", "error: [CocoonRestart] Restart failed: {}", Error);
+					},
+				}
+			}
+		});
 	}
 
 	// Start background health monitoring
@@ -945,12 +1032,32 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 						dev_log!("cocoon", "warn: [CocoonHealth] Health score: {}", health.HealthScore);
 					}
 
-					// Log that automatic restart would be needed
-					dev_log!(
-						"cocoon",
-						"warn: [CocoonHealth] CRASH DETECTED: Cocoon process has crashed and must be restarted \
-						 manually or via application reinitialization"
-					);
+					// Schedule an automatic restart with exponential backoff.
+					let RestartCount = state_guard.RestartCount;
+
+					if RestartCount < 5 {
+						state_guard.RestartCount += 1;
+
+						// Backoff: 1, 2, 4, 8, 16 seconds.
+						let BackoffSecs = 1u64 << RestartCount.min(4);
+
+						if let Some(ref Tx) = state_guard.RestartTx {
+							let _ = Tx.try_send(BackoffSecs);
+						}
+
+						dev_log!(
+							"cocoon",
+							"[CocoonHealth] Scheduling restart attempt {} in {}s",
+							RestartCount + 1,
+							BackoffSecs
+						);
+					} else {
+						dev_log!(
+							"cocoon",
+							"error: [CocoonHealth] Max restarts ({}) reached; not restarting",
+							state_guard.RestartCount
+						);
+					}
 				},
 
 				Ok(None) => {
