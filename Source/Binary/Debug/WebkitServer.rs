@@ -120,7 +120,7 @@ fn cocoon_port() -> u16 {
 pub fn install(window:&WebviewWindow<Wry>) {
 	// Always store the window: even in cocoon-only mode the eval pipeline
 	// stays useful for tests that imported this module directly.
-	let mut guard = WINDOW.lock().unwrap();
+	let mut guard = WINDOW.lock().unwrap_or_else(|e| e.into_inner());
 
 	*guard = Some(Arc::new(window.clone()));
 	drop(guard);
@@ -162,7 +162,7 @@ fn start_server() {
 	for stream in listener.incoming() {
 		match stream {
 			Ok(mut stream) => {
-				let window_opt = WINDOW.lock().unwrap().clone();
+				let window_opt = WINDOW.lock().unwrap_or_else(|e| e.into_inner()).clone();
 
 				std::thread::spawn(move || {
 					if let Err(e) = handle_connection(&window_opt, &mut stream) {

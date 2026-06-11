@@ -394,7 +394,7 @@ impl WorkspaceProvider for MountainEnvironment {
 		}
 
 		let RoleResolved:SingleFlightRole = {
-			let mut Guard = FindFilesInFlight().lock().unwrap();
+			let mut Guard = FindFilesInFlight().lock().unwrap_or_else(|e| e.into_inner());
 
 			match Guard.get(&CacheKey) {
 				Some(Existing) => SingleFlightRole::Follower(Existing.clone()),
@@ -455,7 +455,7 @@ impl WorkspaceProvider for MountainEnvironment {
 		let Cap = Cap;
 
 		for Root in WalkRoots {
-			if Results.lock().unwrap().len() >= Cap {
+			if Results.lock().unwrap_or_else(|e| e.into_inner()).len() >= Cap {
 				break;
 			}
 
@@ -489,7 +489,7 @@ impl WorkspaceProvider for MountainEnvironment {
 				let ResultsArc = ResultsArc.clone();
 
 				Box::new(move |EntryResult| {
-					if ResultsArc.lock().unwrap().len() >= Cap {
+					if ResultsArc.lock().unwrap_or_else(|e| e.into_inner()).len() >= Cap {
 						return ignore::WalkState::Quit;
 					}
 

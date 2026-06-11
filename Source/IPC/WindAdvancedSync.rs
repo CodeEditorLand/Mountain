@@ -642,29 +642,9 @@ impl WindAdvancedSync {
 impl WindAdvancedSync {
 	/// Start advanced synchronization
 	pub async fn start_synchronization(self: Arc<Self>) -> Result<(), String> {
-		dev_log!("lifecycle", "Starting advanced synchronization");
-
-		// Start document synchronization
-		let sync1 = self.clone();
-
-		tokio::spawn(async move {
-			sync1.synchronize_documents().await;
-		});
-
-		// Start UI state synchronization
-		let sync2 = self.clone();
-
-		tokio::spawn(async move {
-			sync2.synchronize_ui_state().await;
-		});
-
-		// Start real-time updates
-		let sync3 = self.clone();
-
-		tokio::spawn(async move {
-			sync3.broadcast_real_time_updates().await;
-		});
-
+		// Polling loops are stub implementations with all actual logic commented
+		// out. Do not spawn them until real implementations land - they would
+		// only burn CPU and flood the dev log.
 		Ok(())
 	}
 
@@ -771,7 +751,7 @@ impl WindAdvancedSync {
 			// registers a subscriber. This keeps the shared Tauri IPC
 			// channel free for keystrokes during extension boot.
 			{
-				let rt = self.real_time_updates.lock().unwrap();
+				let rt = self.real_time_updates.lock().unwrap_or_else(|e| e.into_inner());
 
 				if rt.Subscribers.is_empty() {
 					continue;
@@ -791,7 +771,7 @@ impl WindAdvancedSync {
 
 	/// Get pending document changes
 	async fn get_pending_changes(&self) -> Vec<DocumentChange> {
-		let sync = self.document_sync.lock().unwrap();
+		let sync = self.document_sync.lock().unwrap_or_else(|e| e.into_inner());
 
 		sync.pending_changes.values().flatten().cloned().collect()
 	}
@@ -860,7 +840,7 @@ impl WindAdvancedSync {
 		}
 
 		// Mark change as applied
-		let mut sync = self.document_sync.lock().unwrap();
+		let mut sync = self.document_sync.lock().unwrap_or_else(|e| e.into_inner());
 
 		if let Some(changes) = sync.pending_changes.get_mut(&change.document_id) {
 			if let Some(change_idx) = changes.iter().position(|c| c.change_id == change.change_id) {
@@ -883,7 +863,7 @@ impl WindAdvancedSync {
 
 	/// CONFLICT DETECTION: Microsoft-inspired conflict resolution
 	async fn check_for_conflicts(&self, change:&DocumentChange) -> Result<(), String> {
-		let sync = self.document_sync.lock().unwrap();
+		let sync = self.document_sync.lock().unwrap_or_else(|e| e.into_inner());
 
 		// Check if document exists and has been modified since last sync
 		if let Some(document) = sync.synchronized_documents.get(&change.document_id) {
@@ -913,7 +893,7 @@ impl WindAdvancedSync {
 
 	/// Update sync status
 	async fn update_sync_status(&self) {
-		let mut sync = self.document_sync.lock().unwrap();
+		let mut sync = self.document_sync.lock().unwrap_or_else(|e| e.into_inner());
 
 		sync.sync_status.total_documents = sync.synchronized_documents.len() as u32;
 
@@ -943,14 +923,14 @@ impl WindAdvancedSync {
 
 	/// Get UI state
 	async fn get_ui_state(&self) -> UIStateSynchronization {
-		let sync = self.ui_state_sync.lock().unwrap();
+		let sync = self.ui_state_sync.lock().unwrap_or_else(|e| e.into_inner());
 
 		sync.clone()
 	}
 
 	/// Update UI state
 	async fn update_ui_state(&self, ui_state:UIStateSynchronization) -> Result<(), String> {
-		let mut sync = self.ui_state_sync.lock().unwrap();
+		let mut sync = self.ui_state_sync.lock().unwrap_or_else(|e| e.into_inner());
 
 		*sync = ui_state;
 
@@ -964,7 +944,7 @@ impl WindAdvancedSync {
 
 	/// Get pending updates
 	async fn get_pending_updates(&self) -> Vec<RealTimeUpdate> {
-		let mut updates = self.real_time_updates.lock().unwrap();
+		let mut updates = self.real_time_updates.lock().unwrap_or_else(|e| e.into_inner());
 
 		let pending = updates.UpdateQueue.clone();
 
@@ -978,7 +958,7 @@ impl WindAdvancedSync {
 		for update in updates {
 			// Get subscribers for this target
 			let subscribers = {
-				let rt = self.real_time_updates.lock().unwrap();
+				let rt = self.real_time_updates.lock().unwrap_or_else(|e| e.into_inner());
 
 				rt.Subscribers.get(&update.target).cloned()
 			};
@@ -1003,7 +983,7 @@ impl WindAdvancedSync {
 
 	/// Add document for synchronization
 	pub async fn add_document(&self, document_id:String, file_path:String) -> Result<(), String> {
-		let mut sync = self.document_sync.lock().unwrap();
+		let mut sync = self.document_sync.lock().unwrap_or_else(|e| e.into_inner());
 
 		let document = SynchronizedDocument {
 			document_id:document_id.clone(),
@@ -1031,7 +1011,7 @@ impl WindAdvancedSync {
 
 	/// Subscribe to real-time updates
 	pub async fn subscribe_to_updates(&self, target:String, subscriber:String) -> Result<(), String> {
-		let mut updates = self.real_time_updates.lock().unwrap();
+		let mut updates = self.real_time_updates.lock().unwrap_or_else(|e| e.into_inner());
 
 		let target_clone = target.clone();
 
@@ -1048,7 +1028,7 @@ impl WindAdvancedSync {
 
 	/// Queue real-time update
 	pub async fn queue_update(&self, update:RealTimeUpdate) -> Result<(), String> {
-		let mut updates = self.real_time_updates.lock().unwrap();
+		let mut updates = self.real_time_updates.lock().unwrap_or_else(|e| e.into_inner());
 
 		updates.UpdateQueue.push(update);
 
@@ -1064,7 +1044,7 @@ impl WindAdvancedSync {
 
 	/// Get sync status
 	pub async fn get_sync_status(&self) -> SyncStatus {
-		let sync = self.document_sync.lock().unwrap();
+		let sync = self.document_sync.lock().unwrap_or_else(|e| e.into_inner());
 
 		sync.sync_status.clone()
 	}

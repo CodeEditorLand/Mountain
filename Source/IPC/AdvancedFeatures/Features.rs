@@ -111,7 +111,7 @@ impl Struct {
 	}
 
 	async fn calculate_performance_stats(&self) -> PerformanceStats {
-		let mut stats = self.performance_stats.lock().unwrap();
+		let mut stats = self.performance_stats.lock().unwrap_or_else(|e| e.into_inner());
 
 		stats.connection_uptime = SystemTime::now()
 			.duration_since(SystemTime::UNIX_EPOCH)
@@ -138,7 +138,7 @@ impl Struct {
 				.unwrap_or_default()
 				.as_secs();
 
-			let mut cache = self.message_cache.lock().unwrap();
+			let mut cache = self.message_cache.lock().unwrap_or_else(|e| e.into_inner());
 
 			cache
 				.cached_messages
@@ -161,7 +161,7 @@ impl Struct {
 				.unwrap_or_default()
 				.as_secs();
 
-			let mut sessions = self.collaboration_sessions.lock().unwrap();
+			let mut sessions = self.collaboration_sessions.lock().unwrap_or_else(|e| e.into_inner());
 
 			sessions.retain(|_, session| current_time - session.last_activity < 300);
 
@@ -207,7 +207,7 @@ impl Struct {
 	}
 
 	pub async fn get_cached_message(&self, message_id:&str) -> Option<serde_json::Value> {
-		let mut cache = self.message_cache.lock().unwrap();
+		let mut cache = self.message_cache.lock().unwrap_or_else(|e| e.into_inner());
 
 		let result = cache
 			.cached_messages
@@ -282,7 +282,7 @@ impl Struct {
 	}
 
 	pub async fn record_message_statistics(&self, sent:bool, processing_time_ms:u64) {
-		let mut stats = self.performance_stats.lock().unwrap();
+		let mut stats = self.performance_stats.lock().unwrap_or_else(|e| e.into_inner());
 
 		if sent {
 			stats.total_messages_sent += 1;
@@ -298,7 +298,7 @@ impl Struct {
 	}
 
 	pub async fn record_error(&self) {
-		let mut stats = self.performance_stats.lock().unwrap();
+		let mut stats = self.performance_stats.lock().unwrap_or_else(|e| e.into_inner());
 
 		stats.error_count += 1;
 	}
@@ -308,13 +308,13 @@ impl Struct {
 	}
 
 	pub async fn get_cache_stats(&self) -> Result<MessageCache, String> {
-		let cache = self.message_cache.lock().unwrap();
+		let cache = self.message_cache.lock().unwrap_or_else(|e| e.into_inner());
 
 		Ok(cache.clone())
 	}
 
 	pub async fn get_collaboration_sessions(&self) -> Vec<CollaborationSession> {
-		let sessions = self.collaboration_sessions.lock().unwrap();
+		let sessions = self.collaboration_sessions.lock().unwrap_or_else(|e| e.into_inner());
 
 		sessions.values().cloned().collect()
 	}

@@ -76,7 +76,7 @@ impl StorageWriteDebouncer {
 				tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
 				let Item = {
-					let mut Guard = Debouncer.Pending.lock().unwrap();
+					let mut Guard = Debouncer.Pending.lock().unwrap_or_else(|e| e.into_inner());
 
 					let Item = Guard.take();
 

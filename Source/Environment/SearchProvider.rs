@@ -370,7 +370,7 @@ impl SearchProvider for MountainEnvironment {
 			}
 		}
 
-		let FinalMatches = AllMatches.lock().unwrap().clone();
+		let FinalMatches = AllMatches.lock().unwrap_or_else(|e| e.into_inner()).clone();
 
 		let TotalLineMatches:usize = FinalMatches.iter().map(|F| F.matches.len()).sum();
 

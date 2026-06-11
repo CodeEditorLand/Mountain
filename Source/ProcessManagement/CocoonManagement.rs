@@ -1278,15 +1278,22 @@ fn BuildCocoonEnvironment() -> HashMap<String, String> {
 
 	Env.insert("COCOON_GRPC_PORT".into(), COCOON_GRPC_PORT.to_string());
 
-	// B7-S6: WebSocket transport config.
-	InitializeWsConfig();
+	// B7-S6: WebSocket transport config. Only pass port+secret to Cocoon
+	// when TierWebSocket is not Disabled - otherwise Cocoon starts the WS
+	// server unconditionally and Sky tries to connect, causing CSP errors.
+	let TierWS = std::env::var("TierWebSocket")
+		.unwrap_or_else(|_| "Disabled".into());
 
-	let WsPort = WsPort();
+	if TierWS != "Disabled" {
+		InitializeWsConfig();
 
-	if WsPort > 0 {
-		Env.insert("COCOON_WS_PORT".into(), WsPort.to_string());
+		let WsPort = WsPort();
 
-		Env.insert("COCOON_WS_SECRET".into(), WsSecretHex());
+		if WsPort > 0 {
+			Env.insert("COCOON_WS_PORT".into(), WsPort.to_string());
+
+			Env.insert("COCOON_WS_SECRET".into(), WsSecretHex());
+		}
 	}
 
 	for Key in ["PATH", "HOME"] {
