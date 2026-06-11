@@ -281,13 +281,33 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
-use tauri::{Emitter, Manager};
+use tauri::Manager;
 
 use crate::{
 	IPC::AdvancedFeatures::PerformanceStats::Struct as PerformanceStats,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
+
+pub mod ApplyDocumentChange;
+
+pub mod BroadcastRealTimeUpdates;
+
+pub mod BroadcastUpdates;
+
+pub mod CalculateSyncStatus;
+
+pub mod CheckForConflicts;
+
+pub mod New;
+
+pub mod StartPerformanceMonitoring;
+
+pub mod StartSyncTask;
+
+pub mod SynchronizeDocuments;
+
+pub mod UpdateSyncStatus;
 
 /// Synchronization status
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -456,60 +476,7 @@ pub struct WindAdvancedSync {
 
 impl WindAdvancedSync {
 	/// Create a new WindAdvancedSync instance
-	pub fn new(runtime:Arc<ApplicationRunTime>) -> Self {
-		Self {
-			runtime:runtime.clone(),
-
-			document_sync:Arc::new(Mutex::new(DocumentSynchronization {
-				synchronized_documents:HashMap::new(),
-				pending_changes:HashMap::new(),
-				last_sync_time:0,
-				sync_status:SyncStatus {
-					total_documents:0,
-					synced_documents:0,
-					conflicted_documents:0,
-					offline_documents:0,
-					last_sync_duration_ms:0,
-				},
-			})),
-
-			ui_state_sync:Arc::new(Mutex::new(UIStateSynchronization {
-				active_editor:None,
-				cursor_positions:HashMap::new(),
-				selection_ranges:HashMap::new(),
-				view_state:ViewState {
-					zoom_level:1.0,
-					sidebar_visible:true,
-					panel_visible:true,
-					status_bar_visible:true,
-				},
-				theme:"default".to_string(),
-				layout:LayoutState {
-					editor_groups:Vec::new(),
-					active_group:0,
-					grid_layout:GridLayout { rows:1, columns:1, cell_width:100, cell_height:100 },
-				},
-			})),
-
-			real_time_updates:Arc::new(Mutex::new(RealTimeUpdateManager {
-				Updates:Vec::new(),
-				Subscribers:HashMap::new(),
-				UpdateQueue:Vec::new(),
-				LastBroadcast:0,
-			})),
-
-			performance_stats:Arc::new(Mutex::new(PerformanceStats {
-				total_messages_sent:0,
-				total_messages_received:0,
-				average_processing_time_ms:0.0,
-				peak_message_rate:0,
-				error_count:0,
-				last_update:0,
-				connection_uptime:0,
-			})),
-			// mountain_ipc: Arc::new(MountainIPC::new(runtime)), // Module doesn't exist
-		}
-	}
+	pub fn new(runtime:Arc<ApplicationRunTime>) -> Self { New::Fn(runtime) }
 
 	/// Initialize the synchronization service
 	pub async fn initialize(&self) -> Result<(), String> {
@@ -527,108 +494,14 @@ impl WindAdvancedSync {
 	}
 
 	/// Start background synchronization task
-	async fn start_sync_task(&self) {
-		let document_sync = self.document_sync.clone();
-
-		let runtime = self.runtime.clone();
-
-		tokio::spawn(async move {
-			let mut interval = interval(Duration::from_secs(5));
-
-			loop {
-				interval.tick().await;
-
-				// Synchronize documents
-				if let Ok(mut sync) = document_sync.lock() {
-					let modified_docs:Vec<String> = sync
-						.synchronized_documents
-						.iter()
-						.filter(|(_, document)| document.sync_state == SyncState::Modified)
-						.map(|(doc_id, _)| doc_id.clone())
-						.collect();
-
-					if !modified_docs.is_empty() {
-						dev_log!("ipc", "Synchronizing {} documents", modified_docs.len());
-
-						// Simulate synchronization process
-						sync.last_sync_time =
-							SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
-
-						// Update sync status
-						sync.sync_status = Self::calculate_sync_status(&sync.synchronized_documents);
-
-						// Emit sync event - off by default. The Sky
-						// renderer has no subscriber for this channel;
-						// every emit just queued behind keystrokes on
-						// the shared Tauri IPC pipe. Set
-						// `LAND_SYNC_STATUS_EMIT=1` to opt in for
-						// debugging / future Sky consumers.
-						if std::env::var("LAND_SYNC_STATUS_EMIT").is_ok() {
-							let _ = runtime
-								.Environment
-								.ApplicationHandle
-								.emit("mountain_sync_status_update", sync.sync_status.clone());
-						}
-					}
-				}
-			}
-		});
-	}
+	async fn start_sync_task(&self) { StartSyncTask::Fn(self).await }
 
 	/// Start performance monitoring
-	async fn start_performance_monitoring(&self) {
-		let performance_stats = self.performance_stats.clone();
-
-		let runtime = self.runtime.clone();
-
-		tokio::spawn(async move {
-			let mut interval = interval(Duration::from_secs(10));
-
-			loop {
-				interval.tick().await;
-
-				if let Ok(mut stats) = performance_stats.lock() {
-					stats.last_update =
-						SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
-
-					stats.connection_uptime += 10;
-
-					// Emit performance update - off by default. Same
-					// reasoning as `mountain_sync_status_update`: no
-					// Sky subscriber, every emit cost shared channel
-					// bandwidth. Set `LAND_PERF_EMIT=1` to opt in.
-					if std::env::var("LAND_PERF_EMIT").is_ok() {
-						let _ = runtime
-							.Environment
-							.ApplicationHandle
-							.emit("mountain_performance_update", stats.clone());
-					}
-				}
-			}
-		});
-	}
+	async fn start_performance_monitoring(&self) { StartPerformanceMonitoring::Fn(self).await }
 
 	/// Calculate synchronization status
 	fn calculate_sync_status(documents:&HashMap<String, SynchronizedDocument>) -> SyncStatus {
-		let total = documents.len() as u32;
-
-		let synced = documents.values().filter(|d| d.sync_state == SyncState::Synced).count() as u32;
-
-		let conflicted = documents.values().filter(|d| d.sync_state == SyncState::Conflicted).count() as u32;
-
-		let offline = documents.values().filter(|d| d.sync_state == SyncState::Offline).count() as u32;
-
-		SyncStatus {
-			total_documents:total,
-
-			synced_documents:synced,
-
-			conflicted_documents:conflicted,
-
-			offline_documents:offline,
-
-			last_sync_duration_ms:0,
-		}
+		CalculateSyncStatus::Fn(documents)
 	}
 
 	/// Register IPC commands
@@ -649,75 +522,7 @@ impl WindAdvancedSync {
 	}
 
 	/// Synchronize documents between Wind and Mountain
-	async fn synchronize_documents(&self) {
-		let mut interval = interval(Duration::from_secs(5));
-
-		let mut consecutive_failures = 0;
-
-		let max_consecutive_failures = 3;
-
-		loop {
-			interval.tick().await;
-
-			dev_log!("lifecycle", "Synchronizing documents");
-
-			// ERROR RECOVERY: Microsoft-inspired circuit breaker pattern
-			let sync_start = std::time::Instant::now();
-
-			let mut success_count = 0;
-
-			let mut error_count = 0;
-
-			// Get document changes from Wind
-			let changes = self.get_pending_changes().await;
-
-			// Apply changes to Mountain
-			for change in changes {
-				match self.apply_document_change(change).await {
-					Ok(_) => success_count += 1,
-
-					Err(e) => {
-						error_count += 1;
-
-						dev_log!("ipc", "error: [WindAdvancedSync] Failed to apply document change: {}", e);
-
-						// ERROR HANDLING: Exponential backoff on consecutive failures
-						consecutive_failures += 1;
-
-						if consecutive_failures >= max_consecutive_failures {
-							dev_log!("lifecycle", "Too many consecutive failures, slowing sync interval");
-
-							// Reduce sync frequency to 30-second interval to prevent system overload
-							// during persistent error conditions (circuit breaker pattern).
-							interval = tokio::time::interval(Duration::from_secs(30));
-						}
-					},
-				}
-			}
-
-			// Reset failure counter on successful operations
-			if success_count > 0 {
-				consecutive_failures = 0;
-
-				// Restore normal sync frequency to 5-second interval after successful recovery.
-				interval = tokio::time::interval(Duration::from_secs(5));
-			}
-
-			// Update sync status
-			self.update_sync_status().await;
-
-			// PERFORMANCE MONITORING: Microsoft-inspired metrics collection
-			let sync_duration = sync_start.elapsed();
-
-			dev_log!(
-				"ipc",
-				"[WindAdvancedSync] Document sync completed: {} success, {} errors, {:.2}ms",
-				success_count,
-				error_count,
-				sync_duration.as_millis()
-			);
-		}
-	}
+	async fn synchronize_documents(&self) { SynchronizeDocuments::Fn(self).await }
 
 	/// Synchronize UI state
 	async fn synchronize_ui_state(&self) {
@@ -739,35 +544,7 @@ impl WindAdvancedSync {
 	}
 
 	/// Broadcast real-time updates
-	async fn broadcast_real_time_updates(&self) {
-		let mut interval = interval(Duration::from_millis(100));
-
-		loop {
-			interval.tick().await;
-
-			// Fast-path: when no subscribers are registered the queue
-			// can never reach a consumer. Skip the lock-and-drain path
-			// entirely so the 100ms tick is a true no-op until Sky
-			// registers a subscriber. This keeps the shared Tauri IPC
-			// channel free for keystrokes during extension boot.
-			{
-				let rt = self.real_time_updates.lock().unwrap_or_else(|e| e.into_inner());
-
-				if rt.Subscribers.is_empty() {
-					continue;
-				}
-			}
-
-			let updates = self.get_pending_updates().await;
-
-			if !updates.is_empty() {
-				// Broadcast updates to subscribers
-				if let Err(e) = self.broadcast_updates(updates).await {
-					dev_log!("ipc", "error: [WindAdvancedSync] Failed to broadcast updates: {}", e);
-				}
-			}
-		}
-	}
+	async fn broadcast_real_time_updates(&self) { BroadcastRealTimeUpdates::Fn(self).await }
 
 	/// Get pending document changes
 	async fn get_pending_changes(&self) -> Vec<DocumentChange> {
@@ -778,148 +555,16 @@ impl WindAdvancedSync {
 
 	/// Apply document change
 	async fn apply_document_change(&self, change:DocumentChange) -> Result<(), String> {
-		dev_log!("lifecycle", "Applying document change: {}", change.change_id);
-
-		// CONFLICT RESOLUTION: Microsoft-inspired conflict handling
-		let change_start = std::time::Instant::now();
-
-		// Check for conflicts before applying changes
-		if let Err(conflict) = self.check_for_conflicts(&change).await {
-			dev_log!("lifecycle", "Conflict detected: {}", conflict);
-
-			return Err(format!("Conflict detected: {}", conflict));
-		}
-
-		// Apply change via Mountain IPC instead of mock file system
-		match change.change_type {
-			ChangeType::Update => {
-				// Update file content via Mountain IPC
-				if let Some(_content) = &change.content {
-
-					// self.mountain_ipc.update_document(
-					//     &change.document_id,
-					//     content,
-					//     change.change_id.clone()
-					// )
-					// .await
-					// .map_err(|e| format!("Failed to update document via
-					// Mountain IPC: {}", e))?;
-				}
-			},
-
-			ChangeType::Insert => {
-				// Create new file via Mountain IPC
-				if let Some(_content) = &change.content {
-
-					// self.mountain_ipc.create_document(
-					//     &change.document_id,
-					//     content.as_str(),
-					//     change.change_id.clone()
-					// )
-					// .await
-					// .map_err(|e| format!("Failed to create document via
-					// Mountain IPC: {}", e))?;
-				}
-			},
-
-			ChangeType::Delete => {
-
-				// Delete file via Mountain IPC
-				// self.mountain_ipc.delete_document(
-				//     &change.document_id,
-				//     change.change_id.clone()
-				// )
-				// .await
-				// .map_err(|e| format!("Failed to delete document via Mountain
-				// IPC: {}", e))?;
-			},
-
-			_ => {
-				dev_log!("lifecycle", "Unsupported change type: {:?}", change.change_type);
-			},
-		}
-
-		// Mark change as applied
-		let mut sync = self.document_sync.lock().unwrap_or_else(|e| e.into_inner());
-
-		if let Some(changes) = sync.pending_changes.get_mut(&change.document_id) {
-			if let Some(change_idx) = changes.iter().position(|c| c.change_id == change.change_id) {
-				changes[change_idx].applied = true;
-			}
-		}
-
-		// PERFORMANCE TRACKING: Microsoft-inspired operation metrics
-		let change_duration = change_start.elapsed();
-
-		dev_log!(
-			"ipc",
-			"[WindAdvancedSync] Change applied successfully in {:.2}ms: {}",
-			change_duration.as_millis(),
-			change.change_id
-		);
-
-		Ok(())
+		ApplyDocumentChange::Fn(self, change).await
 	}
 
 	/// CONFLICT DETECTION: Microsoft-inspired conflict resolution
 	async fn check_for_conflicts(&self, change:&DocumentChange) -> Result<(), String> {
-		let sync = self.document_sync.lock().unwrap_or_else(|e| e.into_inner());
-
-		// Check if document exists and has been modified since last sync
-		if let Some(document) = sync.synchronized_documents.get(&change.document_id) {
-			let current_time = SystemTime::now()
-				.duration_since(SystemTime::UNIX_EPOCH)
-				.unwrap_or_default()
-				.as_secs();
-
-			// If document was modified recently (within last 10 seconds), potential
-			// conflict
-			if current_time - document.last_modified < 10 {
-				return Err(format!(
-					"Document {} was modified recently ({}s ago)",
-					document.document_id,
-					current_time - document.last_modified
-				));
-			}
-
-			// Check sync state for conflicts
-			if matches!(document.sync_state, SyncState::Conflicted) {
-				return Err(format!("Document {} is in conflicted state", document.document_id));
-			}
-		}
-
-		Ok(())
+		CheckForConflicts::Fn(self, change).await
 	}
 
 	/// Update sync status
-	async fn update_sync_status(&self) {
-		let mut sync = self.document_sync.lock().unwrap_or_else(|e| e.into_inner());
-
-		sync.sync_status.total_documents = sync.synchronized_documents.len() as u32;
-
-		sync.sync_status.synced_documents = sync
-			.synchronized_documents
-			.values()
-			.filter(|doc| matches!(doc.sync_state, SyncState::Synced))
-			.count() as u32;
-
-		sync.sync_status.conflicted_documents = sync
-			.synchronized_documents
-			.values()
-			.filter(|doc| matches!(doc.sync_state, SyncState::Conflicted))
-			.count() as u32;
-
-		sync.sync_status.offline_documents = sync
-			.synchronized_documents
-			.values()
-			.filter(|doc| matches!(doc.sync_state, SyncState::Offline))
-			.count() as u32;
-
-		sync.last_sync_time = SystemTime::now()
-			.duration_since(SystemTime::UNIX_EPOCH)
-			.unwrap_or_default()
-			.as_secs();
-	}
+	async fn update_sync_status(&self) { UpdateSyncStatus::Fn(self).await }
 
 	/// Get UI state
 	async fn get_ui_state(&self) -> UIStateSynchronization {
@@ -955,30 +600,7 @@ impl WindAdvancedSync {
 
 	/// Broadcast updates to subscribers
 	async fn broadcast_updates(&self, updates:Vec<RealTimeUpdate>) -> Result<(), String> {
-		for update in updates {
-			// Get subscribers for this target
-			let subscribers = {
-				let rt = self.real_time_updates.lock().unwrap_or_else(|e| e.into_inner());
-
-				rt.Subscribers.get(&update.target).cloned()
-			};
-
-			// Broadcast to all subscribers for this target
-			if let Some(subscriber_list) = subscribers {
-				for subscriber in subscriber_list {
-					if let Err(e) = self
-						.runtime
-						.Environment
-						.ApplicationHandle
-						.emit(&format!("real-time-update-{}", subscriber), &update)
-					{
-						dev_log!("ipc", "error: [WindAdvancedSync] Failed to broadcast to {}: {}", subscriber, e);
-					}
-				}
-			}
-		}
-
-		Ok(())
+		BroadcastUpdates::Fn(self, updates).await
 	}
 
 	/// Add document for synchronization
