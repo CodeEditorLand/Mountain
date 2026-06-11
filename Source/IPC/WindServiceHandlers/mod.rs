@@ -116,6 +116,7 @@ use FileSystem::{
 		FileExistsNative::Fn as FileExistsNative,
 		FileMkdirNative::Fn as FileMkdirNative,
 		FileOpenFd::Fn as FileOpenFd,
+		FileReadFd::Fn as FileReadFd,
 		FileReadNative::Fn as FileReadNative,
 		FileReaddirNative::Fn as FileReaddirNative,
 		FileRealpath::Fn as FileRealpath,
@@ -123,6 +124,7 @@ use FileSystem::{
 		FileStatNative::Fn as FileStatNative,
 		FileUnwatch::Fn as FileUnwatch,
 		FileWatch::Fn as FileWatch,
+		FileWriteFd::Fn as FileWriteFd,
 		FileWriteNative::Fn as FileWriteNative,
 	},
 };
@@ -823,7 +825,17 @@ pub async fn mountain_ipc_invoke(
 				// `writeFile`, `rename`; aliasing them here keeps both
 				// rails pointing at the same handler without duplicating
 				// logic or introducing a per-caller translation table.
+				// `read`/`write` are OVERLOADED: the fd-based stream path
+				// (`DiskFileSystemProviderClient.read/write` - behind every
+				// editor file open via `readFileStream` and every streamed
+				// save) sends a NUMERIC fd as the first argument, while the
+				// legacy whole-file form sends a URI/path. Dispatch on the
+				// argument shape; routing fd calls into FileReadNative made
+				// PathExtraction reject the number and every editor open
+				// land in `workbench.editors.errorEditor`.
+				"file:read" if Arguments.first().is_some_and(Value::is_number) => FileReadFd(Arguments).await,
 				"file:read" | "file:readFile" => FileReadNative(Arguments).await,
+				"file:write" if Arguments.first().is_some_and(Value::is_number) => FileWriteFd(Arguments).await,
 				"file:write" | "file:writeFile" => FileWriteNative(Arguments).await,
 				"file:stat" => FileStatNative(Arguments).await,
 				"file:exists" => FileExistsNative(Arguments).await,

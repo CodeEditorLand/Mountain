@@ -557,8 +557,12 @@ fn IsDefaultTierValue(Key:&str, Value:&str) -> bool {
 			| ("TierTreeView", "Mountain" | "Node")
 			| ("TierStorage", "Mountain" | "Node")
 			| ("TierModel", "Mountain" | "Node")
-			| ("TierTasks", "Mountain" | "Node")
-			| ("TierAuth", "Mountain" | "Node")
+			// `WebSocket` routes Sky→Cocoon over the Mist WS transport
+			// (B7-S6); a runtime-only TS routing value - Mountain's
+			// dispatch arms forward tasks:*/auth:* to Cocoon regardless,
+			// so no Cargo feature is involved.
+			| ("TierTasks", "Mountain" | "Node" | "WebSocket")
+			| ("TierAuth", "Mountain" | "Node" | "WebSocket")
 			| ("TierEncryption", "Mountain" | "Node")
 			| ("TierExtensionHost", "Process" | "WebWorker" | "Disabled")
 			| ("TierWebSocket", "Disabled" | "Mountain" | "Mist")

@@ -72,19 +72,35 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 
 	dev_log!("grpc", "[AirStart] Resolving Air sidecar binary path...");
 
-	// Try the Tauri sidecar resolver first (release / bundled).
-	// Falls back to the Cargo target dir for dev builds.
+	// Air builds into its own per-element Target dir
+	// (`Element/Air/.cargo/config.toml`), profile-matched to Mountain's.
+	let Profile = if cfg!(debug_assertions) { "debug" } else { "release" };
+
+	// Try the Tauri sidecar resolver first (release / bundled - SignBundle.sh
+	// copies Air into Contents/Resources). Dev fallbacks: explicit
+	// CARGO_TARGET_DIR, repo layout relative to the running Mountain binary
+	// (CWD-independent), then CWD-relative for `cargo run` from `Land/`.
 	let BinaryPath:Option<PathBuf> = ApplicationHandle
 		.path()
 		.resolve("Air", tauri::path::BaseDirectory::Resource)
 		.ok()
 		.filter(|P| P.exists())
 		.or_else(|| {
-			let CargoTarget = std::env::var("CARGO_TARGET_DIR")
-				.map(PathBuf::from)
-				.unwrap_or_else(|_| PathBuf::from("Element/Air/Target/debug"));
+			let Candidate = std::env::var("CARGO_TARGET_DIR").map(PathBuf::from).ok()?.join("Air");
 
-			let Candidate = CargoTarget.join("Air");
+			Candidate.exists().then_some(Candidate)
+		})
+		.or_else(|| {
+			// Mountain exe lives at Element/Mountain/Target/<profile>/<name>;
+			// hop to the sibling element: Element/Air/Target/<profile>/Air.
+			let ExeDir = std::env::current_exe().ok()?.parent()?.to_path_buf();
+
+			let Candidate = ExeDir.join(format!("../../../Air/Target/{Profile}/Air"));
+
+			Candidate.exists().then_some(Candidate)
+		})
+		.or_else(|| {
+			let Candidate = PathBuf::from(format!("Element/Air/Target/{Profile}/Air"));
 
 			Candidate.exists().then_some(Candidate)
 		});
@@ -109,6 +125,10 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 	// shutdown via SIGTERM from the OS or its own gRPC `Shutdown` RPC.
 	let SpawnResult = tokio::process::Command::new(&BinaryPath)
 		.env("AIR_GRPC_ADDRESS", AIR_GRPC_ADDRESS)
+		// Air's Configuration layer reads `AIR_GRPC_BIND_ADDRESS` (prefix
+		// `AIR_` + `grpc.bind_address`); `AIR_GRPC_ADDRESS` above is kept
+		// for the AirClient-side convention.
+		.env("AIR_GRPC_BIND_ADDRESS", AIR_GRPC_ADDRESS)
 		.env(
 			"AIR_LOG_DIR",
 			std::env::var("AIR_LOG_DIR").unwrap_or_else(|_| "/tmp/air-log".to_string()),

@@ -15,6 +15,8 @@ pub mod FileMkdirNative;
 
 pub mod FileReaddirNative;
 
+pub mod FileReadFd;
+
 pub mod FileReadNative;
 
 pub mod FileRealpath;
@@ -26,5 +28,7 @@ pub mod FileStatNative;
 pub mod FileUnwatch;
 
 pub mod FileWatch;
+
+pub mod FileWriteFd;
 
 pub mod FileWriteNative;

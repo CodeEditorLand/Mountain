@@ -1281,8 +1281,13 @@ fn BuildCocoonEnvironment() -> HashMap<String, String> {
 	// B7-S6: WebSocket transport config. Only pass port+secret to Cocoon
 	// when TierWebSocket is not Disabled - otherwise Cocoon starts the WS
 	// server unconditionally and Sky tries to connect, causing CSP errors.
+	// Runtime env wins for dev overrides; the compile-time value baked
+	// from `.env.Land` by build.rs is the fallback (same pattern as
+	// TierCommandEventBroadcast in mod.rs) - reading only the process env
+	// silently disabled WS for every launch that did not re-export
+	// TierWebSocket in the shell.
 	let TierWS = std::env::var("TierWebSocket")
-		.unwrap_or_else(|_| "Disabled".into());
+		.unwrap_or_else(|_| env!("TierWebSocket", "Disabled").to_string());
 
 	if TierWS != "Disabled" {
 		InitializeWsConfig();

@@ -109,7 +109,7 @@
 		<key>TierWebSocket</key>
 		<string>Disabled # WS: Disabled | Mist (B7-S6: direct Sky↔Cocoon WebSocket via Mist)</string>
 		<key>Trace</key>
-		<string>ipc,grpc,extensions,ext-activate,storage,lifecycle,breaker,tree-view,cocoon,terminal,output,commands,bootstrap-stage,provider-register</string>
+		<string>all</string>
 	</dict>
 </dict>
 </plist>
