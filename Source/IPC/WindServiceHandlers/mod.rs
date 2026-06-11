@@ -406,11 +406,40 @@ const TIER_ENCRYPTION:&str = env!("TierEncryption", "Mountain");
 
 const TIER_WEBSOCKET:&str = env!("TierWebSocket", "Disabled");
 
-#[inline]
-fn tier_routes_to_node(BakedConst:&'static str, EnvKey:&str) -> bool {
+/// Resolved routing tier for a subsystem prefix (Routing-Schema.md
+/// "Tier resolution" table).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum RouteTier {
+	/// Mountain-native Rust handlers (the default for most prefixes).
+	Mountain,
+
+	/// Every call in the family forwards to Cocoon (Node) - the
+	/// Mountain-native arms below never match.
+	Node,
+
+	/// Mountain arms serve the commands they implement; family members
+	/// with no Mountain arm defer to Cocoon via the unknown-command
+	/// catch-all (same machinery as `TierIPC=NodeDeferred`).
+	NodeDeferred,
+}
+
+/// Process env var wins over the compile-time baked value so a single
+/// shell export (`export TierStorage=Node`) flips routing without a
+/// rebuild. Unrecognised values resolve to Mountain - the safe default
+/// is the native Rust path.
+fn resolve_route_tier(BakedConst:&'static str, EnvKey:&str) -> RouteTier {
 	let Resolved = std::env::var(EnvKey).unwrap_or_else(|_| BakedConst.to_string());
 
-	Resolved == "Node"
+	match Resolved.as_str() {
+		"Node" => RouteTier::Node,
+		"NodeDeferred" => RouteTier::NodeDeferred,
+		_ => RouteTier::Mountain,
+	}
+}
+
+#[inline]
+fn tier_routes_to_node(BakedConst:&'static str, EnvKey:&str) -> bool {
+	resolve_route_tier(BakedConst, EnvKey) == RouteTier::Node
 }
 
 pub async fn mountain_ipc_invoke(
@@ -473,6 +502,11 @@ pub async fn mountain_ipc_invoke(
 			// Ack-only event stubs - zero-cost dispatch
 			| "storage:onDidChangeItems"
 			| "storage:logStorage"
+			// Storage lifecycle Null-acks - listed in the short-circuit
+			// match below; without these gate entries those arms were
+			// unreachable and the calls paid full Echo dispatch
+			| "storage:isUsed"
+			| "storage:close"
 			| "configuration:onDidChange"
 			| "workspaces:onDidChangeWorkspaceFolders"
 			| "workspaces:onDidChangeWorkspaceName"
@@ -555,18 +589,27 @@ pub async fn mountain_ipc_invoke(
 			// dispatch arm" error fired on every boot. Stub-ack here alongside the
 			// logger:* group.
 			| "log:registerLogger" | "log:createLogger"
-			// Storage event stubs: change delivery via Tauri events
-			| "storage:onDidChangeItems" | "storage:logStorage"
 			// Command registry stubs: side effects handled via gRPC
 			| "commands:registerCommand" | "commands:unregisterCommand"
 			| "commands:onDidRegisterCommand" | "commands:onDidExecuteCommand"
 			// Configuration event stub
 			| "configuration:onDidChange"
-			// Storage lifecycle stubs (storage:optimize excluded - it must flush pending writes)
-			| "storage:isUsed" | "storage:close"
 			// Workspace event stubs: change delivery via Tauri events
 			| "workspaces:onDidChangeWorkspaceFolders"
 			| "workspaces:onDidChangeWorkspaceName" => {
+
+				return Ok(Value::Null);
+			},
+
+			// Storage event + lifecycle Null-acks (storage:optimize
+			// excluded - it must flush pending writes). Tier-guarded:
+			// under `TierStorage=Node` the storage backing lives in
+			// Cocoon, and `close`/`isUsed` carry real lifecycle
+			// semantics there - fall through to the Echo path so the
+			// family gate forwards them instead of swallowing the ack.
+			"storage:onDidChangeItems" | "storage:logStorage"
+			| "storage:isUsed" | "storage:close"
+				if !tier_routes_to_node(TIER_STORAGE, "TierStorage") => {
 
 				return Ok(Value::Null);
 			},
@@ -683,6 +726,71 @@ pub async fn mountain_ipc_invoke(
 			}
 
 			let MatchResult = match command.as_str() {
+				// =============================================================
+				// Tier gates - one prefix guard per subsystem family, evaluated
+				// BEFORE any Mountain-native arm so `Tier<Family>=Node` cleanly
+				// reroutes the whole family to Cocoon (Routing-Schema.md "Tier
+				// resolution" table; keep that file in lockstep). Defaults are
+				// Mountain (Rust-native); tasks/auth default Node and their
+				// arms below forward unconditionally. `NodeDeferred` keeps the
+				// Mountain arms and lets unimplemented family members defer to
+				// Cocoon via the unknown-command catch-all. The storage and
+				// git gates live with their family arms (predate this block);
+				// same semantics. Guard cost is one short `starts_with` per
+				// family per call - nanoseconds, even on the file:* hot path.
+				// =============================================================
+				_ if (command.starts_with("terminal:") || command.starts_with("localPty:"))
+					&& tier_routes_to_node(TIER_TERMINAL, "TierTerminal") =>
+				{
+					forward_to_cocoon!("terminal", command, Arguments)
+				},
+				_ if command.starts_with("output:")
+					&& tier_routes_to_node(TIER_OUTPUT_CHANNEL, "TierOutputChannel") =>
+				{
+					forward_to_cocoon!("output", command, Arguments)
+				},
+				_ if command.starts_with("search:") && tier_routes_to_node(TIER_SEARCH, "TierSearch") => {
+					forward_to_cocoon!("search", command, Arguments)
+				},
+				_ if (command.starts_with("tree:") || command.starts_with("tree."))
+					&& tier_routes_to_node(TIER_TREE_VIEW, "TierTreeView") =>
+				{
+					forward_to_cocoon!("tree", command, Arguments)
+				},
+				_ if (command.starts_with("model:")
+					|| command.starts_with("textFile:")
+					|| command.starts_with("file:"))
+					&& tier_routes_to_node(TIER_MODEL, "TierModel") =>
+				{
+					forward_to_cocoon!("model", command, Arguments)
+				},
+				_ if (command.starts_with("language:") || command.starts_with("languages:"))
+					&& tier_routes_to_node(TIER_LANGUAGE_FEATURES, "TierLanguageFeatures") =>
+				{
+					forward_to_cocoon!("language", command, Arguments)
+				},
+				_ if (command.starts_with("debug:")
+					|| command.starts_with("extensionhostdebugservice:")
+					|| command.starts_with("extensionHostStarter:"))
+					&& tier_routes_to_node(TIER_DEBUG, "TierDebug") =>
+				{
+					forward_to_cocoon!("debug", command, Arguments)
+				},
+				_ if command.starts_with("encryption:")
+					&& tier_routes_to_node(TIER_ENCRYPTION, "TierEncryption") =>
+				{
+					forward_to_cocoon!("encryption", command, Arguments)
+				},
+				// nativeHost:* to Node only makes sense for the few methods a
+				// headless Cocoon can serve (env paths, proxy resolution);
+				// window/clipboard/dialog calls will Null out. The gate exists
+				// for parity with the Wind-side table - default stays Mountain.
+				_ if command.starts_with("nativeHost:")
+					&& tier_routes_to_node(TIER_NATIVE_HOST, "TierNativeHost") =>
+				{
+					forward_to_cocoon!("nativeHost", command, Arguments)
+				},
+
 				// Configuration commands. VS Code's stock
 				// `ConfigurationService` channel calls `getValue` /
 				// `updateValue`; Mountain's native Effect-TS layer calls
