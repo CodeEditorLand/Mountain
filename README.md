@@ -250,10 +250,10 @@ is built as part of the monorepo. For detailed build instructions, see
 
 ## See Also
 
-- [Mountain Documentation](https://editor.land/Doc/mountain)
-- [Architecture Overview](https://editor.land/Doc/architecture)
-- [Why `Rust`](https://editor.land/Doc/why-rust)
-- [Why `Tauri`](https://editor.land/Doc/why-tauri)
+- [Mountain Documentation](https://Editor.Land/Doc/mountain)
+- [Architecture Overview](https://Editor.Land/Doc/architecture)
+- [Why `Rust`](https://Editor.Land/Doc/why-rust)
+- [Why `Tauri`](https://Editor.Land/Doc/why-tauri)
 - [`Cocoon`](https://github.com/CodeEditorLand/Cocoon)
 - [`Vine`](https://github.com/CodeEditorLand/Vine)
 - [`Echo`](https://github.com/CodeEditorLand/Echo)
