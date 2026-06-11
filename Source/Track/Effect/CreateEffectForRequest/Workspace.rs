@@ -1,6 +1,14 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		"applyEdit" | "showTextDocument" | "$updateWorkspaceFolders" => true,
+		"applyEdit"
+		| "showTextDocument"
+		| "$updateWorkspaceFolders"
+		| "Workspace.RequestResourceTrust"
+		| "Workspace.IsResourceTrusted"
+		| "Workspace.Save"
+		| "Workspace.SaveAs"
+		| "saveAll"
+		| "Workspace.SaveAll" => true,
 
 		_ => false,
 	}

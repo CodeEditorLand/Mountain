@@ -10,7 +10,7 @@ __land_osc() {
 
 # Avoid double-injection if the user's own .bashrc sources us again.
 if [[ -n "${LAND_SHELL_INTEGRATION_ACTIVE:-}" ]]; then
-	return 0 2> /dev/null || exit 0
+	return 0 2>/dev/null || exit 0
 fi
 export LAND_SHELL_INTEGRATION_ACTIVE=1
 

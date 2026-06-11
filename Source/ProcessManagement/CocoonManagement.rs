@@ -771,6 +771,43 @@ async fn LaunchAndManageCocoonSideCar(
 			}
 		}
 
+		// Seed Cocoon's `__terminals` with any terminals already running.
+		// `$acceptTerminalOpened` fires during `localPty:createProcess` but
+		// Cocoon's gRPC channel is not yet open at that point (the workbench
+		// restores terminals before Cocoon connects). Resend each open
+		// terminal here so `vscode.window.terminals` is never empty for
+		// extensions that read it synchronously in `activate()`.
+		{
+			let ActiveTerminals = EnvironmentForActivation
+				.ApplicationState
+				.Feature
+				.Terminals
+				.GetAll();
+
+			if !ActiveTerminals.is_empty() {
+				dev_log!(
+					"terminal",
+					"[CocoonManagement] Seeding {} open terminal(s) to Cocoon",
+					ActiveTerminals.len()
+				);
+
+				for (Id, Terminal) in &ActiveTerminals {
+					let Payload = serde_json::json!({
+						"id": Id,
+						"name": Terminal.Name,
+						"pid": Terminal.OSProcessIdentifier,
+					});
+
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						SideCarId.clone(),
+						"$acceptTerminalOpened".to_string(),
+						Payload,
+					)
+					.await;
+				}
+			}
+		}
+
 		// Phase 2: workspaceContains: events. Iterate the scanned
 		// extension registry, collect every pattern contributed via the
 		// `workspaceContains:<pattern>` activation event, and fire the

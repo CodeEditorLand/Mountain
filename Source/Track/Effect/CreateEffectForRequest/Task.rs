@@ -1,6 +1,6 @@
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
-		"Task.Fetch" | "Task.Execute" => true,
+		"Task.Fetch" | "Task.Execute" | "terminate_task" | "Task.Terminate" => true,
 
 		_ => false,
 	}
