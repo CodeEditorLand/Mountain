@@ -768,6 +768,181 @@ graph TD
 | `ICommandService`       | `CommandService`       | `MountainCommand`       | gRPC + Tauri           |
 | `IDocumentService`      | `DocumentProvider`     | `MountainDocument`      | gRPC + Tauri           |
 
+---
+
+## IPC Handler Architecture
+
+### Atomization Pattern
+
+Every IPC command exposed to the Wind/Sky frontend lives in its own dedicated
+`.rs` file. The top-level `mod.rs` (`IPC/WindServiceHandlers/mod.rs`, ~2 500
+lines) imports every atom and dispatches via a single `match` arm per command
+string. Nothing is implemented inline in `mod.rs` except trivially short
+responses that are not reused anywhere.
+
+**File and struct naming** follow PascalCase throughout:
+
+```
+NativeHost/Quit.rs       → pub struct NativeQuit; impl Fn(…)
+NativeHost/Relaunch.rs   → pub struct NativeRelaunch; impl Fn(…)
+Encryption/Key.rs        → pub fn Fn() -> Result<[u8;32], String>
+Terminal/LocalPTYCreateProcess.rs → pub struct LocalPTYCreateProcess; …
+```
+
+**Domain subdirectories** currently in `WindServiceHandlers/`:
+
+| Directory        | Responsibility                                                   |
+| :--------------- | :--------------------------------------------------------------- |
+| `Cocoon/`        | `cocoon:request`, `cocoon:notify`, `cocoon:extensionHostMessage` |
+| `Commands/`      | `commands:*` execution and registration                          |
+| `Configuration/` | `config:*` read/write/watch                                      |
+| `Encryption/`    | `encryption:encrypt` / `encryption:decrypt`                      |
+| `Extension/`     | Per-extension info queries                                       |
+| `ExtensionHost/` | `extensionHostStarter:*`, `extensionhostdebugservice:*`          |
+| `Extensions/`    | `extensions:*` scan, install, get-installed                      |
+| `FileSystem/`    | `file:*` read, write, watch, stat, fd table                      |
+| `Git/`           | `git:*` operations                                               |
+| `Model/`         | `sky:model:*` content sync                                       |
+| `NativeDialog/`  | `nativeDialog:*` file/folder pickers                             |
+| `NativeHost/`    | `nativeHost:*` OS-level helpers (clipboard, paths, dialogs)      |
+| `Navigation/`    | `editor:*` navigation requests                                   |
+| `Output/`        | Output channel forwarding                                        |
+| `Search/`        | `search:*` file-content search                                   |
+| `Sky/`           | `sky:replay-events` and related Sky bridge handlers              |
+| `Storage/`       | `storage:get` / `storage:set` key-value persistence              |
+| `Terminal/`      | `localPty:*` - PTY create, resize, attach, revive                |
+| `TreeView/`      | `tree:getChildren`, `tree:selectionChanged`, reveal              |
+| `UI/`            | `window:*`, decorations, progress                                |
+| `Update/`        | `update:*` lifecycle (no-op stubs; no update server)             |
+| `Utilities/`     | Shared helpers used across handler files                         |
+
+---
+
+## ISandboxConfiguration
+
+`ProcessManagement/InitializationData.rs` contains two builders that fire at
+application startup:
+
+- **`ConstructSandboxConfiguration`** - produces the `ISandboxConfiguration`
+  JSON payload delivered to the Sky (VS Code workbench) frontend.
+- **`ConstructExtensionHostInitializationData`** - produces the
+  `IExtensionHostInitData` JSON payload delivered to Cocoon.
+
+### Critical ISandboxConfiguration fields
+
+Several fields that VS Code's `NativeWorkbenchEnvironmentService` accesses
+without null-guards must always be present. Omitting any of them causes a boot
+crash in the bundled workbench:
+
+| Field                  | Consumer                                                              | Notes                                                  |
+| :--------------------- | :-------------------------------------------------------------------- | :----------------------------------------------------- |
+| `logsPath`             | `NativeWorkbenchEnvironmentService.logsHome`                          | URI string                                             |
+| `dataFolderName`       | Extension path construction - **primary crash source when undefined** | `URI.joinPath(userHome, dataFolderName, "extensions")` |
+| `sharedDataFolderName` | `appSharedDataHome`                                                   |                                                        |
+| `version`              | Extension compatibility checks                                        |                                                        |
+| `perfMarks`            | Required non-optional array                                           | Must be `[]`                                           |
+| `colorScheme`          | Window theming                                                        | Must be `{ dark: bool, highContrast: bool }`           |
+| `loggers`              | Required non-optional array                                           | Must be `[]`                                           |
+| `mainPid`              | Shared-process communication                                          | `std::process::id()` as number                         |
+| `os`                   | OS-specific code paths                                                | `{ release, hostname, arch }`                          |
+| `profiles`             | `reviveProfile()` called on every URI field                           | See below                                              |
+
+### profiles section
+
+`profiles` must contain `home`, `all` (array), and a default `profile` object.
+The default profile itself must carry **all 13 URI fields** - including
+`languageModelsResource` - as `{ scheme, authority, path, query, fragment }`
+objects, because VS Code calls `.with(...)` on every one without a null check.
+
+To avoid hitting `json!` macro recursion limits, all sub-objects
+(`ProfilesSection`, `ProductConfig`, `NlsSection`, `OsSection`) are pre-built as
+`serde_json::Value` bindings before the main `json!({...})` call.
+
+---
+
+## Encryption Provider
+
+Three files in `IPC/WindServiceHandlers/Encryption/` back the
+`encryption:encrypt` and `encryption:decrypt` IPC commands that Cocoon uses for
+`context.secrets`:
+
+### `Key.rs`
+
+Derives a machine-stable 256-bit key once per process:
+
+```
+key = SHA-256("Land-Encryption-v1" ++ machine_id)
+```
+
+The machine ID is read from the OS-native source:
+
+- **macOS**: `ioreg -rd1 -c IOPlatformExpertDevice` → `IOPlatformUUID`
+- **Linux**: `/etc/machine-id` or `/var/lib/dbus/machine-id`
+- **Windows**: Registry `HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid`
+
+If the machine ID cannot be obtained the function returns `Err` so callers
+surface a meaningful error rather than falling back to a predictable constant.
+The derived key is stored in a `OnceLock<Option<[u8;32]>>` - computed once,
+reused for the lifetime of the process.
+
+### `Encrypt.rs` / `Decrypt.rs`
+
+AES-256-GCM symmetric encryption:
+
+- `encryption:encrypt` → returns `{ ciphertext, nonce }` (base-64 encoded)
+- `encryption:decrypt` → accepts `{ ciphertext, nonce }`, returns plaintext
+
+Used by Cocoon's `context.secrets` API (`secrets.get` / `secrets.store` /
+`secrets.delete` IPC calls route through Mountain's storage backed by these two
+handlers).
+
+---
+
+## Extension Scanning and Cache
+
+### Boot-time cache (`LoadFromCache.rs`)
+
+`Maintain/Build/Manifest/PreBake.ts` runs as a `beforeBundleCommand` hook (fires
+in all build paths: direct `pnpm tauri build`, `Build.sh`, CI). It walks every
+extension root and writes `extensions.manifest.json` into the bundle resources.
+
+At runtime `ApplicationState/Internal/ExtensionScanner/LoadFromCache.rs` reads
+that pre-baked manifest. Cold load time: **<50 ms** vs ~1 200 ms for a live
+directory scan.
+
+### Fallback (`ScanAndPopulateExtensions.rs`)
+
+If the cache file is absent (first run from source, dev builds without
+`beforeBundleCommand`), `ScanAndPopulateExtensions.rs` falls back to a parallel
+`join_all` scan over all extension roots, then writes the result for subsequent
+runs.
+
+### Per-request cache (`ExtensionsGetInstalled.rs`)
+
+`ExtensionsGetInstalled` is called on every `extensions:getInstalled` IPC
+request. Results are cached in a `OnceLock` keyed by `ExtensionTypeFilter`
+variant (Builtin / User / All) so the first call per filter pays the scan cost
+and subsequent calls are free.
+
+---
+
+## Cocoon Management
+
+`ProcessManagement/CocoonManagement.rs` spawns and monitors the Cocoon Node.js
+sidecar:
+
+| Detail                       | Value / Notes                                                    |
+| :--------------------------- | :--------------------------------------------------------------- |
+| Cocoon gRPC port             | 50052 (Mountain's Vine gRPC server is on **50051**)              |
+| Mountain gRPC connect budget | `GRPC_CONNECT_BUDGET_MS = 30_000` (30 seconds)                   |
+| IO forwarder runtime         | `tauri::async_runtime::spawn` - **not** `tokio::spawn`           |
+| Bootstrap script             | `scripts/cocoon/bootstrap-fork.js` (bundled sidecar)             |
+| WebSocket config             | Port picked at spawn time via `portpicker`, stored in `OnceLock` |
+
+The 30-second budget exists to give Cocoon enough time to complete its own
+bootstrap stages (especially the `RPCServer` stage that must bind port 50052
+before Mountain attempts a gRPC handshake).
+
 ### Component Block Map
 
 ```mermaid
