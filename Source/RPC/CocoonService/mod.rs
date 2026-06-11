@@ -32,6 +32,8 @@ pub mod SCM;
 
 pub mod Secret;
 
+pub mod SpawnChannelReadPump;
+
 pub mod Task;
 
 pub mod Terminal;
@@ -295,7 +297,7 @@ lazy_static! {
 	/// Callers that hold a channel_id can push frames back to the Cocoon
 	/// peer over the bidirectional stream without touching the original
 	/// `open_channel_from_mountain` future.
-	static ref CHANNEL_REGISTRY:DashMap<u64, mpsc::Sender<::Vine::Generated::Envelope>> =
+	pub(crate) static ref CHANNEL_REGISTRY:DashMap<u64, mpsc::Sender<::Vine::Generated::Envelope>> =
 		DashMap::new();
 }
 
@@ -449,11 +451,10 @@ impl CocoonService for CocoonServiceImpl {
 		request:tonic::Request<tonic::Streaming<::Vine::Generated::Envelope>>,
 	) -> Result<tonic::Response<Self::OpenChannelFromMountainStream>, tonic::Status> {
 		use futures_util::StreamExt;
-		use ::Vine::Generated::{Envelope, GenericResponse, RpcError, envelope::Payload};
 
 		let ChannelId = NEXT_CHANNEL_ID.fetch_add(1, Ordering::Relaxed);
 
-		let (OutTx, OutRx) = mpsc::channel::<Envelope>(1024);
+		let (OutTx, OutRx) = mpsc::channel::<::Vine::Generated::Envelope>(1024);
 
 		// Register the outbound sender so other subsystems can push frames
 		// to this stream using the channel_id.
@@ -461,98 +462,9 @@ impl CocoonService for CocoonServiceImpl {
 
 		dev_log!("cocoon", "[CocoonService] open_channel_from_mountain channel_id={}", ChannelId);
 
-		let mut Inbound = request.into_inner();
-
-		let ServiceClone = self.clone();
-
-		// Spawn the read pump as a detached task so the method returns the
-		// outbound stream immediately and Cocoon can begin receiving frames.
-		tauri::async_runtime::spawn(async move {
-			while let Some(FrameResult) = Inbound.next().await {
-				let Frame = match FrameResult {
-					Ok(F) => F,
-
-					Err(Status) => {
-						dev_log!("cocoon", "[CocoonService] channel_id={} inbound error: {}", ChannelId, Status);
-
-						break;
-					},
-				};
-
-				let Payload = match Frame.payload {
-					Some(P) => P,
-
-					None => continue,
-				};
-
-				match Payload {
-					Payload::Notification(N) => {
-						// Reuse the unary notification dispatcher verbatim.
-						let _ = GenericNotification::Dispatcher::Fn(&ServiceClone, tonic::Request::new(N)).await;
-					},
-
-					Payload::Request(R) => {
-						let RequestId = R.request_identifier;
-
-						// Reuse the unary request dispatcher; wrap the result
-						// into a Response envelope and push it back.
-						let Wrapped = tonic::Request::new(R);
-
-						let Response = match GenericRequest::Dispatcher::Fn(&ServiceClone, Wrapped).await {
-							Ok(GrpcResponse) => {
-								let Inner = GrpcResponse.into_inner();
-
-								Envelope { payload:Some(Payload::Response(Inner)) }
-							},
-
-							Err(Status) => {
-								Envelope {
-									payload:Some(Payload::Response(GenericResponse {
-										request_identifier:RequestId,
-										result:Vec::new(),
-										error:Some(RpcError {
-											code:Status.code() as i32,
-											message:Status.message().to_string(),
-											data:Vec::new(),
-										}),
-									})),
-								}
-							},
-						};
-
-						if OutTx.send(Response).await.is_err() {
-							// Receiver closed - peer disconnected.
-							break;
-						}
-					},
-
-					Payload::Response(_) => {
-						// Responses on the Mountain-inbound direction are
-						// unexpected; drop silently.
-						dev_log!(
-							"cocoon",
-							"[CocoonService] channel_id={} unexpected Response frame; ignored",
-							ChannelId
-						);
-					},
-
-					Payload::Cancel(_) => {
-						// Best-effort cancel; the unary path has no cancel
-						// support so this is a deliberate no-op.
-					},
-				}
-			}
-
-			// Pump exited - remove the registry entry so stale senders are
-			// not retained.
-			CHANNEL_REGISTRY.remove(&ChannelId);
-
-			dev_log!(
-				"cocoon",
-				"[CocoonService] open_channel_from_mountain channel_id={} closed",
-				ChannelId
-			);
-		});
+		// Detached read pump so this method returns the outbound stream
+		// immediately and Cocoon can begin receiving frames.
+		SpawnChannelReadPump::Fn(self.clone(), ChannelId, request.into_inner(), OutTx);
 
 		let OutboundStream = ReceiverStream::new(OutRx).map(|E| Ok(E));
 

@@ -169,6 +169,30 @@ use tokio::{
 
 use crate::dev_log;
 
+#[path = "TauriIPCServer/DecryptMessage.rs"]
+pub mod DecryptMessage;
+
+#[path = "TauriIPCServer/Dispose.rs"]
+pub mod Dispose;
+
+#[path = "TauriIPCServer/InitializeDefaults.rs"]
+pub mod InitializeDefaults;
+
+#[path = "TauriIPCServer/ProcessMessageQueue.rs"]
+pub mod ProcessMessageQueue;
+
+#[path = "TauriIPCServer/ReceiveMessage.rs"]
+pub mod ReceiveMessage;
+
+#[path = "TauriIPCServer/SendMessage.rs"]
+pub mod SendMessage;
+
+#[path = "TauriIPCServer/StartHealthMonitoring.rs"]
+pub mod StartHealthMonitoring;
+
+#[path = "TauriIPCServer/ValidatePermission.rs"]
+pub mod ValidatePermission;
+
 /// IPC Message structure matching Wind's ITauriIPCMessage interface
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TauriIPCMessage {
@@ -289,49 +313,7 @@ impl TauriIPCServer {
 
 	/// Send a Message to the Wind frontend
 	pub async fn send(&self, channel:&str, data:serde_json::Value) -> Result<(), String> {
-		let Message = TauriIPCMessage {
-			channel:channel.to_string(),
-
-			data,
-
-			sender:Some("mountain".to_string()),
-
-			timestamp:std::time::SystemTime::now()
-				.duration_since(std::time::UNIX_EPOCH)
-				.unwrap_or_default()
-				.as_millis() as u64,
-		};
-
-		let is_connected = {
-			let guard = self
-				.is_connected
-				.lock()
-				.map_err(|e| format!("Failed to check connection status: {}", e))?;
-
-			*guard
-		};
-
-		if !is_connected {
-			// Queue the Message for later delivery
-			let mut queue = self
-				.message_queue
-				.lock()
-				.map_err(|e| format!("Failed to access Message queue: {}", e))?;
-
-			queue.push(Message);
-
-			dev_log!(
-				"ipc",
-				"[TauriIPCServer] Message queued (channel: {}, queue size: {})",
-				channel,
-				queue.len()
-			);
-
-			return Ok(());
-		}
-
-		// Send immediately
-		self.emit_message(&Message).await
+		SendMessage::Fn(self, channel, data).await
 	}
 
 	/// Register a listener for incoming messages from Wind
@@ -420,34 +402,7 @@ impl TauriIPCServer {
 	}
 
 	/// Process queued messages
-	async fn process_message_queue(&self) {
-		let mut queue = match self.message_queue.lock() {
-			Ok(queue) => queue,
-
-			Err(e) => {
-				dev_log!("ipc", "error: [TauriIPCServer] Failed to access Message queue: {}", e);
-
-				return;
-			},
-		};
-
-		while let Some(Message) = queue.pop() {
-			if let Err(e) = self.emit_message(&Message).await {
-				dev_log!("ipc", "error: [TauriIPCServer] Failed to send queued Message: {}", e);
-
-				// Put the Message back in the queue
-				queue.insert(0, Message);
-
-				break;
-			}
-		}
-
-		dev_log!(
-			"ipc",
-			"[TauriIPCServer] Message queue processed, {} messages remaining",
-			queue.len()
-		);
-	}
+	async fn process_message_queue(&self) { ProcessMessageQueue::Fn(self).await }
 
 	/// Get connection status
 	pub fn get_connection_status(&self) -> Result<bool, String> {
@@ -470,38 +425,7 @@ impl TauriIPCServer {
 	}
 
 	/// Cleanup resources
-	pub fn dispose(&self) -> Result<(), String> {
-		{
-			let mut listeners = self
-				.listeners
-				.lock()
-				.map_err(|e| format!("Failed to access listeners: {}", e))?;
-
-			listeners.clear();
-		}
-
-		{
-			let mut queue = self
-				.message_queue
-				.lock()
-				.map_err(|e| format!("Failed to access Message queue: {}", e))?;
-
-			queue.clear();
-		}
-
-		{
-			let mut is_connected = self
-				.is_connected
-				.lock()
-				.map_err(|e| format!("Failed to access connection status: {}", e))?;
-
-			*is_connected = false;
-		}
-
-		dev_log!("ipc", "[TauriIPCServer] IPC Server disposed");
-
-		Ok(())
-	}
+	pub fn dispose(&self) -> Result<(), String> { Dispose::Fn(self) }
 
 	/// Advanced: Validate Message permissions
 	pub async fn validate_message_permissions(&self, Message:&TauriIPCMessage) -> Result<(), String> {
@@ -855,44 +779,7 @@ impl ConnectionPool {
 
 	/// Start health monitoring for a connection
 	async fn StartHealthMonitoring(&self, connection_id:&str) {
-		let health_checker = self.HealthChecker.clone();
-
-		let active_connection = self.ActiveConnection.clone();
-
-		let connection_id = connection_id.to_string();
-
-		tokio::spawn(async move {
-			let mut interval = tokio::time::interval(Duration::from_secs(30));
-
-			loop {
-				interval.tick().await;
-
-				let checker = health_checker.lock().await;
-
-				let mut connections = match active_connection.try_lock() {
-					Ok(conns) => conns,
-					Err(_) => continue,
-				};
-
-				if let Some(Handle) = connections.get_mut(&connection_id) {
-					let is_healthy = checker.check_connection_health(Handle).await;
-
-					Handle.update_health(is_healthy);
-
-					if !Handle.is_healthy() {
-						dev_log!(
-							"ipc",
-							"Connection {} marked as unhealthy (score: {:.1})",
-							Handle.id,
-							Handle.health_score
-						);
-					}
-				} else {
-					// The connection has been removed from the pool, stop monitoring
-					break;
-				}
-			}
-		});
+		StartHealthMonitoring::Fn(self, connection_id).await
 	}
 }
 
@@ -983,32 +870,7 @@ impl SecureMessageChannel {
 
 	/// Decrypt and verify a Message
 	pub fn decrypt_message(&self, encrypted:&EncryptedMessage) -> Result<TauriIPCMessage, String> {
-		// Verify HMAC
-		let hmac_key = hmac::Key::new(hmac::HMAC_SHA256, &self.hmac_key);
-
-		hmac::verify(&hmac_key, &encrypted.ciphertext, &encrypted.hmac_tag)
-			.map_err(|_| "HMAC verification failed".to_string())?;
-
-		// Decrypt Message
-		let mut in_out = encrypted.ciphertext.clone();
-
-		let nonce_slice:&[u8] = &encrypted.nonce;
-
-		let nonce_array:[u8; 12] = nonce_slice.try_into().map_err(|_| "Invalid nonce length".to_string())?;
-
-		let nonce = aead::Nonce::assume_unique_for_key(nonce_array);
-
-		self.encryption_key
-			.open_in_place(nonce, aead::Aad::empty(), &mut in_out)
-			.map_err(|e| format!("Decryption failed: {}", e))?;
-
-		// Remove authentication tag
-		let plaintext_len = in_out.len() - AES_256_GCM.tag_len();
-
-		in_out.truncate(plaintext_len);
-
-		// Deserialize Message
-		serde_json::from_slice(&in_out).map_err(|e| format!("Failed to deserialize Message: {}", e))
+		DecryptMessage::Fn(self, encrypted)
 	}
 
 	/// Rotate encryption keys
@@ -1031,53 +893,7 @@ pub struct EncryptedMessage {
 /// Advanced permission-based IPC Message handler
 #[tauri::command]
 pub async fn mountain_ipc_receive_message(app_handle:tauri::AppHandle, Message:TauriIPCMessage) -> Result<(), String> {
-	dev_log!(
-		"ipc",
-		"[TauriIPCServer] Received IPC Message from Wind on channel: {}",
-		Message.channel
-	);
-
-	// Get the IPC server instance from application state
-	if let Some(ipc_server) = app_handle.try_state::<TauriIPCServer>() {
-		// Advanced security: Validate permissions before processing
-		if let Err(e) = ipc_server.validate_message_permissions(&Message).await {
-			dev_log!(
-				"ipc",
-				"error: [TauriIPCServer] Permission validation failed for channel {}: {}",
-				Message.channel,
-				e
-			);
-
-			// Log security event
-			ipc_server
-				.log_security_event(SecurityEvent {
-					event_type:SecurityEventType::PermissionDenied,
-					user_id:Message.sender.clone().unwrap_or("unknown".to_string()),
-					operation:Message.channel.clone(),
-					timestamp:std::time::SystemTime::now(),
-					details:Some(format!("Permission denied: {}", e)),
-				})
-				.await;
-
-			return Err(format!("Permission denied: {}", e));
-		}
-
-		// Advanced monitoring: Track Message processing time
-		let start_time = std::time::Instant::now();
-
-		let result = ipc_server.IncomingMessage(Message.clone()).await;
-
-		let duration = start_time.elapsed();
-
-		// Record performance metrics
-		ipc_server
-			.record_performance_metrics(Message.channel, duration, result.is_ok())
-			.await;
-
-		result
-	} else {
-		Err("IPC Server not found in application state".to_string())
-	}
+	ReceiveMessage::Fn(app_handle, Message).await
 }
 
 /// Tauri command handler for Wind to check connection status
@@ -1187,39 +1003,7 @@ impl PermissionManager {
 
 	/// Validate permission for an operation
 	pub async fn validate_permission(&self, operation:&str, context:&SecurityContext) -> Result<(), String> {
-		// Check if operation requires specific permissions
-		let required_permissions = self.get_required_permissions(operation).await;
-
-		if required_permissions.is_empty() {
-			return Ok(()); // No specific permissions required
-		}
-
-		// Check if user has required permissions
-		let mut user_permissions:Vec<String> = context.permissions.iter().cloned().collect();
-
-		for role in context.roles.iter() {
-			let role_perms = self.get_role_permissions(role).await;
-
-			user_permissions.extend(role_perms);
-		}
-
-		for required in required_permissions {
-			if !user_permissions.contains(&required) {
-				return Err(format!("Missing permission: {}", required));
-			}
-		}
-
-		// Log successful access
-		self.log_security_event(SecurityEvent {
-			event_type:SecurityEventType::AccessGranted,
-			user_id:context.user_id.clone(),
-			operation:operation.to_string(),
-			timestamp:std::time::SystemTime::now(),
-			details:Some(format!("Access granted for operation: {}", operation)),
-		})
-		.await;
-
-		Ok(())
+		ValidatePermission::Fn(self, operation, context).await
 	}
 
 	/// Get required permissions for an operation
@@ -1266,63 +1050,5 @@ impl PermissionManager {
 	}
 
 	/// Initialize default roles and permissions
-	pub async fn initialize_defaults(&self) {
-		let mut permissions = self.permissions.write().await;
-
-		let mut roles = self.roles.write().await;
-
-		// Define standard permissions
-		let standard_permissions = vec![
-			("file.read", "Read file operations"),
-			("file.write", "Write file operations"),
-			("config.read", "Read configuration"),
-			("config.update", "Update configuration"),
-			("storage.read", "Read storage"),
-			("storage.write", "Write storage"),
-			("system.external", "Access external system resources"),
-		];
-
-		for (name, description) in standard_permissions {
-			permissions.insert(
-				name.to_string(),
-				Permission {
-					name:name.to_string(),
-					description:description.to_string(),
-					category:"standard".to_string(),
-				},
-			);
-		}
-
-		// Define standard roles
-		let standard_roles = vec![
-			("user", vec!["file.read", "config.read", "storage.read"]),
-			(
-				"developer",
-				vec!["file.read", "file.write", "config.read", "storage.read", "storage.write"],
-			),
-			(
-				"admin",
-				vec![
-					"file.read",
-					"file.write",
-					"config.read",
-					"config.update",
-					"storage.read",
-					"storage.write",
-					"system.external",
-				],
-			),
-		];
-
-		for (name, role_permissions) in standard_roles {
-			roles.insert(
-				name.to_string(),
-				Role {
-					name:name.to_string(),
-					permissions:role_permissions.iter().map(|p| p.to_string()).collect(),
-					description:format!("{} role with standard permissions", name),
-				},
-			);
-		}
-	}
+	pub async fn initialize_defaults(&self) { InitializeDefaults::Fn(self).await }
 }
