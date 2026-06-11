@@ -48,6 +48,7 @@ use std::{
 
 use CommonLibrary::{Error::CommonError::CommonError, Search::SearchProvider::SearchProvider};
 use async_trait::async_trait;
+use globset::{Glob, GlobMatcher};
 use grep_matcher::Matcher;
 use grep_regex::{RegexMatcher, RegexMatcherBuilder};
 use grep_searcher::{Searcher, SearcherBuilder, Sink, SinkMatch};
@@ -58,13 +59,11 @@ use serde_json::{Value, json};
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::dev_log;
 
-// TODO: result pagination, cancellation via CancellationToken, include/exclude
-// patterns, context lines (before/after), file-type filtering, replacement
-// highlighting, progress reporting, multi-folder independent search, caching,
-// regex capture groups, search history, result export, performance metrics,
-// deduplication, glob file matching, result ranking, binary file handling,
-// symlink following, max file size limit, search timeout, hidden files,
-// multi-line regex.
+// TODO: result pagination, cancellation via CancellationToken, context lines
+// (before/after), replacement highlighting, progress reporting, multi-folder
+// independent search, caching, regex capture groups, search history, result
+// export, performance metrics, deduplication, result ranking, binary file
+// handling, max file size limit, search timeout, multi-line regex.
 
 /// Mirrors VS Code's `ITextSearchQuery` shape (`vs/workbench/services/
 /// search/common/search.ts`). The workbench's Search view serialises
@@ -96,6 +95,35 @@ struct TextSearchQuery {
 
 	#[serde(default)]
 	is_multiline:Option<bool>,
+}
+
+/// VS Code's `ITextSearchOptions` shape (the second argument to
+/// `search:textSearch`). Carries glob patterns for include/exclude
+/// filtering and the max results cap.
+#[derive(Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+struct TextSearchOptions {
+	/// Glob patterns to include (e.g. `["**/*.ts"]`). If empty, all files
+	/// are searched. Matches VS Code's `include` field on `ISearchOptions`.
+	#[serde(default)]
+	include:Option<Vec<String>>,
+
+	/// Glob patterns to exclude (e.g. `["**/node_modules/**"]`). These are
+	/// applied on top of `.gitignore`. Matches VS Code's `exclude` field.
+	#[serde(default)]
+	exclude:Option<Vec<String>>,
+
+	/// Maximum number of file matches to return (VS Code default: 10 000).
+	#[serde(default)]
+	max_results:Option<usize>,
+
+	/// Search hidden files/directories (`.`-prefixed). Default `false`.
+	#[serde(default)]
+	include_hidden:Option<bool>,
+
+	/// Follow symlinks. Default `true`.
+	#[serde(default)]
+	follow_symlinks:Option<bool>,
 }
 
 /// Per-match column range within the preview line.
@@ -285,8 +313,10 @@ impl Sink for PerFileSink {
 
 #[async_trait]
 impl SearchProvider for MountainEnvironment {
-	async fn TextSearch(&self, QueryValue:Value, _OptionsValue:Value) -> Result<Value, CommonError> {
+	async fn TextSearch(&self, QueryValue:Value, OptionsValue:Value) -> Result<Value, CommonError> {
 		let Query:TextSearchQuery = serde_json::from_value(QueryValue)?;
+
+		let Options:TextSearchOptions = serde_json::from_value(OptionsValue).unwrap_or_default();
 
 		dev_log!("search", "[SearchProvider] Performing text search for: {:?}", Query);
 
@@ -312,6 +342,24 @@ impl SearchProvider for MountainEnvironment {
 			CommonError::InvalidArgument { ArgumentName:"pattern".into(), Reason:Error.to_string() }
 		})?;
 
+		// Pre-compile include/exclude glob patterns so the walker can
+		// filter files cheaply without regex overhead per-entry.
+		let IncludePatterns:Vec<GlobMatcher> = Options
+			.include
+			.unwrap_or_default()
+			.iter()
+			.filter_map(|P| Glob::new(P).ok().map(|G| G.compile_matcher()))
+			.collect();
+
+		let ExcludePatterns:Vec<GlobMatcher> = Options
+			.exclude
+			.unwrap_or_default()
+			.iter()
+			.filter_map(|P| Glob::new(P).ok().map(|G| G.compile_matcher()))
+			.collect();
+
+		let MaxResults = Options.max_results.unwrap_or(10_000);
+
 		let AllMatches = Arc::new(Mutex::new(Vec::<FileMatch>::new()));
 
 		let Folders = self.ApplicationState.Workspace.WorkspaceFolders.lock().clone();
@@ -322,42 +370,89 @@ impl SearchProvider for MountainEnvironment {
 			return Ok(json!([]));
 		}
 
+		let AllMatchesRef = AllMatches.clone();
+
 		for Folder in Folders {
 			if let Ok(FolderPath) = Folder.URI.to_file_path() {
-				// Use a parallel walker for better performance.
-				let Walker = WalkBuilder::new(FolderPath).build_parallel();
+				let mut WalkBuilderInst = WalkBuilder::new(&FolderPath);
 
-				// The `search_parallel` method is not available on `Searcher`. We must process
-				// entries from the walker and call `search_path` individually.
-				Walker.run(|| {
-					// `line_number(true)` is mandatory - without it,
-					// `SinkMatch::line_number()` returns None and every
-					// match lands at line 0, which the renderer treats
-					// as "no line info" and collapses into an
-					// uncategorised count-of-zero. The default
-					// `Searcher::new()` constructor disables line
-					// numbers for performance.
+				// Hidden files: off by default unless caller opts in.
+				WalkBuilderInst.hidden(!Options.include_hidden.unwrap_or(false));
+
+				// Symlinks: follow by default.
+				WalkBuilderInst.follow_links(Options.follow_symlinks.unwrap_or(true));
+
+				let Walker = WalkBuilderInst.build_parallel();
+
+				let Matcher = Matcher.clone();
+
+				let AllMatchesWalker = AllMatchesRef.clone();
+
+				let IncludePatterns = IncludePatterns.clone();
+
+				let ExcludePatterns = ExcludePatterns.clone();
+
+				let FolderPathClone = FolderPath.clone();
+
+				Walker.run(move || {
 					let mut Searcher = SearcherBuilder::new().line_number(true).build();
 
 					let Matcher = Matcher.clone();
 
-					let AllMatches = AllMatches.clone();
+					let AllMatches = AllMatchesWalker.clone();
+
+					let IncludePatterns = IncludePatterns.clone();
+
+					let ExcludePatterns = ExcludePatterns.clone();
+
+					let FolderPath = FolderPathClone.clone();
 
 					Box::new(move |EntryResult| {
+						// Bail early if we've already hit the result cap.
+						{
+							let Guard = AllMatches.lock().unwrap_or_else(|e| e.into_inner());
+
+							if Guard.len() >= MaxResults {
+								return ignore::WalkState::Quit;
+							}
+						}
+
 						if let Ok(Entry) = EntryResult {
 							if Entry.file_type().map_or(false, |ft| ft.is_file()) {
-								// For each file, create a new sink that knows its path.
+								let EntryPath = Entry.path();
+
+								// Apply include/exclude glob patterns relative
+								// to the workspace folder so `**/*.ts` matches
+								// nested files without requiring absolute paths.
+								let RelPath = EntryPath
+									.strip_prefix(&FolderPath)
+									.unwrap_or(EntryPath)
+									.to_string_lossy();
+
+								// Exclude takes priority over include.
+								if !ExcludePatterns.is_empty()
+									&& ExcludePatterns.iter().any(|P| P.is_match(&*RelPath))
+								{
+									return ignore::WalkState::Continue;
+								}
+
+								if !IncludePatterns.is_empty()
+									&& !IncludePatterns.iter().any(|P| P.is_match(&*RelPath))
+								{
+									return ignore::WalkState::Continue;
+								}
+
 								let Sink = PerFileSink {
-									path:Entry.path().to_path_buf(),
+									path:EntryPath.to_path_buf(),
 									results:AllMatches.clone(),
 									matcher:Matcher.clone(),
 								};
 
-								if let Err(Error) = Searcher.search_path(&Matcher, Entry.path(), Sink) {
+								if let Err(Error) = Searcher.search_path(&Matcher, EntryPath, Sink) {
 									dev_log!(
 										"search",
 										"warn: [SearchProvider] Error searching path {}: {}",
-										Entry.path().display(),
+										EntryPath.display(),
 										Error
 									);
 								}

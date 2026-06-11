@@ -10,11 +10,15 @@ pub mod DecorationsSet;
 
 pub mod KeybindingAdd;
 
+pub mod KeybindingEvaluateWhen;
+
 pub mod KeybindingGetAll;
 
 pub mod KeybindingLookup;
 
 pub mod KeybindingRemove;
+
+pub mod KeybindingResolve;
 
 pub mod LifecycleGetPhase;
 

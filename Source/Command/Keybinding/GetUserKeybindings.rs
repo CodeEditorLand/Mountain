@@ -1,16 +1,12 @@
-//! Tauri command - return user-defined keybinding overrides. Stub
-//! returns an empty array; pending persistence layer wired through
-//! `KeybindingProvider`.
-//!
-//! ## Planned
-//!
-//! Hydrate from ApplicationState, including command id, chord, when
-//! clause, source extension, and conflict information for the keyboard
-//! shortcuts UI.
+//! Tauri command - return user-defined keybinding overrides, read from
+//! `keybindings.json` in the app config directory (the same file
+//! `KeybindingProvider::GetResolvedKeybinding` overlays last). Unbind
+//! rules (`-command`) are returned as-is so the shortcuts UI can show
+//! and edit them. A missing or malformed file yields an empty list.
 
 use std::sync::Arc;
 
-use CommonLibrary::{Environment::Requires::Requires, Keybinding::KeybindingProvider::KeybindingProvider};
+use CommonLibrary::FileSystem::ReadFile::ReadFile;
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Wry, command};
 
@@ -22,7 +18,31 @@ pub async fn GetUserKeybindings(ApplicationHandle:AppHandle<Wry>) -> Result<Valu
 
 	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();
 
-	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
+	let UserKeybindingsPath = ApplicationHandle
+		.path()
+		.app_config_dir()
+		.map_err(|Error| format!("Cannot find app config dir: {}", Error))?
+		.join("keybindings.json");
 
-	Ok(json!({ "keybindings": [] }))
+	let Keybindings = match RunTime.Run(ReadFile(UserKeybindingsPath)).await {
+		Ok(Content) => {
+			match serde_json::from_slice::<Value>(&Content) {
+				Ok(Value::Array(Rules)) => Rules,
+				Ok(_) => {
+					dev_log!("keybinding", "warn: keybindings.json is not an array");
+
+					Vec::new()
+				},
+				Err(Error) => {
+					dev_log!("keybinding", "warn: keybindings.json is malformed: {}", Error);
+
+					Vec::new()
+				},
+			}
+		},
+		// Absent file is the normal first-run state.
+		Err(_) => Vec::new(),
+	};
+
+	Ok(json!({ "keybindings": Keybindings }))
 }

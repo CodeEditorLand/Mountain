@@ -16,6 +16,12 @@ pub struct KeybindingEntry {
 
 	/// Optional when-clause (e.g. "editorFocus && !editorReadonly").
 	pub When:Option<String>,
+
+	/// Origin of the entry: extension identifier for
+	/// `RegisterExtensionKeybindings`, `None` for `keybinding:add` entries
+	/// registered without an owner.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub Source:Option<String>,
 }
 
 /// Stores dynamically registered keyboard shortcuts.
@@ -40,9 +46,45 @@ impl KeybindingState {
 
 		Guard.retain(|E| E.CommandId != CommandId);
 
-		Guard.push(KeybindingEntry { CommandId:CommandId.clone(), Keybinding, When });
+		Guard.push(KeybindingEntry { CommandId:CommandId.clone(), Keybinding, When, Source:None });
 
 		dev_log!("keybinding", "[KeybindingState] Keybinding added for: {}", CommandId);
+	}
+
+	/// Register a dynamic keybinding owned by a source (extension
+	/// identifier). Unlike `AddKeybinding` this does NOT displace entries
+	/// for the same command from other sources - an extension contributing
+	/// a binding must not silently erase a user-registered one. It replaces
+	/// only its own previous entry for the same command.
+	pub fn AddKeybindingFromSource(&self, CommandId:String, Keybinding:String, When:Option<String>, Source:String) {
+		let mut Guard = self.Entries.lock();
+
+		Guard.retain(|E| !(E.CommandId == CommandId && E.Source.as_deref() == Some(Source.as_str())));
+
+		Guard.push(KeybindingEntry {
+			CommandId:CommandId.clone(),
+			Keybinding,
+			When,
+			Source:Some(Source.clone()),
+		});
+
+		dev_log!("keybinding", "[KeybindingState] Keybinding added for: {} (source: {})", CommandId, Source);
+	}
+
+	/// Remove every dynamic keybinding registered by a source. Returns the
+	/// number of entries removed so callers can report it.
+	pub fn RemoveKeybindingsBySource(&self, Source:&str) -> usize {
+		let mut Guard = self.Entries.lock();
+
+		let Before = Guard.len();
+
+		Guard.retain(|E| E.Source.as_deref() != Some(Source));
+
+		let Removed = Before - Guard.len();
+
+		dev_log!("keybinding", "[KeybindingState] {} keybinding(s) removed for source: {}", Removed, Source);
+
+		Removed
 	}
 
 	/// Remove all dynamic keybindings for a command.

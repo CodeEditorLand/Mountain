@@ -21,4 +21,8 @@ pub mod OutputClear;
 
 pub mod OutputCreate;
 
+pub mod OutputDispose;
+
+pub mod OutputReplace;
+
 pub mod OutputShow;

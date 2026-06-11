@@ -204,14 +204,16 @@ impl CommandExecutor for MountainEnvironment {
 				// only observable effect of the prior error return was the
 				// red `error:` log line. Treat as silent no-ops until Land
 				// grows the corresponding services.
+				// Only truly non-forwardable, Mountain-private commands are
+				// no-oped here. `workbench.action.*` and `editor.action.*`
+				// commands are handled by the renderer-command forwarding
+				// below so VS Code's own CommandsRegistry executes them.
+				// Keep this list minimal: putting a workbench.action.* here
+				// prevents it from reaching the renderer forwarding.
 				if matches!(
 					CommandIdentifier.as_str(),
 					"getTelemetrySenderObject" | "testing.clearTestResults"
 				) {
-					// `getTelemetrySenderObject` fires once per extension
-					// activation (~30+ times per boot) - same once-per-id
-					// dedup as the view-action path so the log line
-					// documents the probe but doesn't trail.
 					crate::IPC::DevLog::DebugOnce::Fn(
 						"commands",
 						&format!("workbench-internal-noop:{}", CommandIdentifier),
@@ -220,6 +222,53 @@ impl CommandExecutor for MountainEnvironment {
 							 (Land has no backing service).",
 							CommandIdentifier
 						),
+					);
+
+					return Ok(Value::Null);
+				}
+
+				// Workbench renderer-side commands that VS Code's browser-side
+				// `CommandsRegistry` handles. Forward via Tauri event to Sky so
+				// the workbench's own command service can execute them.
+				// `workbench.action.*`, `editor.action.*`, and friends fall here
+				// when they're not already in Mountain's native registry. Return
+				// null (void) immediately - callers never await a meaningful
+				// result from renderer commands. The event is caught by Sky's
+				// `InstallCommands.ts` bridge.
+				let IsRendererCommand = CommandIdentifier.starts_with("workbench.action.")
+					|| CommandIdentifier.starts_with("workbench.debug.")
+					|| CommandIdentifier.starts_with("workbench.scm.")
+					|| CommandIdentifier.starts_with("workbench.view.")
+					|| CommandIdentifier.starts_with("editor.action.")
+					|| CommandIdentifier.starts_with("vscode.diff")
+					|| CommandIdentifier.starts_with("vscode.preview")
+					|| CommandIdentifier.starts_with("vscode.openFolder");
+
+				if IsRendererCommand {
+					use tauri::Emitter;
+
+					// Re-use Sky's existing `sky://command/execute` channel so
+					// the workbench's own `ICommandService.executeCommand` runs
+					// the command in the renderer. Shape matches what
+					// `InstallCommands.ts` expects: `{ id, args }`.
+					let Args = if Argument.is_null() {
+						json!([])
+					} else if Argument.is_array() {
+						Argument.clone()
+					} else {
+						json!([Argument])
+					};
+
+					let Payload = json!({ "id": CommandIdentifier, "args": Args });
+
+					if let Some(Window) = self.ApplicationHandle.get_webview_window("main") {
+						let _ = Window.emit("sky://command/execute", Payload);
+					}
+
+					dev_log!(
+						"commands",
+						"[CommandProvider] Renderer command '{}' forwarded to Sky.",
+						CommandIdentifier
 					);
 
 					return Ok(Value::Null);

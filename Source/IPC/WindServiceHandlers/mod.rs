@@ -191,6 +191,8 @@ use Output::{
 	OutputAppendLine::Fn as OutputAppendLine,
 	OutputClear::Fn as OutputClear,
 	OutputCreate::Fn as OutputCreate,
+	OutputDispose::Fn as OutputDispose,
+	OutputReplace::Fn as OutputReplace,
 	OutputShow::Fn as OutputShow,
 };
 use Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchFindInFiles};
@@ -225,9 +227,11 @@ use UI::{
 	DecorationsGetMany::Fn as DecorationsGetMany,
 	DecorationsSet::Fn as DecorationsSet,
 	KeybindingAdd::Fn as KeybindingAdd,
+	KeybindingEvaluateWhen::Fn as KeybindingEvaluateWhen,
 	KeybindingGetAll::Fn as KeybindingGetAll,
 	KeybindingLookup::Fn as KeybindingLookup,
 	KeybindingRemove::Fn as KeybindingRemove,
+	KeybindingResolve::Fn as KeybindingResolve,
 	LifecycleGetPhase::Fn as LifecycleGetPhase,
 	LifecycleRequestShutdown::Fn as LifecycleRequestShutdown,
 	LifecycleWhenPhase::Fn as LifecycleWhenPhase,
@@ -1278,6 +1282,8 @@ pub async fn mountain_ipc_invoke(
 				"output:appendLine" => call!(app, "output", "output:appendLine", OutputAppendLine, Arguments),
 				"output:clear" => call!(app, "output", "output:clear", OutputClear, Arguments),
 				"output:show" => call!(app, "output", "output:show", OutputShow, Arguments),
+				"output:replace" => call!(app, "output", "output:replace", OutputReplace, Arguments),
+				"output:dispose" => call!(app, "output", "output:dispose", OutputDispose, Arguments),
 
 				// TextFile commands
 				"textFile:read" => call!(rt, "textfile", "textFile:read", TextfileRead, Arguments),
@@ -1414,6 +1420,12 @@ pub async fn mountain_ipc_invoke(
 				"keybinding:remove" => call!(rt, "keybinding", "keybinding:remove", KeybindingRemove, Arguments),
 				"keybinding:lookup" => call!(rt, "keybinding", "keybinding:lookup", KeybindingLookup, Arguments),
 				"keybinding:getAll" => call!(rt, "keybinding", "keybinding:getAll", KeybindingGetAll),
+				"keybinding:resolve" => {
+					call!(rt, "keybinding", "keybinding:resolve", KeybindingResolve, Arguments)
+				},
+				"keybinding:evaluateWhen" => {
+					call!(rt, "keybinding", "keybinding:evaluateWhen", KeybindingEvaluateWhen, Arguments)
+				},
 
 				// Lifecycle commands
 				"lifecycle:getPhase" => call!(rt, "lifecycle", "lifecycle:getPhase", LifecycleGetPhase),
