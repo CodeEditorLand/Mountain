@@ -38,7 +38,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, mut Arguments:Vec<Value>) -> Re
 		return Err("search:findInFiles requires pattern or TextSearchQuery".to_string());
 	};
 
-	let OptionsValue = Arguments.into_iter().next().unwrap_or(Value::Null);
+	let mut OptionsValue = Arguments.into_iter().next().unwrap_or(Value::Null);
 
 	// Mint a stable search_id for this call so `search:cancel` can
 	// abort the in-flight task without a race against future searches.
@@ -48,6 +48,24 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, mut Arguments:Vec<Value>) -> Re
 		.Feature
 		.SearchIdCounter
 		.fetch_add(1, AtomicOrdering::Relaxed);
+
+	// Register the cooperative cancellation flag and thread the id into
+	// the options payload (`__searchId`). The provider's synchronous
+	// ripgrep walk polls the flag per entry - the task-level abort below
+	// only lands at an await point, which the walk never reaches.
+	let CancelFlag = Arc::new(std::sync::atomic::AtomicBool::new(false));
+
+	let CancellationFlags = RunTime.Environment.ApplicationState.Feature.SearchCancellationFlags.clone();
+
+	CancellationFlags.insert(SearchId, CancelFlag);
+
+	if !OptionsValue.is_object() {
+		OptionsValue = json!({});
+	}
+
+	if let Some(Object) = OptionsValue.as_object_mut() {
+		Object.insert("__searchId".to_string(), json!(SearchId));
+	}
 
 	dev_log!(
 		"search",
@@ -70,6 +88,8 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, mut Arguments:Vec<Value>) -> Re
 
 	// Clean up regardless of outcome.
 	ActiveSearches.remove(&SearchId);
+
+	CancellationFlags.remove(&SearchId);
 
 	match Result {
 		Ok(Ok(Value)) => Ok(Value),

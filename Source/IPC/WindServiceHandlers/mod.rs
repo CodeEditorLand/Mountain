@@ -46,6 +46,8 @@ pub mod TreeView;
 
 pub mod Update;
 
+pub mod Workspaces;
+
 pub mod Dispatcher;
 
 pub mod Utilities;
@@ -1160,12 +1162,38 @@ pub async fn mountain_ipc_invoke(
 					Ok(Value::Array(Vec::new()))
 				},
 				// Gallery is offline: Mountain has no marketplace backend. Return
-				// empty arrays for every read and swallow every write, which
-				// mirrors what a network-air-gapped VS Code session shows.
+				// empty arrays / properly-shaped envelopes for every read, which
+				// mirrors a network-air-gapped VS Code session. Each shape must
+				// match VS Code's `IGalleryQueryResult` exactly so the Extensions
+				// view renders "0 results" instead of crashing with a type error.
 				"extensions:query" | "extensions:getExtensions" | "extensions:getRecommendations" => {
 					dev_log!("extensions", "{} (offline gallery - returning [])", command);
 
 					Ok(Value::Array(Vec::new()))
+				},
+
+				// `ExtensionGalleryService.query()` - called when the user types
+				// in the Extensions search box. Returns `IGalleryQueryResult`:
+				// `{ galleryExtensions: IExtension[], total: number }`. An empty
+				// envelope stops the "loading…" spinner and shows "0 results".
+				"extensions:search" => {
+					dev_log!("extensions", "extensions:search (offline gallery - returning empty)");
+
+					Ok(json!({ "galleryExtensions": [], "total": 0 }))
+				},
+
+				// `ExtensionGalleryService.getCoreTranslation()` - locale bundles.
+				// Returns null so VS Code falls back to the bundled English strings.
+				"extensions:getCoreTranslation" => {
+					Ok(Value::Null)
+				},
+
+				// `ExtensionGalleryService.download()` - called when installing a
+				// marketplace extension. With no gallery backend the download
+				// always fails. Return an error shape VS Code surfaces to the user
+				// as "marketplace unavailable" rather than a JS TypeError.
+				"extensions:download" => {
+					Err("Marketplace download unavailable in offline mode".to_string())
 				},
 				// `IExtensionsControlManifest` - consulted by the Extensions
 				// sidebar on every render (ExtensionEnablementService.ts:793)
@@ -1216,39 +1244,7 @@ pub async fn mountain_ipc_invoke(
 				// response crashes the webview with
 				// `TypeError: undefined is not an object (evaluating 'manifest.publisher')`.
 				"extensions:getManifest" => {
-					let VsixPath = match Arguments.first() {
-						Some(serde_json::Value::String(Path)) => Path.clone(),
-						Some(Obj) => {
-							Obj.get("fsPath")
-								.and_then(|V| V.as_str())
-								.map(str::to_owned)
-								.or_else(|| Obj.get("path").and_then(|V| V.as_str()).map(str::to_owned))
-								.unwrap_or_default()
-						},
-						None => String::new(),
-					};
-
-					dev_log!("extensions", "extensions:getManifest vsix={}", VsixPath);
-
-					if VsixPath.is_empty() {
-						Err("extensions:getManifest: missing VSIX path argument".to_string())
-					} else {
-						let Path = std::path::PathBuf::from(&VsixPath);
-
-						match crate::ExtensionManagement::VsixInstaller::ReadFullManifest(&Path) {
-							Ok(Manifest) => Ok(Manifest),
-							Err(Error) => {
-								dev_log!(
-									"extensions",
-									"warn: [WindServiceHandlers] extensions:getManifest failed for '{}': {}",
-									VsixPath,
-									Error
-								);
-
-								Err(format!("extensions:getManifest failed: {}", Error))
-							},
-						}
-					}
+					crate::IPC::WindServiceHandlers::Extension::ExtensionGetManifest::Fn(Arguments).await
 				},
 				// `extensions:reinstall` - returns a minimal ILocalExtension envelope
 				// so VS Code's ExtensionManagementService doesn't retry the operation.
@@ -1373,6 +1369,16 @@ pub async fn mountain_ipc_invoke(
 				// Abort an in-flight text-search task by search_id.
 				"search:cancel" => {
 					if let Some(SearchId) = Arguments.first().and_then(|V| V.as_u64()) {
+						// Cooperative flag first: the synchronous ripgrep
+						// walk polls it per entry, which is what actually
+						// stops the CPU work. The task abort below only
+						// lands at an await point.
+						let Flags = &RunTime.Environment.ApplicationState.Feature.SearchCancellationFlags;
+
+						if let Some(Flag) = Flags.get(&SearchId) {
+							Flag.store(true, std::sync::atomic::Ordering::Relaxed);
+						}
+
 						let ActiveSearches = &RunTime.Environment.ApplicationState.Feature.ActiveSearches;
 
 						if let Some((_, Handle)) = ActiveSearches.remove(&SearchId) {
@@ -2253,7 +2259,48 @@ pub async fn mountain_ipc_invoke(
 				"localPty:listProcesses" => {
 					dev_log!("terminal", "localPty:listProcesses");
 
-					Ok(json!([]))
+					// `IPtyService.listProcesses` returns `IProcessDetails[]`
+					// (`vs/platform/terminal/common/terminal.ts`). The
+					// workbench uses it for terminal-tab tooltips and the
+					// reconnect-on-reload flow. Build entries from the live
+					// PTY registry; `isOrphan:false` because Mountain spawns
+					// PTYs in-process (they die with us, so there is never a
+					// detached pty-host process to revive from).
+					let Terminals = RunTime.Environment.ApplicationState.Feature.Terminals.GetAll();
+
+					let mut Entries:Vec<_> = Terminals.values().collect();
+
+					Entries.sort_by_key(|T| T.Identifier);
+
+					let Processes:Vec<Value> = Entries
+						.into_iter()
+						.map(|T| {
+							json!({
+								"id": T.Identifier,
+								"title": if T.Title.is_empty() { T.Name.clone() } else { T.Title.clone() },
+								"titleSource": 0,
+								"pid": T.OSProcessIdentifier.unwrap_or(0),
+								"cwd": T.GetWorkingDirectory(),
+								"workspaceId": "",
+								"workspaceName": "",
+								"isOrphan": false,
+								"icon": Value::Null,
+								"color": Value::Null,
+								"fixedDimensions": Value::Null,
+								"environmentVariableCollections": Value::Null,
+								"shellLaunchConfig": {
+									"executable": T.ShellPath,
+									"args": T.ShellArguments,
+								},
+								"hasChildProcesses": false,
+								"type": Value::Null,
+								"hideFromUser": false,
+								"isFeatureTerminal": false,
+							})
+						})
+						.collect();
+
+					Ok(json!(Processes))
 				},
 				"localPty:getEnvironment" => {
 					dev_log!("terminal", "localPty:getEnvironment");
@@ -2885,13 +2932,28 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				"process:getMemoryInfo" => {
-					// Provide a best-effort memory snapshot. If sysinfo is
-					// available, real values are returned; otherwise zeros are
-					// safe - VS Code uses this only for diagnostics display.
+					// Electron's `process.getProcessMemoryInfo()` shape, in
+					// KILOBYTES (VS Code's About/diagnostics panel multiplies
+					// accordingly). Real resident-set numbers via sysinfo;
+					// peak and private/shared splits aren't exposed by
+					// sysinfo, so resident is reported for all three
+					// resident-derived fields - close enough for the
+					// diagnostics display this feeds.
+					let ResidentKB = sysinfo::get_current_pid()
+						.ok()
+						.and_then(|Pid| {
+							let mut System = sysinfo::System::new();
+
+							System.refresh_processes(sysinfo::ProcessesToUpdate::Some(&[Pid]), true);
+
+							System.process(Pid).map(|Process| Process.memory() / 1024)
+						})
+						.unwrap_or(0);
+
 					Ok(json!({
-						"workingSetSize": 0u64,
-						"peakWorkingSetSize": 0u64,
-						"privateBytes": 0u64,
+						"workingSetSize": ResidentKB,
+						"peakWorkingSetSize": ResidentKB,
+						"privateBytes": ResidentKB,
 						"sharedBytes": 0u64,
 					}))
 				},
@@ -3132,226 +3194,13 @@ pub async fn mountain_ipc_invoke(
 					Ok(Value::Null)
 				},
 				"workspaces:enterWorkspace" => {
-					dev_log!("workspaces", "workspaces:enterWorkspace");
-
-					// VS Code passes `{ uri: { scheme, path, ... } }` or a
-					// bare string path as the first argument. Extract the
-					// file-system path, read the `.code-workspace` JSON, then
-					// replace the current workspace folders and emit a
-					// `sky://workspace/enter` event so the workbench reloads
-					// its sidebar and title.
-					let RawArg = Arguments.first().cloned().unwrap_or(Value::Null);
-
-					let WorkspacePath = if let Some(UriObj) = RawArg.as_object() {
-						// Serialised `vscode.Uri` - prefer the `path` field.
-						UriObj.get("path").and_then(|V| V.as_str()).map(str::to_string).or_else(|| {
-							// Sometimes the whole thing is `{ _formatted: "file:///..." }`
-							UriObj
-								.get("_formatted")
-								.and_then(|V| V.as_str())
-								.and_then(|S| url::Url::parse(S).ok())
-								.and_then(|U| U.to_file_path().ok())
-								.map(|P| P.to_string_lossy().into_owned())
-						})
-					} else {
-						// Plain string argument - may be a `file://…` URI or a
-						// raw POSIX path.
-						RawArg.as_str().map(|S| {
-							if S.starts_with("file://") {
-								url::Url::parse(S)
-									.ok()
-									.and_then(|U| U.to_file_path().ok())
-									.map(|P| P.to_string_lossy().into_owned())
-									.unwrap_or_else(|| S.to_string())
-							} else {
-								S.to_string()
-							}
-						})
-					};
-
-					if let Some(FilePath) = WorkspacePath {
-						let FilePathBuf = std::path::PathBuf::from(&FilePath);
-
-						match tokio::fs::read_to_string(&FilePathBuf).await {
-							Ok(Contents) => {
-								let Parsed:Result<serde_json::Value, _> = serde_json::from_str(&Contents);
-
-								match Parsed {
-									Ok(Workspace) => {
-										let Folders:Vec<WorkspaceFolderStateDTO> = Workspace
-											.get("folders")
-											.and_then(|V| V.as_array())
-											.map(|Array| {
-												Array
-													.iter()
-													.enumerate()
-													.filter_map(|(Index, Entry)| {
-														let FolderPath = Entry.get("path").and_then(|V| V.as_str())?;
-
-														// Resolve relative paths against the
-														// directory that contains the .code-workspace
-														// file.
-														let Resolved = if std::path::Path::new(FolderPath).is_absolute()
-														{
-															std::path::PathBuf::from(FolderPath)
-														} else {
-															FilePathBuf
-																.parent()
-																.unwrap_or_else(|| std::path::Path::new("/"))
-																.join(FolderPath)
-														};
-
-														let UriStr = format!("file://{}", Resolved.to_string_lossy());
-
-														let Uri = url::Url::parse(&UriStr).ok()?;
-
-														let Name = Entry
-															.get("name")
-															.and_then(|V| V.as_str())
-															.unwrap_or("")
-															.to_string();
-
-														WorkspaceFolderStateDTO::New(Uri, Name, Index).ok()
-													})
-													.collect()
-											})
-											.unwrap_or_default();
-
-										let State = &RunTime.Environment.ApplicationState;
-
-										UpdateWorkspaceFoldersAndBroadcast(
-											&ApplicationHandle,
-											&State.Workspace,
-											Folders,
-										);
-
-										// Signal the workbench to reload its workspace
-										// context (sidebar tree, title bar, breadcrumb).
-										use tauri::Emitter;
-
-										if let Err(Error) = ApplicationHandle
-											.emit("sky://workspace/enter", serde_json::json!({ "uri": FilePath }))
-										{
-											dev_log!("workspaces", "warn: [enterWorkspace] sky emit failed: {}", Error);
-										}
-
-										dev_log!("workspaces", "[enterWorkspace] loaded workspace from {}", FilePath);
-									},
-
-									Err(Error) => {
-										dev_log!(
-											"workspaces",
-											"warn: [enterWorkspace] JSON parse failed for {}: {}",
-											FilePath,
-											Error
-										);
-									},
-								}
-							},
-
-							Err(Error) => {
-								dev_log!(
-									"workspaces",
-									"warn: [enterWorkspace] read failed for {}: {}",
-									FilePath,
-									Error
-								);
-							},
-						}
-					} else {
-						dev_log!("workspaces", "warn: [enterWorkspace] no path in arguments");
-					}
-
-					Ok(Value::Null)
+					Workspaces::EnterWorkspace::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await
 				},
 				"workspaces:createUntitledWorkspace" => {
-					async move {
-						// Inner async block so ? propagates to Result, not the () outer block.
-						let PathResolver = ApplicationHandle.path();
-
-						let AppDataDir = PathResolver
-							.app_data_dir()
-							.map_err(|E| format!("workspaces:createUntitledWorkspace app_data_dir: {}", E))?;
-
-						let UntitledDir = AppDataDir.join(".untitled-workspaces");
-
-						tokio::fs::create_dir_all(&UntitledDir)
-							.await
-							.map_err(|E| format!("workspaces:createUntitledWorkspace mkdir: {}", E))?;
-
-						let Id = uuid::Uuid::new_v4();
-
-						let FileName = format!("Untitled-{}.code-workspace", Id);
-
-						let FilePath = UntitledDir.join(&FileName);
-
-						let Content = r#"{"folders":[],"settings":{}}"#;
-
-						tokio::fs::write(&FilePath, Content)
-							.await
-							.map_err(|E| format!("workspaces:createUntitledWorkspace write: {}", E))?;
-
-						let FilePathStr = FilePath.to_string_lossy().to_string();
-
-						dev_log!("workspaces", "createUntitledWorkspace: id={} path={}", Id, FilePathStr);
-
-						Ok::<Value, String>(json!({ "configPath": FilePathStr, "id": Id.to_string() }))
-					}
-					.await
+					Workspaces::CreateUntitledWorkspace::Fn(ApplicationHandle.clone()).await
 				},
 				"workspaces:deleteUntitledWorkspace" => {
-					async move {
-						// Inner async block so ? propagates to Result, not the () outer block.
-						let Arg = arg_val(&Arguments, 0);
-
-						let ConfigPath = Arg
-							.as_str()
-							.or_else(|| Arg.get("configPath").and_then(Value::as_str))
-							.unwrap_or("")
-							.to_string();
-
-						if ConfigPath.is_empty() {
-							dev_log!("workspaces", "deleteUntitledWorkspace: no configPath");
-
-							return Ok::<Value, String>(Value::Null);
-						}
-
-						let PathResolver = ApplicationHandle.path();
-
-						let AppDataDir = PathResolver
-							.app_data_dir()
-							.map_err(|E| format!("workspaces:deleteUntitledWorkspace app_data_dir: {}", E))?;
-
-						let UntitledDir = AppDataDir.join(".untitled-workspaces");
-
-						let Target = std::path::PathBuf::from(&ConfigPath);
-
-						let IsInUntitledDir = Target
-							.canonicalize()
-							.ok()
-							.zip(UntitledDir.canonicalize().ok())
-							.map(|(T, U)| T.starts_with(U))
-							.unwrap_or(false);
-
-						if !IsInUntitledDir {
-							dev_log!(
-								"workspaces",
-								"deleteUntitledWorkspace: rejected path outside untitled dir: {}",
-								ConfigPath
-							);
-
-							return Ok::<Value, String>(Value::Null);
-						}
-
-						tokio::fs::remove_file(&Target)
-							.await
-							.map_err(|E| format!("workspaces:deleteUntitledWorkspace remove: {}", E))?;
-
-						dev_log!("workspaces", "deleteUntitledWorkspace: removed {}", ConfigPath);
-
-						Ok::<Value, String>(Value::Null)
-					}
-					.await
+					Workspaces::DeleteUntitledWorkspace::Fn(ApplicationHandle.clone(), Arguments).await
 				},
 				"workspaces:getWorkspaceIdentifier" => {
 					// Return a stable identifier derived from the first workspace
@@ -3392,6 +3241,13 @@ pub async fn mountain_ipc_invoke(
 				// `label:getWorkspace` so the name is consistent across callers.
 				"workspaces:getWorkspaceName" => LabelGetWorkspace(RunTime.clone()).await,
 
+				// `IWorkspacesService.getDirtyWorkspaces` lists OTHER windows'
+				// workspaces that left hot-exit backups on disk, so a fresh
+				// window can offer to restore them. Mountain has no backup
+				// (hot-exit) service - in-window dirty state lives in
+				// `Feature::WorkingCopy` and is queried via
+				// `workingCopy:getAllDirty` - so the empty list is the
+				// correct "no backups found" answer, not a stub.
 				"workspaces:getDirtyWorkspaces" => Ok(json!([])),
 
 				// Git (localGit channel) - implements stock VS Code's
@@ -3895,7 +3751,11 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				"language:getLanguages" | "languages:getLanguages" => {
-					Ok(serde_json::json!([
+					// Builtin baseline merged with every `contributes.languages`
+					// id from the scanned extensions, so the language picker /
+					// `vscode.languages.getLanguages()` reflects what's actually
+					// installed instead of a frozen 14-entry list.
+					let mut Languages:Vec<String> = [
 						"plaintext",
 						"typescript",
 						"javascript",
@@ -3909,8 +3769,41 @@ pub async fn mountain_ipc_invoke(
 						"css",
 						"json",
 						"yaml",
-						"markdown"
-					]))
+						"markdown",
+					]
+					.iter()
+					.map(|S| (*S).to_string())
+					.collect();
+
+					let Extensions = RunTime
+						.Environment
+						.ApplicationState
+						.Extension
+						.ScannedExtensions
+						.ScannedExtensions
+						.lock()
+						.clone();
+
+					for Extension in Extensions.values() {
+						if let Some(Contributed) = Extension
+							.Contributes
+							.as_ref()
+							.and_then(|C| C.get("languages"))
+							.and_then(Value::as_array)
+						{
+							for Entry in Contributed {
+								if let Some(Id) = Entry.get("id").and_then(Value::as_str) {
+									Languages.push(Id.to_string());
+								}
+							}
+						}
+					}
+
+					Languages.sort();
+
+					Languages.dedup();
+
+					Ok(json!(Languages))
 				},
 
 				"languages:getAll" | "languages:getEncodedLanguageId" => {

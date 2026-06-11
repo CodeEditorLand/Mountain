@@ -8,6 +8,8 @@
 //! support can import them individually and future handlers reuse the
 //! same code without the transitive-import ballooning a parent file.
 
+pub mod ExtensionGetManifest;
+
 pub mod ExtensionInstall;
 
 pub mod ExtensionUninstall;

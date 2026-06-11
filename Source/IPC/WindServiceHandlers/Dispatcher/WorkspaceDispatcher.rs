@@ -17,6 +17,8 @@ use crate::IPC::WindServiceHandlers::{
 
 /// Dispatches workspace commands.
 pub async fn dispatch_workspace(
+	app_handle:&tauri::AppHandle,
+
 	runtime:std::sync::Arc<crate::RunTime::ApplicationRunTime::ApplicationRunTime>,
 
 	command:&str,
@@ -131,8 +133,22 @@ pub async fn dispatch_workspace(
 			Ok(Value::Null)
 		},
 
-		"workspaces:enterWorkspace" | "workspaces:createUntitledWorkspace" | "workspaces:deleteUntitledWorkspace" => {
-			Ok(Value::Null)
+		"workspaces:enterWorkspace" => {
+			crate::IPC::WindServiceHandlers::Workspaces::EnterWorkspace::Fn(
+				app_handle.clone(),
+				runtime.clone(),
+				arguments,
+			)
+			.await
+		},
+
+		"workspaces:createUntitledWorkspace" => {
+			crate::IPC::WindServiceHandlers::Workspaces::CreateUntitledWorkspace::Fn(app_handle.clone()).await
+		},
+
+		"workspaces:deleteUntitledWorkspace" => {
+			crate::IPC::WindServiceHandlers::Workspaces::DeleteUntitledWorkspace::Fn(app_handle.clone(), arguments)
+				.await
 		},
 
 		"workspaces:getWorkspaceIdentifier" => {

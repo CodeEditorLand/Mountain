@@ -8,11 +8,16 @@
 //! - `GetAllSourceControlManagementState` - full snapshot of every provider,
 //!   group, and resource.
 //! - `GetSCMResourceChanges` - per-provider resource list.
-//! - `ExecuteSCMCommand` - commit / push / pull dispatch (stub).
-//! - `GetSCMBranches` - branch picker data (stub).
-//! - `CheckoutSCMBranch` - switch working tree (stub).
-//! - `GetSCMCommitHistory` - Timeline-panel commit log (stub).
-//! - `StageSCMResource` - git add / unstage (stub).
+//! - `ExecuteSCMCommand` - commit / push / pull / fetch via `git`
+//!   subprocess (shared `Git::Shared::RunGit` runner).
+//! - `GetSCMBranches` - branch picker data from `git branch -a`.
+//! - `CheckoutSCMBranch` - working-tree switch via `git checkout`.
+//! - `GetSCMCommitHistory` - Timeline-panel commit log via `git log`.
+//! - `StageSCMResource` - `git add` / `git restore --staged`.
+//!
+//! All subprocess commands resolve their working directory through
+//! `RepositoryCwd` (first workspace folder) and surface git's stderr
+//! verbatim on non-zero exit.
 //!
 //! Errors propagate as `Result<Value, String>` for direct frontend
 //! display.
@@ -24,10 +29,10 @@
 //!
 //! ## Planned Work
 //!
-//! - Route every stub through the trait for progress reporting, cancellation,
-//!   and proper error surfacing
+//! - Multi-root: pick the repository from the provider's rootUri instead
+//!   of the first workspace folder
+//! - Progress reporting and cancellation for long push/pull operations
 //! - Stash / merge / rebase operations
-//! - Multi-provider concurrency
 //! - Diff viewing and resource decoration
 //! - SCM input-box interactions
 
@@ -42,5 +47,7 @@ pub mod GetSCMBranches;
 pub mod GetSCMCommitHistory;
 
 pub mod GetSCMResourceChanges;
+
+pub mod RepositoryCwd;
 
 pub mod StageSCMResource;

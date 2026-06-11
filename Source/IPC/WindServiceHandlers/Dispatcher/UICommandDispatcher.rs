@@ -127,7 +127,9 @@ pub async fn dispatch_ui_commands(
 			.await
 		},
 
-		"extensions:getManifest" => Ok(Value::Null),
+		"extensions:getManifest" => {
+			crate::IPC::WindServiceHandlers::Extension::ExtensionGetManifest::Fn(arguments).await
+		},
 
 		"extensions:reinstall" | "extensions:updateMetadata" => Ok(Value::Null),
 

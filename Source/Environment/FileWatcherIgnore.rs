@@ -32,8 +32,10 @@ use std::sync::OnceLock;
 /// against the segments most likely to host high-frequency build
 /// churn without containing user-edited source.
 const DEFAULT_IGNORE_SEGMENTS:&[&str] = &[
-	// Rust
+	// Rust (Land's crates set `target-dir = "Target"`, so both
+	// casings host cargo churn; the matcher is case-sensitive)
 	"target",
+	"Target",
 	// Node
 	"node_modules",
 	// Git object database. Refs/HEAD/index changes still fire
@@ -141,7 +143,7 @@ mod tests {
 
 	#[test]
 	fn TargetSegmentMatchesCargoBuildPath() {
-		assert!(ShouldIgnore(
+		assert!(Fn(
 			"/Volumes/CORSAIR/Land/Target/debug/build/foo-abc/build_script.rcgu.o"
 		));
 	}
@@ -151,30 +153,30 @@ mod tests {
 		// `Target` only excluded at top level (case-sensitive on
 		// the default list); a directory called `target-info`
 		// should not be swept up.
-		assert!(!ShouldIgnore("/Volumes/CORSAIR/Land/target-info/source.ts"));
+		assert!(!Fn("/Volumes/CORSAIR/Land/target-info/source.ts"));
 	}
 
 	#[test]
 	fn NodeModulesMatches() {
-		assert!(ShouldIgnore("/repo/node_modules/.bin/eslint"));
+		assert!(Fn("/repo/node_modules/.bin/eslint"));
 	}
 
 	#[test]
 	fn GitObjectsCompositeMatches() {
-		assert!(ShouldIgnore("/repo/.git/objects/ab/cdef1234"));
+		assert!(Fn("/repo/.git/objects/ab/cdef1234"));
 	}
 
 	#[test]
 	fn GitIndexNotIgnored() {
 		// The Git extension needs index / HEAD events; the ignore
 		// list must not swallow those.
-		assert!(!ShouldIgnore("/repo/.git/index"));
+		assert!(!Fn("/repo/.git/index"));
 
-		assert!(!ShouldIgnore("/repo/.git/HEAD"));
+		assert!(!Fn("/repo/.git/HEAD"));
 	}
 
 	#[test]
 	fn UserSourceFileNotIgnored() {
-		assert!(!ShouldIgnore("/repo/Source/Application/Foo.ts"));
+		assert!(!Fn("/repo/Source/Application/Foo.ts"));
 	}
 }

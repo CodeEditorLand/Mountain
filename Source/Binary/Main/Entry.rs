@@ -798,7 +798,27 @@ pub fn Fn() {
 
 				Command::SourceControlManagement::GetAllSourceControlManagementState::GetAllSourceControlManagementState,
 
+				Command::SourceControlManagement::GetSCMResourceChanges::GetSCMResourceChanges,
+
+				Command::SourceControlManagement::ExecuteSCMCommand::ExecuteSCMCommand,
+
+				Command::SourceControlManagement::GetSCMBranches::GetSCMBranches,
+
+				Command::SourceControlManagement::CheckoutSCMBranch::CheckoutSCMBranch,
+
+				Command::SourceControlManagement::GetSCMCommitHistory::GetSCMCommitHistory,
+
+				Command::SourceControlManagement::StageSCMResource::StageSCMResource,
+
 				Command::Keybinding::GetResolvedKeybinding::GetResolvedKeybinding,
+
+				Command::Keybinding::GetUserKeybindings::GetUserKeybindings,
+
+				Command::Keybinding::RegisterExtensionKeybindings::RegisterExtensionKeybindings,
+
+				Command::Keybinding::UnregisterExtensionKeybindings::UnregisterExtensionKeybindings,
+
+				Command::Keybinding::CheckKeybindingConflicts::CheckKeybindingConflicts,
 
 				Track::FrontendCommand::DispatchFrontendCommand::DispatchFrontendCommand,
 

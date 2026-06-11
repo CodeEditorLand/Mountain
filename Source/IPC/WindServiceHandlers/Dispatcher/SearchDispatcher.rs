@@ -31,8 +31,15 @@ pub async fn dispatch_search(
 
 		"search:cancel" => {
 			// VS Code sends the search_id as arg[0] (number).
-			// Look it up in the active-search map and abort the task.
+			// Set the cooperative flag (stops the synchronous ripgrep
+			// walk), then abort the task.
 			if let Some(SearchId) = arguments.first().and_then(|V| V.as_u64()) {
+				let Flags = &runtime.Environment.ApplicationState.Feature.SearchCancellationFlags;
+
+				if let Some(Flag) = Flags.get(&SearchId) {
+					Flag.store(true, std::sync::atomic::Ordering::Relaxed);
+				}
+
 				let ActiveSearches = &runtime.Environment.ApplicationState.Feature.ActiveSearches;
 
 				if let Some((_, Handle)) = ActiveSearches.remove(&SearchId) {

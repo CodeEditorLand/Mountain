@@ -254,7 +254,13 @@ fn CommandFormatDocument(
 	})
 }
 
-/// A native command for saving the current document.
+/// A native command for saving the current document. Mirrors the
+/// `Workspace.Save` Track effect: fire `document.willSave` at Cocoon
+/// (bounded - extensions get their `onWillSaveTextDocument` hook),
+/// round-trip the actual save through Sky's `ITextFileService` (the
+/// editor owns the dirty model), then notify `$acceptModelSaved` so
+/// `onDidSaveTextDocument` fires for extension-triggered saves.
+/// An explicit URI in the argument wins over the active-document state.
 fn CommandSaveDocument(
 	_ApplicationHandle:AppHandle<Wry>,
 
@@ -262,67 +268,118 @@ fn CommandSaveDocument(
 
 	RunTime:Arc<ApplicationRunTime>,
 
-	_Argument:Value,
+	Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 	Box::pin(async move {
 		dev_log!("commands", "[Native Command] Executing Save Document...");
 
-		let AppState = &RunTime.Environment.ApplicationState;
+		let ArgumentURI = match &Argument {
+			Value::String(S) if !S.is_empty() => Some(S.clone()),
+			Value::Array(Items) => Items.first().and_then(Value::as_str).map(str::to_owned),
+			Value::Object(Object) => Object
+				.get("external")
+				.or_else(|| Object.get("uri"))
+				.and_then(Value::as_str)
+				.map(str::to_owned),
+			_ => None,
+		};
 
-		let URIString = AppState
-			.Workspace
-			.ActiveDocumentURI
-			.lock()
-			.clone()
-			.ok_or("No active document URI found in state".to_string())?;
+		let URIString = match ArgumentURI {
+			Some(URI) => URI,
+			None => {
+				RunTime
+					.Environment
+					.ApplicationState
+					.Workspace
+					.ActiveDocumentURI
+					.lock()
+					.clone()
+					.ok_or("No active document URI found in state".to_string())?
+			},
+		};
 
-		let URI = Url::parse(&URIString).map_err(|_| "Invalid URI in window state".to_string())?;
+		let UriVal = json!(URIString);
 
-		// Persist the active document by invoking DocumentProvider::SaveDocument or the
-		// Document::Save effect. This reads the document URI from ApplicationState,
-		// serializes the current editor content, and writes to disk with proper error
-		// handling, atomic writes, and backup creation. Current implementation only
-		// logs the action; full implementation requires integration with the document
-		// lifecycle and file system provider.
-		dev_log!("commands", "[Native Command] Saving document: {}", URI);
+		// Give extensions their onWillSaveTextDocument window, bounded so a
+		// hung extension host can't block the user's save gesture.
+		let _ = tokio::time::timeout(
+			std::time::Duration::from_millis(1500),
+			crate::Vine::Client::SendNotification::Fn(
+				"cocoon-main".to_string(),
+				"document.willSave".to_string(),
+				json!({ "uri": UriVal, "reason": 1 }),
+			),
+		)
+		.await;
 
-		Ok(Value::Null)
+		let SaveResult = match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
+			&RunTime.Environment,
+			"sky://workspace/save",
+			UriVal.clone(),
+		)
+		.await
+		{
+			Ok(Result) => {
+				if Result.is_null() {
+					UriVal.clone()
+				} else {
+					Result
+				}
+			},
+			Err(Error) => {
+				dev_log!("commands", "warn: [Save Document] Sky did not answer ({:?}); ok", Error);
+
+				UriVal.clone()
+			},
+		};
+
+		let _ = crate::Vine::Client::SendNotification::Fn(
+			"cocoon-main".to_string(),
+			"$acceptModelSaved".to_string(),
+			json!({ "uri": UriVal }),
+		)
+		.await;
+
+		Ok(SaveResult)
 	})
 }
 
-/// A native command for closing the current document.
+/// A native command for closing the current document. The editor (Sky)
+/// owns open-editor state, dirty checks, and the save/discard/cancel
+/// prompt, so this forwards to the workbench's own
+/// `workbench.action.closeActiveEditor` via the `sky://command/execute`
+/// bridge (same channel `CommandProvider` uses for renderer commands).
+/// Registered natively - rather than relying on the generic renderer
+/// forwarding - so the close gesture still works when invoked through
+/// the native command registry path.
 fn CommandCloseDocument(
 	_ApplicationHandle:AppHandle<Wry>,
 
-	_Window:WebviewWindow<Wry>,
+	Window:WebviewWindow<Wry>,
 
 	RunTime:Arc<ApplicationRunTime>,
 
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 	Box::pin(async move {
+		use tauri::Emitter;
+
 		dev_log!("commands", "[Native Command] Executing Close Document...");
 
-		let AppState = &RunTime.Environment.ApplicationState;
+		let ActiveURI = RunTime.Environment.ApplicationState.Workspace.ActiveDocumentURI.lock().clone();
 
-		let URIString = AppState
-			.Workspace
-			.ActiveDocumentURI
-			.lock()
-			.clone()
-			.ok_or("No active document URI found in state".to_string())?;
+		if let Some(URIString) = &ActiveURI {
+			dev_log!("commands", "[Native Command] Closing document: {}", URIString);
+		}
 
-		let URI = Url::parse(&URIString).map_err(|_| "Invalid URI in window state".to_string())?;
+		Window
+			.emit(
+				"sky://command/execute",
+				json!({ "id": "workbench.action.closeActiveEditor", "args": [] }),
+			)
+			.map_err(|Error| format!("Close Document relay to Sky failed: {}", Error))?;
 
-		// Close the active document in the editor by triggering the workspace edit
-		// to remove the document from open editors. Checks for unsaved changes and
-		// prompts the user to save, discard, or cancel. Integrates with the document
-		// lifecycle manager to release resources and update the UI. May invoke
-		// Workbench::closeEditor or equivalent command. Current implementation only
-		// logs the action.
-		dev_log!("commands", "[Native Command] Closing document: {}", URI);
-
-		Ok(Value::Null)
+		Ok(json!({ "success": true, "uri": ActiveURI }))
 	})
 }
 

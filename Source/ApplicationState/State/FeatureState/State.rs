@@ -123,6 +123,13 @@ pub struct State {
 	/// `search:cancel` looks up by ID and calls `abort()`.
 	pub ActiveSearches:Arc<DashMap<u64, tokio::task::AbortHandle>>,
 
+	/// Cooperative cancellation flags for in-flight text searches, keyed
+	/// by search_id. The task-level `AbortHandle` in `ActiveSearches`
+	/// only lands at an `.await` point, but the ripgrep walk inside
+	/// `SearchProvider::TextSearch` is synchronous - the walker polls
+	/// this flag per entry and quits early when `search:cancel` sets it.
+	pub SearchCancellationFlags:Arc<DashMap<u64, Arc<std::sync::atomic::AtomicBool>>>,
+
 	/// Monotonically increasing counter for minting search IDs.
 	pub SearchIdCounter:Arc<AtomicU64>,
 }
@@ -178,6 +185,8 @@ impl Default for State {
 			ExternalUriOpeners:Arc::new(Mutex::new(HashMap::new())),
 
 			ActiveSearches:Arc::new(DashMap::new()),
+
+			SearchCancellationFlags:Arc::new(DashMap::new()),
 
 			SearchIdCounter:Arc::new(AtomicU64::new(1)),
 		}

@@ -626,9 +626,10 @@ pub(crate) fn SpecificityOf(Expression:&WhenExpression) -> u32 {
 
 /// Normalise a key expression for equality comparison: lowercase, alias
 /// modifiers to canonical names (`cmd`, `ctrl`, `shift`, `alt`), order
-/// modifiers canonically within each stroke, and separate chord strokes
-/// with single spaces. `"Shift+CMD+p"` and `"meta+shift+P"` both
-/// normalise to `"cmd+shift+p"`.
+/// modifiers canonically within each stroke (VS Code's `ctrl shift alt
+/// cmd` order), and separate chord strokes with single spaces.
+/// `"CMD+Shift+p"` and `"meta+shift+P"` both normalise to
+/// `"shift+cmd+p"`.
 pub(crate) fn NormalizeKeyExpression(Expression:&str) -> String {
 	Expression
 		.split_whitespace()
@@ -783,9 +784,9 @@ mod Tests {
 
 	#[test]
 	fn KeyNormalisation() {
-		assert_eq!(NormalizeKeyExpression("Shift+CMD+p"), "cmd+shift+p");
+		assert_eq!(NormalizeKeyExpression("CMD+Shift+p"), "shift+cmd+p");
 
-		assert_eq!(NormalizeKeyExpression("meta+shift+P"), "cmd+shift+p");
+		assert_eq!(NormalizeKeyExpression("meta+shift+P"), "shift+cmd+p");
 
 		assert_eq!(NormalizeKeyExpression("Ctrl+K  Ctrl+C"), "ctrl+k ctrl+c");
 

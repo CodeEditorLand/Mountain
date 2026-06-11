@@ -59,11 +59,10 @@ use serde_json::{Value, json};
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::dev_log;
 
-// TODO: result pagination, cancellation via CancellationToken, context lines
-// (before/after), replacement highlighting, progress reporting, multi-folder
-// independent search, caching, regex capture groups, search history, result
-// export, performance metrics, deduplication, result ranking, binary file
-// handling, max file size limit, search timeout, multi-line regex.
+// Still pending: result pagination/streaming, context lines (before/after),
+// progress reporting, regex capture groups, max file size limit, search
+// timeout. Cancellation, include/exclude globs, hidden files, symlinks, and
+// the max-results cap are implemented below.
 
 /// Mirrors VS Code's `ITextSearchQuery` shape (`vs/workbench/services/
 /// search/common/search.ts`). The workbench's Search view serialises
@@ -97,20 +96,50 @@ struct TextSearchQuery {
 	is_multiline:Option<bool>,
 }
 
+/// Deserialize a JSON field that VS Code sends as either a single glob
+/// string (`"**/*.ts"`) or an array of strings (`["**/*.ts"]`). Returns
+/// `None` when the field is absent or null.
+fn de_glob_list<'de, D>(Deserializer:D) -> Result<Option<Vec<String>>, D::Error>
+where
+	D:serde::Deserializer<'de>,
+{
+	use serde::de::Error as _;
+	use serde_json::Value;
+
+	let V = Option::<Value>::deserialize(Deserializer)?;
+
+	match V {
+		None | Some(Value::Null) => Ok(None),
+		Some(Value::String(S)) if !S.is_empty() => Ok(Some(vec![S])),
+		Some(Value::String(_)) => Ok(None),
+		Some(Value::Array(Arr)) => {
+			let Strs = Arr
+				.into_iter()
+				.filter_map(|I| I.as_str().map(str::to_owned))
+				.filter(|S| !S.is_empty())
+				.collect::<Vec<_>>();
+
+			Ok(if Strs.is_empty() { None } else { Some(Strs) })
+		},
+		Some(Other) => Err(D::Error::custom(format!("expected string or string[]; got {}", Other))),
+	}
+}
+
 /// VS Code's `ITextSearchOptions` shape (the second argument to
 /// `search:textSearch`). Carries glob patterns for include/exclude
 /// filtering and the max results cap.
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 struct TextSearchOptions {
-	/// Glob patterns to include (e.g. `["**/*.ts"]`). If empty, all files
-	/// are searched. Matches VS Code's `include` field on `ISearchOptions`.
-	#[serde(default)]
+	/// Glob patterns to include (e.g. `"**/*.ts"` or `["**/*.ts"]`). If
+	/// absent, all files are searched. VS Code sends a single string or an
+	/// array; both forms are accepted via `de_glob_list`.
+	#[serde(default, deserialize_with = "de_glob_list")]
 	include:Option<Vec<String>>,
 
-	/// Glob patterns to exclude (e.g. `["**/node_modules/**"]`). These are
-	/// applied on top of `.gitignore`. Matches VS Code's `exclude` field.
-	#[serde(default)]
+	/// Glob patterns to exclude (e.g. `"**/node_modules/**"`). Applied on
+	/// top of `.gitignore`. Accepts both string and array.
+	#[serde(default, deserialize_with = "de_glob_list")]
 	exclude:Option<Vec<String>>,
 
 	/// Maximum number of file matches to return (VS Code default: 10 000).
@@ -124,6 +153,12 @@ struct TextSearchOptions {
 	/// Follow symlinks. Default `true`.
 	#[serde(default)]
 	follow_symlinks:Option<bool>,
+
+	/// Land-internal: search id injected by the `search:findInFiles`
+	/// wire handler so this provider can poll the matching cooperative
+	/// cancellation flag in `Feature::SearchCancellationFlags`.
+	#[serde(default, rename = "__searchId")]
+	search_id:Option<u64>,
 }
 
 /// Per-match column range within the preview line.
@@ -370,99 +405,139 @@ impl SearchProvider for MountainEnvironment {
 			return Ok(json!([]));
 		}
 
+		// Cooperative cancellation: the wire handler registered a flag
+		// under `__searchId` before calling us. The walker polls it per
+		// entry - this is the only mechanism that can stop the
+		// synchronous parallel walk mid-flight (task aborts only land at
+		// await points).
+		let CancelFlag:Option<Arc<std::sync::atomic::AtomicBool>> = Options
+			.search_id
+			.and_then(|Id| self.ApplicationState.Feature.SearchCancellationFlags.get(&Id).map(|F| F.clone()));
+
 		let AllMatchesRef = AllMatches.clone();
 
-		for Folder in Folders {
-			if let Ok(FolderPath) = Folder.URI.to_file_path() {
-				let mut WalkBuilderInst = WalkBuilder::new(&FolderPath);
+		let IncludeHidden = Options.include_hidden.unwrap_or(false);
 
-				// Hidden files: off by default unless caller opts in.
-				WalkBuilderInst.hidden(!Options.include_hidden.unwrap_or(false));
+		let FollowSymlinks = Options.follow_symlinks.unwrap_or(true);
 
-				// Symlinks: follow by default.
-				WalkBuilderInst.follow_links(Options.follow_symlinks.unwrap_or(true));
+		let WalkMatcher = Matcher.clone();
 
-				let Walker = WalkBuilderInst.build_parallel();
+		// The parallel walk is pure blocking CPU/IO work; running it on
+		// the async executor would pin a tokio worker thread for the
+		// whole search AND make the task abort in `search:cancel`
+		// meaningless. `spawn_blocking` moves it to the blocking pool.
+		let WalkResult = tokio::task::spawn_blocking(move || {
+			for Folder in Folders {
+				if CancelFlag.as_ref().is_some_and(|F| F.load(std::sync::atomic::Ordering::Relaxed)) {
+					break;
+				}
 
-				let Matcher = Matcher.clone();
+				if let Ok(FolderPath) = Folder.URI.to_file_path() {
+					let mut WalkBuilderInst = WalkBuilder::new(&FolderPath);
 
-				let AllMatchesWalker = AllMatchesRef.clone();
+					// Hidden files: off by default unless caller opts in.
+					WalkBuilderInst.hidden(!IncludeHidden);
 
-				let IncludePatterns = IncludePatterns.clone();
+					// Symlinks: follow by default.
+					WalkBuilderInst.follow_links(FollowSymlinks);
 
-				let ExcludePatterns = ExcludePatterns.clone();
+					let Walker = WalkBuilderInst.build_parallel();
 
-				let FolderPathClone = FolderPath.clone();
+					let Matcher = WalkMatcher.clone();
 
-				Walker.run(move || {
-					let mut Searcher = SearcherBuilder::new().line_number(true).build();
-
-					let Matcher = Matcher.clone();
-
-					let AllMatches = AllMatchesWalker.clone();
+					let AllMatchesWalker = AllMatchesRef.clone();
 
 					let IncludePatterns = IncludePatterns.clone();
 
 					let ExcludePatterns = ExcludePatterns.clone();
 
-					let FolderPath = FolderPathClone.clone();
+					let FolderPathClone = FolderPath.clone();
 
-					Box::new(move |EntryResult| {
-						// Bail early if we've already hit the result cap.
-						{
-							let Guard = AllMatches.lock().unwrap_or_else(|e| e.into_inner());
+					let CancelFlag = CancelFlag.clone();
 
-							if Guard.len() >= MaxResults {
+					Walker.run(move || {
+						let mut Searcher = SearcherBuilder::new().line_number(true).build();
+
+						let Matcher = Matcher.clone();
+
+						let AllMatches = AllMatchesWalker.clone();
+
+						let IncludePatterns = IncludePatterns.clone();
+
+						let ExcludePatterns = ExcludePatterns.clone();
+
+						let FolderPath = FolderPathClone.clone();
+
+						let CancelFlag = CancelFlag.clone();
+
+						Box::new(move |EntryResult| {
+							// Cancelled via search:cancel - stop all walker
+							// threads.
+							if CancelFlag.as_ref().is_some_and(|F| F.load(std::sync::atomic::Ordering::Relaxed)) {
 								return ignore::WalkState::Quit;
 							}
-						}
 
-						if let Ok(Entry) = EntryResult {
-							if Entry.file_type().map_or(false, |ft| ft.is_file()) {
-								let EntryPath = Entry.path();
+							// Bail early if we've already hit the result cap.
+							{
+								let Guard = AllMatches.lock().unwrap_or_else(|e| e.into_inner());
 
-								// Apply include/exclude glob patterns relative
-								// to the workspace folder so `**/*.ts` matches
-								// nested files without requiring absolute paths.
-								let RelPath = EntryPath
-									.strip_prefix(&FolderPath)
-									.unwrap_or(EntryPath)
-									.to_string_lossy();
-
-								// Exclude takes priority over include.
-								if !ExcludePatterns.is_empty()
-									&& ExcludePatterns.iter().any(|P| P.is_match(&*RelPath))
-								{
-									return ignore::WalkState::Continue;
-								}
-
-								if !IncludePatterns.is_empty()
-									&& !IncludePatterns.iter().any(|P| P.is_match(&*RelPath))
-								{
-									return ignore::WalkState::Continue;
-								}
-
-								let Sink = PerFileSink {
-									path:EntryPath.to_path_buf(),
-									results:AllMatches.clone(),
-									matcher:Matcher.clone(),
-								};
-
-								if let Err(Error) = Searcher.search_path(&Matcher, EntryPath, Sink) {
-									dev_log!(
-										"search",
-										"warn: [SearchProvider] Error searching path {}: {}",
-										EntryPath.display(),
-										Error
-									);
+								if Guard.len() >= MaxResults {
+									return ignore::WalkState::Quit;
 								}
 							}
-						}
 
-						ignore::WalkState::Continue
-					})
-				});
+							if let Ok(Entry) = EntryResult {
+								if Entry.file_type().map_or(false, |ft| ft.is_file()) {
+									let EntryPath = Entry.path();
+
+									// Apply include/exclude glob patterns relative
+									// to the workspace folder so `**/*.ts` matches
+									// nested files without requiring absolute paths.
+									let RelPath = EntryPath
+										.strip_prefix(&FolderPath)
+										.unwrap_or(EntryPath)
+										.to_string_lossy();
+
+									// Exclude takes priority over include.
+									if !ExcludePatterns.is_empty()
+										&& ExcludePatterns.iter().any(|P| P.is_match(&*RelPath))
+									{
+										return ignore::WalkState::Continue;
+									}
+
+									if !IncludePatterns.is_empty()
+										&& !IncludePatterns.iter().any(|P| P.is_match(&*RelPath))
+									{
+										return ignore::WalkState::Continue;
+									}
+
+									let Sink = PerFileSink {
+										path:EntryPath.to_path_buf(),
+										results:AllMatches.clone(),
+										matcher:Matcher.clone(),
+									};
+
+									if let Err(Error) = Searcher.search_path(&Matcher, EntryPath, Sink) {
+										dev_log!(
+											"search",
+											"warn: [SearchProvider] Error searching path {}: {}",
+											EntryPath.display(),
+											Error
+										);
+									}
+								}
+							}
+
+							ignore::WalkState::Continue
+						})
+					});
+				}
 			}
+		})
+		.await;
+
+		if let Err(Error) = WalkResult {
+			dev_log!("search", "warn: [SearchProvider] search walk task failed: {}", Error);
 		}
 
 		let FinalMatches = AllMatches.lock().unwrap_or_else(|e| e.into_inner()).clone();
