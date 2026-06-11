@@ -51,7 +51,8 @@ use tauri::AppHandle;
 ///
 /// # Returns
 ///
-/// Returns success JSON or an error string.
+/// Returns `{ "sessionId": <id> }` for the created session, or an error
+/// string.
 ///
 /// # Errors
 ///
@@ -80,12 +81,12 @@ pub async fn MountainCreateCollaborationSession(app_handle:AppHandle, session_da
 
 	crate::IPC::AdvancedFeatures::mountain_create_collaboration_session::mountain_create_collaboration_session(
 		app_handle,
-		session_id,
+		session_id.clone(),
 		permissions,
 	)
 	.await?;
 
-	Ok(Value::Null)
+	Ok(serde_json::json!({ "sessionId": session_id }))
 }
 
 /// Get collaboration sessions.

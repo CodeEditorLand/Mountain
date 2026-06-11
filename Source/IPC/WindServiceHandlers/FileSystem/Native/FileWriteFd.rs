@@ -115,3 +115,39 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 
 	Ok(json!(Written))
 }
+
+#[cfg(test)]
+mod tests {
+
+	use super::*;
+
+	#[test]
+	fn test_bare_array() {
+		assert_eq!(ExtractBytes(&json!([104, 105])), Some(vec![104, 105]));
+	}
+
+	#[test]
+	fn test_buffer_wrapper() {
+		assert_eq!(ExtractBytes(&json!({ "buffer": [104, 105] })), Some(vec![104, 105]));
+	}
+
+	#[test]
+	fn test_nested_buffer_wrapper() {
+		assert_eq!(ExtractBytes(&json!({ "buffer": { "buffer": [104, 105] } })), Some(vec![104, 105]));
+	}
+
+	#[test]
+	fn test_index_map() {
+		assert_eq!(ExtractBytes(&json!({ "0": 104, "1": 105 })), Some(vec![104, 105]));
+	}
+
+	#[test]
+	fn test_index_map_out_of_range_returns_none() {
+		assert_eq!(ExtractBytes(&json!({ "0": 104, "5": 105 })), None);
+	}
+
+	#[test]
+	fn test_empty_object_returns_none() {
+		assert_eq!(ExtractBytes(&json!({})), None);
+	}
+}

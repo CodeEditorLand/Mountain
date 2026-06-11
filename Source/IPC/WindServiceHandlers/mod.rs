@@ -892,7 +892,9 @@ pub async fn mountain_ipc_invoke(
 					// Flush pending debounced writes for both scopes immediately.
 					// VS Code calls this before workspace close and hot-reload to
 					// ensure state is fully persisted without waiting for the 100 ms
-					// debounce window.
+					// debounce window. The call carries no scope argument, so global
+					// and workspace stores flush together - a partial flush could
+					// persist one scope while losing in-flight writes to the other.
 					dev_log!("storage", "storage:optimize → flush");
 
 					let GlobalPath = Some((*RunTime.Environment.ApplicationState.GlobalMementoPath.lock()).clone());
@@ -1520,6 +1522,9 @@ pub async fn mountain_ipc_invoke(
 					let UriStr = arg_string(&Arguments, 0);
 
 					if !UriStr.is_empty() {
+						// A failed emit is intentionally ignored: the open intent is
+						// fire-and-forget, and Sky may not be listening yet during
+						// boot. The caller treats Null as "request relayed".
 						let _ = ApplicationHandle
 							.emit("sky://window/showTextDocument", serde_json::json!({ "uri": UriStr }));
 					}
@@ -2096,6 +2101,10 @@ pub async fn mountain_ipc_invoke(
 				},
 				// Return empty credentials so the proxy layer's JSON parse succeeds.
 				"nativeHost:lookupAuthorization" => Ok(json!({"username":"","password":""})),
+				// Contract is `Promise<string | undefined>` returning the raw
+				// token string (native.ts lookupKerberosAuthorization); null
+				// deserialises to undefined = "no authorization available",
+				// the safe answer with no Kerberos backend.
 				"nativeHost:lookupKerberosAuthorization" => Ok(Value::Null),
 				"nativeHost:loadCertificates" => Ok(json!([])),
 
@@ -2353,10 +2362,6 @@ pub async fn mountain_ipc_invoke(
 				// PID in the terminal tab tooltip) and `Cwd` (for smart basename).
 				// Property enum: 0=Cwd, 1=ProcessId, 2=Title, 3=OverrideName,
 				// 4=ResolvedShellLaunchConfig, 5=ShellType
-				// `ILocalPtyService.refreshProperty` - returns the current value
-				// of a PTY property. VS Code calls this for `ProcessId` (tooltip)
-				// and `Cwd` (smart basename).
-				// Property enum: 0=Cwd, 1=ProcessId, 2=Title…
 				"localPty:refreshProperty" => {
 					use CommonLibrary::{
 						Environment::Requires::Requires,

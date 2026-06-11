@@ -161,3 +161,47 @@ fn hex_digit(Byte:u8) -> Option<u8> {
 		_ => None,
 	}
 }
+
+#[cfg(test)]
+mod tests {
+
+	use serde_json::json;
+
+	use super::*;
+
+	#[test]
+	fn test_plain_string_passthrough() {
+		assert_eq!(Fn(&json!("/tmp/plain.txt")).unwrap(), "/tmp/plain.txt");
+	}
+
+	#[test]
+	fn test_fspath_preferred_over_path() {
+		let Arg = json!({ "fsPath": "/tmp/from-fspath.txt", "path": "/tmp/from-path.txt" });
+
+		assert_eq!(Fn(&Arg).unwrap(), "/tmp/from-fspath.txt");
+	}
+
+	#[test]
+	fn test_path_percent_decoding() {
+		let Arg = json!({ "path": "/tmp/caf%C3%A9%20menu.txt" });
+
+		assert_eq!(Fn(&Arg).unwrap(), "/tmp/café menu.txt");
+	}
+
+	#[test]
+	fn test_external_strips_file_scheme() {
+		let Arg = json!({ "external": "file:///x" });
+
+		assert_eq!(Fn(&Arg).unwrap(), "/x");
+	}
+
+	#[test]
+	fn test_numeric_input_errors() {
+		assert_eq!(Fn(&json!(42)).unwrap_err(), "File path must be a string or URI object with path/fsPath field");
+	}
+
+	#[test]
+	fn test_empty_object_errors() {
+		assert_eq!(Fn(&json!({})).unwrap_err(), "File path must be a string or URI object with path/fsPath field");
+	}
+}
