@@ -289,24 +289,34 @@ use crate::{
 	dev_log,
 };
 
+#[path = "WindAdvancedSync/ApplyDocumentChange.rs"]
 pub mod ApplyDocumentChange;
 
+#[path = "WindAdvancedSync/BroadcastRealTimeUpdates.rs"]
 pub mod BroadcastRealTimeUpdates;
 
+#[path = "WindAdvancedSync/BroadcastUpdates.rs"]
 pub mod BroadcastUpdates;
 
+#[path = "WindAdvancedSync/CalculateSyncStatus.rs"]
 pub mod CalculateSyncStatus;
 
+#[path = "WindAdvancedSync/CheckForConflicts.rs"]
 pub mod CheckForConflicts;
 
+#[path = "WindAdvancedSync/New.rs"]
 pub mod New;
 
+#[path = "WindAdvancedSync/StartPerformanceMonitoring.rs"]
 pub mod StartPerformanceMonitoring;
 
+#[path = "WindAdvancedSync/StartSyncTask.rs"]
 pub mod StartSyncTask;
 
+#[path = "WindAdvancedSync/SynchronizeDocuments.rs"]
 pub mod SynchronizeDocuments;
 
+#[path = "WindAdvancedSync/UpdateSyncStatus.rs"]
 pub mod UpdateSyncStatus;
 
 /// Synchronization status

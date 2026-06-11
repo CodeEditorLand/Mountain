@@ -42,20 +42,28 @@
 //! - `vs/workbench/contrib/debug/browser/adapter/descriptorFactory.ts`
 //! - `vs/debugAdapter/common/debugProtocol.ts`
 
+#[path = "DebugProvider/ConnectPipeServerAdapter.rs"]
 pub mod ConnectPipeServerAdapter;
 
+#[path = "DebugProvider/ConnectServerAdapter.rs"]
 pub mod ConnectServerAdapter;
 
+#[path = "DebugProvider/RegisterDebugAdapterDescriptorFactory.rs"]
 pub mod RegisterDebugAdapterDescriptorFactory;
 
+#[path = "DebugProvider/RegisterDebugConfigurationProvider.rs"]
 pub mod RegisterDebugConfigurationProvider;
 
+#[path = "DebugProvider/SendCommand.rs"]
 pub mod SendCommand;
 
+#[path = "DebugProvider/SpawnExecutableAdapter.rs"]
 pub mod SpawnExecutableAdapter;
 
+#[path = "DebugProvider/StartDebugging.rs"]
 pub mod StartDebugging;
 
+#[path = "DebugProvider/StopDebugging.rs"]
 pub mod StopDebugging;
 
 use CommonLibrary::{Debug::DebugService::DebugService, Error::CommonError::CommonError};

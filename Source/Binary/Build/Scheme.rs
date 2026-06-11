@@ -46,16 +46,22 @@ use tauri::http::{
 use super::ServiceRegistry::ServiceRegistry;
 use crate::dev_log;
 
+#[path = "Scheme/ForwardHttpRequest.rs"]
 pub mod ForwardHttpRequest;
 
+#[path = "Scheme/LandSchemeHandler.rs"]
 pub mod LandSchemeHandler;
 
+#[path = "Scheme/MimeFromExtension.rs"]
 pub mod MimeFromExtension;
 
+#[path = "Scheme/ParseHttpResponse.rs"]
 pub mod ParseHttpResponse;
 
+#[path = "Scheme/VscodeFileSchemeHandlerInner.rs"]
 pub mod VscodeFileSchemeHandlerInner;
 
+#[path = "Scheme/VscodeWebviewSchemeHandlerInner.rs"]
 pub mod VscodeWebviewSchemeHandlerInner;
 
 // Global service registry (will be initialized in Tauri setup)

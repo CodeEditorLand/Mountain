@@ -2,66 +2,97 @@
 //! module under `FeatureMethods/`; the functions here are thin delegators
 //! that keep the call sites in the trait impl (`mod.rs`) stable.
 
+#[path = "FeatureMethods/InvokeProvider.rs"]
 pub mod InvokeProvider;
 
+#[path = "FeatureMethods/InvokeProviderMethod.rs"]
 pub mod InvokeProviderMethod;
 
+#[path = "FeatureMethods/PrepareCallHierarchy.rs"]
 pub mod PrepareCallHierarchy;
 
+#[path = "FeatureMethods/PrepareRename.rs"]
 pub mod PrepareRename;
 
+#[path = "FeatureMethods/PrepareTypeHierarchy.rs"]
 pub mod PrepareTypeHierarchy;
 
+#[path = "FeatureMethods/ProvideCallHierarchyIncomingCalls.rs"]
 pub mod ProvideCallHierarchyIncomingCalls;
 
+#[path = "FeatureMethods/ProvideCallHierarchyOutgoingCalls.rs"]
 pub mod ProvideCallHierarchyOutgoingCalls;
 
+#[path = "FeatureMethods/ProvideCodeActions.rs"]
 pub mod ProvideCodeActions;
 
+#[path = "FeatureMethods/ProvideCodeLenses.rs"]
 pub mod ProvideCodeLenses;
 
+#[path = "FeatureMethods/ProvideCompletions.rs"]
 pub mod ProvideCompletions;
 
+#[path = "FeatureMethods/ProvideDefinition.rs"]
 pub mod ProvideDefinition;
 
+#[path = "FeatureMethods/ProvideDocumentFormattingEdits.rs"]
 pub mod ProvideDocumentFormattingEdits;
 
+#[path = "FeatureMethods/ProvideDocumentHighlights.rs"]
 pub mod ProvideDocumentHighlights;
 
+#[path = "FeatureMethods/ProvideDocumentLinks.rs"]
 pub mod ProvideDocumentLinks;
 
+#[path = "FeatureMethods/ProvideDocumentRangeFormattingEdits.rs"]
 pub mod ProvideDocumentRangeFormattingEdits;
 
+#[path = "FeatureMethods/ProvideDocumentSymbols.rs"]
 pub mod ProvideDocumentSymbols;
 
+#[path = "FeatureMethods/ProvideFileDecoration.rs"]
 pub mod ProvideFileDecoration;
 
+#[path = "FeatureMethods/ProvideFoldingRanges.rs"]
 pub mod ProvideFoldingRanges;
 
+#[path = "FeatureMethods/ProvideHover.rs"]
 pub mod ProvideHover;
 
+#[path = "FeatureMethods/ProvideInlayHints.rs"]
 pub mod ProvideInlayHints;
 
+#[path = "FeatureMethods/ProvideInlineCompletionItems.rs"]
 pub mod ProvideInlineCompletionItems;
 
+#[path = "FeatureMethods/ProvideLinkedEditingRanges.rs"]
 pub mod ProvideLinkedEditingRanges;
 
+#[path = "FeatureMethods/ProvideOnTypeFormattingEdits.rs"]
 pub mod ProvideOnTypeFormattingEdits;
 
+#[path = "FeatureMethods/ProvideReferences.rs"]
 pub mod ProvideReferences;
 
+#[path = "FeatureMethods/ProvideRenameEdits.rs"]
 pub mod ProvideRenameEdits;
 
+#[path = "FeatureMethods/ProvideSelectionRanges.rs"]
 pub mod ProvideSelectionRanges;
 
+#[path = "FeatureMethods/ProvideSemanticTokensFull.rs"]
 pub mod ProvideSemanticTokensFull;
 
+#[path = "FeatureMethods/ProvideSignatureHelp.rs"]
 pub mod ProvideSignatureHelp;
 
+#[path = "FeatureMethods/ProvideTypeHierarchySubtypes.rs"]
 pub mod ProvideTypeHierarchySubtypes;
 
+#[path = "FeatureMethods/ProvideTypeHierarchySupertypes.rs"]
 pub mod ProvideTypeHierarchySupertypes;
 
+#[path = "FeatureMethods/ProvideWorkspaceSymbols.rs"]
 pub mod ProvideWorkspaceSymbols;
 
 use CommonLibrary::{

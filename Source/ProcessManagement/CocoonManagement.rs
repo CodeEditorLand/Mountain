@@ -68,22 +68,31 @@ use crate::{
 	dev_log,
 };
 
+#[path = "CocoonManagement/BuildCocoonEnvironment.rs"]
 pub mod BuildCocoonEnvironment;
 
+#[path = "CocoonManagement/CocoonProcessState.rs"]
 pub mod CocoonProcessState;
 
+#[path = "CocoonManagement/ConnectToCocoonGrpc.rs"]
 pub mod ConnectToCocoonGrpc;
 
+#[path = "CocoonManagement/FindMatchingWorkspaceContainsPatterns.rs"]
 pub mod FindMatchingWorkspaceContainsPatterns;
 
+#[path = "CocoonManagement/FireRootConfigActivationEvents.rs"]
 pub mod FireRootConfigActivationEvents;
 
+#[path = "CocoonManagement/FireWorkspaceContainsEvents.rs"]
 pub mod FireWorkspaceContainsEvents;
 
+#[path = "CocoonManagement/HardKillCocoon.rs"]
 pub mod HardKillCocoon;
 
+#[path = "CocoonManagement/LaunchAndManageCocoonSideCar.rs"]
 pub mod LaunchAndManageCocoonSideCar;
 
+#[path = "CocoonManagement/MonitorCocoonHealthTask.rs"]
 pub mod MonitorCocoonHealthTask;
 
 pub mod PatternMatchesAnyEntry;
