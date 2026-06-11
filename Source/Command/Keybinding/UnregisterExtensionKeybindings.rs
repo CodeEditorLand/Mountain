@@ -1,10 +1,9 @@
-//! Tauri command - remove keybindings registered by a given extension.
-//! Stub returns success; pending real implementation that filters by
-//! source identifier and clears the affected resolution cache.
+//! Tauri command - remove every dynamic keybinding registered by a given
+//! extension (the `Source` tag written by `RegisterExtensionKeybindings`).
+//! Returns the number of entries removed.
 
 use std::sync::Arc;
 
-use CommonLibrary::{Environment::Requires::Requires, Keybinding::KeybindingProvider::KeybindingProvider};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Wry, command};
 
@@ -20,7 +19,12 @@ pub async fn UnregisterExtensionKeybindings(
 
 	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();
 
-	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
+	let Removed = RunTime
+		.Environment
+		.ApplicationState
+		.Feature
+		.Keybindings
+		.RemoveKeybindingsBySource(&ExtensionIdentifier);
 
-	Ok(json!({ "success": true }))
+	Ok(json!({ "success": true, "removed": Removed }))
 }

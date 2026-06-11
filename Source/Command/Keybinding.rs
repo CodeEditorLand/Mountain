@@ -6,12 +6,21 @@
 //! Naming-Convention exception):
 //!
 //! - `GetResolvedKeybinding::GetResolvedKeybinding` - final resolved bindings
-//!   after merging defaults + extension contributions + user.
-//! - `GetUserKeybindings::GetUserKeybindings` - user overrides (stub).
-//! - `RegisterExtensionKeybindings::RegisterExtensionKeybindings` (stub).
-//! - `UnregisterExtensionKeybindings::UnregisterExtensionKeybindings` (stub).
-//! - `CheckKeybindingConflicts::CheckKeybindingConflicts` - chord overlap
-//!   detection (stub).
+//!   after merging extension contributions + dynamic registry + user.
+//! - `GetUserKeybindings::GetUserKeybindings` - user `keybindings.json`
+//!   overrides (including `-command` unbind rules).
+//! - `RegisterExtensionKeybindings::RegisterExtensionKeybindings` -
+//!   runtime registration into `ApplicationState::Feature::Keybindings`,
+//!   tagged by extension identifier.
+//! - `UnregisterExtensionKeybindings::UnregisterExtensionKeybindings` -
+//!   removes everything tagged with the extension identifier.
+//! - `CheckKeybindingConflicts::CheckKeybindingConflicts` - normalised
+//!   key-expression overlap detection (chord-aware, modifier aliasing).
+//!
+//! When-clause parsing/evaluation and key normalisation live in
+//! `Environment::Utility::WhenClause`; context-aware resolution is the
+//! `keybinding:resolve` wire method (the context-key snapshot comes from
+//! the renderer).
 //!
 //! Errors propagate as `Result<Value, String>` for direct frontend
 //! display.
@@ -22,12 +31,8 @@
 //!
 //! ## Planned Work
 //!
-//! - Weighted resolution (user > extension > default)
-//! - Persistence to ApplicationState
-//! - When-clause context evaluation
-//! - Chord (multi-stroke) sequences
-//! - Platform-specific bindings
-//! - Conflict-resolution UI
+//! - Localization, custom schemes (vim/emacs/sublime)
+//! - Keybinding recording, per-profile keybindings, export/import
 
 pub mod CheckKeybindingConflicts;
 
