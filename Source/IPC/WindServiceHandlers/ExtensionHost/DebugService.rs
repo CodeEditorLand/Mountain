@@ -14,9 +14,12 @@ pub async fn ExtensionHostDebugReload(ApplicationHandle:AppHandle) -> Result<Val
 		crate::dev_log!("exthost", "warn: extensionhostdebugservice:reload emit failed: {}", Error);
 	}
 
-	let _ =
-		crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), "extensionHost.reload".to_string(), json!({}))
-			.await;
+	let _ = crate::Vine::Client::SendNotification::Fn(
+		"cocoon-main".to_string(),
+		"extensionHost.reload".to_string(),
+		json!({}),
+	)
+	.await;
 
 	Ok(Value::Null)
 }
@@ -28,9 +31,12 @@ pub async fn ExtensionHostDebugClose(ApplicationHandle:AppHandle) -> Result<Valu
 		crate::dev_log!("exthost", "warn: extensionhostdebugservice:close emit failed: {}", Error);
 	}
 
-	let _ =
-		crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), "extensionHost.close".to_string(), json!({}))
-			.await;
+	let _ = crate::Vine::Client::SendNotification::Fn(
+		"cocoon-main".to_string(),
+		"extensionHost.close".to_string(),
+		json!({}),
+	)
+	.await;
 
 	Ok(Value::Null)
 }

@@ -883,24 +883,12 @@ pub async fn mountain_ipc_invoke(
 					// debounce window.
 					dev_log!("storage", "storage:optimize → flush");
 
-					let GlobalPath = Some(
-						(*RunTime.Environment.ApplicationState.GlobalMementoPath.lock()).clone(),
-					);
+					let GlobalPath = Some((*RunTime.Environment.ApplicationState.GlobalMementoPath.lock()).clone());
 
-					let WorkspacePath = (*RunTime
-						.Environment
-						.ApplicationState
-						.WorkspaceMementoPath
-						.lock())
-					.clone();
+					let WorkspacePath = (*RunTime.Environment.ApplicationState.WorkspaceMementoPath.lock()).clone();
 
-					let GlobalData = (*RunTime
-						.Environment
-						.ApplicationState
-						.Configuration
-						.MementoGlobalStorage
-						.lock())
-					.clone();
+					let GlobalData =
+						(*RunTime.Environment.ApplicationState.Configuration.MementoGlobalStorage.lock()).clone();
 
 					let WorkspaceData = (*RunTime
 						.Environment
@@ -2419,61 +2407,66 @@ pub async fn mountain_ipc_invoke(
 					if TermId == 0 || PropValue.is_empty() {
 						Ok(Value::Null)
 					} else {
-					match PropId {
-						// Title (2) or OverrideName (3): persist + emit to Sky.
-						2 | 3 => {
-							{
-								let Guard =
-									RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
+						match PropId {
+							// Title (2) or OverrideName (3): persist + emit to Sky.
+							2 | 3 => {
+								{
+									let Guard =
+										RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
 
-								if let Some(Entry) = Guard.get(&TermId) {
-									Entry.lock().Title = PropValue.clone();
+									if let Some(Entry) = Guard.get(&TermId) {
+										Entry.lock().Title = PropValue.clone();
+									}
 								}
-							}
 
-							dev_log!(
-								"terminal",
-								"localPty:updateProperty id={} prop={} title='{}'",
-								TermId,
-								PropId,
-								PropValue
-							);
+								dev_log!(
+									"terminal",
+									"localPty:updateProperty id={} prop={} title='{}'",
+									TermId,
+									PropId,
+									PropValue
+								);
 
-							let _ = RunTime.Environment.ApplicationHandle.emit(
-								SkyEvent::TerminalPropertyChanged.AsStr(),
-								json!({
-									"id": TermId,
-									"property": PropId,
-									"value": PropValue,
-								}),
-							);
-						},
+								let _ = RunTime.Environment.ApplicationHandle.emit(
+									SkyEvent::TerminalPropertyChanged.AsStr(),
+									json!({
+										"id": TermId,
+										"property": PropId,
+										"value": PropValue,
+									}),
+								);
+							},
 
-						// ShellType (5): store only; workbench derives its own icon.
-						5 => {
-							{
-								let Guard =
-									RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
+							// ShellType (5): store only; workbench derives its own icon.
+							5 => {
+								{
+									let Guard =
+										RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
 
-								if let Some(Entry) = Guard.get(&TermId) {
-									Entry.lock().ShellType = Some(PropValue.clone());
+									if let Some(Entry) = Guard.get(&TermId) {
+										Entry.lock().ShellType = Some(PropValue.clone());
+									}
 								}
-							}
 
-							dev_log!("terminal", "localPty:updateProperty id={} shell_type='{}'", TermId, PropValue);
-						},
+								dev_log!(
+									"terminal",
+									"localPty:updateProperty id={} shell_type='{}'",
+									TermId,
+									PropValue
+								);
+							},
 
-						Other => {
-							dev_log!(
-								"terminal",
-								"localPty:updateProperty id={} unknown_prop={} (no-op)",
-								TermId,
-								Other
-							);
-						},
-					}
+							Other => {
+								dev_log!(
+									"terminal",
+									"localPty:updateProperty id={} unknown_prop={} (no-op)",
+									TermId,
+									Other
+								);
+							},
+						}
 
-					Ok(Value::Null)
+						Ok(Value::Null)
 					} // closes else
 				},
 
@@ -2631,8 +2624,7 @@ pub async fn mountain_ipc_invoke(
 							.lock()
 							.get(&TermId)
 							.map(|E| {
-								E.lock().CurrentWorkingDirectory =
-									Some(std::path::PathBuf::from(&Cwd));
+								E.lock().CurrentWorkingDirectory = Some(std::path::PathBuf::from(&Cwd));
 							})
 							.is_some();
 
@@ -2955,8 +2947,13 @@ pub async fn mountain_ipc_invoke(
 					);
 
 					if !SessionId.is_empty() {
-						let AlreadyRegistered =
-							RunTime.Environment.ApplicationState.Feature.Debug.GetDebugSession(&SessionId).is_some();
+						let AlreadyRegistered = RunTime
+							.Environment
+							.ApplicationState
+							.Feature
+							.Debug
+							.GetDebugSession(&SessionId)
+							.is_some();
 
 						if !AlreadyRegistered {
 							let _ = RunTime.Environment.ApplicationState.Feature.Debug.RegisterDebugSession(
@@ -2982,7 +2979,12 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("exthost", "extensionhostdebugservice:terminateSession id={}", SessionId);
 
 					if !SessionId.is_empty() {
-						RunTime.Environment.ApplicationState.Feature.Debug.UnregisterDebugSession(&SessionId);
+						RunTime
+							.Environment
+							.ApplicationState
+							.Feature
+							.Debug
+							.UnregisterDebugSession(&SessionId);
 					}
 
 					Ok(Value::Null)
@@ -3233,87 +3235,95 @@ pub async fn mountain_ipc_invoke(
 
 					Ok(Value::Null)
 				},
-				"workspaces:createUntitledWorkspace" => async move {
-					// Inner async block so ? propagates to Result, not the () outer block.
-					let PathResolver = ApplicationHandle.path();
+				"workspaces:createUntitledWorkspace" => {
+					async move {
+						// Inner async block so ? propagates to Result, not the () outer block.
+						let PathResolver = ApplicationHandle.path();
 
-					let AppDataDir = PathResolver
-						.app_data_dir()
-						.map_err(|E| format!("workspaces:createUntitledWorkspace app_data_dir: {}", E))?;
+						let AppDataDir = PathResolver
+							.app_data_dir()
+							.map_err(|E| format!("workspaces:createUntitledWorkspace app_data_dir: {}", E))?;
 
-					let UntitledDir = AppDataDir.join(".untitled-workspaces");
+						let UntitledDir = AppDataDir.join(".untitled-workspaces");
 
-					tokio::fs::create_dir_all(&UntitledDir)
-						.await
-						.map_err(|E| format!("workspaces:createUntitledWorkspace mkdir: {}", E))?;
+						tokio::fs::create_dir_all(&UntitledDir)
+							.await
+							.map_err(|E| format!("workspaces:createUntitledWorkspace mkdir: {}", E))?;
 
-					let Id = uuid::Uuid::new_v4();
+						let Id = uuid::Uuid::new_v4();
 
-					let FileName = format!("Untitled-{}.code-workspace", Id);
+						let FileName = format!("Untitled-{}.code-workspace", Id);
 
-					let FilePath = UntitledDir.join(&FileName);
+						let FilePath = UntitledDir.join(&FileName);
 
-					let Content = r#"{"folders":[],"settings":{}}"#;
+						let Content = r#"{"folders":[],"settings":{}}"#;
 
-					tokio::fs::write(&FilePath, Content)
-						.await
-						.map_err(|E| format!("workspaces:createUntitledWorkspace write: {}", E))?;
+						tokio::fs::write(&FilePath, Content)
+							.await
+							.map_err(|E| format!("workspaces:createUntitledWorkspace write: {}", E))?;
 
-					let FilePathStr = FilePath.to_string_lossy().to_string();
+						let FilePathStr = FilePath.to_string_lossy().to_string();
 
-					dev_log!("workspaces", "createUntitledWorkspace: id={} path={}", Id, FilePathStr);
+						dev_log!("workspaces", "createUntitledWorkspace: id={} path={}", Id, FilePathStr);
 
-					Ok::<Value, String>(json!({ "configPath": FilePathStr, "id": Id.to_string() }))
-				}.await,
-				"workspaces:deleteUntitledWorkspace" => async move {
-					// Inner async block so ? propagates to Result, not the () outer block.
-					let Arg = arg_val(&Arguments, 0);
-
-					let ConfigPath = Arg
-						.as_str()
-						.or_else(|| Arg.get("configPath").and_then(Value::as_str))
-						.unwrap_or("")
-						.to_string();
-
-					if ConfigPath.is_empty() {
-						dev_log!("workspaces", "deleteUntitledWorkspace: no configPath");
-						return Ok::<Value, String>(Value::Null);
+						Ok::<Value, String>(json!({ "configPath": FilePathStr, "id": Id.to_string() }))
 					}
+					.await
+				},
+				"workspaces:deleteUntitledWorkspace" => {
+					async move {
+						// Inner async block so ? propagates to Result, not the () outer block.
+						let Arg = arg_val(&Arguments, 0);
 
-					let PathResolver = ApplicationHandle.path();
+						let ConfigPath = Arg
+							.as_str()
+							.or_else(|| Arg.get("configPath").and_then(Value::as_str))
+							.unwrap_or("")
+							.to_string();
 
-					let AppDataDir = PathResolver
-						.app_data_dir()
-						.map_err(|E| format!("workspaces:deleteUntitledWorkspace app_data_dir: {}", E))?;
+						if ConfigPath.is_empty() {
+							dev_log!("workspaces", "deleteUntitledWorkspace: no configPath");
 
-					let UntitledDir = AppDataDir.join(".untitled-workspaces");
+							return Ok::<Value, String>(Value::Null);
+						}
 
-					let Target = std::path::PathBuf::from(&ConfigPath);
+						let PathResolver = ApplicationHandle.path();
 
-					let IsInUntitledDir = Target
-						.canonicalize()
-						.ok()
-						.zip(UntitledDir.canonicalize().ok())
-						.map(|(T, U)| T.starts_with(U))
-						.unwrap_or(false);
+						let AppDataDir = PathResolver
+							.app_data_dir()
+							.map_err(|E| format!("workspaces:deleteUntitledWorkspace app_data_dir: {}", E))?;
 
-					if !IsInUntitledDir {
-						dev_log!(
-							"workspaces",
-							"deleteUntitledWorkspace: rejected path outside untitled dir: {}",
-							ConfigPath
-						);
-						return Ok::<Value, String>(Value::Null);
+						let UntitledDir = AppDataDir.join(".untitled-workspaces");
+
+						let Target = std::path::PathBuf::from(&ConfigPath);
+
+						let IsInUntitledDir = Target
+							.canonicalize()
+							.ok()
+							.zip(UntitledDir.canonicalize().ok())
+							.map(|(T, U)| T.starts_with(U))
+							.unwrap_or(false);
+
+						if !IsInUntitledDir {
+							dev_log!(
+								"workspaces",
+								"deleteUntitledWorkspace: rejected path outside untitled dir: {}",
+								ConfigPath
+							);
+
+							return Ok::<Value, String>(Value::Null);
+						}
+
+						tokio::fs::remove_file(&Target)
+							.await
+							.map_err(|E| format!("workspaces:deleteUntitledWorkspace remove: {}", E))?;
+
+						dev_log!("workspaces", "deleteUntitledWorkspace: removed {}", ConfigPath);
+
+						Ok::<Value, String>(Value::Null)
 					}
-
-					tokio::fs::remove_file(&Target)
-						.await
-						.map_err(|E| format!("workspaces:deleteUntitledWorkspace remove: {}", E))?;
-
-					dev_log!("workspaces", "deleteUntitledWorkspace: removed {}", ConfigPath);
-
-					Ok::<Value, String>(Value::Null)
-				}.await,
+					.await
+				},
 				"workspaces:getWorkspaceIdentifier" => {
 					// Return a stable identifier derived from the first workspace
 					// folder's URI so VS Code's caching (recently-opened, per-workspace
@@ -3482,9 +3492,12 @@ pub async fn mountain_ipc_invoke(
 					}
 
 					tokio::spawn(async move {
-						if let Err(E) =
-							crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), Method.to_string(), Payload)
-								.await
+						if let Err(E) = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							Method.to_string(),
+							Payload,
+						)
+						.await
 						{
 							dev_log!("ipc", "warn: [tree] Cocoon notify {} failed: {:?}", Method, E);
 						}
@@ -3888,9 +3901,11 @@ pub async fn mountain_ipc_invoke(
 					if !crate::Vine::Client::IsClientConnected::Fn("cocoon-main") {
 						Ok(Value::Array(Vec::new()))
 					} else {
-						Ok(crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 5_000)
-							.await
-							.unwrap_or(Value::Array(Vec::new())))
+						Ok(
+							crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 5_000)
+								.await
+								.unwrap_or(Value::Array(Vec::new())),
+						)
 					}
 				},
 
@@ -4184,7 +4199,9 @@ pub async fn mountain_ipc_invoke(
 
 						let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
 
-						match crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 15_000).await {
+						match crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 15_000)
+							.await
+						{
 							Ok(Response) => Ok(Response),
 							Err(CocoonError) => {
 								dev_log!(

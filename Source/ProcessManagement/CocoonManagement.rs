@@ -778,11 +778,7 @@ async fn LaunchAndManageCocoonSideCar(
 		// terminal here so `vscode.window.terminals` is never empty for
 		// extensions that read it synchronously in `activate()`.
 		{
-			let ActiveTerminals = EnvironmentForActivation
-				.ApplicationState
-				.Feature
-				.Terminals
-				.GetAll();
+			let ActiveTerminals = EnvironmentForActivation.ApplicationState.Feature.Terminals.GetAll();
 
 			if !ActiveTerminals.is_empty() {
 				dev_log!(
@@ -1016,31 +1012,31 @@ async fn LaunchAndManageCocoonSideCar(
 				let local = tokio::task::LocalSet::new();
 
 				local.block_on(&rt, async move {
-			while let Some(BackoffSecs) = RestartRx.recv().await {
-				tokio::time::sleep(tokio::time::Duration::from_secs(BackoffSecs)).await;
+					while let Some(BackoffSecs) = RestartRx.recv().await {
+						tokio::time::sleep(tokio::time::Duration::from_secs(BackoffSecs)).await;
 
-				dev_log!("cocoon", "[CocoonRestart] Restarting Cocoon after {}s backoff...", BackoffSecs);
+						dev_log!("cocoon", "[CocoonRestart] Restarting Cocoon after {}s backoff...", BackoffSecs);
 
-				{
-					let mut Guard = RestartState.lock().await;
+						{
+							let mut Guard = RestartState.lock().await;
 
-					Guard.IsRunning = false;
+							Guard.IsRunning = false;
 
-					Guard.ChildProcess = None;
-				}
+							Guard.ChildProcess = None;
+						}
 
-				match LaunchAndManageCocoonSideCar(RestartAppHandle.clone(), RestartEnv.clone()).await {
-					Ok(()) => {
-						dev_log!("cocoon", "[CocoonRestart] Cocoon restarted successfully");
+						match LaunchAndManageCocoonSideCar(RestartAppHandle.clone(), RestartEnv.clone()).await {
+							Ok(()) => {
+								dev_log!("cocoon", "[CocoonRestart] Cocoon restarted successfully");
 
-						RestartState.lock().await.RestartCount = 0;
-					},
+								RestartState.lock().await.RestartCount = 0;
+							},
 
-					Err(Error) => {
-						dev_log!("cocoon", "error: [CocoonRestart] Restart failed: {}", Error);
-					},
-				}
-			}
+							Err(Error) => {
+								dev_log!("cocoon", "error: [CocoonRestart] Restart failed: {}", Error);
+							},
+						}
+					}
 				});
 			})
 			.expect("cocoon-restart thread");

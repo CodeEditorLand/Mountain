@@ -57,7 +57,8 @@ pub async fn dispatch_tree_view(
 
 			tokio::spawn(async move {
 				if let Err(e) =
-					crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), method.to_string(), payload).await
+					crate::Vine::Client::SendNotification::Fn("cocoon-main".to_string(), method.to_string(), payload)
+						.await
 				{
 					crate::dev_log!("ipc", "warn: [tree] Cocoon notify {} failed: {:?}", method, e);
 				}

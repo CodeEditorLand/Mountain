@@ -85,6 +85,7 @@ pub struct MountainEnvironment {
 }
 
 unsafe impl Send for MountainEnvironment {}
+
 unsafe impl Sync for MountainEnvironment {}
 
 impl MountainEnvironment {

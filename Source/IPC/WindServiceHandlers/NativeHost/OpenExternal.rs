@@ -52,7 +52,8 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		});
 
 		if let Err(E) =
-			crate::Vine::Client::SendNotification::Fn("cocoon-main".to_owned(), "url:openExternal".to_owned(), Payload).await
+			crate::Vine::Client::SendNotification::Fn("cocoon-main".to_owned(), "url:openExternal".to_owned(), Payload)
+				.await
 		{
 			dev_log!("lifecycle", "warn: openExternal notify failed: {}", E);
 		}

@@ -362,9 +362,7 @@ impl CertificateManager {
 				rcgen::string::Ia5String::try_from(hostname.to_string())
 					.unwrap_or_else(|_| rcgen::string::Ia5String::try_from("localhost".to_string()).unwrap()),
 			),
-			rcgen::SanType::DnsName(
-				rcgen::string::Ia5String::try_from("localhost".to_string()).unwrap(),
-			),
+			rcgen::SanType::DnsName(rcgen::string::Ia5String::try_from("localhost".to_string()).unwrap()),
 			rcgen::SanType::IpAddress(std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST)),
 		];
 
