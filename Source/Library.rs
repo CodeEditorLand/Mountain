@@ -129,6 +129,10 @@ pub mod LandFixTier;
 /// Binary entry points for desktop and mobile builds.
 pub mod Binary;
 
+/// 🟠🔵 Deep-shim interception layer (gated behind TierShim env var).
+/// See: `.hermes/microsoft/05-Mountain-Rust-Intercept.md`
+pub mod Shim;
+
 /// Main entry point for both mobile and desktop builds.
 #[allow(unexpected_cfgs)]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

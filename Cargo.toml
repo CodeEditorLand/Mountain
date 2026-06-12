@@ -136,6 +136,11 @@ default = [
 	"Tasks",
 	"Auth",
 	"ExtensionHost",
+	// 🟠🔵 Shim tiers (gated, experimental — 2026-06-13)
+	// TierShim=None → none active, zero overhead
+	// TierShim=Proxy|Replace → "shim" feature
+	// TierShim=Own → "shim-own" feature  
+	// TierShim=Preempt → "shim-preempt" feature
 ]
 
 ExtensionHostCocoon = []
