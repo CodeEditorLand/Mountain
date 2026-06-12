@@ -477,6 +477,13 @@ fn EmitTierDefaults() {
 		// Vine notification roundtrip; flip to `On` when an extension
 		// peer needs the event.
 		("TierCommandEventBroadcast", "Off"),
+		// Shim tier: experimental deep-hook intercept layer.
+		// None → all shim code compiled out (default: zero overhead).
+		// Proxy → audit-only observation.
+		// Replace → individual service shim replacement.
+		// Own → Land owns InstantiationService container.
+		// Preempt → Land controls BrowserMain.open().
+		("TierShim", "None"),
 	] {
 		println!("cargo:rustc-env={}={}", Key, Default);
 	}
@@ -627,6 +634,7 @@ fn IsDefaultTierValue(Key:&str, Value:&str) -> bool {
 			| ("TierExtensionHost", "Process" | "WebWorker" | "Disabled")
 			| ("TierWebSocket", "Disabled" | "Mountain" | "Mist")
 			| ("TierCommandEventBroadcast", "On" | "Off")
+			| ("TierShim", "None" | "Proxy" | "Replace" | "Own" | "Preempt")
 	)
 }
 
