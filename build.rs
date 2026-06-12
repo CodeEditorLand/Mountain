@@ -335,6 +335,12 @@ fn PropagateTierGating() {
 	// honours the last `rustc-env` for a given key.
 	EmitTierDefaults();
 
+	// Emit per-subsystem Cargo features from .env.Land tier values. A feature
+	// is activated when the tier is neither Disabled nor Node (i.e. the native
+	// Mountain handler is in use), so `#[cfg(feature = "Terminal")]` gates
+	// native dispatch paths at compile time.
+	EmitTierFeatures();
+
 	let Manifest = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set");
 
 	let ManifestPath = std::path::PathBuf::from(Manifest);
@@ -486,6 +492,45 @@ fn EmitTierDefaults() {
 	}
 }
 
+/// Emit per-subsystem Cargo feature flags from .env.Land tier values. A
+/// feature is activated when the tier is neither Disabled nor Node — i.e.
+/// the native Mountain handler is active — so `#[cfg(feature = "...")]`
+/// gates compile-time dispatch paths.
+fn EmitTierFeatures() {
+	let Mappings = [
+		("TierTerminal", "Terminal"),
+		("TierSCM", "SCM"),
+		("TierDebug", "Debug"),
+		("TierLanguageFeatures", "LanguageFeatures"),
+		("TierSearch", "Search"),
+		("TierOutputChannel", "OutputChannel"),
+		("TierNativeHost", "NativeHost"),
+		("TierTreeView", "TreeView"),
+		("TierStorage", "Storage"),
+		("TierModel", "Model"),
+		("TierFileSystem", "FileSystem"),
+		("TierEncryption", "Encryption"),
+		("TierTasks", "Tasks"),
+		("TierAuth", "Auth"),
+	];
+
+	for (EnvKey, FeatureName) in &Mappings {
+		emit_feature_from_tier(EnvKey, FeatureName);
+	}
+}
+
+/// Read a single tier env key and emit a Cargo feature if the value is an
+/// active tier — i.e. neither Disabled nor Node. Uses the .env.Land file
+/// first (matching PropagateTierGating semantics), falling back to the
+/// process environment.
+fn emit_feature_from_tier(EnvKey:&str, FeatureName:&str) {
+	let Value = std::env::var(EnvKey).unwrap_or_else(|_| ReadTierValueFromEnvFile(EnvKey).unwrap_or_default());
+
+	if Value != "Disabled" && Value != "Node" && !Value.is_empty() {
+		println!("cargo:rustc-cfg=feature=\"{}\"", FeatureName);
+	}
+}
+
 /// Whitelist of Rust-side tier feature names. An unknown combination in
 /// `.env.Land` surfaces as a build warning rather than a silent no-op.
 fn IsDeclaredTierFeature(Name:&str) -> bool {
@@ -509,6 +554,21 @@ fn IsDeclaredTierFeature(Name:&str) -> bool {
 			| "TierClipboardLayer4"
 			| "TierOpenExternalLayer4"
 			| "TierExtensionScanParallel"
+			// Per-subsystem silo tiers (from EmitTierFeatures):
+			| "Terminal"
+			| "SCM"
+			| "Debug"
+			| "LanguageFeatures"
+			| "Search"
+			| "OutputChannel"
+			| "NativeHost"
+			| "TreeView"
+			| "Storage"
+			| "Model"
+			| "FileSystem"
+			| "Encryption"
+			| "Tasks"
+			| "Auth"
 	)
 }
 

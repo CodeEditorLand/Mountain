@@ -120,6 +120,22 @@ default = [
 	"TierGlobNative",
 	"TierFileSystemLayer4",
 	"TierRemoteProcedureCallSharedMemory",
+	# Subsystem feature flags
+	"Terminal",
+	"SCM",
+	"Debug",
+	"LanguageFeatures",
+	"Search",
+	"OutputChannel",
+	"NativeHost",
+	"TreeView",
+	"Storage",
+	"Model",
+	"FileSystem",
+	"Encryption",
+	"Tasks",
+	"Auth",
+	"ExtensionHost",
 ]
 
 ExtensionHostCocoon = []
@@ -148,6 +164,22 @@ Test = []
 grove = []
 
 cocoon = []
+
+# Subsystem feature flags
+Terminal = []
+SCM = []
+LanguageFeatures = []
+Search = []
+OutputChannel = []
+NativeHost = []
+TreeView = []
+Storage = []
+Model = []
+FileSystem = []
+Encryption = []
+Tasks = []
+Auth = []
+ExtensionHost = []
 
 # ===========================================================================
 # Tier-gating (Plan A §Rust feature flags). Every name here is mirrored by
