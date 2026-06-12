@@ -2,7 +2,7 @@
 //!
 //! The dispatcher in `MountainVinegRPCService::send_cocoon_notification`
 //! calls canonical Vine atoms directly via `::Vine::Server::Notification::X::X`
-//! for every handler except the two below that have Mountain-specific logic.
+//! for every handler except the ones below that have Mountain-specific logic.
 //!
 //! - `Support`: `UnregisterByHandle` helper called inline from the dispatcher
 //!   for the six pure provider-unregistration arms.

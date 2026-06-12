@@ -6,18 +6,19 @@ use tauri::{AppHandle, Emitter};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-/// Tauri-backed renderer emitter that satisfies
-/// `::Vine::Host::RendererEmitter`.
+/// Satisfies `::Vine::Host::RendererEmitter` by forwarding events to a
+/// Tauri `AppHandle`.
 pub struct TauriRendererEmitter {
 	Handle:AppHandle,
 }
 
 impl TauriRendererEmitter {
-	/// new.
+	/// Creates a new `TauriRendererEmitter` wrapping the given `AppHandle`.
 	pub fn New(Handle:AppHandle) -> Self { Self { Handle } }
 }
 
 impl ::Vine::Host::RendererEmitter for TauriRendererEmitter {
+	/// Emits an event on the given Tauri channel with the provided payload.
 	fn Emit(&self, Channel:&str, Payload:Value) { let _ = self.Handle.emit(Channel, Payload); }
 }
 

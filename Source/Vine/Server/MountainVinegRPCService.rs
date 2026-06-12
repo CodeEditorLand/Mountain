@@ -1,8 +1,8 @@
 //! # MountainVinegRPCService
 //!
-//! Defines the gRPC service implementation for Mountain. This struct handles
-//! incoming RPC calls from the `Cocoon` sidecar, dispatches them to the
-//! application's core logic via the `Track` module, and returns the results.
+//! Defines the gRPC service implementation for Mountain. Handles incoming RPC
+//! calls from the Cocoon sidecar, dispatches them to application logic via the
+//! `Track` module, and returns results.
 //!
 //! ## Service Methods
 //!
@@ -63,10 +63,10 @@ mod ServiceConfig {
 	pub const MAX_METHOD_NAME_LENGTH:usize = 128;
 }
 
-/// The concrete implementation of the `MountainService` gRPC service.
-/// This service handles all incoming RPC calls from the Cocoon sidecar,
-/// validating requests, dispatching to appropriate handlers, and returning
-/// responses in the expected gRPC format.
+/// Implementation of the `MountainService` gRPC service.
+/// Handles all incoming RPC calls from the Cocoon sidecar, validating
+/// requests, dispatching to appropriate handlers, and returning responses
+/// in the expected gRPC format.
 #[derive(Clone)]
 pub struct MountainVinegRPCService {
 	/// Tauri application handle for VS Code integration

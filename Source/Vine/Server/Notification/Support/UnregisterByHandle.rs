@@ -2,7 +2,8 @@ use serde_json::Value;
 
 use crate::Vine::Server::MountainVinegRPCService::MountainVinegRPCService;
 
-/// Unregisters by handle.
+/// Unregisters a provider by its handle, delegating to the canonical Vine
+/// `UnregisterByHandle` implementation.
 pub fn UnregisterByHandle(Service:&MountainVinegRPCService, Parameter:&Value, TypeName:&str) {
 	::Vine::Server::Notification::Support::UnregisterByHandle::UnregisterByHandle(Service, Parameter, TypeName);
 }

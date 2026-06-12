@@ -1,16 +1,17 @@
 //! # Vine — gRPC Communication Module
 //!
 //! Bidirectional gRPC communication protocol between Mountain (the main
-//! extension host process) and Cocoon (the sidecar for web-based operations).
+//! extension host process) and sidecar processes (Cocoon for web-based
+//! operations).
 //!
 //! ## Architecture
 //!
 //! Vine implements two complementary gRPC services:
 //!
-//! - **MountainService (Cocoon → Mountain)**: Processes requests and
-//!   notifications from Cocoon
-//! - **CocoonService (Mountain → Cocoon)**: Sends requests and notifications to
-//!   Cocoon
+//! - **MountainService (Sidecar → Mountain)**: Processes requests and
+//!   notifications from sidecar processes
+//! - **CocoonService (Mountain → Sidecar)**: Sends requests and notifications
+//!   to sidecar processes
 //!
 //! All RPC messages use Protocol Buffers for serialization.
 //!

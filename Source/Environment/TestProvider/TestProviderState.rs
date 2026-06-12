@@ -6,14 +6,20 @@ use std::collections::HashMap;
 
 use crate::Environment::TestProvider::{TestControllerState, TestRun};
 
+/// Aggregate state for the TestProvider.
+///
+/// Holds the registry of test controllers and currently active test runs.
+/// Stored inside `ApplicationState` behind a `tokio::sync::RwLock`.
 #[derive(Debug)]
 pub struct Struct {
+	/// Registered test controllers, keyed by `ControllerIdentifier`.
 	pub Controllers:HashMap<String, TestControllerState::Struct>,
-
+	/// Active test runs, keyed by `RunIdentifier`.
 	pub ActiveRuns:HashMap<String, TestRun::Struct>,
 }
 
 impl Struct {
+	/// Creates a new empty `TestProviderState`.
 	pub fn new() -> Self { Self { Controllers:HashMap::new(), ActiveRuns:HashMap::new() } }
 }
 

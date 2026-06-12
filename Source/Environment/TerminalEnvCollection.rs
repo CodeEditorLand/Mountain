@@ -87,6 +87,7 @@ pub fn Replace(ExtensionId:&str, Variable:String, Value:String) {
 	}
 }
 
+/// Appends `value` to the inherited value of `variable` for the given extension.
 pub fn Append(ExtensionId:&str, Variable:String, Value:String) {
 	if let Ok(mut Guard) = Get().lock() {
 		let Entry = Guard.entry(ExtensionId.to_string()).or_default();
@@ -97,6 +98,7 @@ pub fn Append(ExtensionId:&str, Variable:String, Value:String) {
 	}
 }
 
+/// Prepends `value` before the inherited value of `variable` for the given extension.
 pub fn Prepend(ExtensionId:&str, Variable:String, Value:String) {
 	if let Ok(mut Guard) = Get().lock() {
 		let Entry = Guard.entry(ExtensionId.to_string()).or_default();
@@ -107,6 +109,8 @@ pub fn Prepend(ExtensionId:&str, Variable:String, Value:String) {
 	}
 }
 
+/// Removes the variable mutation for `variable` from the given extension's
+/// collection. Idempotent: calling for a non-existent variable is a no-op.
 pub fn Delete(ExtensionId:&str, Variable:&str) {
 	if let Ok(mut Guard) = Get().lock() {
 		if let Some(Entry) = Guard.get_mut(ExtensionId) {
@@ -115,6 +119,7 @@ pub fn Delete(ExtensionId:&str, Variable:&str) {
 	}
 }
 
+/// Removes all variable mutations for the given extension.
 pub fn Clear(ExtensionId:&str) {
 	if let Ok(mut Guard) = Get().lock() {
 		if let Some(Entry) = Guard.get_mut(ExtensionId) {
@@ -123,6 +128,7 @@ pub fn Clear(ExtensionId:&str) {
 	}
 }
 
+/// Sets whether the given extension's mutations survive a window reload.
 pub fn SetPersistent(ExtensionId:&str, Persistent:bool) {
 	if let Ok(mut Guard) = Get().lock() {
 		let Entry = Guard.entry(ExtensionId.to_string()).or_default();
@@ -131,6 +137,7 @@ pub fn SetPersistent(ExtensionId:&str, Persistent:bool) {
 	}
 }
 
+/// Sets a user-facing description for the given extension's collection.
 pub fn SetDescription(ExtensionId:&str, Description:Option<String>) {
 	if let Ok(mut Guard) = Get().lock() {
 		let Entry = Guard.entry(ExtensionId.to_string()).or_default();
