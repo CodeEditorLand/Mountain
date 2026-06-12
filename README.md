@@ -55,7 +55,7 @@ _"Where `Electron` takes 200 ms to open a dialog, `Mountain` takes 2."_
 [![Tauri Version](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://tauri.app/)
 [![Tonic gRPC Version](https://img.shields.io/badge/Tonic-v0.11-blueviolet.svg)](https://github.com/hyperium/tonic)
 
-**[Rust API Documentation](https://Rust.Documentation.editor.land/Mountain/)**&#x2001;📖
+**[Rust API Documentation](https://rust.documentation.mountain.editor.land/)**&#x2001;📖
 
 ---
 
@@ -407,7 +407,7 @@ Mountain enforces security at multiple layers:
 
 ## API Reference
 
-- [Rust API Documentation](https://Rust.Documentation.editor.land/Mountain/)&#x2001;📖
+- [Rust API Documentation](https://rust.documentation.mountain.editor.land/)&#x2001;📖
 
 ---
 
