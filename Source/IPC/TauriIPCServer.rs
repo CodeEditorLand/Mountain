@@ -778,9 +778,7 @@ impl ConnectionPool {
 	}
 
 	/// Start health monitoring for a connection
-	async fn StartHealthMonitoring(&self, connection_id:&str) {
-		StartHealthMonitoring::Fn(self, connection_id).await
-	}
+	async fn StartHealthMonitoring(&self, connection_id:&str) { StartHealthMonitoring::Fn(self, connection_id).await }
 }
 
 /// Connection health checker

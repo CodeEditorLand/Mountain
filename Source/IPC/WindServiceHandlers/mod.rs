@@ -48,12 +48,11 @@ pub mod Update;
 
 pub mod Workspaces;
 
-
 pub mod DispatchMatch;
+
 pub mod Dispatcher;
 
 pub mod Utilities;
-
 
 // ============================================================================
 // Thin forwarding wrappers - all dispatch logic lives in DispatchMatch.rs.
@@ -61,14 +60,16 @@ pub mod Utilities;
 
 /// Forward to the main IPC dispatch function in DispatchMatch.rs.
 pub async fn mountain_ipc_invoke(
-	ApplicationHandle: tauri::AppHandle,
-	command: String,
-	Arguments: Vec<serde_json::Value>,
+	ApplicationHandle:tauri::AppHandle,
+
+	command:String,
+
+	Arguments:Vec<serde_json::Value>,
 ) -> Result<serde_json::Value, String> {
 	DispatchMatch::mountain_ipc_invoke(ApplicationHandle, command, Arguments).await
 }
 
 /// Forward to handler registration in DispatchMatch.rs.
-pub fn register_wind_ipc_handlers(ApplicationHandle: &tauri::AppHandle) -> Result<(), String> {
+pub fn register_wind_ipc_handlers(ApplicationHandle:&tauri::AppHandle) -> Result<(), String> {
 	DispatchMatch::register_wind_ipc_handlers(ApplicationHandle)
 }

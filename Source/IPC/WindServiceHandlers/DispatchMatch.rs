@@ -11,8 +11,6 @@
 
 // Re-export everything from the parent module so that all sibling module
 // imports (Cocoon::, Configuration::, etc.) resolve correctly.
-use super::*;
-
 // Additional imports needed for the dispatch logic
 // this file's scope so the dispatch match arms below can call
 // `handle_foo(...)` unqualified. Local `use` is scoped to this file only;
@@ -259,6 +257,7 @@ use CommonLibrary::Configuration::DTO::{
 	ConfigurationTarget as ConfigurationTargetModule,
 };
 
+use super::*;
 use crate::dev_log;
 
 type ConfigurationOverridesDTO = ConfigurationOverridesDTOModule::ConfigurationOverridesDTO;
@@ -393,7 +392,9 @@ fn resolve_route_tier(BakedConst:&'static str, EnvKey:&str) -> RouteTier {
 
 	match Resolved.as_str() {
 		"Node" => RouteTier::Node,
+
 		"NodeDeferred" => RouteTier::NodeDeferred,
+
 		_ => RouteTier::Mountain,
 	}
 }
@@ -737,18 +738,14 @@ pub async fn mountain_ipc_invoke(
 				{
 					forward_to_cocoon!("debug", command, Arguments)
 				},
-				_ if command.starts_with("encryption:")
-					&& tier_routes_to_node(TIER_ENCRYPTION, "TierEncryption") =>
-				{
+				_ if command.starts_with("encryption:") && tier_routes_to_node(TIER_ENCRYPTION, "TierEncryption") => {
 					forward_to_cocoon!("encryption", command, Arguments)
 				},
 				// nativeHost:* to Node only makes sense for the few methods a
 				// headless Cocoon can serve (env paths, proxy resolution);
 				// window/clipboard/dialog calls will Null out. The gate exists
 				// for parity with the Wind-side table - default stays Mountain.
-				_ if command.starts_with("nativeHost:")
-					&& tier_routes_to_node(TIER_NATIVE_HOST, "TierNativeHost") =>
-				{
+				_ if command.starts_with("nativeHost:") && tier_routes_to_node(TIER_NATIVE_HOST, "TierNativeHost") => {
 					forward_to_cocoon!("nativeHost", command, Arguments)
 				},
 
@@ -1253,17 +1250,13 @@ pub async fn mountain_ipc_invoke(
 
 				// `ExtensionGalleryService.getCoreTranslation()` - locale bundles.
 				// Returns null so VS Code falls back to the bundled English strings.
-				"extensions:getCoreTranslation" => {
-					Ok(Value::Null)
-				},
+				"extensions:getCoreTranslation" => Ok(Value::Null),
 
 				// `ExtensionGalleryService.download()` - called when installing a
 				// marketplace extension. With no gallery backend the download
 				// always fails. Return an error shape VS Code surfaces to the user
 				// as "marketplace unavailable" rather than a JS TypeError.
-				"extensions:download" => {
-					Err("Marketplace download unavailable in offline mode".to_string())
-				},
+				"extensions:download" => Err("Marketplace download unavailable in offline mode".to_string()),
 				// `IExtensionsControlManifest` - consulted by the Extensions
 				// sidebar on every render (ExtensionEnablementService.ts:793)
 				// to mark malicious / deprecated / auto-updateable entries.
@@ -1429,47 +1422,10 @@ pub async fn mountain_ipc_invoke(
 				// Search commands. Stock VS Code `SearchService` channel
 				// uses `textSearch` / `fileSearch`; Mountain's Effect-TS
 				// rail uses `findInFiles` / `findFiles`. Alias both.
-				"search:findInFiles" | "search:textSearch" | "search:searchText" => {
-					call!(rt, "search", SearchFindInFiles, Arguments)
-				},
-				"search:findFiles" | "search:fileSearch" | "search:searchFile" => {
-					call!(rt, "search", SearchFindFiles, Arguments)
-				},
-				// Abort an in-flight text-search task by search_id.
-				"search:cancel" => {
-					if let Some(SearchId) = Arguments.first().and_then(|V| V.as_u64()) {
-						// Cooperative flag first: the synchronous ripgrep
-						// walk polls it per entry, which is what actually
-						// stops the CPU work. The task abort below only
-						// lands at an await point.
-						let Flags = &RunTime.Environment.ApplicationState.Feature.SearchCancellationFlags;
-
-						if let Some(Flag) = Flags.get(&SearchId) {
-							Flag.store(true, std::sync::atomic::Ordering::Relaxed);
-						}
-
-						let ActiveSearches = &RunTime.Environment.ApplicationState.Feature.ActiveSearches;
-
-						if let Some((_, Handle)) = ActiveSearches.remove(&SearchId) {
-							Handle.abort();
-
-							dev_log!("search", "search:cancel aborted id={}", SearchId);
-						} else {
-							dev_log!("search", "search:cancel id={} not found (already done?)", SearchId);
-						}
-					} else {
-						dev_log!("search", "search:cancel (no id, ignoring)");
-					}
-
-					Ok(Value::Null)
-				},
-
-				// No-op acks for search channel methods that have no
-				// server-side state.
-				"search:clearCache" | "search:onDidChangeResult" => {
-					dev_log!("search", "{} (stub-ack)", command);
-
-					Ok(Value::Null)
+				command if command.starts_with("search:") => {
+					Search::SearchRouter::route(RunTime.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
 				},
 
 				// Decorations commands
