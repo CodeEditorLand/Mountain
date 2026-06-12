@@ -72,7 +72,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		"mailto",
 		"ftp",
 		"vscode",
-		"fiddee",
+		"fcd",
 		"ssh",
 		"git",
 		"x-github-client",

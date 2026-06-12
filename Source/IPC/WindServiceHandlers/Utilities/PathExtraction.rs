@@ -197,11 +197,17 @@ mod tests {
 
 	#[test]
 	fn test_numeric_input_errors() {
-		assert_eq!(Fn(&json!(42)).unwrap_err(), "File path must be a string or URI object with path/fsPath field");
+		assert_eq!(
+			Fn(&json!(42)).unwrap_err(),
+			"File path must be a string or URI object with path/fsPath field"
+		);
 	}
 
 	#[test]
 	fn test_empty_object_errors() {
-		assert_eq!(Fn(&json!({})).unwrap_err(), "File path must be a string or URI object with path/fsPath field");
+		assert_eq!(
+			Fn(&json!({})).unwrap_err(),
+			"File path must be a string or URI object with path/fsPath field"
+		);
 	}
 }

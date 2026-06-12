@@ -42,7 +42,11 @@ pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Val
 		.unwrap_or(false);
 
 	if !IsInUntitledDir {
-		dev_log!("workspaces", "deleteUntitledWorkspace: rejected path outside untitled dir: {}", ConfigPath);
+		dev_log!(
+			"workspaces",
+			"deleteUntitledWorkspace: rejected path outside untitled dir: {}",
+			ConfigPath
+		);
 
 		return Ok(Value::Null);
 	}

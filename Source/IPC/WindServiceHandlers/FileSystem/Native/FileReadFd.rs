@@ -55,7 +55,10 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 		let mut Total = 0usize;
 
 		while Total < Length {
-			let N = File.read(&mut Buffer[Total..]).await.map_err(|E| format!("file:read fd={}: {}", Fd, E))?;
+			let N = File
+				.read(&mut Buffer[Total..])
+				.await
+				.map_err(|E| format!("file:read fd={}: {}", Fd, E))?;
 
 			if N == 0 {
 				break;
@@ -78,7 +81,14 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 
 	let Buffer = ReadResult?;
 
-	dev_log!("vfs-verbose", "file:read fd={} pos={} len={} read={}", Fd, Pos, Length, Buffer.len());
+	dev_log!(
+		"vfs-verbose",
+		"file:read fd={} pos={} len={} read={}",
+		Fd,
+		Pos,
+		Length,
+		Buffer.len()
+	);
 
 	Ok(json!({ "buffer": Buffer, "bytesRead": Buffer.len() }))
 }

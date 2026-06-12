@@ -14,7 +14,7 @@ use std::path::PathBuf;
 /// Leaf directory name. Public so TS-side callers that mirror this value
 /// (`Cocoon/Source/Services/Handler/Extension/Host/Handler.ts` etc.) can
 /// import the constant via a generated header if/when that wiring lands.
-pub const DOTFILE_NAME:&str = ".fiddee";
+pub const DOTFILE_NAME:&str = ".fcd";
 
 /// Returns `$HOME/.fiddee` (or `$USERPROFILE\.fiddee` on Windows).
 /// Falls back to a relative `.fiddee` so callers always get a valid

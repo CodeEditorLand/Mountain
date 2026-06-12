@@ -11,6 +11,7 @@ use crate::dev_log;
 pub async fn Fn(Args:Vec<Value>) -> Result<Value, String> {
 	let VsixPath = match Args.first() {
 		Some(Value::String(Path)) => Path.clone(),
+
 		Some(Obj) => {
 			Obj.get("fsPath")
 				.and_then(|V| V.as_str())
@@ -18,6 +19,7 @@ pub async fn Fn(Args:Vec<Value>) -> Result<Value, String> {
 				.or_else(|| Obj.get("path").and_then(|V| V.as_str()).map(str::to_owned))
 				.unwrap_or_default()
 		},
+
 		None => String::new(),
 	};
 
@@ -31,6 +33,7 @@ pub async fn Fn(Args:Vec<Value>) -> Result<Value, String> {
 
 	match crate::ExtensionManagement::VsixInstaller::ReadFullManifest(&Path) {
 		Ok(Manifest) => Ok(Manifest),
+
 		Err(Error) => {
 			dev_log!(
 				"extensions",

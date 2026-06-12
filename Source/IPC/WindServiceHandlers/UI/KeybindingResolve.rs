@@ -5,13 +5,13 @@
 //!
 //! 1. Merge all rule sources via `KeybindingProvider::GetResolvedKeybinding`
 //!    (extensions + dynamic registry + user `keybindings.json`).
-//! 2. Keep rules whose normalised key expression matches the input
-//!    (modifier aliases and ordering are canonicalised, chords compared
+//! 2. Keep rules whose normalised key expression matches the input (modifier
+//!    aliases and ordering are canonicalised, chords compared
 //!    stroke-for-stroke).
 //! 3. Drop rules whose `when` clause evaluates false in the snapshot.
 //! 4. Rank survivors by source weight (user > dynamic > extension), then
-//!    when-clause specificity, so `editorTextFocus && !inQuickOpen` beats
-//!    a bare `editorTextFocus` which beats an unguarded binding.
+//!    when-clause specificity, so `editorTextFocus && !inQuickOpen` beats a
+//!    bare `editorTextFocus` which beats an unguarded binding.
 //!
 //! Returns the winning rule (`{key, command, when?, args?, source?}`) or
 //! `null` when nothing is bound for the key in this context.
@@ -26,8 +26,11 @@ use crate::{Environment::Utility::WhenClause, RunTime::ApplicationRunTime::Appli
 fn SourceWeight(Rule:&Value) -> u32 {
 	match Rule.get("source").and_then(Value::as_str) {
 		Some("user") => 3,
+
 		Some(Source) if Source.starts_with("dynamic") => 2,
+
 		Some(Source) if Source.starts_with("extension") => 1,
+
 		_ => 0,
 	}
 }
@@ -65,9 +68,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 						.and_then(Value::as_str)
 						.is_some_and(|Key| WhenClause::NormalizeKeyExpression(Key) == NormalizedInput)
 				})
-				.filter(|Rule| {
-					WhenClause::EvaluateClause(Rule.get("when").and_then(Value::as_str), &Context)
-				})
+				.filter(|Rule| WhenClause::EvaluateClause(Rule.get("when").and_then(Value::as_str), &Context))
 				.max_by_key(|Rule| (SourceWeight(Rule), WhenSpecificity(Rule)))
 				.cloned()
 		})

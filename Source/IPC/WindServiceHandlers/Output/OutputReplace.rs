@@ -13,10 +13,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Val
 
 	let Text = arg_string(&Arguments, 1);
 
-	let _ = ApplicationHandle.emit(
-		SkyEvent::OutputReplace.AsStr(),
-		json!({ "channel": ChannelName, "text": Text }),
-	);
+	let _ = ApplicationHandle.emit(SkyEvent::OutputReplace.AsStr(), json!({ "channel": ChannelName, "text": Text }));
 
 	Ok(Value::Null)
 }

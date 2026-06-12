@@ -15,10 +15,7 @@ pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Val
 
 	// Notify Sky to register the channel in the Output panel.
 	if let Some(Window) = ApplicationHandle.get_webview_window("main") {
-		let _ = Window.emit(
-			"sky://output/create",
-			json!({ "id": ChannelName, "name": ChannelName }),
-		);
+		let _ = Window.emit("sky://output/create", json!({ "id": ChannelName, "name": ChannelName }));
 	}
 
 	Ok(json!({ "channelName": ChannelName }))

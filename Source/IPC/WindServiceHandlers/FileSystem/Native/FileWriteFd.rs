@@ -95,7 +95,9 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 			.await
 			.map_err(|E| format!("file:write fd={} seek({}): {}", Fd, Pos, E))?;
 
-		File.write_all(Slice).await.map_err(|E| format!("file:write fd={}: {}", Fd, E))?;
+		File.write_all(Slice)
+			.await
+			.map_err(|E| format!("file:write fd={}: {}", Fd, E))?;
 
 		File.flush().await.map_err(|E| format!("file:write fd={} flush: {}", Fd, E))?;
 
@@ -133,7 +135,10 @@ mod tests {
 
 	#[test]
 	fn test_nested_buffer_wrapper() {
-		assert_eq!(ExtractBytes(&json!({ "buffer": { "buffer": [104, 105] } })), Some(vec![104, 105]));
+		assert_eq!(
+			ExtractBytes(&json!({ "buffer": { "buffer": [104, 105] } })),
+			Some(vec![104, 105])
+		);
 	}
 
 	#[test]

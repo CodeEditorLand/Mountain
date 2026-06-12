@@ -94,8 +94,7 @@ pub async fn Fn(
 
 										let Uri = url::Url::parse(&UriStr).ok()?;
 
-										let Name =
-											Entry.get("name").and_then(|V| V.as_str()).unwrap_or("").to_string();
+										let Name = Entry.get("name").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 										WorkspaceFolderStateDTO::New(Uri, Name, Index).ok()
 									})
@@ -121,7 +120,12 @@ pub async fn Fn(
 					},
 
 					Err(Error) => {
-						dev_log!("workspaces", "warn: [enterWorkspace] JSON parse failed for {}: {}", FilePath, Error);
+						dev_log!(
+							"workspaces",
+							"warn: [enterWorkspace] JSON parse failed for {}: {}",
+							FilePath,
+							Error
+						);
 					},
 				}
 			},
