@@ -4,7 +4,7 @@
 
 use crate::Vine::Error::VineError;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(SideCarIdentifier:&str) -> Result<bool, VineError> {
 	::Vine::Client::CheckSideCarHealth::Fn(SideCarIdentifier)
 }

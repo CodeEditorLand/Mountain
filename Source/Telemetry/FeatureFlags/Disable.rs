@@ -2,7 +2,7 @@
 
 use crate::Telemetry::FeatureFlags::{FeatureFlagError, GlobalRegistry};
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(FlagName:&str, Reason:&str) -> Result<(), FeatureFlagError::Enum> {
 	GlobalRegistry::REGISTRY.Disable(FlagName, Reason)
 }

@@ -3,7 +3,6 @@
 //! registration `DisposeWebviewPanel` later fails with "unknown handle"
 //! and webviews leak DOM. Falls back to a millisecond pseudo-handle and
 //! a direct Sky emit on trait failure.
-
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::json;

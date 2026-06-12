@@ -5,7 +5,6 @@
 //! by every PTY spawn that runs after the notification arrives - no
 //! retro-active mutation of running terminals (matches VS Code
 //! semantics).
-
 use serde_json::Value;
 
 use crate::{
@@ -14,7 +13,7 @@ use crate::{
 	dev_log,
 };
 
-/// Terminals env collection dispatch.
+/// Handles terminal environment variable collection via Vine IPC.
 pub async fn TerminalEnvCollectionDispatch(_Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
 	let Suffix = MethodName.strip_prefix("terminal.envCollection.").unwrap_or(MethodName);
 

@@ -1,14 +1,12 @@
 //! Notification handlers that forward events to Sky via `app.emit()`.
 //! Covers: webview messages, status bar, output channels, progress,
 //! `openExternal`, and language configuration.
-
 use serde_json::{Value, json};
 use tauri::Emitter;
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;
 
 // ── Webview ───────────────────────────────────────────────────────────────
-
 pub fn HandleOnDidReceiveMessage(Params:Value, Env:&MountainEnvironment) {
 	let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0);
 
@@ -46,7 +44,6 @@ pub fn HandleWebviewDispose(Params:Value, Env:&MountainEnvironment) {
 }
 
 // ── Status bar ────────────────────────────────────────────────────────────
-
 pub fn HandleSetStatusBarText(Params:Value, Env:&MountainEnvironment) {
 	let ItemId = Params.get("itemId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
@@ -64,7 +61,6 @@ pub fn HandleDisposeStatusBarItem(Params:Value, Env:&MountainEnvironment) {
 }
 
 // ── Output channels ───────────────────────────────────────────────────────
-
 pub fn HandleOutputCreate(Params:Value, Env:&MountainEnvironment) {
 	let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
@@ -117,7 +113,6 @@ pub fn HandleOutputDispose(Params:Value, Env:&MountainEnvironment) {
 }
 
 // ── Progress ──────────────────────────────────────────────────────────────
-
 pub fn HandleProgressStart(Params:Value, Env:&MountainEnvironment) {
 	let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
@@ -153,7 +148,6 @@ pub fn HandleProgressComplete(Params:Value, Env:&MountainEnvironment) {
 }
 
 // ── Misc ──────────────────────────────────────────────────────────────────
-
 pub fn HandleOpenExternal(Params:Value, Env:&MountainEnvironment) {
 	let Url = Params.get("url").and_then(|V| V.as_str()).unwrap_or("").to_string();
 

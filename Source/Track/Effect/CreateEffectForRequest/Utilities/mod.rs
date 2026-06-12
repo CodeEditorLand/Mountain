@@ -1,7 +1,7 @@
 //! Shared utilities for `CreateEffectForRequest` domain handlers.
 
-/// Params module.
+/// Parameter parsing helpers.
 pub mod Params;
 
-/// Proxy module.
+/// Proxy (redirect) helpers.
 pub mod Proxy;

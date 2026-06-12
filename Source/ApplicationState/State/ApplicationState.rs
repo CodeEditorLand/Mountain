@@ -1,11 +1,11 @@
-//! # ApplicationState Module (ApplicationState)
+//! # ApplicationState
 //!
-//! ## RESPONSIBILITIES
 //! Central state management for the Mountain application, aggregating all
 //! state modules into a single source of truth.
 //!
-//! ## ARCHITECTURAL ROLE
-//! The ApplicationState is the **state container** that aggregates all
+//! ## Architectural Role
+//!
+//! The ApplicationState is the state container that aggregates all
 //! domain-specific state modules and provides thread-safe access.
 //!
 //! ```text
@@ -15,36 +15,32 @@
 //!                   Disk (Persistence)
 //! ```
 //!
-//! ### Design Principles:
+//! ### Design Principles
+//!
 //! 1. **Single Source of Truth**: All state lives in one place
-//! 2. **Thread Safety**: All state is protected by Arc<Mutex<...>>
+//! 2. **Thread Safety**: All state is protected by `Arc<Mutex<...>>`
 //! 3. **Recovery-Oriented**: Comprehensive error handling and recovery
 //! 4. **Type Safety**: Strong typing at all levels
 //! 5. **Observability**: Comprehensive logging for state changes
 //!
-//! ## KEY COMPONENTS
-//! - Workspace: Workspace folders, trust, active document
-//! - Configuration: Configuration, memento storage
-//! - Extension: Extension registry, providers, scanned extensions
-//! - Feature: Diagnostics, documents, terminals, webviews, etc.
-//! - UI: Pending UI requests
+//! ## Key Components
 //!
-//! ## ERROR HANDLING
-//! All state operations use `Arc<Mutex<...>>` for thread-safety with proper
+//! - Workspace: workspace folders, trust, active document
+//! - Configuration: memento storage paths
+//! - Extension: extension registry, providers, scanned extensions
+//! - Feature: diagnostics, documents, terminals, webviews, etc.
+//! - UI: pending UI requests
+//!
+//! ## Error Handling
+//!
+//! All state operations use `Arc<Mutex<...>>` for thread safety with proper
 //! error handling via `MapLockError` helpers.
 //!
-//! ## LOGGING
-//! State changes are logged at appropriate levels (debug, info, warn, error).
+//! ## Performance Considerations
 //!
-//! ## PERFORMANCE CONSIDERATIONS
 //! - Lock mutexes briefly and release immediately
 //! - Avoid nested locks to prevent deadlocks
-//! - Use Arc for shared ownership across threads
-//!
-//! ## TODO
-//! - [ ] Add state validation invariants
-//! - [ ] Implement state metrics collection
-//! - [ ] Add state diffing for debugging
+//! - Use `Arc` for shared ownership across threads
 
 use std::sync::Arc;
 
@@ -60,10 +56,12 @@ use super::{
 };
 use crate::{Environment::TestProvider::TestProviderState::Struct as TestProviderState, dev_log};
 
-/// The central, shared, thread-safe state for the entire Mountain application.
+/// Central, shared, thread-safe state for the entire Mountain application.
 pub type SharedApplicationState = Arc<ApplicationState>;
 
-/// Data for application state.
+/// Aggregated application state container holding workspace, configuration,
+/// extension, feature, and UI state, plus memento storage paths and test
+/// provider state.
 pub struct ApplicationState {
 	/// Workspace state containing workspace folders, trust, and active
 	/// document.

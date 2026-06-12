@@ -2,5 +2,5 @@
 
 use crate::Telemetry::Gates::GetRuntimeGates;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(GateName:&str) -> bool { GetRuntimeGates::Fn().contains(GateName) }

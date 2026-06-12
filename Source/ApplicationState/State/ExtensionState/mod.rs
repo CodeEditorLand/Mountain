@@ -2,14 +2,14 @@
 //! `ProviderRegistration`, `ScannedExtensions`) plus the composite `State`
 //! struct. Callers spell the full sub-path.
 
-/// Extensionregistry module.
+/// Extension command-handle registry.
 pub mod ExtensionRegistry;
 
-/// Providerregistration module.
+/// Language-provider registration state.
 pub mod ProviderRegistration;
 
-/// Scannedextensions module.
+/// Discovered-extension manifest state.
 pub mod ScannedExtensions;
 
-/// State module.
+/// Composite extension state container.
 pub mod State;

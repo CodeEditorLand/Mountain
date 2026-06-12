@@ -1,10 +1,8 @@
-//! # WorkspaceState
-//!
-//! Manages workspace-related state: workspace folders, trust status,
-//! currently active document, and state deltas.
+//! Workspace state: workspace folders, trust status, currently active
+//! document, and state deltas.
 
-/// Workspacedelta module.
+/// Workspace state delta tracking.
 pub mod WorkspaceDelta;
 
-/// Workspacestate module.
+/// Workspace state container.
 pub mod WorkspaceState;

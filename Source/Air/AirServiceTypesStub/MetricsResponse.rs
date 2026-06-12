@@ -3,7 +3,7 @@
 use crate::Air::AirServiceTypesStub::AirMetricsProtoDTO;
 
 #[derive(Debug, Clone)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	pub metrics:AirMetricsProtoDTO::Struct,
 

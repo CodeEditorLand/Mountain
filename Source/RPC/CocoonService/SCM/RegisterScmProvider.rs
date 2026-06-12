@@ -4,7 +4,6 @@
 //! to). The prior direct Sky emit bypassed state tracking - providers
 //! registered by gitlens/svn/etc. never appeared in the SCM view until a
 //! `UpdateScmGroup` call landed.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

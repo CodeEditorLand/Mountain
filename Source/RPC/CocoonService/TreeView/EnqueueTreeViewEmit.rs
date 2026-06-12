@@ -3,7 +3,6 @@
 //! long-lived flusher wakes on first item, drains immediately, sleeps one
 //! frame (16 ms), drains stragglers, then emits one `{ views: [...] }` batch.
 //! Zero spawns per call; sub-millisecond wake latency.
-
 use std::sync::OnceLock;
 
 use serde_json::{Value, json};

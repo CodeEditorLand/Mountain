@@ -10,7 +10,8 @@ pub fn Fn(Params:Value, Env:&MountainEnvironment) {
 
 	let Increment = Params.get("increment").and_then(|V| V.as_f64());
 
-	let _ = Env.ApplicationHandle.emit(
+	let _ = Env.ApplicationHandle.emit_to(
+		"main",
 		"sky://progress/update",
 		json!({ "id": Id, "message": Message, "increment": Increment }),
 	);

@@ -1,6 +1,5 @@
 //! Forward resource-state updates from the Vine gRPC notification to Sky.
 //! Group label/metadata is already stored from register_scm_resource_group.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

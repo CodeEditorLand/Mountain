@@ -4,7 +4,6 @@
 //! that carry custom request shapes) and `Provide*` (23 files dispatching
 //! the typed gRPC requests to the corresponding
 //! `LanguageFeatureProviderRegistry` methods on the environment).
-
 // --- Hierarchy prepare entry-points ---
 // These establish the root item before incoming/outgoing/sub/supertypes.
 pub mod PrepareCallHierarchy;

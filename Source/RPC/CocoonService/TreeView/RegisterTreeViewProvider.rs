@@ -1,6 +1,5 @@
 //! Register a Cocoon-contributed tree-view provider in `ApplicationState`
 //! and notify Sky via the coalesced `EnqueueTreeViewEmit` batcher.
-
 use serde_json::json;
 use tonic::{Response, Status};
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;

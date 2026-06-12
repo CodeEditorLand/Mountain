@@ -1,7 +1,6 @@
-//! `tls_delete_cert` Tauri command - currently aliased to
-//! `renew_certificate` (regenerates instead of removing). TODO:
-//! add a real `CertificateManager::delete_certificate` so the
-//! cache entry actually disappears.
+//! `tls_delete_cert` Tauri command — regenerates the certificate instead of
+//! removing it. A real `CertificateManager::delete_certificate` method is
+//! needed to fully evict the cache entry.
 
 use std::sync::{Arc, Mutex};
 

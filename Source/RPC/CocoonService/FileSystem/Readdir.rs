@@ -1,5 +1,4 @@
 //! Enumerate the entries of a directory by name.
-
 use tonic::{Response, Status};
 use ::Vine::Generated::{ReaddirRequest, ReaddirResponse};
 

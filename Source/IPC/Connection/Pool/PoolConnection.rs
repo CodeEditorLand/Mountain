@@ -1,19 +1,5 @@
 //! # Pool
 //!
-//! ## File: IPC/Connection/Pool/PoolConnection.rs
-//!
-//! ## Role: Manages connection pool for efficient resource reuse
-//! ## Primary Responsibility: Pool and recycle connections with capacity limits
-//!
-//! ## Dependencies
-//! - Tokio: Async runtime and synchronization primitives
-//! - Arc<TokioRwLock>: Thread-safe, async-friendly shared state
-//!
-//! ## Security Considerations
-//! - Connection limits prevent resource exhaustion attacks
-//! - Stale connection cleanup prevents memory leaks
-//! - Max connections per channel prevents denial-of-service
-//!
 //! ## Performance Considerations
 //! - Async RwLock allows multiple concurrent reads
 //! - Connection reuse reduces allocation overhead

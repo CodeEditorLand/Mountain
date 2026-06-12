@@ -3,7 +3,7 @@
 
 use std::path::PathBuf;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(Raw:&str) -> PathBuf {
 	if let Some(Stripped) = Raw.strip_prefix("~/") {
 		if let Ok(Home) = std::env::var("HOME") {

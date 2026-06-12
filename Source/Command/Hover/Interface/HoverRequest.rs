@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::Command::Hover::Interface::Position;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	pub uri:String,
 

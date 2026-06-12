@@ -6,7 +6,6 @@
 //! and dropped; Cancel → deliberate no-op (the unary path has no cancel
 //! support). Removes the `CHANNEL_REGISTRY` entry when the stream closes
 //! so stale senders are not retained.
-
 use tokio::sync::mpsc;
 
 use crate::dev_log;
@@ -27,7 +26,6 @@ pub(crate) fn Fn(
 		while let Some(FrameResult) = Inbound.next().await {
 			let Frame = match FrameResult {
 				Ok(F) => F,
-
 				Err(Status) => {
 					dev_log!("cocoon", "[CocoonService] channel_id={} inbound error: {}", ChannelId, Status);
 
@@ -37,7 +35,6 @@ pub(crate) fn Fn(
 
 			let Payload = match Frame.payload {
 				Some(P) => P,
-
 				None => continue,
 			};
 
@@ -46,7 +43,6 @@ pub(crate) fn Fn(
 					// Reuse the unary notification dispatcher verbatim.
 					let _ = super::GenericNotification::Dispatcher::Fn(&Service, tonic::Request::new(N)).await;
 				},
-
 				Payload::Request(R) => {
 					let RequestId = R.request_identifier;
 
@@ -58,9 +54,8 @@ pub(crate) fn Fn(
 						Ok(GrpcResponse) => {
 							let Inner = GrpcResponse.into_inner();
 
-							Envelope { payload:Some(Payload::Response(Inner)) }
+							Envelope { payload:Some(Payload::Response(Inner)), channel_id:ChannelId }
 						},
-
 						Err(Status) => {
 							Envelope {
 								payload:Some(Payload::Response(GenericResponse {
@@ -72,6 +67,7 @@ pub(crate) fn Fn(
 										data:Vec::new(),
 									}),
 								})),
+								channel_id:ChannelId,
 							}
 						},
 					};
@@ -81,7 +77,6 @@ pub(crate) fn Fn(
 						break;
 					}
 				},
-
 				Payload::Response(_) => {
 					// Responses on the Mountain-inbound direction are
 					// unexpected; drop silently.
@@ -91,7 +86,6 @@ pub(crate) fn Fn(
 						ChannelId
 					);
 				},
-
 				Payload::Cancel(_) => {
 					// Best-effort cancel; the unary path has no cancel
 					// support so this is a deliberate no-op.

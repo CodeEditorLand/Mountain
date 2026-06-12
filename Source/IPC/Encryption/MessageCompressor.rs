@@ -25,7 +25,6 @@
 //! - Compression level 6 provides good balance between speed and ratio
 //! - Batch size 10 aggregates small messages for efficiency
 //! - Gzip provides widely compatible compression format
-//!
 
 use std::io::{Read, Write};
 

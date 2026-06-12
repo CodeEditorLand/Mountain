@@ -6,7 +6,7 @@ use CommonLibrary::Error::CommonError::CommonError;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
-/// Flushs pending operations.
+	/// Flushs pending operations.
 	pub async fn FlushPendingOperations(&self) {
 		dev_log!("lifecycle", "[ApplicationRunTime] Flushing pending operations...");
 

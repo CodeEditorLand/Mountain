@@ -1,7 +1,6 @@
 //! Window-management RPC service. Placeholder for the Grove + Cocoon
 //! extension-host roadmap (window/document/webview lifecycle). Status:
 //! not yet wired; all exports are cfg-gated behind `grove` or `cocoon`.
-
 #[cfg(any(feature = "grove", feature = "cocoon"))]
 pub struct Struct;
 

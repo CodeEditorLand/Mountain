@@ -1,7 +1,7 @@
 //! Single file result inside `SearchFilesResponse`.
 
 #[derive(Debug, Clone)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	pub path:String,
 

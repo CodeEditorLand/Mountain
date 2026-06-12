@@ -1,5 +1,4 @@
 //! Rename a file or directory, creating any missing target parents first.
-
 use tonic::{Response, Status};
 use ::Vine::Generated::{Empty, RenameFileRequest};
 

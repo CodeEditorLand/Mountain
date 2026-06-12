@@ -1,7 +1,7 @@
 //! Inner metrics payload for `MetricsResponse`.
 
 #[derive(Debug, Clone)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	pub memory_usage_mb:f64,
 

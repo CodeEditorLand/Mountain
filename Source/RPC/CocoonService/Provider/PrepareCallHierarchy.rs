@@ -5,7 +5,6 @@
 //! asks the registered provider to return the root `CallHierarchyItem` at that
 //! location. Without this step the incoming/outgoing calls panels are always
 //! empty even when the provider is correctly registered.
-
 use serde_json::Value;
 use tonic::{Response, Status};
 use url::Url;

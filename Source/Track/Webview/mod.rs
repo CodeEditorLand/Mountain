@@ -1,5 +1,5 @@
 //! Webview-guest message forwarding. Callers spell
 //! `Track::Webview::MountainWebviewPostMessageFromGuest::MountainWebviewPostMessageFromGuest`.
 
-/// Mountainwebviewpostmessagefromguest module.
+/// Webview guest post-message handler.
 pub mod MountainWebviewPostMessageFromGuest;

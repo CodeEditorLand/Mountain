@@ -12,7 +12,7 @@ use CommonLibrary::{
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
-/// Disposes terminals safely.
+	/// Disposes terminals safely.
 	pub async fn DisposeTerminalsSafely(&self) -> Result<(), CommonError> {
 		let TerminalProvider:Arc<dyn TerminalProviderTrait> = self.Environment.Require();
 

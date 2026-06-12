@@ -1,5 +1,4 @@
 //! Dispose a PTY via `TerminalProvider::DisposeTerminal`.
-
 use tonic::{Response, Status};
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 use ::Vine::Generated::{CloseTerminalRequest, Empty};

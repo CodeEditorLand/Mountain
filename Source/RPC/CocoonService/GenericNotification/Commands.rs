@@ -1,6 +1,5 @@
 //! Notification handlers: `registerCommand`, `unregisterCommand`.
 //! Fire-and-forget variants called from `send_mountain_notification`.
-
 use serde_json::Value;
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
 

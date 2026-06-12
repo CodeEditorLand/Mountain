@@ -29,7 +29,6 @@
 //! - Messages use efficient serde_json::Value for flexible data payloads
 //! - Timestamp uses u64 for compact representation
 //! - Option<> used for optional fields to minimize serialization overhead
-//!
 
 use serde::{Deserialize, Serialize};
 

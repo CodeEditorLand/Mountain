@@ -1,7 +1,6 @@
 //! Tracks which extension host owns which extension id. Populated from
 //! `$deltaExtensions` + `InitExtensionHost` payloads; read by
 //! `ExtensionRouter` when a request needs to be routed to a specific host.
-
 use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::RwLock;

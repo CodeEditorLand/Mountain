@@ -9,7 +9,6 @@
 //! watch handle from a hash of the URI so dedup-by-triple logic in
 //! `FileWatcherProvider` can collapse identical registrations from multiple
 //! extensions watching the same root.
-
 use std::{
 	path::PathBuf,
 	sync::atomic::{AtomicU64, Ordering},

@@ -1,6 +1,5 @@
 //! Look up a contributed command and execute it. Marshals the first
 //! protobuf `argument` oneof into `serde_json::Value` for the executor.
-
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
 use serde_json::json;
 use tonic::{Response, Status};

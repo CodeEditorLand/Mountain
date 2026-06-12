@@ -9,7 +9,7 @@ use serde_json::Value;
 
 use crate::{ApplicationState::Internal::Persistence::MementoLoader::AttemptMementoRecovery, dev_log};
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(StorageFilePath:&Path) -> HashMap<String, Value> {
 	if !StorageFilePath.exists() {
 		dev_log!(

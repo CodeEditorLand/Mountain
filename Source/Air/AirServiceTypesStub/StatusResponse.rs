@@ -1,7 +1,7 @@
 //! `GetStatus` response DTO. Carries uptime, request counts, health flag.
 
 #[derive(Debug, Clone)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	pub version:String,
 

@@ -8,5 +8,5 @@ pub fn Fn(Params:Value, Env:&MountainEnvironment) {
 
 	let _ = Env
 		.ApplicationHandle
-		.emit("sky://webview/dispose", json!({ "panelId": PanelId }));
+		.emit_to("main", "sky://webview/dispose", json!({ "panelId": PanelId }));
 }

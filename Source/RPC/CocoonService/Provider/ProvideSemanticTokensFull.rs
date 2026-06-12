@@ -1,5 +1,4 @@
 //! Forward a semantic-tokens-full request to the registered provider.
-
 use tonic::{Response, Status};
 use url::Url;
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;

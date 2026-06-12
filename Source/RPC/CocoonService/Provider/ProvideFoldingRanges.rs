@@ -1,5 +1,4 @@
 //! Forward a folding-ranges request to the registered provider.
-
 use tonic::{Response, Status};
 use url::Url;
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;

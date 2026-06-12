@@ -4,7 +4,6 @@
 //! registration the workbench has no memory of the entry and
 //! the first `SetStatusBarText::Fn` call rebroadcasts a fresh entry
 //! (state leak). Falls back to a direct Sky emit on trait failure.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

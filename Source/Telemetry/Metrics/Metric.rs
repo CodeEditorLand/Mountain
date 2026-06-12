@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use crate::Telemetry::Metrics::MetricValue;
 
 #[derive(Debug, Clone)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	pub Name:String,
 

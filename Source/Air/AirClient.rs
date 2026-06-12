@@ -1,10 +1,10 @@
 use ::AirLibrary::AirError;
 use CommonLibrary::Error::CommonError::CommonError;
 
-/// Type alias for AirClient.
+/// Alias for the AirLibrary client type.
 pub type AirClient = ::AirLibrary::Client::AirClient::AirClient;
 
-/// Maps air error.
+/// Maps an AirLibrary error to a CommonError.
 pub fn MapAirError(Error:AirError) -> CommonError {
 	match Error {
 		AirError::Authentication(Reason) => CommonError::AccessDenied { Reason },

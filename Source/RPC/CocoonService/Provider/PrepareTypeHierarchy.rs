@@ -3,7 +3,6 @@
 //! Entry point for VS Code's type hierarchy feature. Returns the root
 //! `TypeHierarchyItem` at the given position so the Subtypes/Supertypes
 //! panels have a starting item to display.
-
 use serde_json::Value;
 use tonic::{Response, Status};
 use url::Url;

@@ -13,10 +13,8 @@
 //! - **Permission**: Permission definition with name, description, and category
 //!
 //! ## ERROR HANDLING
-//! N/A - This is a data definition module.
 //!
 //! ## LOGGING
-//! N/A - Permission creation is logged by PermissionManager.
 //!
 //! ## PERFORMANCE CONSIDERATIONS
 //! - Permission definitions are stored in HashMap for O(1) lookup

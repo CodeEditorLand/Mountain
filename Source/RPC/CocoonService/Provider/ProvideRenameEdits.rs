@@ -1,5 +1,4 @@
 //! Forward a rename-edits request to the registered provider.
-
 use tonic::{Response, Status};
 use url::Url;
 use CommonLibrary::LanguageFeature::{
@@ -33,7 +32,9 @@ pub async fn Fn(
 		Column:Position_.map(|P| P.character).unwrap_or(0),
 	};
 
-	let Forward = Service.environment.ProvideRenameEdits(DocumentURI, PositionDTO_, Request.new_name);
+	let Forward = Service
+		.environment
+		.ProvideRenameEdits(DocumentURI, PositionDTO_, Request.new_name);
 
 	let Outcome = match Service.RunCancellable("ProvideRenameEdits", Forward).await {
 		Some(Outcome) => Outcome,

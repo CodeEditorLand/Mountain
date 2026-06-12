@@ -4,33 +4,34 @@
 //! lifecycle dev-log lines. Behind the `Telemetry` feature gate; the
 //! non-feature path falls through with no overhead.
 //!
-//! Layout (one export per file, file name = identity):
-//! - `InitializeTracing::Fn` - install the global subscriber.
-//! - `CreateSpan::Fn` - span factory with structured attributes.
-//! - `InstrumentRPC::Fn` - gRPC-call wrapper with start/finish logs.
-//! - `InstrumentCommand::Fn` - Mountain-command wrapper, errors as
+//! ## Layout
+//!
+//! - `InitializeTracing::Fn`: installs the global subscriber.
+//! - `CreateSpan::Fn`: span factory with structured attributes.
+//! - `InstrumentRPC::Fn`: gRPC-call wrapper with start/finish logs.
+//! - `InstrumentCommand::Fn`: Mountain-command wrapper, errors as
 //!   `CommonError`.
-//! - `MeasureTime` (macro file) - `measure_time!` block timer.
+//! - `MeasureTime` (macro file): `measure_time!` block timer.
 //!
 //! ## Status
 //!
-//! Zero callers as of 2026-05-02. The Telemetry feature is not yet
-//! enabled in any profile; once it ships, wire from `Binary::Main` and
-//! the IPC dispatch hot path.
+//! No callers as of 2026-05-02. The Telemetry feature is not yet enabled in
+//! any profile; wire from `Binary::Main` and the IPC dispatch hot path once
+//! it ships.
 
-/// Createspan module.
+/// Span factory with structured attributes.
 pub mod CreateSpan;
 
-/// Initializetracing module.
+/// Global subscriber initialization.
 pub mod InitializeTracing;
 
-/// Instrumentcommand module.
+/// Command execution instrumentation.
 pub mod InstrumentCommand;
 
-/// Instrumentrpc module.
+/// gRPC-call wrapper with span and logging.
 pub mod InstrumentRPC;
 
-/// Measuretime module.
+/// `measure_time!` macro for block timing.
 pub mod MeasureTime;
 
 #[cfg(test)]

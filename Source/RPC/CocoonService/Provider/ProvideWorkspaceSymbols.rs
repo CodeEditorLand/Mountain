@@ -1,5 +1,4 @@
 //! Forward a workspace-symbols query to the registered provider.
-
 use tonic::{Response, Status};
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
 use ::Vine::Generated::{ProvideWorkspaceSymbolsRequest, ProvideWorkspaceSymbolsResponse};

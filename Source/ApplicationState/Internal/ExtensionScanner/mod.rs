@@ -1,10 +1,8 @@
-//! # ExtensionScanner
-//!
-//! Scans registered extension directories and populates the
-//! extension registry state. Handles partial failures gracefully.
+//! Scans registered extension directories and populates the extension
+//! registry state. Handles partial failures gracefully.
 
-/// Loadfromcache module.
+/// Extension cache loading from disk.
 pub mod LoadFromCache;
 
-/// Scanandpopulateextensions module.
+/// Extension directory scanning and registry population.
 pub mod ScanAndPopulateExtensions;

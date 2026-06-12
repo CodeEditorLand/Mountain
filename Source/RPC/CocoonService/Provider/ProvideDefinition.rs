@@ -1,6 +1,5 @@
 //! Resolve "go to definition" via the registered provider, mapping each
 //! result location into the gRPC `Location` shape.
-
 use tonic::{Response, Status};
 use url::Url;
 use CommonLibrary::LanguageFeature::{

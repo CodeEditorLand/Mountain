@@ -1,6 +1,5 @@
 //! Forward a completion request to the registered provider and project
 //! the suggestions into the gRPC `CompletionItem` shape.
-
 use tonic::{Response, Status};
 use url::Url;
 use CommonLibrary::LanguageFeature::{
@@ -47,7 +46,9 @@ pub async fn Fn(
 		},
 	};
 
-	let Forward = Service.environment.ProvideCompletions(DocumentURI, PositionDTO_, ContextDTO, None);
+	let Forward = Service
+		.environment
+		.ProvideCompletions(DocumentURI, PositionDTO_, ContextDTO, None);
 
 	let Outcome = match Service.RunCancellable("ProvideCompletionItems", Forward).await {
 		Some(Outcome) => Outcome,

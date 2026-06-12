@@ -1,96 +1,52 @@
-//! # Vine gRPC Server Module
+//! # Vine gRPC Server
 //!
-//! This module contains the implementation for the Mountain gRPC server. It is
-//! responsible for listening for incoming connections from sidecars like
-//! `Cocoon`, handling RPC requests, and dispatching them into the Mountain
-//! application logic.
+//! Implements the Mountain gRPC server for incoming connections from sidecars
+//! like Cocoon. Handles RPC request dispatching into Mountain application
+//! logic.
 //!
 //! ## Architecture
 //!
-//! The Vine server implements two complementary gRPC services:
+//! Two complementary gRPC services:
 //!
-//! ### MountainService (Listens on one port)
-//! - **ProcessCocoonRequest**: Handles request-response calls from Cocoon
-//! - **SendCocoonNotification**: Processes fire-and-forget notifications from
-//!   Cocoon
-//! - **CancelOperation**: Cancels long-running operations requested by Cocoon
+//! - **MountainService**: Handles Cocoon-to-Mountain requests and notifications
+//!   (listening port)
+//! - **CocoonService**: Sends Mountain-to-Cocoon requests and notifications
+//!   (outgoing port)
 //!
-//! ### CocoonService (Listens on separate port)
-//! - **ProcessMountainRequest**: Handles request-response calls from Mountain
-//!   to Cocoon
-//! - **SendMountainNotification**: Processes notifications from Mountain to
-//!   Cocoon
-//! - **CancelOperation**: Cancels operations in Cocoon
+//! ## Lifecycle
 //!
-//! ## Lifecycle Management
+//! 1. **Initialization**: Servers spawned as background tasks via `Initialize`
+//! 2. **Service Registration**: gRPC services registered with tonic's Server
+//!    builder
+//! 3. **Request Handling**: Each RPC call dispatched to appropriate handlers
+//! 4. **Graceful Shutdown**: Servers terminate when tokio runtime shuts down
 //!
-//! 1. **Initialization**: Servers are spawned as background tasks via
-//!    `Initialize::Initialize`
-//! 2. **Service Registration**: gRPC services are registered with tonic's
-//!    Server builder
-//! 3. **Request Handling**: Each RPC call is dispatched to appropriate handlers
-//! 4. **Graceful Shutdown**: Servers terminate when tokio runtime is shut down
+//! ## Security
 //!
-//! ## Data Flow
-//!
-//! ```text
-//! Cocoon Sidecar                          Mountain Extension Host
-//!      │                                          │
-//!      │  ┌──────────────────────────────────►    │
-//!      │  │ MountainService::ProcessCocoonRequest │
-//!      │  │ (extensions, queries, state)          │
-//!      │  ◄───────────────────────────────────    │
-//!      │                                          │
-//!      │  ┌──────────────────────────────────►    │
-//!      │  │ MountainService::SendCocoonNotification
-//!      │  │ (status updates, events)              │
-//!      │  ◄───────────────────────────────────    │
-//!      │                                          │
-//!      │  ◄────────────────────────────────────── │
-//!      │  │ CocoonService::ProcessMountainRequest │
-//!      │  │ (Webview operations, IPC)             │
-//!      │  ┌──────────────────────────────────►    │
-//!      │                                          │
-//!      │  ◄────────────────────────────────────── │
-//!      │  │ CocoonService::SendMountainNotification
-//!      │  │ (config changes, commands)             │
-//!      │  ┌──────────────────────────────────►    │
-//!      │                                          │
-//! ```
-//!
-//! ## Error Handling
-//!
-//! - Request validation before processing
-//! - Comprehensive error conversion to tonic::Status
-//! - Detailed logging of all errors
-//! - Graceful error responses to clients
-//!
-//! ## Security Considerations
-//!
-//! - Request size limits (4MB default)
-//! - Method whitelisting (prevents arbitrary method calls)
+//! - Request size limits (4 MB default)
+//! - Method whitelisting
 //! - Parameter validation before processing
 //! - Safe error messages (no sensitive data leakage)
 //!
-//! ## Modules
+//! ## Sub-modules
 //!
-//! - [`Initialize`]: Server initialization and startup logic
-//! - [`MountainVinegRPCService`]: Implementation of MountainService (Cocoon →
-//!   Mountain)
-//! - `CocoonServiceImpl`: Implementation of CocoonService (Mountain → Cocoon)
+//! - [`Initialize`]: Server initialization and startup
+//! - [`MountainVinegRPCService`]: MountainService impl (Cocoon → Mountain)
+//! - [`VineHostImpl`]: Vine host implementation
+//! - [`Notification`]: Cocoon-to-Mountain notification atoms (one handler per
+//!   file)
 
-/// Initialize module.
+/// Server initialization and startup.
 pub mod Initialize;
 
-/// Mountainvinegrpcservice module.
+/// MountainService implementation (handles Cocoon → Mountain calls).
 pub mod MountainVinegRPCService;
 
-/// Vinehostimpl module.
+/// Vine host implementation.
 pub mod VineHostImpl;
 
-/// Cocoon → Mountain notification atoms. One handler per file so the
-/// dispatcher in `MountainVinegRPCService::send_cocoon_notification`
-/// stays a thin match; each wire method lives at
+/// Cocoon-to-Mountain notification atoms. One handler per file so the
+/// dispatcher stays a thin match; each wire method lives at
 /// `Vine::Server::Notification::<Atom>::<Atom>` for grep-friendly
-/// navigation. See `Notification/mod.rs` for the contract.
+/// navigation.
 pub mod Notification;

@@ -1,5 +1,4 @@
 //! Configuration-update DTO. Carries key + value + scope.
-
 use serde::{Deserialize, Serialize};
 
 use crate::RPC::Configuration::ConfigurationScope;

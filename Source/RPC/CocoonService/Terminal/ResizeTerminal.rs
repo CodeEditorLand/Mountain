@@ -2,7 +2,6 @@
 //! the shell receives SIGWINCH and readline/shells repaint correctly. Also
 //! emits `sky://terminal/resize` so the Sky xterm.js panel reflows its
 //! viewport to match.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

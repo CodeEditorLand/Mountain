@@ -1,7 +1,6 @@
 //! Notification handlers: `register_*_provider` language feature registrations.
 //! All follow the same pattern: extract `handle`, `language_selector`,
 //! `extension_id` from `Params` and call `RegisterProvider`.
-
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 use serde_json::Value;
 

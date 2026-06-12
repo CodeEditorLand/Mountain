@@ -1,6 +1,5 @@
 //! Display an input-box UI. Returns `cancelled:true` with empty value
 //! when the user dismisses without confirming.
-
 use tonic::{Response, Status};
 use CommonLibrary::UserInterface::{
 	DTO::InputBoxOptionsDTO::InputBoxOptionsDTO,

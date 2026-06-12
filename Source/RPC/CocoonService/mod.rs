@@ -291,7 +291,10 @@ use crate::{
 use crate::dev_log;
 
 /// Monotonic counter for outbound channel slots in `CHANNEL_REGISTRY`.
-static NEXT_CHANNEL_ID:AtomicU64 = AtomicU64::new(1);
+/// Shared with
+/// `Vine::Server::MountainVinegRPCService::open_channel_from_cocoon` so channel
+/// ids stay unique across both stream directions.
+pub(crate) static NEXT_CHANNEL_ID:AtomicU64 = AtomicU64::new(1);
 
 /// Monotonic counter for cancellable provider operations registered in
 /// `ActiveOperations`. The typed `Provide*` proto requests carry no request
@@ -315,10 +318,10 @@ lazy_static! {
 /// to the appropriate Mountain services.
 #[derive(Clone)]
 pub struct CocoonServiceImpl {
-	/// environment — Mountain environment providing access to all services.
+	/// environment - Mountain environment providing access to all services.
 	environment:Arc<MountainEnvironment>,
 
-	/// ActiveOperations — Registry of active operations keyed by request ID,
+	/// ActiveOperations - Registry of active operations keyed by request ID,
 	/// each with a cancellation token for operation cancellation.
 	ActiveOperations:Arc<RwLock<HashMap<u64, tokio_util::sync::CancellationToken>>>,
 }
@@ -382,7 +385,9 @@ impl CocoonServiceImpl {
 	/// (a `request_id` field on the `Provide*Request` messages in Vine.proto).
 	pub async fn RunCancellable<T>(
 		&self,
+
 		OperationName:&str,
+
 		Forward:impl std::future::Future<Output = T>,
 	) -> Option<T> {
 		let RequestId = NEXT_OPERATION_ID.fetch_add(1, Ordering::Relaxed);
@@ -393,8 +398,11 @@ impl CocoonServiceImpl {
 			_ = Token.cancelled() => {
 				dev_log!(
 					"cocoon",
+
 					"[CocoonService] {} operation {} cancelled before completion",
+
 					OperationName,
+
 					RequestId
 				);
 
@@ -419,7 +427,7 @@ impl CocoonServiceImpl {
 	/// - `provider_type`: The type of language feature.
 	/// - `language_selector`: Language scope (e.g. `"typescript"`).
 	/// - `extension_id`: Extension that registered this provider.
-	fn RegisterProvider
+	fn RegisterProvider(&self, handle:u32, provider_type:ProviderType, language_selector:&str, extension_id:&str) {
 		// SideCarIdentifier = "cocoon-main" so FeatureMethods::invoke_provider can
 		// route back via Vine::Client::SendRequestToSideCar("cocoon-main", ...).
 		// Selector stored as array so ProviderLookup::get_matching_provider's
@@ -469,7 +477,13 @@ impl CocoonServiceImpl {
 		// Strip file:// prefix if present
 		let path_str = if let Some(Stripped) = value.strip_prefix("file://") {
 			Stripped
-		} else if value.starts_with('/') || (value.len() > 1 && value.as_bytes()[1] == b':' && value.as_bytes()[0].is_ascii_alphabetic() && value.len() > 2 && (value.as_bytes()[2] == b'\\' || value.as_bytes()[2] == b'/')) {
+		} else if value.starts_with('/')
+			|| (value.len() > 1
+				&& value.as_bytes()[1] == b':'
+				&& value.as_bytes()[0].is_ascii_alphabetic()
+				&& value.len() > 2
+				&& (value.as_bytes()[2] == b'\\' || value.as_bytes()[2] == b'/'))
+		{
 			// Bare absolute path (Unix or Windows drive)
 			value
 		} else if let Some((scheme, _)) = value.split_once(':') {
@@ -542,6 +556,25 @@ impl CocoonService for CocoonServiceImpl {
 		let ChannelId = NEXT_CHANNEL_ID.fetch_add(1, Ordering::Relaxed);
 
 		let (OutTx, OutRx) = mpsc::channel::<::Vine::Generated::Envelope>(1024);
+
+		// A new open supersedes every existing channel for the Cocoon peer
+		// (there is exactly one Cocoon sidecar): a restarted Cocoon leaves
+		// stale registry entries whose senders route in-flight responses
+		// into a dead stream. Drop the stored senders so registry pushes
+		// only reach the new channel; each stale pump removes its own
+		// (already-gone) entry when its inbound stream ends.
+		let StaleChannelIds:Vec<u64> = CHANNEL_REGISTRY.iter().map(|Entry| *Entry.key()).collect();
+
+		for StaleChannelId in StaleChannelIds {
+			if CHANNEL_REGISTRY.remove(&StaleChannelId).is_some() {
+				dev_log!(
+					"cocoon",
+					"[CocoonService] open_channel_from_mountain channel_id={} drains stale channel_id={}",
+					ChannelId,
+					StaleChannelId
+				);
+			}
+		}
 
 		// Register the outbound sender so other subsystems can push frames
 		// to this stream using the channel_id.

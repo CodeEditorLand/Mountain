@@ -1,7 +1,6 @@
 //! Generic-request secret-storage handlers for `process_mountain_request`.
 //! Handles `getSecret`, `storeSecret`, `deleteSecret` using Cocoon's
 //! `MountainGRPCClient` name conventions.
-
 use CommonLibrary::Secret::SecretProvider::SecretProvider;
 use serde_json::{Value, json};
 use tonic::Response;

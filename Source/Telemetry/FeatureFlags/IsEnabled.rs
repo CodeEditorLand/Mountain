@@ -2,5 +2,5 @@
 
 use crate::Telemetry::FeatureFlags::GlobalRegistry;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(FlagName:&str) -> bool { GlobalRegistry::REGISTRY.IsEnabled(FlagName) }

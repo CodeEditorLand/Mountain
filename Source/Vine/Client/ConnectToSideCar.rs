@@ -4,7 +4,7 @@
 
 use crate::Vine::Error::VineError;
 
-/// fn.
+/// Public entry point for this module.
 pub async fn Fn(SideCarIdentifier:String, Address:String) -> Result<(), VineError> {
 	::Vine::Client::ConnectToSideCar::Fn(SideCarIdentifier, Address).await
 }

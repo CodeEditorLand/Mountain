@@ -1,6 +1,5 @@
 //! Forward a selection-ranges request (multiple positions per call) to
 //! the registered provider.
-
 use tonic::{Response, Status};
 use url::Url;
 use CommonLibrary::LanguageFeature::{

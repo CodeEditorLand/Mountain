@@ -1,6 +1,5 @@
 //! Resolve "find references" via the registered provider, mapping each
 //! result into the gRPC `Location` shape.
-
 use serde_json::json;
 use tonic::{Response, Status};
 use url::Url;

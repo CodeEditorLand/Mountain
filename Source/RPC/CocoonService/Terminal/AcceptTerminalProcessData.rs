@@ -1,6 +1,5 @@
 //! Forward terminal stdout bytes to Sky on `sky://terminal/data` as
 //! lossy-decoded UTF-8.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

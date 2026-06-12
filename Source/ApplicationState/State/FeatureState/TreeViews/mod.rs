@@ -1,7 +1,5 @@
-//! # TreeViewState
-//!
-//! Tracks active tree view providers keyed by view ID,
+//! Tree view panel state. Tracks active tree view providers keyed by view ID,
 //! storing metadata and visible state.
 
-/// Treeviewstate module.
+/// Tree view state container.
 pub mod TreeViewState;

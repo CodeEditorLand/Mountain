@@ -1,6 +1,5 @@
 //! Update a webview panel's HTML through the trait so the content is
 //! captured in `WebviewStateDTO` and re-servable on reveal/restore.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

@@ -8,7 +8,6 @@
 //!
 //! The response is a list of `InlineCompletionItem` messages that Mountain
 //! maps back into Monaco's `InlineCompletionList`.
-
 use tonic::{Response, Status};
 use url::Url;
 use CommonLibrary::LanguageFeature::{
@@ -53,7 +52,9 @@ pub async fn Fn(
 			.unwrap_or(""),
 	});
 
-	let Forward = Service.environment.ProvideInlineCompletionItems(DocumentURI, PositionDTO_, Context);
+	let Forward = Service
+		.environment
+		.ProvideInlineCompletionItems(DocumentURI, PositionDTO_, Context);
 
 	let Outcome = match Service.RunCancellable("ProvideInlineCompletionItems", Forward).await {
 		Some(Outcome) => Outcome,

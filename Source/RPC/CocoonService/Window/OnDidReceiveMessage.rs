@@ -1,7 +1,6 @@
 //! Forward a webview→extension message to Sky on
 //! `sky://webview/post-message`. The protobuf `oneof` is normalised to
 //! a JSON value (string or bytes).
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

@@ -11,7 +11,7 @@ use AirLibrary::Vine::Generated::air::{air_service_client::AirServiceClient, air
 use crate::dev_log;
 
 #[cfg(feature = "AirIntegration")]
-/// fn.
+/// Public entry point for this module.
 pub async fn Fn(AirClient:&AirServiceClient<tonic::transport::Channel>) -> bool {
 	use tonic::Request;
 

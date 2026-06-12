@@ -7,7 +7,10 @@
 //! register events are lost and the Activity Bar comes up empty.
 //!
 //! Replays: tree-views, SCM providers, extension commands, active terminals
-//! (including buffered stdout from before SkyBridge's listeners were up).
+//! (including buffered stdout from before SkyBridge's listeners were up),
+//! output channels (create + buffered content, capped at the last
+//! `OUTPUT_REPLAY_MAX_LINES` lines per channel), diagnostics per owner,
+//! and status bar entries.
 
 use std::sync::Arc;
 
@@ -15,6 +18,11 @@ use serde_json::Value;
 use tauri::{AppHandle, Emitter};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+
+/// Per-channel cap on replayed output content. Build logs accumulate
+/// megabytes; the workbench only needs the recent tail to repaint the
+/// Output panel.
+const OUTPUT_REPLAY_MAX_LINES:usize = 200;
 
 pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let mut TreeViewCount:usize = 0;
@@ -273,17 +281,139 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 		);
 	}
 
+	// ── Output channels (create + buffered content) ──────────────────────
+	// `Feature.OutputChannels` retains each channel's name, buffered text
+	// and visibility (populated by the OutputProvider and the generic
+	// notification rail's output handlers). Replay re-creates the channel,
+	// then pushes the buffered tail through `sky://output/replace` -
+	// atomic in Sky's bridge, so content delivered live after the
+	// listeners came up is not duplicated.
+	let mut OutputChannelCount:usize = 0;
+
+	let mut OutputReplayBytes:usize = 0;
+
+	let OutputChannels = RunTime.Environment.ApplicationState.Feature.OutputChannels.GetAll();
+
+	for (ChannelId, Dto) in OutputChannels.iter() {
+		let Name = if Dto.Name.is_empty() { ChannelId.clone() } else { Dto.Name.clone() };
+
+		if ApplicationHandle
+			.emit("sky://output/create", serde_json::json!({ "id": ChannelId, "name": Name }))
+			.is_ok()
+		{
+			OutputChannelCount += 1;
+		}
+
+		if Dto.Buffer.is_empty() {
+			continue;
+		}
+
+		let Tail = {
+			let Lines:Vec<&str> = Dto.Buffer.split_inclusive('\n').collect();
+
+			if Lines.len() > OUTPUT_REPLAY_MAX_LINES {
+				Lines[Lines.len() - OUTPUT_REPLAY_MAX_LINES..].concat()
+			} else {
+				Dto.Buffer.clone()
+			}
+		};
+
+		OutputReplayBytes += Tail.len();
+
+		let _ = ApplicationHandle.emit(
+			"sky://output/replace",
+			serde_json::json!({ "channel": ChannelId, "value": Tail }),
+		);
+
+		if Dto.IsVisible {
+			let _ = ApplicationHandle.emit("sky://output/show", serde_json::json!({ "channel": ChannelId }));
+		}
+	}
+
+	// ── Diagnostics (markers per owner) ───────────────────────────────────
+	// `Feature.Diagnostics` retains the full owner → URI → markers map.
+	// Re-emit one `sky://diagnostics/changed` per owner in the same
+	// payload shape `DiagnosticProvider::SetDiagnostics` produces, so
+	// SkyBridge's marker bridge repopulates `IMarkerService` (squiggles +
+	// Problems panel) without waiting for the next language-server push.
+	let mut DiagnosticsOwnerCount:usize = 0;
+
+	let mut DiagnosticsUriCount:usize = 0;
+
+	let Diagnostics = RunTime.Environment.ApplicationState.Feature.Diagnostics.GetAll();
+
+	for (Owner, MarkersByUri) in Diagnostics.iter() {
+		if MarkersByUri.is_empty() {
+			continue;
+		}
+
+		let Uris:Vec<String> = MarkersByUri.keys().cloned().collect();
+
+		let ChangedEntries:Vec<serde_json::Value> = MarkersByUri
+			.iter()
+			.map(|(Uri, Markers)| serde_json::json!({ "uri": Uri, "markers": Markers }))
+			.collect();
+
+		let Payload = serde_json::json!({
+			"Owner": Owner,
+			"owner": Owner,
+			"Uris": Uris,
+			"changedURIs": ChangedEntries,
+		});
+
+		if ApplicationHandle.emit("sky://diagnostics/changed", Payload).is_ok() {
+			DiagnosticsOwnerCount += 1;
+
+			DiagnosticsUriCount += MarkersByUri.len();
+		}
+	}
+
+	// ── Status bar entries ────────────────────────────────────────────────
+	// `Feature.Markers.ActiveStatusBarItems` retains every entry pushed
+	// through `SetStatusBarEntry`. Replay mirrors the live payload shape
+	// of `set_status_bar_entry_impl` so SkyBridge's `SetOrUpdateEntry`
+	// upserts into `IStatusbarService` identically.
+	let mut StatusBarCount:usize = 0;
+
+	let StatusBarItems = RunTime.Environment.ApplicationState.Feature.Markers.GetStatusBarItems();
+
+	for (EntryId, Entry) in StatusBarItems.iter() {
+		let Payload = serde_json::json!({
+			"id": EntryId,
+			"itemId": Entry.ItemIdentifier,
+			"extensionId": Entry.ExtensionIdentifier,
+			"name": Entry.Name,
+			"text": Entry.Text,
+			"tooltip": Entry.Tooltip,
+			"command": Entry.Command,
+			"color": Entry.Color,
+			"backgroundColor": Entry.BackgroundColor,
+			"alignment": if Entry.IsAlignedLeft { 0 } else { 1 },
+			"priority": Entry.Priority,
+			"accessibilityInformation": Entry.AccessibilityInformation,
+		});
+
+		if ApplicationHandle.emit("sky://statusbar/set-entry", Payload).is_ok() {
+			StatusBarCount += 1;
+		}
+	}
+
 	crate::dev_log!(
 		"sky-emit",
 		"[SkyEmit] replay-events tree-views={} scm={} scm-groups={} scm-resource-updates={} commands={} terminals={} \
-		 terminal-bytes={}",
+		 terminal-bytes={} output-channels={} output-bytes={} diagnostics-owners={} diagnostics-uris={} statusbar={}",
 		TreeViewCount,
 		ScmCount,
 		ScmGroupCount,
 		ScmResourceUpdateCount,
 		CommandCount,
 		TerminalCount,
-		TerminalDataBytes
+		TerminalDataBytes,
+		OutputChannelCount,
+		OutputReplayBytes,
+		DiagnosticsOwnerCount,
+		DiagnosticsUriCount,
+		StatusBarCount
 	);
 
 	Ok(serde_json::json!({
@@ -294,5 +424,10 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) ->
 		"commands": CommandCount,
 		"terminals": TerminalCount,
 		"terminalDataBytes": TerminalDataBytes,
+		"outputChannels": OutputChannelCount,
+		"outputReplayBytes": OutputReplayBytes,
+		"diagnosticsOwners": DiagnosticsOwnerCount,
+		"diagnosticsUris": DiagnosticsUriCount,
+		"statusBarItems": StatusBarCount,
 	}))
 }

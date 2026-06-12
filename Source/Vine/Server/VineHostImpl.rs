@@ -13,7 +13,7 @@ pub struct TauriRendererEmitter {
 }
 
 impl TauriRendererEmitter {
-/// new.
+	/// new.
 	pub fn New(Handle:AppHandle) -> Self { Self { Handle } }
 }
 

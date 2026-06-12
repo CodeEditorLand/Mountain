@@ -4,7 +4,7 @@
 use crate::Telemetry::FeatureFlags::FlagCategory;
 
 #[derive(Debug, Clone)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	pub Name:String,
 

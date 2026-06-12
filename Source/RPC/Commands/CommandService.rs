@@ -1,5 +1,4 @@
 //! Command registration and execution service.
-
 use std::collections::HashMap;
 
 pub struct Struct {

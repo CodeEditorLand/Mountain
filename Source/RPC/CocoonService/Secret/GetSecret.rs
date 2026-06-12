@@ -1,6 +1,5 @@
 //! Read a value from the OS keychain. The gRPC proto carries only `key`;
 //! the app name is used as the keyring service scope.
-
 use tonic::{Response, Status};
 use CommonLibrary::Secret::SecretProvider::SecretProvider;
 use ::Vine::Generated::{GetSecretRequest, GetSecretResponse};

@@ -2,32 +2,17 @@
 
 use std::sync::Arc;
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::{
 	IPC::WindServiceHandlers::{
 		Navigation::LabelGetWorkspace,
-		UI::{
-			WorkspacesAddFolder,
-			WorkspacesGetFolders,
-			WorkspacesGetName,
-			WorkspacesRemoveFolder,
-		},
+		UI::{WorkspacesAddFolder, WorkspacesGetFolders, WorkspacesGetName, WorkspacesRemoveFolder},
 		Utilities::{
-			JsonValueHelpers::{
-				Fn as v_str,
-				arg_string,
-			},
-			RecentlyOpened::{
-				Mutate::Fn as MutateRecentlyOpened,
-				Read::Fn as ReadRecentlyOpened,
-			},
+			JsonValueHelpers::{Fn as v_str, arg_string},
+			RecentlyOpened::{Mutate::Fn as MutateRecentlyOpened, Read::Fn as ReadRecentlyOpened},
 		},
-		Workspaces::{
-			CreateUntitledWorkspace,
-			DeleteUntitledWorkspace,
-			EnterWorkspace,
-		},
+		Workspaces::{CreateUntitledWorkspace, DeleteUntitledWorkspace, EnterWorkspace},
 	},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
@@ -85,15 +70,11 @@ pub(crate) async fn route(
 			if !Uri.is_empty() {
 				MutateRecentlyOpened(|List| {
 					if let Some(Workspaces) = List.get_mut("workspaces").and_then(|V| V.as_array_mut()) {
-						Workspaces.retain(|Entry| {
-							Entry.get("uri").and_then(|V| V.as_str()).unwrap_or("") != Uri
-						});
+						Workspaces.retain(|Entry| Entry.get("uri").and_then(|V| V.as_str()).unwrap_or("") != Uri);
 					}
 
 					if let Some(Files) = List.get_mut("files").and_then(|V| V.as_array_mut()) {
-						Files.retain(|Entry| {
-							Entry.get("uri").and_then(|V| V.as_str()).unwrap_or("") != Uri
-						});
+						Files.retain(|Entry| Entry.get("uri").and_then(|V| V.as_str()).unwrap_or("") != Uri);
 					}
 				});
 			}
@@ -134,9 +115,8 @@ pub(crate) async fn route(
 						let File = Entry.get("fileUri").cloned();
 
 						if let Some(FolderUri) = Folder.and_then(|V| v_str(&V)) {
-							MergedWorkspaces.retain(|E| {
-								E.get("uri").and_then(|V| V.as_str()).unwrap_or("") != FolderUri
-							});
+							MergedWorkspaces
+								.retain(|E| E.get("uri").and_then(|V| V.as_str()).unwrap_or("") != FolderUri);
 
 							let mut Item = serde_json::Map::new();
 
@@ -150,9 +130,7 @@ pub(crate) async fn route(
 						}
 
 						if let Some(FileUri) = File.and_then(|V| v_str(&V)) {
-							MergedFiles.retain(|E| {
-								E.get("uri").and_then(|V| V.as_str()).unwrap_or("") != FileUri
-							});
+							MergedFiles.retain(|E| E.get("uri").and_then(|V| V.as_str()).unwrap_or("") != FileUri);
 
 							let mut Item = serde_json::Map::new();
 
@@ -193,9 +171,7 @@ pub(crate) async fn route(
 			Some(EnterWorkspace::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await)
 		},
 
-		"workspaces:createUntitledWorkspace" => {
-			Some(CreateUntitledWorkspace::Fn(ApplicationHandle.clone()).await)
-		},
+		"workspaces:createUntitledWorkspace" => Some(CreateUntitledWorkspace::Fn(ApplicationHandle.clone()).await),
 
 		"workspaces:deleteUntitledWorkspace" => {
 			Some(DeleteUntitledWorkspace::Fn(ApplicationHandle.clone(), Arguments).await)
@@ -230,9 +206,7 @@ pub(crate) async fn route(
 		},
 
 		// Workspace display name (delegates to LabelGetWorkspace)
-		"workspaces:getWorkspaceName" => {
-			Some(LabelGetWorkspace::Fn(RunTime.clone()).await)
-		},
+		"workspaces:getWorkspaceName" => Some(LabelGetWorkspace::Fn(RunTime.clone()).await),
 
 		// Hot-exit backup check — Mountain has no backup service.
 		"workspaces:getDirtyWorkspaces" => Some(Ok(json!([]))),

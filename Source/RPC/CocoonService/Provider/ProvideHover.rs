@@ -1,6 +1,5 @@
 //! Look up a hover from the registered provider. Joins multiple content
 //! pieces with a Markdown horizontal-rule separator.
-
 use tonic::{Response, Status};
 use url::Url;
 use CommonLibrary::LanguageFeature::{

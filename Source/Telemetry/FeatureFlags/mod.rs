@@ -1,49 +1,50 @@
 //! # Runtime Feature Flags
 //!
 //! Process-wide on/off switches that gate experimental, legacy,
-//! performance-sensitive, or developer-only behaviour without recompiling.
+//! performance-sensitive, or developer-only behavior without recompiling.
 //!
-//! Layout (one export per file, file name = identity):
-//! - `FeatureFlag::Struct` - a flag entry (name, state, category, reason).
-//! - `FlagCategory::Enum` - Experimental / Legacy / Performance / UserFacing /
+//! ## Layout
+//!
+//! - `FeatureFlag::Struct`: a flag entry (name, state, category, reason).
+//! - `FlagCategory::Enum`: Experimental / Legacy / Performance / UserFacing /
 //!   Internal.
-//! - `FeatureFlagError::Enum` - registry operation errors.
-//! - `FeatureFlagRegistry::Struct` - thread-safe registry, seeded with the
-//!   default Mountain flags.
-//! - `GlobalRegistry::REGISTRY` - process-wide singleton (module-private).
+//! - `FeatureFlagError::Enum`: registry operation errors.
+//! - `FeatureFlagRegistry::Struct`: thread-safe registry seeded with default
+//!   Mountain flags.
+//! - `GlobalRegistry`: process-wide singleton (module-private).
 //! - `IsEnabled::Fn`, `Enable::Fn`, `Disable::Fn`, `GetAllFlags::Fn`,
-//!   `Initialize::Fn` - convenience accessors for the global registry.
+//!   `Initialize::Fn`: convenience accessors for the global registry.
 //!
 //! ## Status
 //!
 //! Wired up but unused as of 2026-05-02. Hydrate from `MountainEnvironment`
 //! and gate flag-driven code paths.
 
-/// Disable module.
+/// Flag disable convenience accessor.
 pub mod Disable;
 
-/// Enable module.
+/// Flag enable convenience accessor.
 pub mod Enable;
 
-/// Featureflag module.
+/// Feature flag entry (name, state, category, reason).
 pub mod FeatureFlag;
 
-/// Featureflagerror module.
+/// Registry operation errors.
 pub mod FeatureFlagError;
 
-/// Featureflagregistry module.
+/// Thread-safe registry seeded with default Mountain flags.
 pub mod FeatureFlagRegistry;
 
-/// Flagcategory module.
+/// Flag category enumeration.
 pub mod FlagCategory;
 
-/// Getallflags module.
+/// All-flags retrieval convenience accessor.
 pub mod GetAllFlags;
 
-/// Initialize module.
+/// Global registry initialization.
 pub mod Initialize;
 
-/// Isenabled module.
+/// Flag enabled check convenience accessor.
 pub mod IsEnabled;
 
 pub(crate) mod GlobalRegistry;

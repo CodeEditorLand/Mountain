@@ -1,5 +1,4 @@
 //! Notification: `registerCommand`.
-
 use serde_json::Value;
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
 

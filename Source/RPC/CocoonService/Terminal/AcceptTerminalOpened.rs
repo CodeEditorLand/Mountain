@@ -2,7 +2,6 @@
 //! `sky://terminal/create` (NOT `/opened` - `SkyBridge.ts:1736` listens on
 //! `create` and destructures `{ id, name, pid }`; the `pid` is best-effort
 //! 0 here until the real one lands via `AcceptTerminalProcessId`).
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

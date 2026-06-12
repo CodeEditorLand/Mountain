@@ -2,7 +2,6 @@
 //! `RegisterTreeViewProvider::Fn` uses as a registration handle. Lets
 //! `GetTreeChildren::Fn` look up the registered provider without the
 //! caller passing the handle through the wire.
-
 pub fn Fn(ViewIdentifier:&str) -> u32 {
 	ViewIdentifier
 		.as_bytes()

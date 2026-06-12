@@ -10,17 +10,16 @@ use crate::dev_log;
 
 /// Stops the Echo task scheduler and cleans up its resources.
 ///
-/// # Arguments
+/// # Parameters
 ///
-/// * `SchedulerForShutdown` - Arc-wrapped scheduler to shut down
+/// - `SchedulerForShutdown` — Arc-wrapped scheduler to shut down
 ///
 /// # Returns
 ///
-/// A `Result` indicating success or failure.
+/// `Ok(())` on success, or `Err(String)` if shutdown fails.
 ///
-/// # Shutdown Process
+/// ## Behaviour
 ///
-/// This function performs:
 /// - Stops accepting new tasks
 /// - Completes in-progress tasks
 /// - Cleans up scheduler resources

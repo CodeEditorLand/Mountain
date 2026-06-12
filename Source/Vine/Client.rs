@@ -1,49 +1,49 @@
 //! Vine client - callers use `::Vine::Client::X::Fn(...)` directly.
 
-/// Checksidecarhealth module.
+/// Checks the health of a sidecar connection.
 pub mod CheckSideCarHealth;
 
-/// Connecttosidecar module.
+/// Establishes a gRPC connection to a sidecar.
 pub mod ConnectToSideCar;
 
-/// Disconnectfromsidecar module.
+/// Disconnects an active gRPC connection to a sidecar.
 pub mod DisconnectFromSideCar;
 
-/// Isclientconnected module.
+/// Reports whether a sidecar client is connected.
 pub mod IsClientConnected;
 
-/// Isshuttingdown module.
+/// Reports whether the client is marked for shutdown.
 pub mod IsShuttingDown;
 
-/// Markshutdown module.
+/// Marks the client for shutdown, preventing new requests.
 pub mod MarkShutdown;
 
-/// Notificationframe module.
+/// Encapsulates a single notification frame for the multiplexer.
 pub mod NotificationFrame;
 
-/// Publishnotification module.
+/// Publishes a notification to the broadcast channel.
 pub mod PublishNotification;
 
-/// Publishnotificationfrommux module.
+/// Publishes a notification from the streaming multiplexer.
 pub mod PublishNotificationFromMux;
 
-/// Sendnotification module.
+/// Sends a fire-and-forget notification to the sidecar.
 pub mod SendNotification;
 
-/// Sendrequest module.
+/// Sends a request to the sidecar and awaits a response.
 pub mod SendRequest;
 
-/// Shared module.
+/// Shared client state (connection pool, broadcast, shutdown flag).
 pub mod Shared;
 
-/// Subscribenotifications module.
+/// Subscribes to the notification broadcast channel.
 pub mod SubscribeNotifications;
 
-/// Subscribercount module.
+/// Reports the number of active broadcast subscribers.
 pub mod SubscriberCount;
 
-/// Tryconnectsingle module.
+/// Attempts a single gRPC connection without retry.
 pub mod TryConnectSingle;
 
-/// Waitforclientconnection module.
+/// Blocks until the sidecar client establishes a connection.
 pub mod WaitForClientConnection;

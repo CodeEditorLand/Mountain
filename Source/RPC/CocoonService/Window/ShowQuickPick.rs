@@ -1,7 +1,6 @@
 //! Display a quick-pick UI through the `UserInterfaceProvider`. The
 //! returned label strings are mapped back to indices via linear search
 //! so the proto response can carry stable `selected_indices`.
-
 use tonic::{Response, Status};
 use CommonLibrary::UserInterface::{
 	DTO::{QuickPickItemDTO::QuickPickItemDTO, QuickPickOptionsDTO::QuickPickOptionsDTO},

@@ -1,5 +1,4 @@
 //! OTEL trace-span DTO.
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

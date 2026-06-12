@@ -1,7 +1,6 @@
 //! Open a document in the workbench. Maps to `sky://editor/openDocument`
 //! (same channel as `Workspace::OpenDocument::Fn`; this is the
 //! window-namespace alias).
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

@@ -10,7 +10,6 @@
 //! | `FindFiles` / `FindTextInFiles`         | Low    | long-running                        |
 //! | `GitExec`                               | Low    | spawns subprocess                   |
 //! | everything else                         | Normal | safe default                        |
-
 use Echo::Task::Priority::Priority as EchoPriority;
 
 pub fn Fn(Method:&str) -> EchoPriority {

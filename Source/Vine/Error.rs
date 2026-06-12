@@ -6,7 +6,6 @@
 //! `crate::Vine::Error::*` via type aliases so existing in-tree imports
 //! continue to resolve without an explicit workspace-crate import at each
 //! call site.
-
 /// Canonical Vine error enum. See [`::Vine::Error::VineError`] for the full
 /// variant list and conversion impls.
 pub type VineError = ::Vine::Error::VineError;

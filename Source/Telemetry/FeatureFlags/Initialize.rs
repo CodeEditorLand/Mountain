@@ -4,7 +4,7 @@
 
 use crate::{Telemetry::FeatureFlags::FeatureFlagError, dev_log};
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() -> Result<(), FeatureFlagError::Enum> {
 	dev_log!("config", "feature flags system initialized");
 

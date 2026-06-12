@@ -1,19 +1,5 @@
 //! # Manage
 //!
-//! ## File: IPC/Connection/Manage/ManageConnection.rs
-//!
-//! ## Role: Manages connection state for IPC communication
-//! ## Primary Responsibility: Track and manage connection lifecycles with Rust frontend
-//!
-//! ## Dependencies
-//! - TauriIPCMessage: Message types from IPC/Message/Define
-//! - AppHandle: Tauri application handle for event emission
-//!
-//! ## Security Considerations
-//! - Connection timeout prevents hanging connections
-//! - State isolation prevents connection state leakage
-//! - Connection validation prevents malformed connection states
-//!
 //! ## Performance Considerations
 //! - Arc<Mutex<>> for thread-safe shared state without excessive locks
 //! - Non-blocking status checks for high-frequency polling

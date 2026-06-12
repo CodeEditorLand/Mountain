@@ -1,6 +1,5 @@
 //! Register a Cocoon-side on-type-formatting provider. Uses the
 //! type-formatting-specific request shape (carries trigger characters).
-
 use tonic::{Response, Status};
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 use ::Vine::Generated::{Empty, RegisterOnTypeFormattingProviderRequest};

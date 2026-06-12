@@ -1,6 +1,5 @@
 //! Wire a Cocoon-contributed command into Mountain's `CommandExecutor` as
 //! a Proxied handler that forwards back to the sidecar.
-
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
 use tonic::{Response, Status};
 use ::Vine::Generated::{Empty, RegisterCommandRequest};

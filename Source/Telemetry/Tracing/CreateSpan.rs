@@ -3,7 +3,7 @@
 //! their own `cfg` gates.
 
 #[cfg(feature = "Telemetry")]
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(Name:&str, Attributes:&[(&str, &str)]) -> tracing::Span {
 	let mut Span = tracing::span!(tracing::Level::INFO, Name);
 
@@ -15,5 +15,5 @@ pub fn Fn(Name:&str, Attributes:&[(&str, &str)]) -> tracing::Span {
 }
 
 #[cfg(not(feature = "Telemetry"))]
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(_Name:&str, _Attributes:&[(&str, &str)]) {}

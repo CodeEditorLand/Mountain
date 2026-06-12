@@ -5,7 +5,6 @@
 //! `ExtHostAuthentication$getSession` and maps the response back to proto
 //! fields. If no provider is registered the default (empty) response is
 //! returned, which VS Code treats as "no session available".
-
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 use serde_json::json;
 use tonic::{Response, Status};

@@ -1,5 +1,5 @@
 //! Editor decoration state. Callers spell
 //! `Decorations::DecorationsState::{DecorationData, DecorationsState}`.
 
-/// Decorationsstate module.
+/// Decorations state container.
 pub mod DecorationsState;

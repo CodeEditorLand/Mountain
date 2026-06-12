@@ -6,5 +6,18 @@ use crate::Environment::MountainEnvironment::MountainEnvironment;
 pub fn Fn(Params:Value, Env:&MountainEnvironment) {
 	let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
-	let _ = Env.ApplicationHandle.emit("sky://output/clear", json!({ "channel": Channel }));
+	if let Some(Entry) = Env
+		.ApplicationState
+		.Feature
+		.OutputChannels
+		.OutputChannels
+		.lock()
+		.get_mut(&Channel)
+	{
+		Entry.Clear();
+	}
+
+	let _ = Env
+		.ApplicationHandle
+		.emit_to("main", "sky://output/clear", json!({ "channel": Channel }));
 }

@@ -1,5 +1,4 @@
 //! Remove a previously-registered Cocoon command from the executor.
-
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
 use tonic::{Response, Status};
 use ::Vine::Generated::{Empty, UnregisterCommandRequest};

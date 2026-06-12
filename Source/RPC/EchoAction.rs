@@ -6,7 +6,6 @@
 //! Without this gate a `$activateByEvent("*")` fan-out (28+ `ReadFile` +
 //! 28+ `Stat` + 28+ `Configuration.Inspect`) starves any interactive Wind
 //! IPC arriving during the burst.
-
 pub mod EchoActionServer;
 
 pub mod ExtensionHostRegistry;

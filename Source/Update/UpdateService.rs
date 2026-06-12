@@ -1,23 +1,29 @@
-//! Application updater. Two paths: Tauri's bundled updater (always available)
-//! and Air-delegated updates (feature-gated). `CheckForUpdatesWithAir::Fn`
-//! routes by `UpdateMode::Enum`.
+//! Application self-update. Tauri's bundled updater (always available) plus
+//! optional Air gRPC delegation. Currently dormant — zero call sites; kept
+//! atomized for the eventual Help → Check for Updates wire-up.
 //!
-//! ## Status
+//! ## Sub-modules
 //!
-//! Zero call sites as of 2026-05-02. Wire from `Binary::Main` (Help
-//! Check for Updates) or remove if Air becomes the canonical path.
+//! - [`CheckForUpdates`]: Tauri bundled updater path
+//! - [`CheckForUpdatesWithAir`]: Mode-aware dispatcher (Tauri vs Air)
+//! - [`UpdateMode`]: Delegation strategy (`AutoDetect`, `ForceAir`,
+//!   `ForceTauri`)
+//!
+//! ## Feature-gated
+//!
+//! - `AirIntegration` enables [`CheckForUpdatesViaAir`] and [`IsAirAvailable`]
 
-/// Checkforupdates module.
+/// Tauri bundled updater path.
 pub mod CheckForUpdates;
 
-/// Checkforupdateswithair module.
+/// Mode-aware dispatcher: routes to Tauri or Air per `UpdateMode`.
 pub mod CheckForUpdatesWithAir;
 
-/// Updatemode module.
+/// Delegation mode controlling update mechanism selection.
 pub mod UpdateMode;
 
 #[cfg(feature = "AirIntegration")]
-/// Checkforupdatesviaair module.
+/// Air gRPC update check path.
 pub mod CheckForUpdatesViaAir;
 
 #[cfg(feature = "AirIntegration")]

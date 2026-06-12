@@ -1,10 +1,8 @@
-//! # Persistence
-//!
 //! Memento loading and saving for state persistence and crash recovery.
-//! Writes/reads JSON state files to disk with proper error handling.
+//! Writes and reads JSON state files to disk with proper error handling.
 
-/// Mementoloader module.
+/// Memento loading with recovery and initial-load logic.
 pub mod MementoLoader;
 
-/// Mementosaver module.
+/// Memento saving to disk.
 pub mod MementoSaver;

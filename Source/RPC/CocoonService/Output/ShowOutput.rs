@@ -1,6 +1,5 @@
 //! Show an output channel in the workbench panel via
 //! `sky://output/show`.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

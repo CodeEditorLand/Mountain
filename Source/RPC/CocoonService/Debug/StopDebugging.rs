@@ -1,7 +1,6 @@
 //! Stop an active debug session. Emits `sky://debug/sessionEnd` (NOT
 //! `/stop` - Sky listens on the former at `SkyBridge.ts:2234`;
 //! `DebugProvider.rs:351` emits the same channel from the lifecycle path).
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

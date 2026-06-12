@@ -9,7 +9,7 @@ use parking_lot::RwLock;
 use crate::Telemetry::Metrics::{Metric, MetricValue};
 
 #[derive(Debug)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	Metrics:Arc<RwLock<Vec<Metric::Struct>>>,
 
@@ -17,12 +17,12 @@ pub struct Struct {
 }
 
 impl Struct {
-/// new.
+	/// Creates a new instance.
 	pub fn new(MaxEntries:usize) -> Self {
 		Self { Metrics:Arc::new(RwLock::new(Vec::with_capacity(MaxEntries))), MaxEntries }
 	}
 
-/// Records counter.
+	/// Records counter.
 	pub fn RecordCounter(&self, Name:&str, Value:f64, Labels:HashMap<String, String>) {
 		self.Push(Metric::Struct {
 			Name:Name.to_string(),
@@ -32,7 +32,7 @@ impl Struct {
 		});
 	}
 
-/// Records gauge.
+	/// Records gauge.
 	pub fn RecordGauge(&self, Name:&str, Value:f64, Labels:HashMap<String, String>) {
 		self.Push(Metric::Struct {
 			Name:Name.to_string(),
@@ -42,7 +42,7 @@ impl Struct {
 		});
 	}
 
-/// Records histogram.
+	/// Records histogram.
 	pub fn RecordHistogram(&self, Name:&str, Value:Duration, Labels:HashMap<String, String>) {
 		self.Push(Metric::Struct {
 			Name:Name.to_string(),
@@ -62,10 +62,10 @@ impl Struct {
 		Metrics.push(Item);
 	}
 
-/// Gets all metrics.
+	/// Gets all metrics.
 	pub fn GetAllMetrics(&self) -> Vec<Metric::Struct> { self.Metrics.read().clone() }
 
-/// Gets metrics by name.
+	/// Gets metrics by name.
 	pub fn GetMetricsByName(&self, Name:&str) -> Vec<Metric::Struct> {
 		self.Metrics.read().iter().filter(|M| M.Name == Name).cloned().collect()
 	}

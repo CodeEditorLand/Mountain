@@ -474,6 +474,13 @@ message Envelope {
     GenericResponse response = 3;
     CancelOperationRequest cancel = 4;
   }
+
+  // Per-connection channel identifier assigned by the side that owns the
+  // channel registry entry for this stream. 0 when the sender has no
+  // registry-assigned identifier. Receivers can compare this against the
+  // identifier observed at channel-open time to detect frames from a stale
+  // (pre-reconnect) channel.
+  uint64 ChannelId = 5;
 }
 
 // A generic request message containing a method name and serialized parameters.

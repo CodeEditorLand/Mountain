@@ -25,16 +25,16 @@ use crate::Air::AirServiceTypesStub::{
 };
 
 #[derive(Debug, Clone)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct;
 
 impl Struct {
-/// new.
+	/// Creates a new instance.
 	pub async fn new(_Address:&str) -> Result<Self, String> {
 		Err("AirIntegration feature is not implemented yet".to_string())
 	}
 
-/// Checks for updates.
+	/// Checks for updates.
 	pub async fn CheckForUpdates(
 		&self,
 
@@ -43,12 +43,12 @@ impl Struct {
 		Err("AirIntegration feature is not implemented yet".to_string())
 	}
 
-/// Downloads file.
+	/// Downloads file.
 	pub async fn DownloadFile(&self, _Request:DownloadRequest::Struct) -> Result<DownloadFileResponse::Struct, String> {
 		Err("AirIntegration feature is not implemented yet".to_string())
 	}
 
-/// Applys update.
+	/// Applys update.
 	pub async fn ApplyUpdate(
 		&self,
 
@@ -57,7 +57,7 @@ impl Struct {
 		Err("AirIntegration feature is not implemented yet".to_string())
 	}
 
-/// Authenticates user.
+	/// Authenticates user.
 	pub async fn AuthenticateUser(
 		&self,
 
@@ -66,22 +66,22 @@ impl Struct {
 		Err("AirIntegration feature is not implemented yet".to_string())
 	}
 
-/// Indexs files.
+	/// Indexs files.
 	pub async fn IndexFiles(&self, _Request:IndexRequest::Struct) -> Result<IndexFilesResponse::Struct, String> {
 		Err("AirIntegration feature is not implemented yet".to_string())
 	}
 
-/// Searchs files.
+	/// Searchs files.
 	pub async fn SearchFiles(&self, _Request:SearchRequest::Struct) -> Result<SearchFilesResponse::Struct, String> {
 		Err("AirIntegration feature is not implemented yet".to_string())
 	}
 
-/// Gets status.
+	/// Gets status.
 	pub async fn GetStatus(&self, _Request:StatusRequest::Struct) -> Result<StatusResponse::Struct, String> {
 		Err("AirIntegration feature is not implemented yet".to_string())
 	}
 
-/// Gets metrics.
+	/// Gets metrics.
 	pub async fn GetMetrics(&self, _Request:MetricsRequest::Struct) -> Result<MetricsResponse::Struct, String> {
 		Err("AirIntegration feature is not implemented yet".to_string())
 	}

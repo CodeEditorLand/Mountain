@@ -6,14 +6,13 @@
 //! is discarded here because the gRPC notification contract has no return
 //! channel; callers that need the success boolean must use the request path
 //! (`applyEdit` via `process_cocoon_request`).
-
 use std::sync::Arc;
 
 use serde_json::Value;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-/// Workspaces apply edit.
+/// Applies a workspace edit via Vine IPC.
 pub async fn WorkspaceApplyEdit(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let RunTime = Arc::clone(Service.RunTime());
 
@@ -34,7 +33,6 @@ pub async fn WorkspaceApplyEdit(Service:&MountainVinegRPCService, Parameter:&Val
 			Ok(_) => {
 				dev_log!("ipc", "[WorkspaceApplyEdit] notification round-trip resolved");
 			},
-
 			Err(Error) => {
 				dev_log!("ipc", "warn: [WorkspaceApplyEdit] notification round-trip failed: {:?}", Error);
 			},

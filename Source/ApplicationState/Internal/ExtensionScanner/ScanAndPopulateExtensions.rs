@@ -15,7 +15,7 @@ use crate::{
 	dev_log,
 };
 
-/// fn.
+/// Public entry point for this module.
 pub async fn Fn(
 	ApplicationHandle:AppHandle,
 
@@ -179,8 +179,10 @@ pub async fn Fn(
 						// reconciles it (fire-and-forget, swallowed when
 						// Cocoon is not connected yet - the init payload /
 						// getAll it fetches later reads the merged map).
-						let ToAdd:Vec<Value> =
-							Merged.iter().filter_map(|(_, Description)| serde_json::to_value(Description).ok()).collect();
+						let ToAdd:Vec<Value> = Merged
+							.iter()
+							.filter_map(|(_, Description)| serde_json::to_value(Description).ok())
+							.collect();
 
 						NotifyCocoonDeltaExtensions(ToAdd, Vec::new());
 

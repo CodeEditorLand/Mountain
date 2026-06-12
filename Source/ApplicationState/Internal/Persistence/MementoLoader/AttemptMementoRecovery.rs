@@ -7,7 +7,7 @@ use std::{fs, path::Path};
 
 use crate::dev_log;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(FilePath:&Path, CorruptedContent:&str) {
 	let BackupPath = FilePath.with_extension("json.backup");
 

@@ -163,7 +163,7 @@ impl CertificateManager {
 
 	/// Initialize or load the CA certificate
 	///
-	/// This method attempts to load the CA certificate from the keyring.
+	/// Attempts to load the CA certificate from the keyring.
 	/// If not found, it generates a new self-signed CA and stores it.
 	///
 	/// # Example
@@ -376,7 +376,8 @@ impl CertificateManager {
 			rcgen::ExtendedKeyUsagePurpose::ClientAuth,
 		];
 
-		// Generate self-signed certificate - TODO: Update rcgen API usage
+		// Generate a self-signed certificate using the rcgen crate. The rcgen
+		// API may change between versions — update the usage when upgrading.
 		let key_pair = rcgen::KeyPair::generate()?;
 
 		// Generate self-signed certificate using the params and key pair

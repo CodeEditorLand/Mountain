@@ -1,7 +1,7 @@
 //! Echo-scheduler-powered runtime that executes `ActionEffect` pipelines.
 //! Method-per-file impls live as siblings under `RunTime/Execute/` and
-//! `RunTime/Shutdown/`. The struct stays here (no `pub use` indirection)
-//! so callers spell `RunTime::ApplicationRunTime::ApplicationRunTime`.
+//! `RunTime/Shutdown/`. The struct stays here so callers spell
+//! `RunTime::ApplicationRunTime::ApplicationRunTime`.
 
 use std::sync::Arc;
 
@@ -11,9 +11,10 @@ use Echo::Scheduler::Scheduler::Scheduler;
 use crate::{Environment::MountainEnvironment::MountainEnvironment, dev_log};
 
 #[derive(Clone)]
-/// Data for application run time.
+/// Echo-backed runtime that drives `ActionEffect` pipelines through the
+/// work-stealing scheduler.
 pub struct ApplicationRunTime {
-	/// Shared handle to the application's central scheduler.
+	/// Shared handle to the application's central Echo scheduler.
 	pub Scheduler:Arc<Scheduler>,
 
 	/// Shared handle to the `MountainEnvironment` capability provider.
@@ -21,7 +22,7 @@ pub struct ApplicationRunTime {
 }
 
 impl ApplicationRunTime {
-/// create.
+	/// Creates a new runtime instance with the given scheduler and environment.
 	pub fn Create(Scheduler:Arc<Scheduler>, Environment:Arc<MountainEnvironment>) -> Self {
 		dev_log!("lifecycle", "new Echo-based instance created");
 

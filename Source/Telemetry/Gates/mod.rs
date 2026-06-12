@@ -3,52 +3,53 @@
 //! Compile-time and runtime feature gates that decide which telemetry
 //! code paths are alive in the current binary.
 //!
-//! Layout (one export per file, file name = identity):
-//! - `IsDebugBuild::Fn`, `IsDevelopmentBuild::Fn`, `IsTelemetryEnabled::Fn`,
-//!   `IsMetricsEnabled::Fn`, `IsDistributedTracingEnabled::Fn`,
-//!   `IsFeatureFlagsEnabled::Fn` - `cfg!`-driven `const fn` predicates.
-//! - `GetRuntimeGates::Fn`, `RuntimeGateEnabled::Fn`, `ListEnabledGates::Fn`,
-//!   `ValidateRequiredGates::Fn` - runtime set accessors.
-//! - `EnableRuntimeGate::Fn` - TODO no-op shim until the storage moves from
+//! ## Layout
+//!
+//! - `IsDebugBuild`, `IsDevelopmentBuild`, `IsTelemetryEnabled`,
+//!   `IsMetricsEnabled`, `IsDistributedTracingEnabled`,
+//!   `IsFeatureFlagsEnabled`: `cfg!`-driven `const fn` predicates.
+//! - `GetRuntimeGates`, `RuntimeGateEnabled`, `ListEnabledGates`,
+//!   `ValidateRequiredGates`: runtime set accessors.
+//! - `EnableRuntimeGate`: no-op shim until storage moves from
 //!   `OnceLock<HashSet>` to `RwLock<HashSet>`.
-//! - `RuntimeGates::GATES` - module-private singleton + initialiser.
+//! - `RuntimeGates`: module-private singleton and initializer.
 //!
 //! ## Status
 //!
-//! Zero callers as of 2026-05-02. Wire into IPC dispatch and
-//! command execution once the gates are read from runtime config.
+//! No callers as of 2026-05-02. Wire into IPC dispatch and command execution
+//! once the gates are read from runtime config.
 
-/// Enableruntimegate module.
+/// Runtime gate enablement (no-op shim).
 pub mod EnableRuntimeGate;
 
-/// Getruntimegates module.
+/// Runtime gate list accessor.
 pub mod GetRuntimeGates;
 
-/// Isdebugbuild module.
+/// Debug build detection.
 pub mod IsDebugBuild;
 
-/// Isdevelopmentbuild module.
+/// Development build detection.
 pub mod IsDevelopmentBuild;
 
-/// Isdistributedtracingenabled module.
+/// Distributed tracing enabled check.
 pub mod IsDistributedTracingEnabled;
 
-/// Isfeatureflagsenabled module.
+/// Feature flags enabled check.
 pub mod IsFeatureFlagsEnabled;
 
-/// Ismetricsenabled module.
+/// Metrics enabled check.
 pub mod IsMetricsEnabled;
 
-/// Istelemetryenabled module.
+/// Telemetry enabled check.
 pub mod IsTelemetryEnabled;
 
-/// Listenabledgates module.
+/// Enabled gates list accessor.
 pub mod ListEnabledGates;
 
-/// Runtimegateenabled module.
+/// Single runtime gate enabled check.
 pub mod RuntimeGateEnabled;
 
-/// Validaterequiredgates module.
+/// Required gates validation.
 pub mod ValidateRequiredGates;
 
 pub(crate) mod RuntimeGates;

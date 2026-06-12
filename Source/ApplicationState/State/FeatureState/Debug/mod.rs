@@ -1,7 +1,5 @@
-//! # Debug
-//!
-//! Tracks debug provider registrations and session state
+//! Debug state. Tracks debug provider registrations and session state
 //! for the integrated debugger.
 
-/// Debugstate module.
+/// Debug state container.
 pub mod DebugState;

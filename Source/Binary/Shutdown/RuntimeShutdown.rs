@@ -10,17 +10,16 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Shuts down the ApplicationRunTime and its effect execution engine.
 ///
-/// # Arguments
+/// # Parameters
 ///
-/// * `ApplicationHandle` - The Tauri application handle
+/// - `ApplicationHandle` — The Tauri application handle
 ///
 /// # Returns
 ///
-/// A `Result` indicating success or failure.
+/// `Ok(())` on success, or `Err(String)` if shutdown fails.
 ///
-/// # Shutdown Process
+/// ## Behaviour
 ///
-/// This function performs:
 /// - Stops all running tasks and effects
 /// - Cleans up internal resources
 /// - Ensures graceful termination of the runtime

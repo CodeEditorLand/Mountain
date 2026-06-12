@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	pub line:u32,
 

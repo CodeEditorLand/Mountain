@@ -5,5 +5,5 @@ use std::collections::HashMap;
 
 use crate::Telemetry::Metrics::GlobalRegistry;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(Name:&str, Value:f64) { GlobalRegistry::REGISTRY.RecordCounter(Name, Value, HashMap::new()); }

@@ -1,5 +1,4 @@
 //! Create a new output channel and notify Sky over `sky://output/create`.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

@@ -59,10 +59,11 @@
 //! - Services initialized only when needed
 //! - Clone operations minimized for Arc-wrapped shared state
 //!
-//! ## TODO
-//! - [ ] Add setup progress tracking
-//! - [ ] Implement setup timeout handling
-//! - [ ] Add setup rollback mechanism on failure
+//! ## Planned Work
+//!
+//! - Setup progress tracking
+//! - Setup timeout handling
+//! - Setup rollback mechanism on failure
 
 use std::sync::Arc;
 

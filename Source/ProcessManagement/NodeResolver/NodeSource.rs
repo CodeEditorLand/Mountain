@@ -3,7 +3,7 @@
 //! lines.
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-/// Enumeration for enum.
+/// Enumeration for the enclosing variant set.
 pub enum Enum {
 	/// `Pick` environment variable.
 	Override,
@@ -33,7 +33,7 @@ pub enum Enum {
 }
 
 impl Enum {
-/// Ass label.
+	/// Returns the human-readable label for this source.
 	pub fn AsLabel(self) -> &'static str {
 		match self {
 			Self::Override => "override",

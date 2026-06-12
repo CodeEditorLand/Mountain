@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use crate::ApplicationState::State::ApplicationState::ApplicationState;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(State:&Arc<ApplicationState>) -> Result<String, String> {
 	State
 		.Workspace

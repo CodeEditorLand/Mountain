@@ -5,5 +5,5 @@ use std::collections::HashSet;
 
 use crate::Telemetry::Gates::RuntimeGates;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() -> &'static HashSet<String> { RuntimeGates::Initialise() }

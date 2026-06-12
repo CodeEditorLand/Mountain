@@ -1,48 +1,21 @@
 //! # Compress
 //!
-//! ## File: IPC/Message/Compress/Compress.rs
-//!
-//! ## Role in Mountain Architecture
-//!
 //! Provides Gzip compression for IPC messages to optimize bandwidth usage
 //! between Mountain's Rust backend and Wind's TypeScript frontend.
 //!
-//! ## Primary Responsibility
-//!
 //! Compress and decompress IPC message payloads using Gzip algorithm to reduce
 //! transfer payload size and improve IPC communication performance.
-//!
-//! ## Secondary Responsibilities
 //!
 //! - Determine optimal batching strategy for multiple messages
 //! - Handle compression errors gracefully with fallback
 //! - Validate decompression results to prevent decompression bomb attacks
 //! - Provide size thresholds for determining when to compress
 //!
-//! ## Dependencies
-//!
-//! **External Crates:**
-//! - `flate2` - Gzip compression/decompression
-//! - `serde_json` - Message serialization
-//!
-//! **Internal Modules:**
-//! - `DefineMessage::TauriIPCMessage` - Message type being compressed
-//!
-//! ## Dependents
-//!
-//! - `TauriIPCServer` - Uses compression for message batches
-//! - `Send` - Compresses outgoing messages
-//! - `Receive` - Decompresses incoming messages
-//!
-//! ## VSCode Pattern Reference
-//!
 //! Inspired by VSCode's RPC message compression in
 //! `vs/base/parts/ipc/node/ipc.net.ts`
 //! - Adaptive compression based on payload size
 //! - Size threshold for deciding when to compress
 //! - Batching small messages for efficiency
-//!
-//! ## Security Considerations
 //!
 //! - Compression bomb protection: Maximum decompressed size enforced
 //! - Validation of decompressed size before processing
@@ -56,19 +29,14 @@
 //! - Adaptive compression level (default = 6, balanced speed/ratio)
 //! - Batch multiple small messages when ShouldBatch returns true
 //!
-//! ## Error Handling Strategy
-//!
 //! - Returns Result<T, CompressionError> for explicit error handling
 //! - Logs compression failures without propagating to caller (graceful
 //!   degradation)
 //! - Falls back to uncompressed on compression failure
 //! - Detailed error messages include context for debugging
 //!
-//! ## Thread Safety
-//!
 //! - All methods are `&self` and safe for concurrent access
 //! - No interior mutability, state is configuration only
-//!
 
 use std::io::{Read, Write};
 

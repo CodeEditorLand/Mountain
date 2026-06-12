@@ -1,6 +1,5 @@
 //! Register a Cocoon-side signature-help provider. Uses the
 //! signature-help-specific request shape (carries trigger characters).
-
 use tonic::{Response, Status};
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 use ::Vine::Generated::{Empty, RegisterSignatureHelpProviderRequest};

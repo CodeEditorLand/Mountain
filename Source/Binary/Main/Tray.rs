@@ -26,9 +26,10 @@
 //!
 //! Minimal resource overhead.
 //!
-//! ## TODO
-//! - [ ] Add tray menu customization
-// - [ ] Implement tray notification handling
+//! ## Planned Work
+//!
+//! - Tray menu customization
+//! - Tray notification handling
 
 // Note: All Tauri tray commands are now in the atomic command modules
 // in Binary/Tray/*.rs. This module is kept for organizational purposes.

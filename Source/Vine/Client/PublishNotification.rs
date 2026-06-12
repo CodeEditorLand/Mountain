@@ -4,5 +4,5 @@
 
 use serde_json::Value;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(_SideCarIdentifier:&str, _Method:&str, _Parameters:&Value) {}

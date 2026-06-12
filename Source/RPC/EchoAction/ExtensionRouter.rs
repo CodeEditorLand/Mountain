@@ -1,7 +1,6 @@
 //! Pairs an extension identifier with the host that owns it. Used by
 //! `EchoActionServer` to scope priority/telemetry when more than one
 //! extension host is active (Grove + Cocoon).
-
 use std::sync::Arc;
 
 use crate::RPC::EchoAction::ExtensionHostRegistry;

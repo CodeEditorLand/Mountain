@@ -1,55 +1,67 @@
-//! # ApplicationState DTO Module
+//! Serializable DTOs used for state persistence and IPC transmission.
 //!
-//! # RESPONSIBILITY
-//! - Aggregates and re-exports all Data Transfer Objects (DTOs)
-//! - Central module for state serialization/deserialization
-//! - Provides standard interface for gRPC/IPC transmission of application state
+//! Each DTO module follows the convention: one file per type, `pub struct
+//! Struct` as the primary export, matching the Cocoon wire format.
 //!
-//! # FIELDS
-//! - Re-exports all DTO modules for application state components
+//! ## Sub-modules
+//!
+//! - [`CustomDocumentStateDTO`]: Custom document state
+//! - [`DocumentStateDTO`]: Standard document state
+//! - [`ExtensionDescriptionStateDTO`]: Extension description state
+//! - [`MarkerDataDTO`]: Marker (diagnostic) data
+//! - [`MarkerSeverity`]: Marker severity levels
+//! - [`MergedConfigurationStateDTO`]: Merged configuration state
+//! - [`OutputChannelStateDTO`]: Output channel state
+//! - [`ProviderRegistrationDTO`]: Provider registration state
+//! - [`RPCRangeDTO`]: LSP-compatible range DTO
+//! - [`RPCModelContentChangeDTO`]: Model content change DTO
+//! - [`TerminalStateDTO`]: Terminal instance state
+//! - [`TreeViewStateDTO`]: Tree view panel state
+//! - [`WebviewStateDTO`]: Webview panel state
+//! - [`WindowStateDTO`]: Window state
+//! - [`WorkspaceFolderStateDTO`]: Workspace folder state
 
-// --- Module Declarations (alphabetical) ---
-/// Customdocumentstatedto module.
+/// Custom document state DTO.
 pub mod CustomDocumentStateDTO;
 
-/// Documentstatedto module.
+/// Standard document state DTO.
 pub mod DocumentStateDTO;
 
-/// Extensiondescriptionstatedto module.
+/// Extension description state DTO.
 pub mod ExtensionDescriptionStateDTO;
 
-/// Markerdatadto module.
+/// Marker (diagnostic) data DTO.
 pub mod MarkerDataDTO;
 
-/// Markerseverity module.
+/// Marker severity levels enumeration.
 pub mod MarkerSeverity;
 
-/// Mergedconfigurationstatedto module.
+/// Merged configuration state DTO.
 pub mod MergedConfigurationStateDTO;
 
-/// Outputchannelstatedto module.
+/// Output channel state DTO.
 pub mod OutputChannelStateDTO;
 
-/// Providerregistrationdto module.
+/// Provider registration state DTO.
 pub mod ProviderRegistrationDTO;
 
-/// Rpcrangedto module.
+/// LSP-compatible range DTO for IPC transmission.
 pub mod RPCRangeDTO;
 
-/// Rpcmodelcontentchangedto module.
+/// Model content change DTO for IPC transmission.
 pub mod RPCModelContentChangeDTO;
 
-/// Terminalstatedto module.
+/// Terminal instance state DTO.
 pub mod TerminalStateDTO;
 
-/// Treeviewstatedto module.
+/// Tree view panel state DTO.
 pub mod TreeViewStateDTO;
 
-/// Webviewstatedto module.
+/// Webview panel state DTO.
 pub mod WebviewStateDTO;
 
-/// Windowstatedto module.
+/// Window state DTO.
 pub mod WindowStateDTO;
 
-/// Workspacefolderstatedto module.
+/// Workspace folder state DTO.
 pub mod WorkspaceFolderStateDTO;

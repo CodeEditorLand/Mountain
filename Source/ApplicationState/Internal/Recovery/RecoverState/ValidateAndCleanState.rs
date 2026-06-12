@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use crate::dev_log;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn<T>(StateData:&mut HashMap<String, T>, Validator:impl Fn(&T) -> bool) {
 	let OriginalLen = StateData.len();
 

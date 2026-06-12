@@ -54,10 +54,11 @@
 //! All commands are async with `tokio` runtime support.
 //! Minimal allocation overhead by reusing existing data structures.
 //!
-//! ## TODO
-//! - [ ] Add request rate limiting
-//! - [ ] Implement command validation middleware
-//! - [ ] Add telemetry for command usage analytics
+//! ## Planned Work
+//!
+//! - Request rate limiting
+//! - Command validation middleware
+//! - Telemetry for command usage analytics
 
 // Note: All Tauri IPC commands are now in the atomic command modules
 // in Binary/IPC/*.rs. This module is kept for organizational purposes.

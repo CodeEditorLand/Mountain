@@ -1,7 +1,6 @@
 //! Mountain → Cocoon initialization payload (workspace folders +
 //! configuration). Stores parsed folders into `ApplicationState.Workspace`
 //! so the rest of the boot path sees them.
-
 use tonic::{Response, Status};
 use ::Vine::Generated::{Empty, InitExtensionHostRequest};
 

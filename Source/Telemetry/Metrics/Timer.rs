@@ -18,17 +18,17 @@ pub struct Struct {
 }
 
 impl Struct {
-/// start.
+	/// start.
 	pub fn Start(Name:&str) -> Self { Self { Name:Name.to_string(), Labels:HashMap::new(), Start:Instant::now() } }
 
-/// Withs label.
+	/// Withs label.
 	pub fn WithLabel(mut self, Key:&str, Value:&str) -> Self {
 		self.Labels.insert(Key.to_string(), Value.to_string());
 
 		self
 	}
 
-/// Stops and record.
+	/// Stops and record.
 	pub fn StopAndRecord(self) -> Duration {
 		let Elapsed = self.Start.elapsed();
 

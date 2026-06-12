@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use crate::ProcessManagement::NodeResolver::{NodeExecutableName, NodeSource, ResolvedNode};
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() -> Option<ResolvedNode::Struct> {
 	let VoltaHome = std::env::var("VOLTA_HOME").ok().or_else(|| {
 		std::env::var("HOME")

@@ -1,7 +1,6 @@
 //! Apply folder additions/removals to `ApplicationState.Workspace`. URIs
 //! drive removal matching; new folders are appended after the existing
 //! set so existing indices stay stable.
-
 use tonic::{Response, Status};
 use ::Vine::Generated::{Empty, UpdateWorkspaceFoldersRequest};
 

@@ -1,5 +1,5 @@
 //! Keybinding registration state. Callers spell
 //! `Keybindings::KeybindingState::{KeybindingEntry, KeybindingState}`.
 
-/// Keybindingstate module.
+/// Keybinding state container.
 pub mod KeybindingState;

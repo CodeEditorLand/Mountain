@@ -1,5 +1,5 @@
 //! Application boot-phase state. Callers spell
 //! `LifecyclePhase::LifecyclePhaseState::LifecyclePhaseState`.
 
-/// Lifecyclephasestate module.
+/// Application lifecycle phase state container.
 pub mod LifecyclePhaseState;

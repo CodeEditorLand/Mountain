@@ -1,6 +1,5 @@
 //! Read a file from disk and return its bytes (always tagged `utf-8` -
 //! the encoding negotiation lives in Cocoon).
-
 use tonic::{Response, Status};
 use ::Vine::Generated::{ReadFileRequest, ReadFileResponse};
 

@@ -26,7 +26,7 @@ use tauri::{AppHandle, Emitter};
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 #[cfg(feature = "AirIntegration")]
-/// fn.
+/// Public entry point for this module.
 pub async fn Fn(
 	ApplicationHandle:AppHandle,
 

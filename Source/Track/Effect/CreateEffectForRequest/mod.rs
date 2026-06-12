@@ -1,82 +1,94 @@
-/// Utilities module.
+//! Domain-specific effect constructors, one file per domain. The `Fn` in
+//! this module delegates to domain modules in priority order.
+//!
+//! ## Domain Sub-modules
+//!
+//! - `Authentication`, `Clipboard`, `Commands`, `Configuration`, `Debug`,
+//!   `Diagnostics`, `Documents`, `FileSystem`, `FileWatcher`, `Git`,
+//!   `Keybinding`, `LanguageFeatures`, `Languages`, `NativeHost`, `SCM`,
+//!   `Search`, `Secrets`, `StatusBar`, `Storage`, `Task`, `Terminal`,
+//!   `TreeView`, `UserInterface`, `Utilities`, `Webview`, `WindowUI`,
+//!   `Workspace`
+
+/// Shared utilities (param parsing, proxy helpers).
 pub mod Utilities;
 
-/// Authentication module.
+/// Authentication effect constructors.
 pub mod Authentication;
 
-/// Clipboard module.
+/// Clipboard effect constructors.
 pub mod Clipboard;
 
-/// Commands module.
+/// Commands effect constructors.
 pub mod Commands;
 
-/// Configuration module.
+/// Configuration effect constructors.
 pub mod Configuration;
 
-/// Debug module.
+/// Debug effect constructors.
 pub mod Debug;
 
-/// Diagnostics module.
+/// Diagnostics effect constructors.
 pub mod Diagnostics;
 
-/// Documents module.
+/// Documents effect constructors.
 pub mod Documents;
 
-/// Filesystem module.
+/// File system effect constructors.
 pub mod FileSystem;
 
-/// Filewatcher module.
+/// File watcher effect constructors.
 pub mod FileWatcher;
 
-/// Git module.
+/// Git effect constructors.
 pub mod Git;
 
-/// Keybinding module.
+/// Keybinding effect constructors.
 pub mod Keybinding;
 
-/// Languagefeatures module.
+/// Language features effect constructors.
 pub mod LanguageFeatures;
 
-/// Languages module.
+/// Languages effect constructors.
 pub mod Languages;
 
-/// Nativehost module.
+/// Native host effect constructors.
 pub mod NativeHost;
 
-/// Scm module.
+/// Source control management effect constructors.
 pub mod SCM;
 
-/// Search module.
+/// Search effect constructors.
 pub mod Search;
 
-/// Secrets module.
+/// Secrets effect constructors.
 pub mod Secrets;
 
-/// Statusbar module.
+/// Status bar effect constructors.
 pub mod StatusBar;
 
-/// Storage module.
+/// Storage effect constructors.
 pub mod Storage;
 
-/// Task module.
+/// Task effect constructors.
 pub mod Task;
 
-/// Terminal module.
+/// Terminal effect constructors.
 pub mod Terminal;
 
-/// Treeview module.
+/// Tree view effect constructors.
 pub mod TreeView;
 
-/// Userinterface module.
+/// User interface effect constructors.
 pub mod UserInterface;
 
-/// Webview module.
+/// Webview effect constructors.
 pub mod Webview;
 
-/// Windowui module.
+/// Window UI effect constructors.
 pub mod WindowUI;
 
-/// Workspace module.
+/// Workspace effect constructors.
 pub mod Workspace;
 
 use serde_json::Value;

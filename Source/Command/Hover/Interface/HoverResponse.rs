@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::Command::Hover::Interface::{HoverContent, Range};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	pub contents:Vec<HoverContent::Enum>,
 
@@ -20,10 +20,10 @@ impl Default for Struct {
 }
 
 impl Struct {
-/// new.
+	/// Creates a new instance.
 	pub fn new(contents:Vec<HoverContent::Enum>) -> Self { Self { contents, range:None } }
 
-/// Withs range.
+	/// Creates a response with the given contents and hover range.
 	pub fn WithRange(contents:Vec<HoverContent::Enum>, range:Range::Struct) -> Self {
 		Self { contents, range:Some(range) }
 	}

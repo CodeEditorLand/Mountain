@@ -1,5 +1,4 @@
 //! Forward a type hierarchy subtypes request to the registered provider.
-
 use serde_json::json;
 use tonic::{Response, Status};
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;

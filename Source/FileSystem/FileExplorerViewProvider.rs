@@ -23,7 +23,7 @@ use url::Url;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 #[derive(Clone)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	AppicationHandle:AppHandle,
 }
@@ -31,7 +31,7 @@ pub struct Struct {
 impl Environment for Struct {}
 
 impl Struct {
-/// new.
+	/// new.
 	pub fn New(AppicationHandle:AppHandle) -> Self { Self { AppicationHandle } }
 
 	fn CreateTreeItemDTO(&self, Name:&str, URI:&Url, FileType:FileTypeDTO) -> Value {

@@ -19,7 +19,7 @@ use tauri_plugin_updater::UpdaterExt;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
-/// fn.
+/// Public entry point for this module.
 pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<Runtime>, NotifyNoUpdate:bool) -> Result<(), CommonError> {
 	dev_log!("update", "[UpdateService] Checking for updates...");
 

@@ -12,7 +12,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::dev_log;
 
 #[cfg(feature = "Telemetry")]
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() -> Result<(), Box<dyn std::error::Error>> {
 	tracing_subscriber::registry()
 		.with(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
@@ -31,5 +31,5 @@ pub fn Fn() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[cfg(not(feature = "Telemetry"))]
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() -> Result<(), Box<dyn std::error::Error>> { Ok(()) }

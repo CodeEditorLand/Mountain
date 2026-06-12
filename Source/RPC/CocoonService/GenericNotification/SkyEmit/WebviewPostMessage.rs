@@ -10,7 +10,8 @@ pub fn Fn(Params:Value, Env:&MountainEnvironment) {
 
 	let MsgParams = Params.get("params").cloned().unwrap_or(Value::Null);
 
-	let _ = Env.ApplicationHandle.emit(
+	let _ = Env.ApplicationHandle.emit_to(
+		"main",
 		"sky://webview/message",
 		json!({ "panelId": PanelId, "method": Method, "params": MsgParams }),
 	);

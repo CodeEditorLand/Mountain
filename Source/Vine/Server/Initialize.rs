@@ -37,7 +37,6 @@
 //! - Log errors to the logging system
 //! - Not automatically restart on failure (caller should implement retry logic
 //!   if needed)
-
 use std::{net::SocketAddr, sync::Arc};
 
 use tauri::{AppHandle, Manager};
@@ -114,7 +113,7 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 }
 
 /// Initializes and starts the gRPC servers on background tasks.
-/// This function retrieves the core `ApplicationRunTime` from Tauri's managed
+/// the core `ApplicationRunTime` from Tauri's managed
 /// state, instantiates the gRPC service implementations
 /// (`MountainVinegRPCService` and `CocoonServiceServer`), and uses `tonic` to
 /// serve them at the specified addresses.
@@ -129,7 +128,7 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 /// - `Err(VineError)`: Initialization failed (invalid address, missing runtime,
 ///   etc.)
 /// # Errors
-/// This function will return an error if:
+/// return an error if:
 /// - Either socket address string is invalid or unparseable
 /// - ApplicationRunTime is not available in Tauri state
 /// - Server task spawning fails (rare)
@@ -236,7 +235,6 @@ pub fn Initialize(
 	// Port 50052 is still reserved for Cocoon's own gRPC server (started by
 	// Cocoon's Effect-TS bootstrap, Stage 5); Mountain connects to it as a
 	// CLIENT via Vine::Client::ConnectToSideCar and never binds 50052.
-
 	dev_log!(
 		"grpc",
 		"[VineServer] MountainService gRPC server initialized on {}",

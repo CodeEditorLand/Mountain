@@ -1,15 +1,21 @@
-//! Effect execution engine for the Mountain application. Provides the runtime
-//! environment for executing effects through the Echo scheduler.
+//! RunTime — Effect execution engine for the Mountain application.
+//!
+//! Provides the runtime environment that drives `ActionEffect` pipelines
+//! through the Echo scheduler.
+//!
+//! ## Sub-modules
+//!
+//! - [`ApplicationRunTime`]: Runtime struct definition and lifecycle
+//! - [`Execute`]: Effect execution wrappers (retry, timeout, direct run)
+//! - [`Shutdown`]: Graceful service shutdown and lifecycle management
 
-// --- Sub-modules ---
-
-/// Application runtime module containing the struct definition.
-/// The struct is accessible as
-/// `RunTime::ApplicationRunTime::ApplicationRunTime`.
+/// Runtime struct definition (accessible as
+/// `RunTime::ApplicationRunTime::ApplicationRunTime`).
 pub mod ApplicationRunTime;
 
-/// Effect execution logic.
+/// Effect execution wrappers: run, run with retry, run with timeout.
 pub mod Execute;
 
-/// Service shutdown and lifecycle management.
+/// Graceful service shutdown and lifecycle management (dispose terminals, flush
+/// ops, save state).
 pub mod Shutdown;

@@ -1,7 +1,6 @@
 //! Register an authentication provider in `ApplicationState`. Cocoon-side
 //! providers (GitHub, Microsoft, etc.) call this on activation; later
 //! `GetAuthenticationSession` calls look up the registered handle.
-
 use serde_json::json;
 use tonic::{Response, Status};
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;

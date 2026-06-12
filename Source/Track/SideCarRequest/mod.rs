@@ -1,5 +1,5 @@
 //! Sidecar request dispatch. Callers spell
 //! `Track::SideCarRequest::DispatchSideCarRequest::DispatchSideCarRequest`.
 
-/// Dispatchsidecarrequest module.
+/// Sidecar RPC request dispatcher.
 pub mod DispatchSideCarRequest;

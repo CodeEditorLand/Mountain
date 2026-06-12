@@ -1,7 +1,6 @@
 //! Child-process RPC service. Placeholder for spawn + stdio + signal
 //! handling for Cocoon. Status: not yet wired; all exports are cfg-gated
 //! behind the `child-processes` feature.
-
 #[cfg(feature = "child-processes")]
 pub struct Struct;
 

@@ -1,7 +1,6 @@
 //! Spawn a new PTY via `TerminalProvider::CreateTerminal`. Builds the
 //! options JSON `TerminalStateDTO::Create` expects (name + shellPath +
 //! shellArgs + cwd) and forwards through.
-
 use serde_json::json;
 use tonic::{Response, Status};
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;

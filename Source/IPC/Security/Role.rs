@@ -13,15 +13,12 @@
 //! - **Role**: Role definition with name, permissions, and description
 //!
 //! ## ERROR HANDLING
-//! N/A - This is a data definition module.
 //!
 //! ## LOGGING
-//! N/A - Role creation is logged by PermissionManager.
 //!
 //! ## PERFORMANCE CONSIDERATIONS
 //! - Role definitions are stored in HashMap for O(1) lookup
 //! - Permissions are stored as `Vec<String>` for iteration
-//!
 
 use serde::{Deserialize, Serialize};
 

@@ -1,7 +1,6 @@
 //! Round-trip a `getChildren` request to the Cocoon-side
 //! `TreeDataProvider` over Vine. Returns an empty list when no provider
 //! is registered or the sidecar call times out (5 s default).
-
 use serde_json::{Value, json};
 use tonic::{Response, Status};
 use ::Vine::{

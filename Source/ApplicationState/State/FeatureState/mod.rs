@@ -2,52 +2,71 @@
 //!
 //! Feature-specific state management for diagnostics, documents,
 //! terminals, webviews, tree views, output channels, keybindings,
-//! navigation history, and working copies.
+//! navigation history, decorations, debug state, lifecycle phase,
+//! markers, tasks, and working copies.
 //!
-//! Each sub-module owns its own slice of the application state.
-//! Access is via Arc<Mutex<...>> with short-held locks.
+//! Each sub-module owns a slice of the application state. Access is
+//! via `Arc<Mutex<...>>` with short-held locks.
+//!
+//! ## Sub-modules
+//!
+//! - [`Debug`]: Debug session state
+//! - [`Decorations`]: Text editor decoration state
+//! - [`Diagnostics`]: Diagnostic markers state
+//! - [`Documents`]: Document state
+//! - [`Keybindings`]: Keybinding state
+//! - [`LifecyclePhase`]: Lifecycle phase tracking
+//! - [`Markers`]: General marker state
+//! - [`NavigationHistory`]: Navigation history state
+//! - [`OutputChannels`]: Output channel state
+//! - [`State`]: Aggregate state container
+//! - [`Tasks`]: Task execution state
+//! - [`Terminals`]: Terminal instance state
+//! - [`TreeViews`]: Tree view panel state
+//! - [`Webviews`]: Webview panel state
+//! - [`WorkingCopy`]: Working copy (unsaved/backup) state
 
-/// Debug module.
+/// Debug session state.
 pub mod Debug;
 
-/// Decorations module.
+/// Text editor decoration state.
 pub mod Decorations;
 
-/// Diagnostics module.
+/// Diagnostic markers state.
 pub mod Diagnostics;
 
-/// Documents module.
+/// Document state.
 pub mod Documents;
 
-/// Keybindings module.
+/// Keybinding state.
 pub mod Keybindings;
 
-/// Lifecyclephase module.
+/// Lifecycle phase tracking.
 pub mod LifecyclePhase;
 
-/// Markers module.
+/// General marker state.
 pub mod Markers;
 
-/// Navigationhistory module.
+/// Navigation history state.
 pub mod NavigationHistory;
 
-/// Outputchannels module.
+/// Output channel state.
 pub mod OutputChannels;
 
-/// State module.
+/// Aggregate state container for FeatureState sub-states.
 pub mod State;
 
-/// Terminals module.
+/// Terminal instance state.
 pub mod Terminals;
 
-/// Tasks module.
+/// Task execution state.
 pub mod Tasks;
 
-/// Treeviews module.
+/// Tree view panel state.
 pub mod TreeViews;
 
-/// Webviews module.
+/// Webview panel state.
 pub mod Webviews;
 
-/// Workingcopy module.
+/// Working copy (unsaved/backup) state.
 pub mod WorkingCopy;

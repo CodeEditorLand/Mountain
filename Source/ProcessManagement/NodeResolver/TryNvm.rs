@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use crate::ProcessManagement::NodeResolver::{NodeExecutableName, NodeSource, ResolvedNode};
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() -> Option<ResolvedNode::Struct> {
 	if let Ok(NvmBin) = std::env::var("NVM_BIN") {
 		let Candidate = PathBuf::from(NvmBin).join(NodeExecutableName::Fn());

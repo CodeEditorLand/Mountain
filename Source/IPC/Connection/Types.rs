@@ -16,22 +16,19 @@
 //! - **ConnectionStatus**: Connection health status
 //!
 //! ## ERROR HANDLING
-//! N/A - This is a data definition module.
 //!
 //! ## LOGGING
-//! N/A - Status changes are logged by the ConnectionManager.
 //!
 //! ## PERFORMANCE CONSIDERATIONS
 //! - ConnectionHandle uses health scoring for efficient monitoring
 //! - Stats are calculated on-demand to avoid overhead
 //! - Simple structures minimize memory footprint
-//!
 
 use serde::{Deserialize, Serialize};
 
 /// Connection status
 ///
-/// Represents the current state of an IPC connection, allowing
+/// The current state of an IPC connection, allowing
 /// the system to track and report connection health.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ConnectionStatus {

@@ -2,7 +2,7 @@ use serde_json::Value;
 
 use crate::Vine::Server::MountainVinegRPCService::MountainVinegRPCService;
 
-/// Unregisters external uri opener.
+/// Unregisters an external URI opener via Vine IPC.
 pub async fn UnregisterExternalUriOpener(Service:&MountainVinegRPCService, Parameter:&Value) {
 	// Remove any scheme entries registered under this opener_id from
 	// the FeatureState map so `nativeHost:openExternal` stops routing

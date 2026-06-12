@@ -4,7 +4,6 @@
 //! `showTextDocument`, `openDocument`, `createWebviewPanel`, `setWebviewHtml`,
 //! `createStatusBarItem`, `setStatusBarText`, `saveAll`, `applyEdit`,
 //! `openExternal`.
-
 use CommonLibrary::UserInterface::UserInterfaceProvider::UserInterfaceProvider;
 use serde_json::{Value, json};
 use tauri::Emitter;

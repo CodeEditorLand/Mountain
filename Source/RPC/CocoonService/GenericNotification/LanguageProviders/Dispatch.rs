@@ -1,6 +1,5 @@
 //! Dispatch a `register_*_provider` method string to the correct ProviderType.
 //! Returns `true` if recognised.
-
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 use serde_json::Value;
 

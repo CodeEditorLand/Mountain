@@ -1,6 +1,5 @@
-//! # NavigationHistory
-//!
-//! Tracks the user's navigation history through the editor,
+//! Navigation history state. Tracks the user's navigation through the editor,
 //! enabling back/forward navigation gestures.
-/// Navigationhistorystate module.
+
+/// Navigation history state container.
 pub mod NavigationHistoryState;

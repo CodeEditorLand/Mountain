@@ -6,7 +6,7 @@
 use crate::dev_log;
 
 #[cfg(feature = "Telemetry")]
-/// fn.
+/// Public entry point for this module.
 pub async fn Fn<F, T, E>(ServiceName:&str, MethodName:&str, Operation:F) -> Result<T, E>
 where
 	F: std::future::Future<Output = Result<T, E>>,
@@ -56,7 +56,7 @@ where
 }
 
 #[cfg(not(feature = "Telemetry"))]
-/// fn.
+/// Public entry point for this module.
 pub async fn Fn<F, T, E>(_ServiceName:&str, _MethodName:&str, Operation:F) -> Result<T, E>
 where
 	F: std::future::Future<Output = Result<T, E>>, {

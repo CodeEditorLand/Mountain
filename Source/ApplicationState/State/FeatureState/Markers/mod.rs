@@ -1,7 +1,5 @@
-//! # MarkerState
-//!
-//! Tracks custom document state, status bar items,
+//! Marker state. Tracks custom document state, status bar items,
 //! and SCM provider marker state.
 
-/// Markerstate module.
+/// Marker state container.
 pub mod MarkerState;

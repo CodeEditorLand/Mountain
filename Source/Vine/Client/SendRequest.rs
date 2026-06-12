@@ -9,7 +9,7 @@ use serde_json::Value;
 
 use crate::Vine::Error::VineError;
 
-/// fn.
+/// Public entry point for this module.
 pub async fn Fn(
 	SideCarIdentifier:&str,
 

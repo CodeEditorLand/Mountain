@@ -31,18 +31,13 @@
 //! ### Dependents
 //! - Frontend (Sky): Invokes this command when theme changes
 //!
-//! ## TODO
+//! ## Planned Work
 //!
-//! ### Immediate Improvements
-//! - Add support for custom icon paths
-//! - Implement icon caching to reduce memory usage
-//!
-//! ### Future Work
-//! - Support for animated tray icons
-//! - Add icon transition effects
+//! - Support for custom icon paths
+//! - Icon caching to reduce memory usage
+//! - Animated tray icons
+//! - Icon transition effects
 //! - Support for third-party icon themes
-//!
-//! ### Missing Functionality to Probe
 //! - Platform-specific icon format requirements
 //! - Icon size optimization for different DPI settings
 //! - Icon loading performance characteristics

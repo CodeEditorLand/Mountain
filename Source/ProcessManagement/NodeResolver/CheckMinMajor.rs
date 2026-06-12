@@ -5,7 +5,7 @@
 
 use crate::dev_log;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(VersionString:&str) {
 	let Trimmed = VersionString.trim_start_matches('v');
 

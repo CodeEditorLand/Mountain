@@ -426,7 +426,7 @@ pub async fn mountain_ipc_invoke(
 			| "sky:editor:optionsChanged"
 			| "sky:editor:diffInformationChanged"
 			| "sky:editor:viewColumnChanged"
-			);
+	);
 
 	let OTLPStart = if IsHighFrequencyCommand { 0 } else { crate::IPC::DevLog::NowNano::Fn() };
 
@@ -836,9 +836,9 @@ pub async fn mountain_ipc_invoke(
 				| "logger:deregisterLogger"
 				| "logger:setVisibility" => Ok(Value::Null),
 
-			// `logger:getLevel` — VS Code expects a numeric LogLevel enum.
-			// Mapping: Trace=0, Debug=1, Info=2, Warning=3, Error=4, Critical=5
-			"logger:getLevel" => Ok(json!(log::max_level() as u32)),
+				// `logger:getLevel` — VS Code expects a numeric LogLevel enum.
+				// Mapping: Trace=0, Debug=1, Info=2, Warning=3, Error=4, Critical=5
+				"logger:getLevel" => Ok(json!(log::max_level() as u32)),
 
 				// Return an empty array so the VS Code Output view can
 				// iterate the result without crashing on null.
@@ -983,7 +983,9 @@ pub async fn mountain_ipc_invoke(
 
 					// Parse the URI into its components so VS Code can reconstruct
 					// the Uri object without undefined fields.
-					let Parsed = UriStr.parse::<url::Url>().unwrap_or_else(|_| url::Url::parse("file:///").unwrap());
+					let Parsed = UriStr
+						.parse::<url::Url>()
+						.unwrap_or_else(|_| url::Url::parse("file:///").unwrap());
 
 					Ok(serde_json::json!({
 						"scheme": Parsed.scheme(),
@@ -1065,38 +1067,37 @@ pub async fn mountain_ipc_invoke(
 				| "commands:onDidExecuteCommand" => Ok(Value::Null),
 
 				// Extension host commands - routed through ExtensionsRouter
-				command if command.starts_with("extensions:") =>
-					Extensions::ExtensionsRouter::route(
-						ApplicationHandle.clone(),
-						RunTime.clone(),
-						&command,
-						Arguments,
-					)
-					.await
-					.unwrap_or_else(|| Ok(Value::Null)),
+				command if command.starts_with("extensions:") => {
+					Extensions::ExtensionsRouter::route(ApplicationHandle.clone(), RunTime.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
+				},
 
 				// Terminal commands - routed through TerminalRouter
-				command if command.starts_with("terminal:") || command.starts_with("localPty:") =>
-					Terminal::TerminalRouter::route(
-						RunTime.clone(),
-						ApplicationHandle.clone(),
-						&command,
-						Arguments,
-					)
-					.await
-					.unwrap_or_else(|| Ok(Value::Null)),
+				command if command.starts_with("terminal:") || command.starts_with("localPty:") => {
+					Terminal::TerminalRouter::route(RunTime.clone(), ApplicationHandle.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
+				},
 
-								// Output channel commands - routed through OutputRouter
-								command if command.starts_with("output:") =>
-									Output::OutputRouter::route(ApplicationHandle.clone(), &command, Arguments)
-										.await
-										.unwrap_or_else(|| Ok(Value::Null)),
+				// Output channel commands - routed through OutputRouter
+				command if command.starts_with("output:") => {
+					Output::OutputRouter::route(ApplicationHandle.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
+				},
 
-								// Text model + textFile commands - routed through ModelRouter
-								command if command.starts_with("textFile:") || command.starts_with("model:") || command.starts_with("text:") || command == "workspace:openTextDocument" =>
-									Model::ModelRouter::route(ApplicationHandle.clone(), RunTime.clone(), &command, Arguments)
-										.await
-										.unwrap_or_else(|| Ok(Value::Null)),
+				// Text model + textFile commands - routed through ModelRouter
+				command
+					if command.starts_with("textFile:")
+						|| command.starts_with("model:")
+						|| command.starts_with("text:")
+						|| command == "workspace:openTextDocument" =>
+				{
+					Model::ModelRouter::route(ApplicationHandle.clone(), RunTime.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
+				},
 
 				// Storage commands (additional)
 				"storage:delete" => call!(rt, "storage", "storage:delete", StorageDelete, Arguments),
@@ -1146,19 +1147,17 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				// Workspaces commands - routed through WorkspacesRouter
-				command if command.starts_with("workspaces:") =>
-					Workspaces::WorkspacesRouter::route(
-						ApplicationHandle.clone(),
-						RunTime.clone(),
-						&command,
-						Arguments,
-					)
-					.await
-					.unwrap_or_else(|| Ok(Value::Null)),
-					// Extension host commands - routed through ExtensionHostRouter
-				command if command.starts_with("extensionHostStarter:")
-					|| command.starts_with("extensionhostdebugservice:")
-					|| command == "cocoon:extensionHostMessage" =>
+				command if command.starts_with("workspaces:") => {
+					Workspaces::WorkspacesRouter::route(ApplicationHandle.clone(), RunTime.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
+				},
+				// Extension host commands - routed through ExtensionHostRouter
+				command
+					if command.starts_with("extensionHostStarter:")
+						|| command.starts_with("extensionhostdebugservice:")
+						|| command == "cocoon:extensionHostMessage" =>
+				{
 					ExtensionHost::ExtensionHostRouter::route(
 						RunTime.clone(),
 						ApplicationHandle.clone(),
@@ -1166,8 +1165,9 @@ pub async fn mountain_ipc_invoke(
 						Arguments,
 					)
 					.await
-					.unwrap_or_else(|| Ok(Value::Null)),
-			// Themes commands
+					.unwrap_or_else(|| Ok(Value::Null))
+				},
+				// Themes commands
 				"themes:getActive" => call!(rt, "themes", "themes:getActive", ThemesGetActive),
 				"themes:list" => call!(rt, "themes", "themes:list", ThemesList),
 				"themes:set" => call!(rt, "themes", "themes:set", ThemesSet, Arguments),
@@ -1295,12 +1295,13 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				// Navigation history commands - routed through HistoryRouter
-				command if command.starts_with("history:") =>
+				command if command.starts_with("history:") => {
 					History::HistoryRouter::route(RunTime.clone(), &command, Arguments)
 						.await
-						.unwrap_or_else(|| Ok(Value::Null)),
+						.unwrap_or_else(|| Ok(Value::Null))
+				},
 
-								// IPC status commands
+				// IPC status commands
 				"mountain_get_status" => {
 					let status = json!({
 						"connected": true,
@@ -1850,32 +1851,34 @@ pub async fn mountain_ipc_invoke(
 					#[cfg(target_os = "macos")]
 					{
 						use std::ffi::c_double;
-						unsafe extern "C" {
-							fn CGEventSourceSecondsSinceLastEventType(
-								eventSourceState: i32,
-								eventType: u32,
-							) -> c_double;
+
+						unsafe extern {
+							fn CGEventSourceSecondsSinceLastEventType(eventSourceState:i32, eventType:u32) -> c_double;
 						}
+
 						const kCGEventSourceStateHIDSystemState:i32 = 1;
+
 						const kCGEventKeyDown:u32 = 10;
+
 						const kCGEventLeftMouseDown:u32 = 1;
+
 						let Idle = unsafe {
 							let Key = CGEventSourceSecondsSinceLastEventType(
 								kCGEventSourceStateHIDSystemState,
 								kCGEventKeyDown,
 							);
+
 							let Mouse = CGEventSourceSecondsSinceLastEventType(
 								kCGEventSourceStateHIDSystemState,
 								kCGEventLeftMouseDown,
 							);
+
 							Key.min(Mouse)
 						};
-						if Idle > 60.0 {
-							Ok(json!("idle"))
-						} else {
-							Ok(json!("active"))
-						}
+
+						if Idle > 60.0 { Ok(json!("idle")) } else { Ok(json!("active")) }
 					}
+
 					#[cfg(not(target_os = "macos"))]
 					Ok(json!("unknown"))
 				},
@@ -1883,28 +1886,34 @@ pub async fn mountain_ipc_invoke(
 					#[cfg(target_os = "macos")]
 					{
 						use std::ffi::c_double;
-						unsafe extern "C" {
-							fn CGEventSourceSecondsSinceLastEventType(
-								eventSourceState: i32,
-								eventType: u32,
-							) -> c_double;
+
+						unsafe extern {
+							fn CGEventSourceSecondsSinceLastEventType(eventSourceState:i32, eventType:u32) -> c_double;
 						}
+
 						const kCGEventSourceStateHIDSystemState:i32 = 1;
+
 						const kCGEventKeyDown:u32 = 10;
+
 						const kCGEventLeftMouseDown:u32 = 1;
+
 						let Idle = unsafe {
 							let Key = CGEventSourceSecondsSinceLastEventType(
 								kCGEventSourceStateHIDSystemState,
 								kCGEventKeyDown,
 							);
+
 							let Mouse = CGEventSourceSecondsSinceLastEventType(
 								kCGEventSourceStateHIDSystemState,
 								kCGEventLeftMouseDown,
 							);
+
 							Key.min(Mouse)
 						};
+
 						Ok(json!((Idle * 1000.0) as u64))
 					}
+
 					#[cfg(not(target_os = "macos"))]
 					Ok(json!(0))
 				},
@@ -1912,7 +1921,9 @@ pub async fn mountain_ipc_invoke(
 				"nativeHost:isOnBatteryPower" => Ok(json!(false)),
 				"nativeHost:startPowerSaveBlocker" => {
 					static NEXT_BLOCKER_ID:std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+
 					let Id = NEXT_BLOCKER_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
 					Ok(json!(Id))
 				},
 				"nativeHost:stopPowerSaveBlocker" => Ok(json!(false)),
@@ -2640,6 +2651,13 @@ pub async fn mountain_ipc_invoke(
 					}
 				},
 
+				// Renderer-side cancellation: Wind/Sky sends a request id when
+				// the user types away or scrolls, so Cocoon aborts the in-flight
+				// provider instead of computing a result nobody is waiting for.
+				"language:cancelRequest" => {
+					forward_to_cocoon!("language", command, Arguments)
+				},
+
 				"language:getLanguages" | "languages:getLanguages" => {
 					// Builtin baseline merged with every `contributes.languages`
 					// id from the scanned extensions, so the language picker /
@@ -2991,8 +3009,7 @@ pub async fn mountain_ipc_invoke(
 				// host (language features, SCM, debug, tasks, etc.) resolve
 				// without requiring a Mountain dispatch arm.
 				_ => {
-					use std::str::FromStr;
-					use std::sync::OnceLock;
+					use std::{str::FromStr, sync::OnceLock};
 
 					// Check if command should defer to Cocoon's Node.js runtime.
 					// The env var is baked in at build time via rustc-env from
@@ -3001,9 +3018,8 @@ pub async fn mountain_ipc_invoke(
 					// command and env lookup is a syscall.
 					static TIER_IPC_CACHE:OnceLock<String> = OnceLock::new();
 
-					let TierIPC:&str = TIER_IPC_CACHE.get_or_init(|| {
-						std::env::var("TierIPC").unwrap_or_else(|_| "Mountain".into())
-					});
+					let TierIPC:&str =
+						TIER_IPC_CACHE.get_or_init(|| std::env::var("TierIPC").unwrap_or_else(|_| "Mountain".into()));
 
 					let ShouldDefer = TierIPC == "NodeDeferred" || TierIPC == "Node";
 

@@ -1,7 +1,5 @@
-//! # WebviewState
-//!
-//! Tracks active webview panels keyed by panel ID,
+//! Webview panel state. Tracks active webview panels keyed by panel ID,
 //! storing view state and persisted data.
 
-/// Webviewstate module.
+/// Webview panel state container.
 pub mod WebviewState;

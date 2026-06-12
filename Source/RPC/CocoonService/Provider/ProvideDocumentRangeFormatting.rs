@@ -1,5 +1,4 @@
 //! Forward a document-range-formatting request to the registered provider.
-
 use serde_json::json;
 use tonic::{Response, Status};
 use url::Url;
@@ -30,7 +29,9 @@ pub async fn Fn(
 
 	let OptionsDTO = json!({ "tabSize": 4, "insertSpaces": true });
 
-	let Forward = Service.environment.ProvideDocumentRangeFormattingEdits(DocumentURI, RangeDTO, OptionsDTO);
+	let Forward = Service
+		.environment
+		.ProvideDocumentRangeFormattingEdits(DocumentURI, RangeDTO, OptionsDTO);
 
 	let Outcome = match Service.RunCancellable("ProvideDocumentRangeFormatting", Forward).await {
 		Some(Outcome) => Outcome,

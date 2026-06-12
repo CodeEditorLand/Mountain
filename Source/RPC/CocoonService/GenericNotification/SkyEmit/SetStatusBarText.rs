@@ -10,5 +10,5 @@ pub fn Fn(Params:Value, Env:&MountainEnvironment) {
 
 	let _ = Env
 		.ApplicationHandle
-		.emit("sky://statusbar/update", json!({ "id": ItemId, "text": Text }));
+		.emit_to("main", "sky://statusbar/update", json!({ "id": ItemId, "text": Text }));
 }

@@ -1,50 +1,22 @@
 //! # Define
 //!
-//! ## File: IPC/Message/Define/DefineMessage.rs
-//!
-//! ## Role in Mountain Architecture
-//!
 //! Defines core message types and structures used throughout the IPC layer
 //! for communication between Mountain's Rust backend and Wind's TypeScript
 //! frontend.
 //!
-//! ## Primary Responsibility
-//!
 //! Provide type-safe message structures that enable serialization across the
 //! Rust-TypeScript language boundary with proper schema validation.
-//!
-//! ## Secondary Responsibilities
 //!
 //! - Define IPC message format matching Wind's interface
 //! - Define connection status tracking types
 //! - Define listener callback type signatures
 //! - Ensure message compatibility between Mountain and Wind
 //!
-//! ## Dependencies
-//!
-//! **External Crates:**
-//! - `serde` - Serialization/deserialization support
-//! - `serde_json` - JSON format for cross-language communication
-//!
-//! **Internal Modules:**
-//! - None (this module provides foundational types)
-//!
-//! ## Dependents
-//!
-//! - `TauriIPCServer` - Uses all message types
-//! - `RouteMessage` - Routes TauriIPCMessage instances
-//! - `Compress` - Compresses TauriIPCMessage batches
-//! - `Encrypt` - Encrypts TauriIPCMessage instances
-//!
-//! ## VSCode Pattern Reference
-//!
 //! Matches VSCode's RPC message format:
 //! - Channel-based routing
 //! - JSON-formatted payloads
 //! - Timestamp-based ordering
 //! - Sender identification
-//!
-//! ## Security Considerations
 //!
 //! - All fields validated during deserialization to prevent injection attacks
 //! - Timestamp field prevents replay attacks when combined with nonce
@@ -58,23 +30,18 @@
 //!   boundary)
 //! - Compact structure minimizes serialization overhead
 //!
-//! ## Error Handling Strategy
-//!
 //! - Serde provides automatic serde errors with context
 //! - All deserialization operations wrapped in Result for explicit handling
 //! - Failed deserialization logged with full context
 //!
-//! ## Thread Safety
-//!
 //! - All structs derive Clone for safe sharing across threads
 //! - No interior mutability, all state in Arc/Mutex wrapper in parent
-//!
 
 use serde::{Deserialize, Serialize};
 
 /// IPC message structure matching Wind's ITauriIPCMessage interface
 ///
-/// Represents the standard message format for all IPC
+/// The standard message format for all IPC
 /// communication between Mountain's Rust backend and Wind's TypeScript
 /// frontend.
 ///

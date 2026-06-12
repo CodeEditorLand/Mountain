@@ -3,7 +3,6 @@
 //! `RPC/CocoonService/mod.rs:1235` already uses `panelId` - keep this
 //! site aligned so a `dispose` from either path lands in the same DOM
 //! `cel:webview:dispose` CustomEvent.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

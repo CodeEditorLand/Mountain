@@ -1,6 +1,5 @@
 //! Register a Cocoon-contributed debug adapter in `ApplicationState` and
 //! notify Sky so the debug-launcher UI can light up.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

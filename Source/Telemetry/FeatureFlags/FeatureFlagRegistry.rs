@@ -9,13 +9,13 @@ use parking_lot::RwLock;
 use crate::Telemetry::FeatureFlags::{FeatureFlag, FeatureFlagError, FlagCategory};
 
 #[derive(Debug)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	Flags:Arc<RwLock<HashMap<String, FeatureFlag::Struct>>>,
 }
 
 impl Struct {
-/// new.
+	/// Creates a new instance.
 	pub fn new() -> Self {
 		let mut Flags = HashMap::new();
 
@@ -66,12 +66,12 @@ impl Struct {
 		Self { Flags:Arc::new(RwLock::new(Flags)) }
 	}
 
-/// Iss enabled.
+	/// Iss enabled.
 	pub fn IsEnabled(&self, FlagName:&str) -> bool {
 		self.Flags.read().get(FlagName).map(|F| F.Enabled).unwrap_or(false)
 	}
 
-/// enable.
+	/// enable.
 	pub fn Enable(&self, FlagName:&str, Reason:&str) -> Result<(), FeatureFlagError::Enum> {
 		let mut Flags = self.Flags.write();
 
@@ -86,7 +86,7 @@ impl Struct {
 		}
 	}
 
-/// disable.
+	/// disable.
 	pub fn Disable(&self, FlagName:&str, Reason:&str) -> Result<(), FeatureFlagError::Enum> {
 		let mut Flags = self.Flags.write();
 
@@ -101,13 +101,13 @@ impl Struct {
 		}
 	}
 
-/// Adds flag.
+	/// Adds flag.
 	pub fn AddFlag(&self, Flag:FeatureFlag::Struct) { self.Flags.write().insert(Flag.Name.clone(), Flag); }
 
-/// Gets all flags.
+	/// Gets all flags.
 	pub fn GetAllFlags(&self) -> Vec<FeatureFlag::Struct> { self.Flags.read().values().cloned().collect() }
 
-/// Gets flags by category.
+	/// Gets flags by category.
 	pub fn GetFlagsByCategory(&self, Category:FlagCategory::Enum) -> Vec<FeatureFlag::Struct> {
 		self.Flags.read().values().filter(|F| F.Category == Category).cloned().collect()
 	}

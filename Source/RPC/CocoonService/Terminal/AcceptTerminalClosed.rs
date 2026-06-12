@@ -1,6 +1,5 @@
 //! Forward a terminal-closed notification to Sky on `sky://terminal/exit`.
 //! (`/closed` had no consumer.)
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

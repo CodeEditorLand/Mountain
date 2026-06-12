@@ -387,25 +387,23 @@ pub(crate) fn Fn<R:tauri::Runtime>(
 
 /// Single-pass normalization of the post-authority resource path.
 ///
-/// 1. Truncate at the first `?` or `#` so filesystem / asset-resolver
-///    lookups operate on a clean path component. Roo's runtime
-///    sourcemap-probe (`vZt` in its bundle) fetches
-///    `<src>?source-map=true` which would otherwise hit the
-///    asset_resolver as a literal `index.js?source-map=true` filename
-///    and either 404 or fall through to the SPA-fallback `index.html`
-///    (5765 bytes served as `application/octet-stream`). With the
-///    strip, `index.js?source-map=true` → `index.js`, which exists on
-///    disk and serves correctly with the right MIME. Sourcemap-probe
-///    URLs that point to non-existent suffixes (`index.map.json`,
-///    `index.sourcemap`) still 404 silently; that is the intended
-///    behavior of `vZt`'s preload list.
+/// 1. Truncate at the first `?` or `#` so filesystem / asset-resolver lookups
+///    operate on a clean path component. Roo's runtime sourcemap-probe (`vZt`
+///    in its bundle) fetches `<src>?source-map=true` which would otherwise hit
+///    the asset_resolver as a literal `index.js?source-map=true` filename and
+///    either 404 or fall through to the SPA-fallback `index.html` (5765 bytes
+///    served as `application/octet-stream`). With the strip,
+///    `index.js?source-map=true` → `index.js`, which exists on disk and serves
+///    correctly with the right MIME. Sourcemap-probe URLs that point to
+///    non-existent suffixes (`index.map.json`, `index.sourcemap`) still 404
+///    silently; that is the intended behavior of `vZt`'s preload list.
 /// 2. Strip the `/out/` prefix if present - our assets are at
 ///    `/Static/Application/vs/` not `/Static/Application/out/vs/`.
-/// 3. Remap `Static/node_modules/` → `Static/Application/node_modules/`.
-///    VS Code's nodeModulesPath = 'vs/../../node_modules' resolves
-///    `../../` from `Static/Application/vs/` up to `Static/`; the
-///    browser canonicalizes this to `Static/node_modules/` but our
-///    files live at `Static/Application/node_modules/`.
+/// 3. Remap `Static/node_modules/` → `Static/Application/node_modules/`. VS
+///    Code's nodeModulesPath = 'vs/../../node_modules' resolves `../../` from
+///    `Static/Application/vs/` up to `Static/`; the browser canonicalizes this
+///    to `Static/node_modules/` but our files live at
+///    `Static/Application/node_modules/`.
 ///
 /// Rules 2 and 3 are mutually exclusive on the prefix, so the single
 /// `if`/`else` chain applies exactly the rewrite the former sequential

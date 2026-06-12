@@ -8,7 +8,7 @@
 //! `BudgetMilliseconds` remains the hard cap so call sites keep their
 //! existing behaviour for the pathological "Cocoon never starts" case.
 
-/// fn.
+/// Public entry point for this module.
 pub async fn Fn(SideCarIdentifier:&str, BudgetMilliseconds:u64) -> bool {
 	::Vine::Client::WaitForClientConnection::Fn(SideCarIdentifier, BudgetMilliseconds).await
 }

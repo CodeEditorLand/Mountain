@@ -2,7 +2,6 @@
 //! (ripgrep-backed: parallel walk, gitignore-aware, literal patterns
 //! escaped before compilation). Maps the provider's `FileMatch` JSON
 //! into this RPC's `TextMatch` entries.
-
 use serde_json::{Value, json};
 use tonic::{Response, Status};
 use CommonLibrary::Search::SearchProvider::SearchProvider;
@@ -60,13 +59,13 @@ pub async fn Fn(
 
 			// `lineNumber` is 1-based from the provider; proto positions
 			// are 0-based.
-			let Line = Match
-				.get("lineNumber")
-				.and_then(|L| L.as_u64())
-				.unwrap_or(1)
-				.saturating_sub(1) as u32;
+			let Line = Match.get("lineNumber").and_then(|L| L.as_u64()).unwrap_or(1).saturating_sub(1) as u32;
 
-			let Columns = Match.get("columns").and_then(|C| C.as_array()).map(|A| A.as_slice()).unwrap_or_default();
+			let Columns = Match
+				.get("columns")
+				.and_then(|C| C.as_array())
+				.map(|A| A.as_slice())
+				.unwrap_or_default();
 
 			// Empty `columns` means match-position lookup failed in the
 			// provider; highlight the whole preview line instead.

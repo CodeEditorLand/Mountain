@@ -1,7 +1,6 @@
 //! Save Participants domain handlers for CocoonService.
 //!
 //! Typed gRPC RPCs: participate_in_save.
-
 use tonic::{Response, Status};
 use ::Vine::Generated::{ParticipateInSaveRequest, ParticipateInSaveResponse};
 

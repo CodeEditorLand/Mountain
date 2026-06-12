@@ -3,14 +3,13 @@
 //! `::Vine::Server::Notification::OutputChannelCoalesce`. This thin
 //! delegator preserves the Mountain-path `TryEnqueue` for any historical
 //! caller; the Vine-side handler is the steady-state path.
-
 use std::sync::Arc;
 
 use tauri::AppHandle;
 
 use crate::Vine::Server::VineHostImpl::TauriRendererEmitter;
 
-/// Trys enqueue.
+/// Coalesces batched output channel updates via Vine IPC.
 pub fn TryEnqueue(Handle:&AppHandle, Channel:String, Value:String) -> bool {
 	let Emitter = Arc::new(TauriRendererEmitter::New(Handle.clone()));
 

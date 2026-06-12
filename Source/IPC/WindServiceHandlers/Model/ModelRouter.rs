@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tauri::Emitter;
 
 use crate::{
@@ -77,8 +77,7 @@ pub(crate) async fn route(
 			let UriStr = arg_string(&Arguments, 0);
 
 			if !UriStr.is_empty() {
-				let _ = ApplicationHandle
-					.emit("sky://window/showTextDocument", json!({ "uri": UriStr }));
+				let _ = ApplicationHandle.emit("sky://window/showTextDocument", json!({ "uri": UriStr }));
 			}
 
 			Some(Ok(Value::Null))

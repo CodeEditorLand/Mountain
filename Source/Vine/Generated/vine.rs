@@ -28,6 +28,13 @@ pub struct Empty {}
 /// etc.) can observe the same flow concurrently.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Envelope {
+    /// Per-connection channel identifier assigned by the side that owns the
+    /// channel registry entry for this stream. 0 when the sender has no
+    /// registry-assigned identifier. Receivers can compare this against the
+    /// identifier observed at channel-open time to detect frames from a stale
+    /// (pre-reconnect) channel.
+    #[prost(uint64, tag = "5")]
+    pub channel_id: u64,
     #[prost(oneof = "envelope::Payload", tags = "1, 2, 3, 4")]
     pub payload: ::core::option::Option<envelope::Payload>,
 }

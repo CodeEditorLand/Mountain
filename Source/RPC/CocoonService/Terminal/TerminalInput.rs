@@ -1,5 +1,4 @@
 //! Forward bytes received from Cocoon to the PTY master writer.
-
 use tonic::{Response, Status};
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 use ::Vine::Generated::{Empty, TerminalInputRequest};

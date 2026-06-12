@@ -6,7 +6,7 @@ use crate::{
 	dev_log,
 };
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() -> Option<ResolvedNode::Struct> {
 	let Raw = std::env::var("Pick").ok()?;
 

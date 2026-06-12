@@ -32,7 +32,6 @@
 //! - Parameter validation before processing
 //! - Message size limits enforced
 //! - Safe error messages (no sensitive data)
-
 use std::{collections::HashMap, sync::Arc};
 
 use serde_json::{Value, json};
@@ -68,6 +67,7 @@ mod ServiceConfig {
 /// This service handles all incoming RPC calls from the Cocoon sidecar,
 /// validating requests, dispatching to appropriate handlers, and returning
 /// responses in the expected gRPC format.
+#[derive(Clone)]
 pub struct MountainVinegRPCService {
 	/// Tauri application handle for VS Code integration
 	ApplicationHandle:AppHandle,
@@ -107,13 +107,43 @@ impl MountainVinegRPCService {
 	pub fn Create(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) -> Self {
 		dev_log!("grpc", "[MountainVinegRPCService] New instance created");
 
-		Self {
+		let Service = Self {
 			ApplicationHandle,
 
 			RunTime,
 
 			ActiveOperations:Arc::new(RwLock::new(HashMap::new())),
-		}
+		};
+
+		// Inject the reverse-RPC request handler into the Vine multiplexer:
+		// inbound `Payload::Request` frames on the streaming channel dispatch
+		// through the same path as the unary `process_cocoon_request`.
+		let HandlerService = Service.clone();
+
+		::Vine::Multiplexer::Multiplexer::InstallRequestHandler(Arc::new(move |RequestData:GenericRequest| {
+			let Service = HandlerService.clone();
+
+			Box::pin(async move {
+				let RequestIdentifier = RequestData.request_identifier;
+
+				match Service.process_cocoon_request(Request::new(RequestData)).await {
+					Ok(GrpcResponse) => GrpcResponse.into_inner(),
+					Err(Status) => {
+						GenericResponse {
+							request_identifier:RequestIdentifier,
+							result:Vec::new(),
+							error:Some(RPCError {
+								code:Status.code() as i32,
+								message:Status.message().to_string(),
+								data:Vec::new(),
+							}),
+						}
+					},
+				}
+			})
+		}));
+
+		Service
 	}
 
 	/// Registers an operation for potential cancellation.
@@ -494,14 +524,39 @@ impl MountainService for MountainVinegRPCService {
 		>,
 	>;
 
+	// Bidirectional streaming channel opened by Cocoon. Each inbound
+	// `Envelope` routes the same way as its unary counterpart:
+	//   Notification → send_cocoon_notification
+	//   Request      → process_cocoon_request; Response pushed back via OutTx
+	//   Response     → log and ignore (not expected on this direction)
+	//   Cancel       → cancel_operation
+	// The outbound sender registers in `RPC::CocoonService::CHANNEL_REGISTRY`
+	// under a process-unique channel_id so other subsystems can push frames
+	// to the Cocoon peer over this stream.
 	async fn open_channel_from_cocoon(
 		&self,
 
-		_request:tonic::Request<tonic::Streaming<::Vine::Generated::Envelope>>,
+		request:tonic::Request<tonic::Streaming<::Vine::Generated::Envelope>>,
 	) -> Result<tonic::Response<Self::OpenChannelFromCocoonStream>, tonic::Status> {
-		Err(tonic::Status::unimplemented(
-			"OpenChannelFromCocoon: streaming multiplexer not yet wired (Patch 14); use unary endpoints",
-		))
+		use futures_util::StreamExt;
+
+		let ChannelId = crate::RPC::CocoonService::NEXT_CHANNEL_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
+		let (OutTx, OutRx) = tokio::sync::mpsc::channel::<::Vine::Generated::Envelope>(1024);
+
+		crate::RPC::CocoonService::CHANNEL_REGISTRY.insert(ChannelId, OutTx.clone());
+
+		dev_log!(
+			"grpc",
+			"[MountainVinegRPCService] open_channel_from_cocoon channel_id={}",
+			ChannelId
+		);
+
+		SpawnCocoonChannelReadPump(self.clone(), ChannelId, request.into_inner(), OutTx);
+
+		let OutboundStream = tokio_stream::wrappers::ReceiverStream::new(OutRx).map(Ok);
+
+		Ok(tonic::Response::new(Box::pin(OutboundStream)))
 	}
 
 	/// Handles generic request-response RPCs from Cocoon.
@@ -558,10 +613,7 @@ impl MountainService for MountainVinegRPCService {
 		if let Err(status) = self.ValidateRequest(&RequestData) {
 			dev_log!("grpc", "warn: [MountainVinegRPCService] Request validation failed: {}", status);
 
-			let ErrorData = serde_json::to_vec(
-				&json!({ "method": &MethodName, "detail": status.message() }),
-			)
-			.ok();
+			let ErrorData = serde_json::to_vec(&json!({ "method": &MethodName, "detail": status.message() })).ok();
 
 			return Ok(Response::new(Self::CreateErrorResponse(
 				RequestIdentifier,
@@ -586,15 +638,12 @@ impl MountainService for MountainVinegRPCService {
 					Ok(v) => v,
 
 					Err(e) => {
-						let msg =
-							format!("Failed to deserialize parameters for method '{}': {}", MethodName, e);
+						let msg = format!("Failed to deserialize parameters for method '{}': {}", MethodName, e);
 
 						dev_log!("grpc", "error: {}", msg);
 
-						let ErrorData = serde_json::to_vec(
-							&json!({ "method": &MethodName, "detail": e.to_string() }),
-						)
-						.ok();
+						let ErrorData =
+							serde_json::to_vec(&json!({ "method": &MethodName, "detail": e.to_string() })).ok();
 
 						return Ok(Response::new(Self::CreateErrorResponse(
 							RequestIdentifier,
@@ -627,8 +676,11 @@ impl MountainService for MountainVinegRPCService {
 
 				dev_log!(
 					"grpc",
+
 					"[MountainVinegRPCService] Request [ID: {}] '{}' cancelled before completion",
+
 					RequestIdentifier,
+
 					MethodName
 				);
 
@@ -639,8 +691,11 @@ impl MountainService for MountainVinegRPCService {
 
 				return Ok(Response::new(Self::CreateErrorResponse(
 					RequestIdentifier,
+
 					-32800,
+
 					format!("Request '{}' cancelled", MethodName),
+
 					ErrorData,
 				)));
 			},
@@ -706,10 +761,7 @@ impl MountainService for MountainVinegRPCService {
 
 				let ErrorCode = if LooksLike404 { -32004 } else { -32000 };
 
-				let ErrorData = serde_json::to_vec(
-					&json!({ "method": &MethodName, "detail": &ErrorString }),
-				)
-				.ok();
+				let ErrorData = serde_json::to_vec(&json!({ "method": &MethodName, "detail": &ErrorString })).ok();
 
 				Ok(Response::new(Self::CreateErrorResponse(
 					RequestIdentifier,
@@ -1371,4 +1423,103 @@ impl MountainService for MountainVinegRPCService {
 			},
 		}
 	}
+}
+
+/// Detached read pump for the Cocoon→Mountain bidirectional `Envelope`
+/// stream (`open_channel_from_cocoon`). Mirrors
+/// `RPC::CocoonService::SpawnChannelReadPump` for the `MountainService`
+/// context: Notification → `send_cocoon_notification`; Request →
+/// `process_cocoon_request` with the response pushed back via the outbound
+/// sender; Response → unexpected on this direction, logged and dropped;
+/// Cancel → `cancel_operation` (fires the matching `ActiveOperations`
+/// token). Removes the `CHANNEL_REGISTRY` entry when the stream closes so
+/// stale senders are not retained.
+fn SpawnCocoonChannelReadPump(
+	Service:MountainVinegRPCService,
+
+	ChannelId:u64,
+
+	mut Inbound:tonic::Streaming<::Vine::Generated::Envelope>,
+
+	OutTx:tokio::sync::mpsc::Sender<::Vine::Generated::Envelope>,
+) {
+	use futures_util::StreamExt;
+	use ::Vine::Generated::{Envelope, envelope::Payload};
+
+	tauri::async_runtime::spawn(async move {
+		while let Some(FrameResult) = Inbound.next().await {
+			let Frame = match FrameResult {
+				Ok(F) => F,
+				Err(Status) => {
+					dev_log!(
+						"grpc",
+						"[MountainVinegRPCService] channel_id={} inbound error: {}",
+						ChannelId,
+						Status
+					);
+
+					break;
+				},
+			};
+
+			let Payload = match Frame.payload {
+				Some(P) => P,
+				None => continue,
+			};
+
+			match Payload {
+				Payload::Notification(N) => {
+					let _ = Service.send_cocoon_notification(Request::new(N)).await;
+				},
+				Payload::Request(R) => {
+					let RequestIdentifier = R.request_identifier;
+
+					let ResponseFrame = match Service.process_cocoon_request(Request::new(R)).await {
+						Ok(GrpcResponse) => {
+							Envelope {
+								payload:Some(Payload::Response(GrpcResponse.into_inner())),
+								channel_id:ChannelId,
+							}
+						},
+						Err(Status) => {
+							Envelope {
+								payload:Some(Payload::Response(GenericResponse {
+									request_identifier:RequestIdentifier,
+									result:Vec::new(),
+									error:Some(RPCError {
+										code:Status.code() as i32,
+										message:Status.message().to_string(),
+										data:Vec::new(),
+									}),
+								})),
+								channel_id:ChannelId,
+							}
+						},
+					};
+
+					if OutTx.send(ResponseFrame).await.is_err() {
+						break;
+					}
+				},
+				Payload::Response(_) => {
+					dev_log!(
+						"grpc",
+						"[MountainVinegRPCService] channel_id={} unexpected Response frame; ignored",
+						ChannelId
+					);
+				},
+				Payload::Cancel(C) => {
+					let _ = Service.cancel_operation(Request::new(C)).await;
+				},
+			}
+		}
+
+		crate::RPC::CocoonService::CHANNEL_REGISTRY.remove(&ChannelId);
+
+		dev_log!(
+			"grpc",
+			"[MountainVinegRPCService] open_channel_from_cocoon channel_id={} closed",
+			ChannelId
+		);
+	});
 }

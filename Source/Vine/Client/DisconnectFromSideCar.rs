@@ -3,7 +3,7 @@
 
 use crate::Vine::Error::VineError;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(SideCarIdentifier:String) -> Result<(), VineError> {
 	::Vine::Client::DisconnectFromSideCar::Fn(SideCarIdentifier)
 }

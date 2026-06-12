@@ -1,5 +1,5 @@
 //! Discovered-extension manifest state. Callers spell
 //! `ScannedExtensions::ScannedExtensions::Catalogue`.
 
-/// Scannedextensions module.
+/// Scanned extensions catalogue.
 pub mod ScannedExtensions;

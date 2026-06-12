@@ -51,10 +51,11 @@
 //! - Asynchronous service initialization
 //! - Lazy initialization where possible
 //!
-//! ## TODO
-//! - [ ] Add crash recovery mechanism
-//! - [ ] Implement proper error dialog for startup failures
-//! - [ ] Add startup performance metrics
+//! ## Planned Work
+//!
+//! - Crash recovery mechanism
+//! - Proper error dialog for startup failures
+//! - Startup performance metrics
 
 use std::sync::{
 	Arc,
@@ -169,8 +170,11 @@ pub fn Fn() {
 	let IsTtyLaunch =
 		std::env::var("TERM_PROGRAM").is_ok() || std::env::var("TERM").map_or(false, |V| V != "dumb" && V != "unknown");
 
-	let PendingShellEnvironment =
-		if IsTtyLaunch { None } else { crate::Environment::Utility::EnhanceShellEnvironment::Begin() };
+	let PendingShellEnvironment = if IsTtyLaunch {
+		None
+	} else {
+		crate::Environment::Utility::EnhanceShellEnvironment::Begin()
+	};
 
 	// Initialize the native keyring store (Keychain on macOS) before any
 	// code path that calls SecretProvider. keyring-core 1.0 requires an
@@ -668,32 +672,27 @@ pub fn Fn() {
 
 						tokio::spawn(async move {
 							MistRegistry
-								.RegisterDefault(std::sync::Arc::new(
-									move |Method:String, Params:serde_json::Value| {
-										let HandleForCall = MistAppHandle.clone();
+								.RegisterDefault(std::sync::Arc::new(move |Method:String, Params:serde_json::Value| {
+									let HandleForCall = MistAppHandle.clone();
 
-										Box::pin(async move {
-											let Arguments:Vec<serde_json::Value> = match Params {
-												serde_json::Value::Array(Items) => Items,
+									Box::pin(async move {
+										let Arguments:Vec<serde_json::Value> = match Params {
+											serde_json::Value::Array(Items) => Items,
 
-												serde_json::Value::Null => vec![],
+											serde_json::Value::Null => vec![],
 
-												Other => vec![Other],
-											};
+											Other => vec![Other],
+										};
 
-											crate::IPC::WindServiceHandlers::mountain_ipc_invoke(
-												HandleForCall,
-												Method,
-												Arguments,
-											)
-											.await
-										})
-											as futures_util::future::BoxFuture<
-												'static,
-												Result<serde_json::Value, String>,
-											>
-									},
-								))
+										crate::IPC::WindServiceHandlers::mountain_ipc_invoke(
+											HandleForCall,
+											Method,
+											Arguments,
+										)
+										.await
+									})
+										as futures_util::future::BoxFuture<'static, Result<serde_json::Value, String>>
+								}))
 								.await;
 
 							dev_log!(
@@ -702,8 +701,7 @@ pub fn Fn() {
 								 over WebSocket"
 							);
 
-							if let Err(Error) =
-								Mist::WebSocket::ServeLocal(5051, Some(MistSecret), MistRegistry).await
+							if let Err(Error) = Mist::WebSocket::ServeLocal(5051, Some(MistSecret), MistRegistry).await
 							{
 								dev_log!("lifecycle", "warn: [Lifecycle] [Mist] WebSocket server exited: {:?}", Error);
 							}

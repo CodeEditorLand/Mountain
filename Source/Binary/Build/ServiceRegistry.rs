@@ -45,7 +45,7 @@ use tokio::{
 
 use crate::dev_log;
 
-/// Represents a local HTTP/HTTPS service registered with the land:// scheme
+/// A local HTTP/HTTPS service registered with the land:// scheme
 ///
 /// # Fields
 ///

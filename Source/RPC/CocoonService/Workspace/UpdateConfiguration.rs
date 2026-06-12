@@ -1,6 +1,5 @@
 //! Forward a Cocoon-side configuration change to Sky for workbench
 //! settings refresh.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

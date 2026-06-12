@@ -1,5 +1,4 @@
 //! Configuration read/write service.
-
 use std::collections::HashMap;
 
 pub struct Struct {

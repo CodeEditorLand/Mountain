@@ -2,5 +2,5 @@
 
 use crate::Telemetry::Metrics::{GlobalRegistry, Metric};
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() -> Vec<Metric::Struct> { GlobalRegistry::REGISTRY.GetAllMetrics() }

@@ -1,6 +1,5 @@
 //! Start a debug session. Mints a session id, emits `sky://debug/start` so
 //! the workbench can render the debug toolbar/console.
-
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use serde_json::json;

@@ -12,7 +12,8 @@ pub fn Fn(Params:Value, Env:&MountainEnvironment) {
 
 	let Cancellable = Params.get("cancellable").and_then(|V| V.as_bool()).unwrap_or(false);
 
-	let _ = Env.ApplicationHandle.emit(
+	let _ = Env.ApplicationHandle.emit_to(
+		"main",
 		"sky://progress/start",
 		json!({ "id": Id, "title": Title, "location": Location, "cancellable": Cancellable }),
 	);

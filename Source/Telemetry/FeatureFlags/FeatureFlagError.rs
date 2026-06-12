@@ -1,7 +1,7 @@
 //! Error type returned by `FeatureFlagRegistry` operations.
 
 #[derive(Debug, thiserror::Error)]
-/// Enumeration for enum.
+/// Enumeration for the enclosing variant set.
 pub enum Enum {
 	#[error("Feature flag not found: {0}")]
 	NotFound(String),

@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use crate::ProcessManagement::NodeResolver::NodeSource;
 
 #[derive(Debug, Clone)]
-/// Data for struct.
+/// DTO for the enclosing request/response.
 pub struct Struct {
 	pub Path:PathBuf,
 

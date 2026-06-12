@@ -1,5 +1,4 @@
 //! Append text to an output channel via `sky://output/append`.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

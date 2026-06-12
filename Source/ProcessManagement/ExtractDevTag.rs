@@ -4,7 +4,7 @@
 //! `None` for bare stdout so the caller falls back to the catch-all `cocoon`
 //! tag.
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(Line:&str) -> Option<String> {
 	let Stripped = Line.strip_prefix("[DEV:")?;
 

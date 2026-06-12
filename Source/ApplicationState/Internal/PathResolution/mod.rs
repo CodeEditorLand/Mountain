@@ -1,7 +1,5 @@
-//! # PathResolution
-//!
-//! Resolves filesystem paths for memento storage files
-//! with sanitization for cross-platform safety.
+//! Resolves filesystem paths for memento storage files with sanitization
+//! for cross-platform safety.
 
-/// Resolvemementostoragefilepath module.
+/// Memento storage file path resolution.
 pub mod ResolveMementoStorageFilePath;

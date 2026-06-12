@@ -1,6 +1,5 @@
 //! Save every dirty editor (optionally including untitled) via
 //! `sky://editor/saveAll`.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

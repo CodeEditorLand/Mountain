@@ -7,7 +7,7 @@
 //! Telemetry feature ships, or remove with the rest of the stub stack.
 
 #[cfg(feature = "Telemetry")]
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() -> Result<(), Box<dyn std::error::Error>> {
 	crate::Telemetry::Tracing::InitializeTracing::Fn()?;
 
@@ -17,5 +17,5 @@ pub fn Fn() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[cfg(not(feature = "Telemetry"))]
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() -> Result<(), Box<dyn std::error::Error>> { Ok(()) }

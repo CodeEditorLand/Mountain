@@ -1,6 +1,5 @@
 //! Forward a task-termination request to Sky over
 //! `sky://task/terminate`.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

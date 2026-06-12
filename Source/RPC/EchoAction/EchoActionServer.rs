@@ -1,6 +1,5 @@
 //! Singleton submission gate for every Cocoon→Mountain request. Wraps the
 //! Echo scheduler with a per-method priority lane.
-
 use std::sync::Arc;
 
 use Echo::{Scheduler::Scheduler::Scheduler, Task::Priority::Priority as EchoPriority};

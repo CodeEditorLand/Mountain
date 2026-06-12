@@ -6,18 +6,17 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 
 /// Scans and populates extensions from the configured scan paths.
 ///
-/// # Arguments
+/// # Parameters
 ///
-/// * `ApplicationHandle` - The Tauri application handle
-/// * `AppState` - The application state containing extension information
+/// - `ApplicationHandle` — The Tauri application handle
+/// - `AppState` — The application state containing extension information
 ///
 /// # Returns
 ///
-/// A `Result` indicating success or failure.
+/// `Ok(())` on success, or `Err(String)` if population fails.
 ///
-/// # Extension Scanning Process
+/// ## Behaviour
 ///
-/// This function performs:
 /// - Scanning all configured extension directories
 /// - Parsing extension metadata and manifests
 /// - Loading extension capabilities

@@ -2,11 +2,13 @@
 //!
 //! Initializes and starts the Vine gRPC server.
 
-/// Starts the Vine gRPC server at the specified primary and secondary addresses.
+/// Starts the Vine gRPC server at the specified primary and secondary
+/// addresses.
 ///
 /// # Parameters
 ///
-/// - `ApplicationHandle` — Tauri application handle used for service registration.
+/// - `ApplicationHandle` — Tauri application handle used for service
+///   registration.
 /// - `PrimaryAddress` — Primary server address, e.g. `[::1]:50051`.
 /// - `SecondaryAddress` — Secondary server address, e.g. `[::1]:50052`.
 ///

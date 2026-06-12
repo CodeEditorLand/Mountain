@@ -1,5 +1,4 @@
 //! Forward an on-type-formatting request to the registered provider.
-
 use serde_json::json;
 use tonic::{Response, Status};
 use url::Url;
@@ -33,7 +32,9 @@ pub async fn Fn(
 	let OptionsDTO = json!({ "tabSize": 4, "insertSpaces": true });
 
 	let Forward =
-		Service.environment.ProvideOnTypeFormattingEdits(DocumentURI, PositionDTO_, Request.character, OptionsDTO);
+		Service
+			.environment
+			.ProvideOnTypeFormattingEdits(DocumentURI, PositionDTO_, Request.character, OptionsDTO);
 
 	let Outcome = match Service.RunCancellable("ProvideOnTypeFormatting", Forward).await {
 		Some(Outcome) => Outcome,

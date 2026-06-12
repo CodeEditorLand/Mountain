@@ -18,7 +18,7 @@ use crate::{
 	Workspace::WorkspaceFileService::WorkspaceFile,
 };
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(WorkspaceFilePath:&Path, FileContent:&str) -> Result<Vec<WorkspaceFolderStateDTO>, CommonError> {
 	let Parsed:WorkspaceFile::Struct = serde_json::from_str(FileContent)
 		.map_err(|Error| CommonError::SerializationError { Description:Error.to_string() })?;

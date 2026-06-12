@@ -1,5 +1,4 @@
 //! Open a document in the workbench via `sky://editor/openDocument`.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

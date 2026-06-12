@@ -1,7 +1,6 @@
 //! Forward an `OpenExternal` request to Sky on
 //! `sky://native/openExternal` so the webview can launch the URI in the
 //! system browser/handler.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

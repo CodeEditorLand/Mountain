@@ -1,5 +1,4 @@
 //! Register a Cocoon-side definition provider.
-
 use tonic::{Response, Status};
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 use ::Vine::Generated::{Empty, RegisterProviderRequest};

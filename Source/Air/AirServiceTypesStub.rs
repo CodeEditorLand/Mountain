@@ -1,70 +1,93 @@
-//! Air-integration type stubs. Twenty children: one per request/response
+//! Air integration type stubs. Twenty children: one per request/response
 //! DTO, the placeholder `AirClientType::Struct`, and the
-//! `DEFAULT_AIR_SERVER_ADDRESS::Const` server-address constant. Every
-//! `AirClientType::Struct` method returns "feature not implemented" until
-//! the real `AirLibrary` client lands behind `--features AirIntegration`.
+//! `DEFAULT_AIR_SERVER_ADDRESS` constant. Every `AirClientType` method
+//! returns "feature not implemented" until the real `AirLibrary` client
+//! lands behind `--features AirIntegration`.
 //!
 //! ## Status
 //!
-//! Zero callers as of 2026-05-02. Remove this entire module when
-//! the live Air client is wired in.
+//! No callers as of 2026-05-02. Remove this entire module when the live
+//! Air client is wired in.
+//!
+//! ## Sub-modules
+//!
+//! - [`AirClientType`]: Stub client implementation
+//! - [`AirMetricsProtoDTO`]: Metrics response inner payload
+//! - [`ApplyUpdateRequest`]: Apply update request DTO
+//! - [`ApplyUpdateResponse`]: Apply update response DTO
+//! - [`AuthenticationRequest`]: Authentication request DTO
+//! - [`AuthenticationResponse`]: Authentication response DTO
+//! - [`DEFAULT_AIR_SERVER_ADDRESS`]: Default server address constant
+//! - [`DownloadFileResponse`]: Download file response DTO
+//! - [`DownloadRequest`]: Download file request DTO
+//! - [`FileResultProtoDTO`]: Search result file entry
+//! - [`IndexFilesResponse`]: Index files response DTO
+//! - [`IndexRequest`]: Index files request DTO
+//! - [`MetricsRequest`]: Metrics request DTO
+//! - [`MetricsResponse`]: Metrics response DTO
+//! - [`SearchFilesResponse`]: Search files response DTO
+//! - [`SearchRequest`]: Search files request DTO
+//! - [`StatusRequest`]: Status request DTO
+//! - [`StatusResponse`]: Status response DTO
+//! - [`UpdateCheckRequest`]: Update check request DTO
+//! - [`UpdateCheckResponse`]: Update check response DTO
 
-/// Airclienttype module.
+/// Stub client type used while AirIntegration feature is off.
 pub mod AirClientType;
 
-/// Airmetricsprotodto module.
+/// Inner metrics payload for MetricsResponse.
 pub mod AirMetricsProtoDTO;
 
-/// Applyupdaterequest module.
+/// Apply update request DTO.
 pub mod ApplyUpdateRequest;
 
-/// Applyupdateresponse module.
+/// Apply update response DTO.
 pub mod ApplyUpdateResponse;
 
-/// Authenticationrequest module.
+/// Authentication request DTO.
 pub mod AuthenticationRequest;
 
-/// Authenticationresponse module.
+/// Authentication response DTO.
 pub mod AuthenticationResponse;
 
-/// Default air server address module.
+/// Default Air server address (127.0.0.1:50051).
 pub mod DEFAULT_AIR_SERVER_ADDRESS;
 
-/// Downloadfileresponse module.
+/// Download file response DTO.
 pub mod DownloadFileResponse;
 
-/// Downloadrequest module.
+/// Download file request DTO.
 pub mod DownloadRequest;
 
-/// Fileresultprotodto module.
+/// Single file result inside SearchFilesResponse.
 pub mod FileResultProtoDTO;
 
-/// Indexfilesresponse module.
+/// Index files response DTO.
 pub mod IndexFilesResponse;
 
-/// Indexrequest module.
+/// Index files request DTO.
 pub mod IndexRequest;
 
-/// Metricsrequest module.
+/// Metrics request DTO.
 pub mod MetricsRequest;
 
-/// Metricsresponse module.
+/// Metrics response DTO.
 pub mod MetricsResponse;
 
-/// Searchfilesresponse module.
+/// Search files response DTO.
 pub mod SearchFilesResponse;
 
-/// Searchrequest module.
+/// Search files request DTO.
 pub mod SearchRequest;
 
-/// Statusrequest module.
+/// Status request DTO.
 pub mod StatusRequest;
 
-/// Statusresponse module.
+/// Status response DTO with uptime, request counts, and health flag.
 pub mod StatusResponse;
 
-/// Updatecheckrequest module.
+/// Update check request DTO.
 pub mod UpdateCheckRequest;
 
-/// Updatecheckresponse module.
+/// Update check response DTO.
 pub mod UpdateCheckResponse;

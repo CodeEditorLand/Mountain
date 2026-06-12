@@ -1,6 +1,5 @@
-//! # DiagnosticsState
-//!
-//! Tracks diagnostic markers keyed by owner and resource URI.
+//! Diagnostics state. Tracks diagnostic markers keyed by owner and resource
+//! URI.
 
-/// Diagnosticsstate module.
+/// Diagnostics state container.
 pub mod DiagnosticsState;

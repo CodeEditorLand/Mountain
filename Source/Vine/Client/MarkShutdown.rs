@@ -4,5 +4,5 @@
 //! SIGKILL window returns silently with `Ok(())` instead of logging a
 //! `Connection refused` error.
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() { ::Vine::Client::MarkShutdown::Fn() }

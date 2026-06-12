@@ -1,6 +1,5 @@
 //! Return every scanned extension projected into the gRPC `ExtensionInfo`
 //! shape.
-
 use tonic::{Response, Status};
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 use ::Vine::Generated::{Empty, ExtensionInfo, GetAllExtensionsResponse};

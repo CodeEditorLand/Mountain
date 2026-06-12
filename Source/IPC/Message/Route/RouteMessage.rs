@@ -1,49 +1,24 @@
 //! # Route
 //!
-//! ## File: IPC/Message/Route/RouteMessage.rs
-//!
-//! ## Role in Mountain Architecture
-//!
 //! Routes IPC messages to their registered listeners based on channel name,
 //! implementing a publish-subscribe pattern for message distribution.
-//!
-//! ## Primary Responsibility
 //!
 //! Route incoming IPC messages from Wind to registered listener callbacks
 //! based on channel name, supporting both point-to-point and broadcast
 //! patterns.
-//!
-//! ## Secondary Responsibilities
 //!
 //! - Register new listeners for channels
 //! - Remove listeners when no longer needed
 //! - Handle listener errors gracefully
 //! - Log routing events for debugging
 //!
-//! ## Dependencies
-//!
-//! **External Crates:**
-//! - `std::collections::HashMap` - Channel-to-listener mapping
-//! - `log` - Routing event logging
-//!
-//! **Internal Modules:**
-//! - `DefineMessage::{TauriIPCMessage, ListenerCallback}` - Message and
 //!   callback types
-//!
-//! ## Dependents
-//!
-//! - `TauriIPCServer` - Uses for message distribution
-//! - `HandleIncomingMessage` - Routes messages to listeners
-//!
-//! ## VSCode Pattern Reference
 //!
 //! Matches VSCode's channel-based routing in
 //! `vs/base/parts/ipc/common/ipc.net.ts`
 //! - Channel name mapping to handlers
 //! - Multiple listeners per channel support
 //! - Listener cleanup on removal
-//!
-//! ## Security Considerations
 //!
 //! - Validate channel names to prevent injection
 //! - Prevent listener callback errors from crashing server
@@ -56,18 +31,13 @@
 //! - Lock contention minimized by short critical sections
 //! - Error handling doesn't block other listeners
 //!
-//! ## Error Handling Strategy
-//!
 //! - Listener errors logged but don't prevent other listeners from receiving
 //!   message
 //! - Returns Result for explicit error handling
 //! - Detailed error messages with channel and listener context
 //!
-//! ## Thread Safety
-//!
 //! - HashMap wrapped in Arc<Mutex> for safe concurrent access
 //! - Lock contention minimized by short critical sections
-//!
 
 use std::{
 	collections::HashMap,

@@ -4,42 +4,43 @@
 //! through a process-wide `MetricsRegistry::Struct` that drops the oldest
 //! sample once 10 000 entries have been recorded.
 //!
-//! Layout (one export per file, file name = identity):
-//! - `Metric::Struct` + `MetricValue::Enum` - the observation payload.
-//! - `MetricsRegistry::Struct` - the storage primitive.
-//! - `Timer::Struct` - RAII-style histogram timer.
-//! - `RecordCounter::Fn`, `RecordGauge::Fn`, `GetAllMetrics::Fn` - convenience
+//! ## Layout
+//!
+//! - `Metric::Struct` + `MetricValue::Enum`: the observation payload.
+//! - `MetricsRegistry::Struct`: the storage primitive.
+//! - `Timer::Struct`: RAII-style histogram timer.
+//! - `RecordCounter::Fn`, `RecordGauge::Fn`, `GetAllMetrics::Fn`: convenience
 //!   accessors against the global registry.
-//! - `Initialize::Fn` - no-op bring-up hook.
-//! - `GlobalRegistry::REGISTRY` - module-private singleton.
+//! - `Initialize::Fn`: no-op bring-up hook.
+//! - `GlobalRegistry`: module-private singleton.
 //!
 //! ## Status
 //!
-//! Zero callers as of 2026-05-02. Pending wire-up from
-//! `Binary::Main` and the IPC fast paths.
+//! No callers as of 2026-05-02. Pending wire-up from `Binary::Main` and the
+//! IPC fast paths.
 
-/// Getallmetrics module.
+/// All-metrics retrieval from global registry.
 pub mod GetAllMetrics;
 
-/// Initialize module.
+/// Metrics initialization (no-op bring-up hook).
 pub mod Initialize;
 
-/// Metric module.
+/// Metric observation payload.
 pub mod Metric;
 
-/// Metricvalue module.
+/// Metric observation value enumeration.
 pub mod MetricValue;
 
-/// Metricsregistry module.
+/// Bounded-ring-buffer metrics registry.
 pub mod MetricsRegistry;
 
-/// Recordcounter module.
+/// Counter recording convenience accessor.
 pub mod RecordCounter;
 
-/// Recordgauge module.
+/// Gauge recording convenience accessor.
 pub mod RecordGauge;
 
-/// Timer module.
+/// RAII-style histogram timer.
 pub mod Timer;
 
 pub(crate) mod GlobalRegistry;

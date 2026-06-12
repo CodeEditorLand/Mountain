@@ -7,7 +7,7 @@ use std::{fs, path::Path};
 
 use crate::dev_log;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(FilePath:&Path, Content:&str) {
 	let Timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
 

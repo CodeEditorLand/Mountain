@@ -1,6 +1,5 @@
 //! Look up a single scanned extension by id and project the manifest into
 //! the gRPC `ExtensionInfo` shape.
-
 use tonic::{Response, Status};
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 use ::Vine::Generated::{ExtensionInfo, GetExtensionRequest, GetExtensionResponse};

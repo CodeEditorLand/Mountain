@@ -1,5 +1,4 @@
 //! Forward a document-formatting request to the registered provider.
-
 use serde_json::json;
 use tonic::{Response, Status};
 use url::Url;

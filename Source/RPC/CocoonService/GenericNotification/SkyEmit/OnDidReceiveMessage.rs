@@ -13,7 +13,9 @@ pub fn Fn(Params:Value, Env:&MountainEnvironment) {
 		.or_else(|| Params.get("bytesMessage").map(|_| "[binary]".to_string()))
 		.unwrap_or_default();
 
-	let _ = Env
-		.ApplicationHandle
-		.emit("sky://webview/postMessage", json!({ "handle": Handle, "message": Message }));
+	let _ = Env.ApplicationHandle.emit_to(
+		"main",
+		"sky://webview/postMessage",
+		json!({ "handle": Handle, "message": Message }),
+	);
 }

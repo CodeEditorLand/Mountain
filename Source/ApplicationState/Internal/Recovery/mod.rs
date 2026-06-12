@@ -1,7 +1,5 @@
-//! # Recovery
-//!
-//! State validation, error recovery with exponential backoff,
-//! and timeout-protected state operations.
+//! State validation, error recovery with exponential backoff, and
+//! timeout-protected state operations.
 
-/// Recoverstate module.
+/// State recovery with validation, backoff, and timeout.
 pub mod RecoverState;

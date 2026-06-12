@@ -1,5 +1,6 @@
-// Configuration Initialize Module - Initializes and merges application
-// configurations.
+//! # Configuration Initialize Module
+//!
+//! Initializes and merges application configurations.
 
 use crate::{
 	Environment::{

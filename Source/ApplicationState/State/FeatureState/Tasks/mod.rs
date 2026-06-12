@@ -1,4 +1,4 @@
-//! Task-execution feature state.
+//! Task execution feature state: tracks running and completed tasks.
 
-/// Taskexecutionstate module.
+/// Task execution state container.
 pub mod TaskExecutionState;

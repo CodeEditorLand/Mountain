@@ -1,5 +1,4 @@
 //! Register a Cocoon-side linked-editing-range provider.
-
 use tonic::{Response, Status};
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 use ::Vine::Generated::{Empty, RegisterProviderRequest};

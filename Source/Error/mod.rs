@@ -1,23 +1,34 @@
-//! Local error stack - currently unused.
+//! Local error taxonomy — currently unused.
 //!
-//! Every Mountain consumer uses `CommonLibrary::Error::CommonError`
-//! instead. Files remain in place to preserve the original taxonomy;
-//! remove or migrate when the strategy is settled.
+//! Every Mountain consumer uses `CommonLibrary::Error::CommonError` instead.
+//! These files remain to preserve the original error taxonomy; remove or
+//! migrate when the strategy is settled.
+//!
+//! ## Sub-modules
+//!
+//! - [`ConfigurationError`]: Configuration-related errors
+//! - [`CoreError`]: Core error types (ErrorSeverity, ErrorKind, ErrorContext,
+//!   MountainError)
+//! - [`FileSystemError`]: File system operation errors
+//! - [`IPCError`]: Inter-process communication errors
+//! - [`ProviderError`]: Capability provider errors
+//! - [`ServiceError`]: Service lifecycle errors
 
-/// Configurationerror module.
+/// Configuration read/write/validation errors.
 pub mod ConfigurationError;
 
-/// Coreerror module.
+/// Core error types: severity levels, error categories, context metadata, and
+/// the base MountainError type.
 pub mod CoreError;
 
-/// Filesystemerror module.
+/// File system operation errors.
 pub mod FileSystemError;
 
-/// Ipcerror module.
+/// Inter-process communication errors.
 pub mod IPCError;
 
-/// Providererror module.
+/// Capability provider (file, terminal, document) errors.
 pub mod ProviderError;
 
-/// Serviceerror module.
+/// Service lifecycle errors.
 pub mod ServiceError;

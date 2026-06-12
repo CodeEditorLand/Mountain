@@ -3,7 +3,7 @@
 //! registry from `MountainEnvironment`.
 
 #[cfg(feature = "Telemetry")]
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() -> Result<(), Box<dyn std::error::Error>> {
 	use crate::dev_log;
 
@@ -13,5 +13,5 @@ pub fn Fn() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[cfg(not(feature = "Telemetry"))]
-/// fn.
+/// Public entry point for this module.
 pub fn Fn() -> Result<(), Box<dyn std::error::Error>> { Ok(()) }

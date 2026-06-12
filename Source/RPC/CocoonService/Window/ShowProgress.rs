@@ -1,6 +1,5 @@
 //! Begin a progress notification. Mints a millisecond handle, emits
 //! `sky://progress/start` so the workbench can render the bar.
-
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::json;

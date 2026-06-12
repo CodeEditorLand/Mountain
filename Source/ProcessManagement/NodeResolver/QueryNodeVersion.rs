@@ -5,7 +5,7 @@
 
 use std::path::Path;
 
-/// fn.
+/// Public entry point for this module.
 pub fn Fn(NodePath:&Path) -> Option<String> {
 	let Output = std::process::Command::new(NodePath).arg("--version").output().ok()?;
 

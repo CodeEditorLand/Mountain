@@ -1,50 +1,22 @@
 //! # Encrypt
 //!
-//! ## File: IPC/Message/Encrypt/Encrypt.rs
-//!
-//! ## Role in Mountain Architecture
-//!
 //! Provides AES-256-GCM encryption and HMAC message authentication for IPC
 //! communication, ensuring sensitive data remains secure between Mountain
 //! backend and Wind frontend.
 //!
-//! ## Primary Responsibility
-//!
 //! Encrypt and decrypt IPC messages using AES-256-GCM for confidentiality
 //! and HMAC-SHA256 for message authentication and integrity verification.
-//!
-//! ## Secondary Responsibilities
 //!
 //! - Generate and manage encryption keys securely
 //! - Generate unique nonces for each encryption operation
 //! - Verify HMAC signatures to ensure message integrity
 //! - Support key rotation for long-term security
 //!
-//! ## Dependencies
-//!
-//! **External Crates:**
-//! - `ring` (crypto) - AES-256-GCM and HMAC-SHA256 implementations
-//! - `base64` - Binary-to-text encoding for transport
-//! - `serde` - Serialization
-//!
-//! **Internal Modules:**
-//! - `DefineMessage::TauriIPCMessage` - Message type to encrypt/decrypt
-//!
-//! ## Dependents
-//!
-//! - `TauriIPCServer` - Uses encryption for sensitive messages
-//! - `Send` - Encrypts outgoing messages when security is required
-//! - `Receive` - Decrypts incoming encrypted messages
-//!
-//! ## VSCode Pattern Reference
-//!
 //! Based on VSCode's secure IPC patterns in
 //! `vs/base/parts/ipc/electron-main/ipcMain.ts`
 //! - AEAD mode for authenticated encryption
 //! - Per-message nonces for security
 //! - HMAC for additional integrity verification
-//!
-//! ## Security Considerations
 //!
 //! - AES-256-GCM provides authenticated encryption (confidentiality +
 //!   integrity)
@@ -61,19 +33,14 @@
 //! - Nonces generated quickly (12 bytes)
 //! - Encryption overhead: ~16 bytes for auth tag + 12 bytes nonce
 //!
-//! ## Error Handling Strategy
-//!
 //! - All cryptographic operations return Result for explicit handling
 //! - Failed HMAC verification rejects message immediately
 //! - Key generation failures are fatal (cannot continue)
 //! - Detailed error messages for debugging
 //!
-//! ## Thread Safety
-//!
 //! - SecureMessageChannel methods read-only (self)
 //! - Can be safely shared across threads via Arc
 //! - No interior mutability
-//!
 
 use std::array::TryFromSliceError;
 

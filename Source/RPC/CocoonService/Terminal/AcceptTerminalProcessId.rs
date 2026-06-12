@@ -1,6 +1,5 @@
 //! Forward the resolved PID for a terminal to Sky on
 //! `sky://terminal/processId`.
-
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};

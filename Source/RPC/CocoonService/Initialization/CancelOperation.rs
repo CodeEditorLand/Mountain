@@ -1,6 +1,5 @@
 //! Cancel an in-flight Mountain-originated operation by request id. Looks
 //! up the cancellation token in `Service.ActiveOperations` and fires it.
-
 use tonic::{Response, Status};
 use ::Vine::Generated::{CancelOperationRequest, Empty};
 

@@ -1,6 +1,5 @@
-//! # DocumentState
-//!
-//! Tracks open documents, their metadata, and in-memory content buffers.
+//! Document state. Tracks open documents, their metadata, and in-memory
+//! content buffers.
 
-/// Documentstate module.
+/// Document state container.
 pub mod DocumentState;
