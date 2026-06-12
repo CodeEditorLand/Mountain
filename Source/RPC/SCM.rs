@@ -1,9 +1,10 @@
 //! Source-control-management RPC service. Placeholder for git repo
-//! discovery, change tracking, commit/push operations. TODO: zero callers
-//! as of 2026-05-02.
+//! discovery, change tracking, commit/push operations.
+/// Source-control-management service handle.
 #[cfg(feature = "scm-support")]
 pub struct Struct;
 
+/// Creates a new `Struct`.
 #[cfg(feature = "scm-support")]
 impl Struct {
 	pub fn new() -> Self { Struct }

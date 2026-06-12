@@ -1,6 +1,8 @@
 //! OTEL trace-span DTO.
 use serde::{Deserialize, Serialize};
 
+/// OTEL trace span: models a single span with trace ID, span ID, parent, name,
+/// and timing.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub trace_id:String,

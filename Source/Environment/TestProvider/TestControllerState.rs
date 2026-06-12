@@ -13,12 +13,17 @@ use serde::{Deserialize, Serialize};
 pub struct Struct {
 	/// Unique identifier for this controller (e.g. `"rust-analyzer"`).
 	pub ControllerIdentifier:String,
+
 	/// User-facing label shown in the Test Explorer panel.
 	pub Label:String,
+
 	/// Sidecar process that owns this controller, if any.
 	pub SideCarIdentifier:Option<String>,
+
 	/// Whether this controller is currently active.
 	pub IsActive:bool,
-	/// Test type tags this controller supports (e.g. `"unit"`, `"integration"`).
+
+	/// Test type tags this controller supports (e.g. `"unit"`,
+	/// `"integration"`).
 	pub SupportedTestTypes:Vec<String>,
 }

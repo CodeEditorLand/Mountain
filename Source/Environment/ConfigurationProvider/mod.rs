@@ -41,6 +41,10 @@ mod UpdateValue;
 
 mod InspectValue;
 
+/// Configuration loading — parses, caches, and merges configuration files from
+/// disk.
+///
+/// Exposed publicly for external callers like `ConfigurationInitialize`.
 pub mod Loading; // Make public for external callers like ConfigurationInitialize
 
 #[async_trait]

@@ -99,6 +99,20 @@ struct TextSearchQuery {
 /// Deserialize a JSON field that VS Code sends as either a single glob
 /// string (`"**/*.ts"`) or an array of strings (`["**/*.ts"]`). Returns
 /// `None` when the field is absent or null.
+///
+/// ## Parameters
+///
+/// * `Deserializer` — A Serde deserializer providing the input data.
+///
+/// ## Returns
+///
+/// * `Ok(Some(Vec<String>))` — One or more non-empty glob patterns.
+/// * `Ok(None)` — The field was absent, null, or an empty string/array.
+///
+/// ## Errors
+///
+/// Returns a deserialization error if the value is present but is neither
+/// a string nor an array of strings.
 fn de_glob_list<'de, D>(Deserializer:D) -> Result<Option<Vec<String>>, D::Error>
 where
 	D: serde::Deserializer<'de>, {

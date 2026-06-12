@@ -38,8 +38,10 @@ use serde_json::Value;
 pub enum MutatorType {
 	/// Replaces the variable value entirely, discarding the inherited value.
 	Replace = 1,
+
 	/// Appends the value to the inherited variable value.
 	Append = 2,
+
 	/// Prepends the value before the inherited variable value.
 	Prepend = 3,
 }
@@ -51,8 +53,10 @@ pub enum MutatorType {
 pub struct Mutator {
 	/// The name of the environment variable to mutate.
 	pub Variable:String,
+
 	/// The value to set, append, or prepend.
 	pub Value:String,
+
 	/// The mutation strategy (Replace, Append, or Prepend).
 	pub Kind:MutatorType,
 }
@@ -65,8 +69,10 @@ pub struct Mutator {
 pub struct ExtensionCollection {
 	/// Whether these mutations survive a window reload.
 	pub Persistent:bool,
+
 	/// User-facing label for this collection.
 	pub Description:Option<String>,
+
 	/// Per-variable mutations registered by this extension.
 	pub Mutators:HashMap<String, Mutator>,
 }
@@ -87,7 +93,8 @@ pub fn Replace(ExtensionId:&str, Variable:String, Value:String) {
 	}
 }
 
-/// Appends `value` to the inherited value of `variable` for the given extension.
+/// Appends `value` to the inherited value of `variable` for the given
+/// extension.
 pub fn Append(ExtensionId:&str, Variable:String, Value:String) {
 	if let Ok(mut Guard) = Get().lock() {
 		let Entry = Guard.entry(ExtensionId.to_string()).or_default();
@@ -98,7 +105,8 @@ pub fn Append(ExtensionId:&str, Variable:String, Value:String) {
 	}
 }
 
-/// Prepends `value` before the inherited value of `variable` for the given extension.
+/// Prepends `value` before the inherited value of `variable` for the given
+/// extension.
 pub fn Prepend(ExtensionId:&str, Variable:String, Value:String) {
 	if let Ok(mut Guard) = Get().lock() {
 		let Entry = Guard.entry(ExtensionId.to_string()).or_default();

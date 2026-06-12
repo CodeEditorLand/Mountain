@@ -47,8 +47,11 @@ use serde_json::Value;
 use super::MountainEnvironment::MountainEnvironment;
 
 // Atomic public DTOs (one export per file).
+/// Webview lifecycle state enum — Created, Revealed, Hidden, Disposed.
 pub mod WebviewLifecycleState;
 
+/// Webview message DTO — carries the webview origin, target, and payload
+/// for `postMessage` IPC.
 pub mod WebviewMessage;
 
 // Private submodules - implementation only, accessed through the

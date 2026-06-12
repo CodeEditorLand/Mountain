@@ -14,14 +14,19 @@ use crate::Environment::TestProvider::TestRunStatus;
 pub struct Struct {
 	/// Unique identifier for this test within its controller.
 	pub TestIdentifier:String,
+
 	/// Fully-qualified human-readable test name.
 	pub FullName:String,
+
 	/// Execution status (Passed, Failed, Skipped, Errored).
 	pub Status:TestRunStatus::Enum,
+
 	/// Execution duration in milliseconds, if measured.
 	pub DurationMs:Option<u64>,
+
 	/// Error message string, populated on failure.
 	pub ErrorMessage:Option<String>,
+
 	/// Stack trace string, populated on failure.
 	pub StackTrace:Option<String>,
 }

@@ -98,7 +98,7 @@ impl MountainVinegRPCService {
 }
 
 impl MountainVinegRPCService {
-	/// Creates a new instance of the Mountain gRPC service.
+	/// Creates a new `MountainVinegRPCService` instance.
 	/// # Parameters
 	/// - `ApplicationHandle`: Tauri app handle for framework integration
 	/// - `RunTime`: Application runtime with core dependencies

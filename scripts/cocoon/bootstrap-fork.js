@@ -28,7 +28,6 @@ const ParentPID = process.env["VSCODE_PARENT_PID"];
 // ============================================================================
 
 const Trace = (Tag, Message) => {
-
 	try {
 		performance.mark(`land:cocoon:${Tag}:${Message}`);
 	} catch {}
@@ -47,7 +46,6 @@ const PostHogHost = "https://eu.i.posthog.com";
 const DistinctId = `land-dev-${process.env["USER"] || process.env["USERNAME"] || "unknown"}`;
 
 const PostHogCapture = async (EventName, Properties = {}) => {
-
 	// Gate 1: production builds never send
 	if (process.env["NODE_ENV"] === "production") return;
 
@@ -105,7 +103,6 @@ const PostHogCapture = async (EventName, Properties = {}) => {
 // ============================================================================
 
 const OTLPFlush = async () => {
-
 	if (process.env["NODE_ENV"] === "production") return;
 
 	if (process.env["Capture"] !== "true") return;
@@ -178,9 +175,7 @@ const OTLPFlush = async () => {
 									) * 1000000n,
 								),
 								status: E.name.includes("error")
-
 									? { code: 2 }
-
 									: { code: 1 },
 							})),
 						},
@@ -222,7 +217,6 @@ setInterval(OTLPFlush, 5000);
 // ============================================================================
 
 if (ParentPID) {
-
 	setInterval(() => {
 		try {
 			process.kill(Number(ParentPID), 0);
@@ -266,7 +260,6 @@ const CocoonEntryPaths = [
 let Loaded = false;
 
 for (const EntryPath of CocoonEntryPaths) {
-
 	try {
 		const { pathname } = EntryPath;
 
@@ -298,7 +291,6 @@ for (const EntryPath of CocoonEntryPaths) {
 }
 
 if (!Loaded) {
-
 	Trace("bootstrap", "stub-mode");
 
 	PostHogCapture("cocoon:stub:active", {

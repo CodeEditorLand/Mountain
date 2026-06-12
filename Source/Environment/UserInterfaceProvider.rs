@@ -244,13 +244,28 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 // --- Internal Helper Functions ---
 
-/// A generic helper that sends a request to the Sky UI and waits for a
-/// response.
+/// Sends a UI request to the Sky (Tauri) frontend and waits for a response.
 ///
-/// Atom T1: made `pub(crate)` so Track effect creators
-/// (`applyEdit` / `showTextDocument` / `Task.Execute`, etc.) can reuse the
-/// same RequestIdentifier/oneshot pattern instead of emitting fire-and-
-/// forget events that resolve to synthetic success.
+/// This is the core request–response primitive used by both the
+/// `UserInterfaceProvider` trait methods (`ShowMessage`, `ShowQuickPick`,
+/// `ShowInputBox`) and external effect creators (`applyEdit`,
+/// `showTextDocument`, `Task.Execute`, etc.) that need a blocking UI
+/// interaction rather than a fire-and-forget emit.
+///
+/// # Flow
+///
+/// 1. Generates a UUID-based request identifier.
+/// 2. Inserts a `tokio::sync::oneshot::Sender` into
+///    `ApplicationState.UI.PendingUserInterfaceRequest`.
+/// 3. Emits a Tauri event with the identifier and payload.
+/// 4. Await the oneshot with a 300‑second timeout; the frontend resolves it via
+///    `DispatchLogic::ResolveUIRequest`.
+///
+/// # Returns
+///
+/// - `Ok(Value)` — the JSON value returned by the Sky UI.
+/// - `Err(CommonError::UserInterfaceInteraction)` — if the channel was dropped,
+///   the event emission failed, or the request timed out.
 pub(crate) async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 	Environment:&MountainEnvironment,
 

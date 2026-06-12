@@ -51,18 +51,16 @@ fn GetKeyringServiceName(Environment:&MountainEnvironment, ExtensionIdentifier:&
 	format!("{}.{}", Environment.ApplicationHandle.package_info().name, ExtensionIdentifier)
 }
 
-/// Helper to check if the Air gRPC client is available without a
-/// proper health check. The raw client requires `&mut self` for
-/// `health_check`, but `MountainEnvironment` holds an immutable
-/// reference. This returns `true` whenever a client is attached.
-/// Blocked on proper wrapper integration.
+/// Checks whether the Air gRPC client is available for use.
+///
+/// Currently returns `true` unconditionally whenever a client is attached.
+/// A proper health check (`health_check` RPC) is not yet implemented because
+/// the raw `AirServiceClient` requires `&mut self` for the health check
+/// while `MountainEnvironment` holds an immutable reference to the client.
+/// This function exists as a placeholder for when a wrapper with
+/// interior mutability is introduced.
 #[cfg(feature = "AirIntegration")]
-async fn IsAirAvailable(_AirClient:&AirServiceClient<tonic::transport::Channel>) -> bool {
-	// TODO: implement proper health check when AirClient wrapper supports
-	// &mut self for health_check RPC. MountainEnvironment stores an
-	// immutable reference, so this is blocked on wrapper integration.
-	true
-}
+async fn IsAirAvailable(_AirClient:&AirServiceClient<tonic::transport::Channel>) -> bool { true }
 
 #[async_trait]
 impl SecretProvider for MountainEnvironment {
@@ -270,9 +268,11 @@ impl SecretProvider for MountainEnvironment {
 
 /// Air stub: retrieves a secret from the remote Air service.
 ///
-/// TODO: construct GetSecretRequest with ExtensionIdentifier + Key, call
-/// AirClient.get_secret with timeout, map errors to CommonError, return
-/// Ok(Some(secret)) if found or Ok(None) if not found.
+/// Currently not implemented. Logs the request and returns
+/// [`CommonError::NotImplemented`]. When implemented, it will construct a
+/// `GetSecretRequest` with the extension identifier and key, call
+/// `AirClient.get_secret` with a timeout, map errors to `CommonError`,
+/// and return `Ok(Some(secret))` if found or `Ok(None)` if not found.
 #[cfg(feature = "AirIntegration")]
 async fn GetSecretFromAir(
 	_AirClient:&AirServiceClient<tonic::transport::Channel>,
@@ -288,16 +288,15 @@ async fn GetSecretFromAir(
 		Key
 	);
 
-	// TODO: construct GetSecretRequest with ExtensionIdentifier + Key, call
-	// AirClient.get_secret with timeout, map errors to CommonError, return
-	// Ok(Some(secret)) if found / Ok(None) if not found.
 	Err(CommonError::NotImplemented { FeatureName:"GetSecretFromAir".to_string() })
 }
 
 /// Air stub: stores a secret in the remote Air service.
 ///
-/// TODO: construct StoreSecretRequest with ExtensionIdentifier, Key, Value;
-/// handle encryption and secure transmission; map errors to CommonError.
+/// Currently not implemented. Logs the request and returns
+/// [`CommonError::NotImplemented`]. When implemented, it will construct a
+/// `StoreSecretRequest` with extension identifier, key, and value; handle
+/// encryption and secure transmission; and map errors to `CommonError`.
 #[cfg(feature = "AirIntegration")]
 async fn StoreSecretToAir(
 	_AirClient:&AirServiceClient<tonic::transport::Channel>,
@@ -315,12 +314,15 @@ async fn StoreSecretToAir(
 		Key
 	);
 
-	// TODO: construct StoreSecretRequest with ExtensionIdentifier, Key, Value;
-	// handle encryption and secure transmission; map errors to CommonError.
 	Err(CommonError::NotImplemented { FeatureName:"StoreSecretToAir".to_string() })
 }
 
-/// Deletes a secret from the Air service.
+/// Air stub: deletes a secret from the remote Air service.
+///
+/// Currently not implemented. Logs the request and returns
+/// [`CommonError::NotImplemented`]. When implemented, it will construct a
+/// `DeleteSecretRequest`, handle idempotency (deleting a non-existent
+/// secret is treated as success), and map errors to `CommonError`.
 #[cfg(feature = "AirIntegration")]
 async fn DeleteSecretFromAir(
 	_AirClient:&AirServiceClient<tonic::transport::Channel>,
@@ -336,7 +338,5 @@ async fn DeleteSecretFromAir(
 		Key
 	);
 
-	// TODO: construct DeleteSecretRequest, handle idempotency (missing secret
-	// is success), map errors to CommonError.
 	Err(CommonError::NotImplemented { FeatureName:"DeleteSecretFromAir".to_string() })
 }

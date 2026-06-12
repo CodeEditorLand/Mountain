@@ -1,4 +1,4 @@
-//! Map a Cocoon→Mountain wire method name to an Echo priority lane.
+//! Map a gRPC wire method name to an Echo priority lane.
 //!
 //! | Wire method                             | Lane   | Reason                              |
 //! | --------------------------------------- | ------ | ----------------------------------- |
@@ -12,6 +12,7 @@
 //! | everything else                         | Normal | safe default                        |
 use Echo::Task::Priority::Priority as EchoPriority;
 
+/// Map a gRPC wire method name to an Echo scheduler priority lane.
 pub fn Fn(Method:&str) -> EchoPriority {
 	match Method {
 		"FileSystem.ReadFile"

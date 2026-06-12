@@ -32,40 +32,75 @@ use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 #[derive(Clone, Copy)]
 enum Route {
 	FsReadFile,
+
 	FsWriteFile,
+
 	FsStat,
+
 	FsReaddir,
+
 	FsCreateDir,
+
 	FsDelete,
+
 	FsRename,
+
 	CommandsExecute,
+
 	ExecuteCommand,
+
 	UnregisterCommand,
+
 	ShowOpenDialog,
+
 	ShowSaveDialog,
+
 	ShowInputBox,
+
 	OpenExternal,
+
 	ShowTextDocument,
+
 	ShowInformation,
+
 	ShowWarning,
+
 	ShowError,
+
 	CreateStatusBarItem,
+
 	SetStatusBarText,
+
 	CreateWebviewPanel,
+
 	SetWebviewHtml,
+
 	FindFiles,
+
 	FindTextInFiles,
+
 	OpenDocument,
+
 	SaveAll,
+
 	ApplyEdit,
+
 	GetSecret,
+
 	StoreSecret,
+
 	DeleteSecret,
+
 	ReadFileUri,
+
 	WriteFileUri,
+
 	StatUri,
+
 	ReaddirUri,
+
 	CallHierarchy,
+
 	TypeHierarchy,
 }
 
@@ -199,17 +234,11 @@ pub async fn Fn(
 
 		Route::ShowTextDocument => WindowDialogs::ShowTextDocument::Fn(RequestId, Params, Env),
 
-		Route::ShowInformation => {
-			WindowDialogs::ShowMessage::Fn(RequestId, Params, Env, MessageSeverity::Info).await
-		},
+		Route::ShowInformation => WindowDialogs::ShowMessage::Fn(RequestId, Params, Env, MessageSeverity::Info).await,
 
-		Route::ShowWarning => {
-			WindowDialogs::ShowMessage::Fn(RequestId, Params, Env, MessageSeverity::Warning).await
-		},
+		Route::ShowWarning => WindowDialogs::ShowMessage::Fn(RequestId, Params, Env, MessageSeverity::Warning).await,
 
-		Route::ShowError => {
-			WindowDialogs::ShowMessage::Fn(RequestId, Params, Env, MessageSeverity::Error).await
-		},
+		Route::ShowError => WindowDialogs::ShowMessage::Fn(RequestId, Params, Env, MessageSeverity::Error).await,
 
 		Route::CreateStatusBarItem => WindowDialogs::CreateStatusBarItem::Fn(RequestId, Params, Env),
 

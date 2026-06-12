@@ -14,6 +14,7 @@ use crate::Environment::TestProvider::{TestControllerState, TestRun};
 pub struct Struct {
 	/// Registered test controllers, keyed by `ControllerIdentifier`.
 	pub Controllers:HashMap<String, TestControllerState::Struct>,
+
 	/// Active test runs, keyed by `RunIdentifier`.
 	pub ActiveRuns:HashMap<String, TestRun::Struct>,
 }

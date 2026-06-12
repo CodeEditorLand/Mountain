@@ -1,4 +1,4 @@
-//! Internal fan-out path - now dead code. Mountain's Multiplexer is
+//! Internal fan-out path — now dead code. Mountain's Multiplexer is
 //! `::Vine::Multiplexer::Multiplexer` (type alias), so multiplexer
 //! notifications fan out through Vine's own broadcast. Nothing in
 //! Mountain calls this function.

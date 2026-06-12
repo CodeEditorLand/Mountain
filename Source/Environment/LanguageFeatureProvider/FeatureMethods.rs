@@ -2,96 +2,127 @@
 //! module under `FeatureMethods/`; the functions here are thin delegators
 //! that keep the call sites in the trait impl (`mod.rs`) stable.
 
+/// Invoke provider registration and dispatch.
 #[path = "FeatureMethods/InvokeProvider.rs"]
 pub mod InvokeProvider;
 
+/// Invoke provider method registration and dispatch.
 #[path = "FeatureMethods/InvokeProviderMethod.rs"]
 pub mod InvokeProviderMethod;
 
+/// Call hierarchy preparation registration and dispatch.
 #[path = "FeatureMethods/PrepareCallHierarchy.rs"]
 pub mod PrepareCallHierarchy;
 
+/// Rename preparation registration and dispatch.
 #[path = "FeatureMethods/PrepareRename.rs"]
 pub mod PrepareRename;
 
+/// Type hierarchy preparation registration and dispatch.
 #[path = "FeatureMethods/PrepareTypeHierarchy.rs"]
 pub mod PrepareTypeHierarchy;
 
+/// Call hierarchy incoming calls provider registration and dispatch.
 #[path = "FeatureMethods/ProvideCallHierarchyIncomingCalls.rs"]
 pub mod ProvideCallHierarchyIncomingCalls;
 
+/// Call hierarchy outgoing calls provider registration and dispatch.
 #[path = "FeatureMethods/ProvideCallHierarchyOutgoingCalls.rs"]
 pub mod ProvideCallHierarchyOutgoingCalls;
 
+/// Code actions provider registration and dispatch.
 #[path = "FeatureMethods/ProvideCodeActions.rs"]
 pub mod ProvideCodeActions;
 
+/// Code lenses provider registration and dispatch.
 #[path = "FeatureMethods/ProvideCodeLenses.rs"]
 pub mod ProvideCodeLenses;
 
+/// Completions provider registration and dispatch.
 #[path = "FeatureMethods/ProvideCompletions.rs"]
 pub mod ProvideCompletions;
 
+/// Go-to-definition provider registration and dispatch.
 #[path = "FeatureMethods/ProvideDefinition.rs"]
 pub mod ProvideDefinition;
 
+/// Document formatting edits provider registration and dispatch.
 #[path = "FeatureMethods/ProvideDocumentFormattingEdits.rs"]
 pub mod ProvideDocumentFormattingEdits;
 
+/// Document highlights provider registration and dispatch.
 #[path = "FeatureMethods/ProvideDocumentHighlights.rs"]
 pub mod ProvideDocumentHighlights;
 
+/// Document links provider registration and dispatch.
 #[path = "FeatureMethods/ProvideDocumentLinks.rs"]
 pub mod ProvideDocumentLinks;
 
+/// Document range formatting edits provider registration and dispatch.
 #[path = "FeatureMethods/ProvideDocumentRangeFormattingEdits.rs"]
 pub mod ProvideDocumentRangeFormattingEdits;
 
+/// Document symbols provider registration and dispatch.
 #[path = "FeatureMethods/ProvideDocumentSymbols.rs"]
 pub mod ProvideDocumentSymbols;
 
+/// File decoration provider registration and dispatch.
 #[path = "FeatureMethods/ProvideFileDecoration.rs"]
 pub mod ProvideFileDecoration;
 
+/// Folding ranges provider registration and dispatch.
 #[path = "FeatureMethods/ProvideFoldingRanges.rs"]
 pub mod ProvideFoldingRanges;
 
+/// Hover provider registration and dispatch.
 #[path = "FeatureMethods/ProvideHover.rs"]
 pub mod ProvideHover;
 
+/// Inlay hints provider registration and dispatch.
 #[path = "FeatureMethods/ProvideInlayHints.rs"]
 pub mod ProvideInlayHints;
 
+/// Inline completion items provider registration and dispatch.
 #[path = "FeatureMethods/ProvideInlineCompletionItems.rs"]
 pub mod ProvideInlineCompletionItems;
 
+/// Linked editing ranges provider registration and dispatch.
 #[path = "FeatureMethods/ProvideLinkedEditingRanges.rs"]
 pub mod ProvideLinkedEditingRanges;
 
+/// On-type formatting edits provider registration and dispatch.
 #[path = "FeatureMethods/ProvideOnTypeFormattingEdits.rs"]
 pub mod ProvideOnTypeFormattingEdits;
 
+/// References provider registration and dispatch.
 #[path = "FeatureMethods/ProvideReferences.rs"]
 pub mod ProvideReferences;
 
+/// Rename edits provider registration and dispatch.
 #[path = "FeatureMethods/ProvideRenameEdits.rs"]
 pub mod ProvideRenameEdits;
 
+/// Selection ranges provider registration and dispatch.
 #[path = "FeatureMethods/ProvideSelectionRanges.rs"]
 pub mod ProvideSelectionRanges;
 
+/// Semantic tokens full provider registration and dispatch.
 #[path = "FeatureMethods/ProvideSemanticTokensFull.rs"]
 pub mod ProvideSemanticTokensFull;
 
+/// Signature help provider registration and dispatch.
 #[path = "FeatureMethods/ProvideSignatureHelp.rs"]
 pub mod ProvideSignatureHelp;
 
+/// Type hierarchy subtypes provider registration and dispatch.
 #[path = "FeatureMethods/ProvideTypeHierarchySubtypes.rs"]
 pub mod ProvideTypeHierarchySubtypes;
 
+/// Type hierarchy supertypes provider registration and dispatch.
 #[path = "FeatureMethods/ProvideTypeHierarchySupertypes.rs"]
 pub mod ProvideTypeHierarchySupertypes;
 
+/// Workspace symbols provider registration and dispatch.
 #[path = "FeatureMethods/ProvideWorkspaceSymbols.rs"]
 pub mod ProvideWorkspaceSymbols;
 

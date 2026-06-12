@@ -105,6 +105,9 @@ pub(crate) fn AppendTerminalOutput(TerminalId:u64, Bytes:&[u8]) {
 	}
 }
 
+/// Returns all buffered terminal output for replay — each entry is a
+/// `(terminal_id, bytes)` pair. Called on `sky:replay-events` to
+/// recover output that arrived before SkyBridge's listener was installed.
 pub fn Fn() -> Vec<(u64, Vec<u8>)> {
 	let Map = TerminalOutputBuffer().lock();
 

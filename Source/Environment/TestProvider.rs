@@ -23,14 +23,24 @@
 //! - `vs/workbench/contrib/testing/common/testService.ts`,
 //! - `vs/workbench/contrib/testing/common/testTypes.ts`.
 
+/// Test controller registration — stores identifier, label, owning sidecar,
+/// and active state in `ApplicationState`.
 pub mod TestControllerState;
 
+/// Aggregate state — holds the controller registry and active-runs map behind
+/// a `tokio::sync::RwLock`.
 pub mod TestProviderState;
 
+/// Per-test outcome — identifier, name, status, optional duration and error
+/// details.
 pub mod TestResult;
 
+/// Active test run record — run identifier, controller, status, start instant,
+/// and per-test results map.
 pub mod TestRun;
 
+/// Lifecycle state enum — Queued → Running → terminal (Passed/Failed/
+/// Skipped/Errored).
 pub mod TestRunStatus;
 
 use std::sync::Arc;

@@ -8,8 +8,8 @@
 //!
 //! Two complementary gRPC services:
 //!
-//! - **MountainService**: Handles sidecar-to-Mountain requests and notifications
-//!   (listening port)
+//! - **MountainService**: Handles sidecar-to-Mountain requests and
+//!   notifications (listening port)
 //! - **CocoonService**: Sends Mountain-to-sidecar requests and notifications
 //!   (outgoing port)
 //!

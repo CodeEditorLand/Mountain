@@ -43,27 +43,35 @@
 //! - `vs/debugAdapter/common/debugProtocol.ts`
 
 #[path = "DebugProvider/ConnectPipeServerAdapter.rs"]
+/// Connects to a debug adapter over a Unix pipe or Windows named pipe.
 pub mod ConnectPipeServerAdapter;
 
 #[path = "DebugProvider/ConnectServerAdapter.rs"]
+/// Connects to a debug adapter via a TCP host:port endpoint.
 pub mod ConnectServerAdapter;
 
 #[path = "DebugProvider/RegisterDebugAdapterDescriptorFactory.rs"]
+/// Registers adapter descriptor factories keyed by debug type.
 pub mod RegisterDebugAdapterDescriptorFactory;
 
 #[path = "DebugProvider/RegisterDebugConfigurationProvider.rs"]
+/// Registers configuration provider callbacks keyed by debug type.
 pub mod RegisterDebugConfigurationProvider;
 
 #[path = "DebugProvider/SendCommand.rs"]
+/// Forwards a DAP command to an active debug adapter session.
 pub mod SendCommand;
 
 #[path = "DebugProvider/SpawnExecutableAdapter.rs"]
+/// Spawns a debug adapter as a child process from a configured executable.
 pub mod SpawnExecutableAdapter;
 
 #[path = "DebugProvider/StartDebugging.rs"]
+/// Initiates a new debug session from a folder URI and configuration.
 pub mod StartDebugging;
 
 #[path = "DebugProvider/StopDebugging.rs"]
+/// Gracefully disconnects and tears down a running debug session.
 pub mod StopDebugging;
 
 use CommonLibrary::{Debug::DebugService::DebugService, Error::CommonError::CommonError};
