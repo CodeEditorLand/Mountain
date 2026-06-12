@@ -15,7 +15,22 @@ use crate::dev_log;
 ///   Mountain.dev.log without parsing stderr.
 /// - Best-effort: failures don't abort Mountain boot. A real EADDRINUSE later
 ///   will surface via Cocoon's own bootstrap error.
+///
+/// The TCP probe, `lsof`/`kill` subprocesses, and grace-window sleeps all
+/// block the calling thread. Boot calls this from a Tokio worker, so the
+/// body runs under `block_in_place` to hand the worker back to the
+/// scheduler; outside a multi-thread runtime it runs inline.
 pub(crate) fn Fn(Port:u16) {
+	match tokio::runtime::Handle::try_current() {
+		Ok(Handle) if Handle.runtime_flavor() == tokio::runtime::RuntimeFlavor::MultiThread => {
+			tokio::task::block_in_place(|| SweepBlocking(Port));
+		},
+
+		_ => SweepBlocking(Port),
+	}
+}
+
+fn SweepBlocking(Port:u16) {
 	use std::{net::TcpStream, time::Duration};
 
 	let Addr = format!("127.0.0.1:{}", Port);

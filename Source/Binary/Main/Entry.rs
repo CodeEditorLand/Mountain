@@ -153,6 +153,25 @@ pub fn Fn() {
 		STARTUP_TIME_MS.store(NowMs, Ordering::Relaxed);
 	}
 
+	// -------------------------------------------------------------------------
+	// [Boot] [Env] Kick off the interactive-shell env probe FIRST so the
+	// `$SHELL -ilc env` child runs concurrently with keyring init and the
+	// dev-log sink open below. The merge (`Probe::Finish`) happens further
+	// down, still on the single-threaded pre-Tokio boot path where
+	// `set_var` is sound and before any Mountain child process spawns.
+	// Skip entirely when launched from a TTY (terminal already has the
+	// right env). On macOS, `std::io::stdin().is_terminal()` is the
+	// canonical check - waits for is-terminal 0.5; in the interim,
+	// probe `TERM_PROGRAM` env var which macOS Terminal.app and iTerm2
+	// both set. `TERM=xterm-256color` alone is unreliable (pipelines
+	// set it too). No-op when skip or the shell probe fails/times out.
+	// -------------------------------------------------------------------------
+	let IsTtyLaunch =
+		std::env::var("TERM_PROGRAM").is_ok() || std::env::var("TERM").map_or(false, |V| V != "dumb" && V != "unknown");
+
+	let PendingShellEnvironment =
+		if IsTtyLaunch { None } else { crate::Environment::Utility::EnhanceShellEnvironment::Begin() };
+
 	// Initialize the native keyring store (Keychain on macOS) before any
 	// code path that calls SecretProvider. keyring-core 1.0 requires an
 	// explicit store set via set_default_store() before Entry::new() can
@@ -187,26 +206,19 @@ pub fn Fn() {
 	crate::IPC::DevLog::InitEager::Fn();
 
 	// -------------------------------------------------------------------------
-	// [Boot] [Env] Enhance the process environment with the user's
-	// interactive-shell PATH / NVM_DIR / HOMEBREW_PREFIX / JAVA_HOME / …
-	// before any child process is spawned. macOS GUI launches (Finder,
-	// Dock, Spotlight, `open <bundle>.app`) start the app with a minimal
-	// env where Homebrew, NVM, and similar are not on PATH; without this
-	// step the Cocoon node binary, language servers, and `git` calls
-	// from extensions all fall back to system defaults (or fail).
-	//
-	// Skip entirely when launched from a TTY (terminal already has the
-	// right env). On macOS, `std::io::stdin().is_terminal()` is the
-	// canonical check - waits for is-terminal 0.5; in the interim,
-	// probe `TERM_PROGRAM` env var which macOS Terminal.app and iTerm2
-	// both set. `TERM=xterm-256color` alone is unreliable (pipelines
-	// set it too). No-op when skip or the shell probe fails/times out.
+	// [Boot] [Env] Join the interactive-shell env probe started at the
+	// top of Fn() and merge the user's PATH / NVM_DIR / HOMEBREW_PREFIX /
+	// JAVA_HOME / … before any child process is spawned. macOS GUI
+	// launches (Finder, Dock, Spotlight, `open <bundle>.app`) start the
+	// app with a minimal env where Homebrew, NVM, and similar are not on
+	// PATH; without this step the Cocoon node binary, language servers,
+	// and `git` calls from extensions all fall back to system defaults
+	// (or fail). The wait is bounded by the deadline set at spawn time,
+	// so the keyring/log-init work above already consumed part of the
+	// shell's budget.
 	// -------------------------------------------------------------------------
-	let IsTtyLaunch =
-		std::env::var("TERM_PROGRAM").is_ok() || std::env::var("TERM").map_or(false, |V| V != "dumb" && V != "unknown");
-
-	if !IsTtyLaunch {
-		crate::Environment::Utility::EnhanceShellEnvironment::Fn();
+	if let Some(Pending) = PendingShellEnvironment {
+		Pending.Finish();
 	}
 
 	// -------------------------------------------------------------------------
@@ -353,21 +365,21 @@ pub fn Fn() {
 		crate::Binary::Build::PostHogPlugin::HydrateRuntimeEnvironment::Fn();
 
 		// ---------------------------------------------------------------------
-		// [Boot] [PostHog] Initialize telemetry client first so any
-		// error captured during the rest of boot lands in the project.
-		// No-op in release builds or when Report=false.
+		// [Boot] [PostHog] / [Common::Telemetry] Both inits are
+		// network-bound and stash their clients in process-wide
+		// OnceLocks that every capture path treats as "not yet set =
+		// no-op", so nothing later in boot depends on their completion.
+		// Run them as one background task (relative order preserved -
+		// the shared stack reads the env the PostHog plugin loads) so
+		// window work starts immediately. No-op in release builds or
+		// when Report=false. Events captured before the task lands are
+		// dropped - acceptable for best-effort telemetry.
 		// ---------------------------------------------------------------------
-		crate::Binary::Build::PostHogPlugin::Initialize::Fn().await;
+		tokio::spawn(async {
+			crate::Binary::Build::PostHogPlugin::Initialize::Fn().await;
 
-		// ---------------------------------------------------------------------
-		// [Boot] [Common::Telemetry] Initialize the shared dual-pipe
-		// stack so library crates linked into Mountain (Echo, Mist,
-		// Common) emit through the same client. The HydrateRuntime
-		// Environment step above populated the env so this picks up
-		// the same Authorize/Beam/Capture values Mountain's plugin
-		// already loaded. Idempotent.
-		// ---------------------------------------------------------------------
-		CommonLibrary::Telemetry::Initialize::Fn(CommonLibrary::Telemetry::Tier::Tier::Mountain).await;
+			CommonLibrary::Telemetry::Initialize::Fn(CommonLibrary::Telemetry::Tier::Tier::Mountain).await;
+		});
 
 		// ---------------------------------------------------------------------
 		// [Boot] [Args] CLI parsing (using CliParse module)
@@ -669,7 +681,12 @@ pub fn Fn() {
 				// Maps to embedded frontend assets from Sky/Target.
 				let AppHandle = ctx.app_handle().clone();
 
-				std::thread::spawn(move || {
+				// Blocking-pool task instead of a per-request OS thread:
+				// the handler body is synchronous (mmap-cache hit) but
+				// falls back to blocking disk IO on a cache miss, so the
+				// dedicated blocking pool is the right home. Saves the
+				// ~100µs thread-spawn cost × 800+ requests at boot.
+				tauri::async_runtime::spawn_blocking(move || {
 					let response = crate::Binary::Build::Scheme::VscodeFileSchemeHandler(&AppHandle, &request);
 
 					responder.respond(response);
@@ -687,7 +704,9 @@ pub fn Fn() {
 				// `swMessage` postMessage channel, not this scheme.
 				let AppHandle = ctx.app_handle().clone();
 
-				std::thread::spawn(move || {
+				// Blocking pool (sync body, disk IO on miss) - see the
+				// vscode-file handler above.
+				tauri::async_runtime::spawn_blocking(move || {
 					let response = crate::Binary::Build::Scheme::VscodeWebviewSchemeHandler(&AppHandle, &request);
 
 					responder.respond(response);
@@ -708,7 +727,9 @@ pub fn Fn() {
 				// URI to `vscode-file://vscode-app/<path>`.
 				let AppHandle = ctx.app_handle().clone();
 
-				std::thread::spawn(move || {
+				// Blocking pool (sync body, disk IO on miss) - see the
+				// vscode-file handler above.
+				tauri::async_runtime::spawn_blocking(move || {
 					let Original = request.uri().to_string();
 
 					let RewrittenUri = match Original.strip_prefix("vscode-webview-resource://") {

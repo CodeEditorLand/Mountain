@@ -18,7 +18,15 @@ pub async fn Fn(
 
 	let DocumentURI = Url::parse(URI).map_err(|E| Status::invalid_argument(format!("Invalid URI: {}", E)))?;
 
-	match Service.environment.ProvideDocumentSymbols(DocumentURI).await {
+	let Forward = Service.environment.ProvideDocumentSymbols(DocumentURI);
+
+	let Outcome = match Service.RunCancellable("ProvideDocumentSymbols", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideDocumentSymbolsResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideDocumentSymbolsResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Document symbols failed: {}", Error))),

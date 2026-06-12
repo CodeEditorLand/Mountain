@@ -18,7 +18,15 @@ pub async fn Fn(
 
 	let DocumentURI = Url::parse(URI).map_err(|E| Status::invalid_argument(format!("Invalid URI: {}", E)))?;
 
-	match Service.environment.ProvideSemanticTokensFull(DocumentURI).await {
+	let Forward = Service.environment.ProvideSemanticTokensFull(DocumentURI);
+
+	let Outcome = match Service.RunCancellable("ProvideSemanticTokensFull", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideSemanticTokensResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideSemanticTokensResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Semantic tokens failed: {}", Error))),

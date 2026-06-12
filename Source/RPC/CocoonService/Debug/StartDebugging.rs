@@ -1,7 +1,7 @@
 //! Start a debug session. Mints a session id, emits `sky://debug/start` so
 //! the workbench can render the debug toolbar/console.
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use serde_json::json;
 use tauri::Emitter;
@@ -10,6 +10,10 @@ use ::Vine::Generated::{StartDebuggingRequest, StartDebuggingResponse};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
 
+/// Monotonic counter for debug session identifiers. Process-unique even
+/// when multiple sessions start within the same millisecond.
+static NEXT_DEBUG_SESSION_ID:AtomicU64 = AtomicU64::new(1);
+
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
 
@@ -17,10 +21,7 @@ pub async fn Fn(
 ) -> Result<Response<StartDebuggingResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] start_debugging: type={}", Request.debug_type);
 
-	let SessionIdentifier = format!(
-		"debug-{}",
-		SystemTime::now().duration_since(UNIX_EPOCH).map(|D| D.as_millis()).unwrap_or(0)
-	);
+	let SessionIdentifier = format!("debug-{}", NEXT_DEBUG_SESSION_ID.fetch_add(1, Ordering::Relaxed));
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://debug/start",

@@ -14,14 +14,18 @@ pub async fn Fn(
 ) -> Result<Response<ProvideCodeLensesResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] Providing code lenses");
 
-	match Service
-		.environment
-		.ProvideCodeLenses(
-			Url::parse(Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or(""))
-				.map_err(|E| Status::invalid_argument(format!("Invalid URI: {}", E)))?,
-		)
-		.await
-	{
+	let DocumentURI = Url::parse(Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or(""))
+		.map_err(|E| Status::invalid_argument(format!("Invalid URI: {}", E)))?;
+
+	let Forward = Service.environment.ProvideCodeLenses(DocumentURI);
+
+	let Outcome = match Service.RunCancellable("ProvideCodeLenses", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideCodeLensesResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideCodeLensesResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Code lenses failed: {}", Error))),

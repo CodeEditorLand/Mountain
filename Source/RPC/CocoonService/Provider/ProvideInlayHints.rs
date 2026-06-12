@@ -28,7 +28,15 @@ pub async fn Fn(
 		"EndColumn": R.and_then(|R| R.end.as_ref()).map(|P| P.character).unwrap_or(0),
 	});
 
-	match Service.environment.ProvideInlayHints(DocumentURI, RangeDTO).await {
+	let Forward = Service.environment.ProvideInlayHints(DocumentURI, RangeDTO);
+
+	let Outcome = match Service.RunCancellable("ProvideInlayHints", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideInlayHintsResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideInlayHintsResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Inlay hints failed: {}", Error))),

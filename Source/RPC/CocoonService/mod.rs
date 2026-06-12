@@ -291,6 +291,12 @@ use crate::dev_log;
 /// Monotonic counter for outbound channel slots in `CHANNEL_REGISTRY`.
 static NEXT_CHANNEL_ID:AtomicU64 = AtomicU64::new(1);
 
+/// Monotonic counter for cancellable provider operations registered in
+/// `ActiveOperations`. The typed `Provide*` proto requests carry no request
+/// id, so Mountain assigns a local one per forward; `cancel_operation` can
+/// fire it once the caller learns the id (currently Mountain-local only).
+static NEXT_OPERATION_ID:AtomicU64 = AtomicU64::new(1);
+
 lazy_static! {
 
 	/// Process-wide map from channel_id → outbound `Envelope` sender.
@@ -356,6 +362,51 @@ impl CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Unregistered operation {}", request_id);
 	}
 
+	/// Runs a provider forward under a freshly-registered cancellation token.
+	///
+	/// Allocates an operation id from `NEXT_OPERATION_ID`, registers it in
+	/// `ActiveOperations` (the same map `cancel_operation` /
+	/// `Initialization::CancelOperation` fires tokens in), races `Forward`
+	/// against the token with `tokio::select!`, and unregisters the operation
+	/// on both the completed and cancelled exit paths.
+	///
+	/// Returns `None` when the operation was cancelled before the forward
+	/// completed; callers respond with their empty/default response so the
+	/// gRPC caller unblocks immediately instead of waiting out the forward.
+	///
+	/// NOTE: the typed `Provide*` proto requests carry no request id field,
+	/// so the registered id is Mountain-local. End-to-end renderer-driven
+	/// cancellation additionally needs the id threaded from the caller
+	/// (a `request_id` field on the `Provide*Request` messages in Vine.proto).
+	pub async fn RunCancellable<T>(
+		&self,
+		OperationName:&str,
+		Forward:impl std::future::Future<Output = T>,
+	) -> Option<T> {
+		let RequestId = NEXT_OPERATION_ID.fetch_add(1, Ordering::Relaxed);
+
+		let Token = self.RegisterOperation(RequestId).await;
+
+		let Outcome = tokio::select! {
+			_ = Token.cancelled() => {
+				dev_log!(
+					"cocoon",
+					"[CocoonService] {} operation {} cancelled before completion",
+					OperationName,
+					RequestId
+				);
+
+				None
+			},
+
+			Output = Forward => Some(Output),
+		};
+
+		self.UnregisterOperation(RequestId).await;
+
+		Outcome
+	}
+
 	/// Registers a language feature provider in ApplicationState.
 	///
 	/// Converts the gRPC request fields into a `ProviderRegistrationDTO` and
@@ -402,8 +453,10 @@ impl CocoonServiceImpl {
 
 	/// Extracts a filesystem path from a URI proto message.
 	///
-	/// Handles both `file://` URIs and bare paths. Returns `None` if the URI
-	/// is absent or the path cannot be extracted.
+	/// Handles `file://` URIs and bare paths. Virtual schemes (`untitled:`,
+	/// `output:`, `vscode-*:`, `extension*:`) have no filesystem backing and
+	/// return `None`, as do unknown schemes. Returns `None` if the URI is
+	/// absent or the path cannot be extracted.
 	fn UriToPath(uri_opt:Option<&Uri>) -> Option<std::path::PathBuf> {
 		let value = uri_opt?.value.as_str();
 
@@ -414,11 +467,43 @@ impl CocoonServiceImpl {
 		// Strip file:// prefix if present
 		let path_str = if let Some(Stripped) = value.strip_prefix("file://") {
 			Stripped
-		} else if value.starts_with('/') || (value.len() > 1 && value.as_bytes()[1] == b':') {
-			// Bare absolute path (Unix or Windows)
+		} else if value.starts_with('/') || (value.len() > 1 && value.as_bytes()[1] == b':' && value.as_bytes()[0].is_ascii_alphabetic() && value.len() > 2 && (value.as_bytes()[2] == b'\\' || value.as_bytes()[2] == b'/')) {
+			// Bare absolute path (Unix or Windows drive)
 			value
+		} else if let Some((scheme, _)) = value.split_once(':') {
+			// RFC 3986 scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+			let is_scheme = scheme.as_bytes().first().is_some_and(|B| B.is_ascii_alphabetic())
+				&& scheme
+					.bytes()
+					.all(|B| B.is_ascii_alphanumeric() || B == b'+' || B == b'-' || B == b'.');
+
+			if !is_scheme {
+				// Colon inside a bare relative path - treat as a path
+				value
+			} else if matches!(scheme, "untitled" | "output")
+				|| scheme.starts_with("vscode-")
+				|| scheme.starts_with("extension")
+			{
+				dev_log!(
+					"cocoon",
+					"[CocoonService] UriToPath: virtual scheme '{}' has no filesystem path: {}",
+					scheme,
+					value
+				);
+
+				return None;
+			} else {
+				dev_log!(
+					"cocoon",
+					"warn: [CocoonService] UriToPath: unknown scheme '{}' - refusing to treat as disk path: {}",
+					scheme,
+					value
+				);
+
+				return None;
+			}
 		} else {
-			// Unknown scheme - return as-is
+			// Bare relative path
 			value
 		};
 

@@ -35,7 +35,15 @@ pub async fn Fn(
 
 	let ContextDTO = json!({ "diagnostics": [], "only": null });
 
-	match Service.environment.ProvideCodeActions(DocumentURI, RangeDTO, ContextDTO).await {
+	let Forward = Service.environment.ProvideCodeActions(DocumentURI, RangeDTO, ContextDTO);
+
+	let Outcome = match Service.RunCancellable("ProvideCodeActions", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideCodeActionsResponse { actions:Vec::new() })),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideCodeActionsResponse { actions:Vec::new() })),
 
 		Err(Error) => Err(Status::internal(format!("Code actions failed: {}", Error))),

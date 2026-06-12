@@ -37,7 +37,15 @@ pub async fn Fn(
 
 	let PositionDTO_ = PositionDTO { LineNumber:Line, Column:Character };
 
-	match Service.environment.ProvideHover(DocumentURI, PositionDTO_).await {
+	let Forward = Service.environment.ProvideHover(DocumentURI, PositionDTO_);
+
+	let Outcome = match Service.RunCancellable("ProvideHover", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideHoverResponse { markdown:String::new(), range:None })),
+	};
+
+	match Outcome {
 		Ok(Some(Hover)) => {
 			let Markdown = Hover
 				.Contents

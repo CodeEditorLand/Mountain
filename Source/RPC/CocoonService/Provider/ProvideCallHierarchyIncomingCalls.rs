@@ -19,7 +19,15 @@ pub async fn Fn(
 		"uri": Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or(""),
 	});
 
-	match Service.environment.ProvideCallHierarchyIncomingCalls(ItemDTO).await {
+	let Forward = Service.environment.ProvideCallHierarchyIncomingCalls(ItemDTO);
+
+	let Outcome = match Service.RunCancellable("ProvideCallHierarchyIncomingCalls", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(<ProvideCallHierarchyResponse>::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(<ProvideCallHierarchyResponse>::default())),
 
 		Err(Error) => Err(Status::internal(format!("call hierarchy incoming failed: {}", Error))),

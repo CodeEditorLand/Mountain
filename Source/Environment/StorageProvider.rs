@@ -27,8 +27,9 @@
 //! All disk writes go through `SaveStorageToDisk`, which is spawned via
 //! `tokio::spawn` so the trait call returns immediately. The function creates
 //! parent directories as needed and logs errors without propagating them
-//! (fire-and-forget pattern). Writes are NOT yet atomic (temp+rename); that
-//! is a known TODO.
+//! (fire-and-forget pattern). Writes are atomic: the JSON is written to a
+//! sibling `<path>.tmp` file and renamed over the target, so a crash
+//! mid-write leaves the previous file intact.
 //!
 //! ## VS Code reference
 //!
@@ -136,9 +137,9 @@ pub async fn FlushPendingWrites(
 }
 
 // TODO: storage quotas per extension, encryption for sensitive values,
-// compression for large datasets, migration/versioning, atomic writes
-// (temp+rename), storage change notifications/watchers, TTL / auto-expiry,
-// binary data support, transaction (batch + rollback), sync via Air.
+// compression for large datasets, migration/versioning, storage change
+// notifications/watchers, TTL / auto-expiry, binary data support,
+// transaction (batch + rollback), sync via Air.
 #[async_trait]
 impl StorageProvider for MountainEnvironment {
 	/// Retrieves a value from either global or workspace storage.
@@ -357,13 +358,39 @@ async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
 				}
 			}
 
-			if let Err(Error) = fs::write(&Path, JSONString).await {
+			// Atomic write: persist to a sibling temp file, then rename over
+			// the target. `rename` is atomic on POSIX, so a crash mid-write
+			// leaves the previous storage file intact instead of truncated
+			// JSON.
+			let TempPath = {
+				let mut TempOsString = Path.as_os_str().to_os_string();
+
+				TempOsString.push(".tmp");
+
+				PathBuf::from(TempOsString)
+			};
+
+			if let Err(Error) = fs::write(&TempPath, JSONString).await {
 				dev_log!(
 					"storage",
-					"error: [StorageProvider] Failed to write storage file to '{}': {}",
+					"error: [StorageProvider] Failed to write temp storage file '{}': {}",
+					TempPath.display(),
+					Error
+				);
+
+				return;
+			}
+
+			if let Err(Error) = fs::rename(&TempPath, &Path).await {
+				dev_log!(
+					"storage",
+					"error: [StorageProvider] Failed to rename temp storage file '{}' over '{}': {}",
+					TempPath.display(),
 					Path.display(),
 					Error
 				);
+
+				let _ = fs::remove_file(&TempPath).await;
 			}
 		},
 

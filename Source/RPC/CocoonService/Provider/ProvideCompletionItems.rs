@@ -47,11 +47,15 @@ pub async fn Fn(
 		},
 	};
 
-	match Service
-		.environment
-		.ProvideCompletions(DocumentURI, PositionDTO_, ContextDTO, None)
-		.await
-	{
+	let Forward = Service.environment.ProvideCompletions(DocumentURI, PositionDTO_, ContextDTO, None);
+
+	let Outcome = match Service.RunCancellable("ProvideCompletionItems", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideCompletionItemsResponse { items:Vec::new() })),
+	};
+
+	match Outcome {
 		Ok(Some(List)) => {
 			let Items = List
 				.Suggestions

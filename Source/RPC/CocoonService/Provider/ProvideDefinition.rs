@@ -34,7 +34,15 @@ pub async fn Fn(
 		Column:Position_.map(|P| P.character).unwrap_or(0),
 	};
 
-	match Service.environment.ProvideDefinition(DocumentURI, PositionDTO_).await {
+	let Forward = Service.environment.ProvideDefinition(DocumentURI, PositionDTO_);
+
+	let Outcome = match Service.RunCancellable("ProvideDefinition", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideDefinitionResponse { locations:Vec::new() })),
+	};
+
+	match Outcome {
 		Ok(Some(Locations)) => {
 			let Mapped = Locations
 				.iter()

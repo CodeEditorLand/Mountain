@@ -23,15 +23,36 @@
 
 use std::time::Duration;
 
+/// In-flight `$SHELL -ilc env` capture started by [`Begin`]. The shell
+/// runs concurrently with the rest of the pre-runtime boot work (keyring
+/// init, log-sink open, `.env.Land` probing); [`Probe::Finish`] joins it
+/// with a bounded deadline and merges the result into `std::env`.
+pub struct Probe {
+	Child:std::process::Child,
+
+	Deadline:std::time::Instant,
+}
+
 /// Run `$SHELL -ilc env` and merge novel keys into `std::env`. Existing
 /// values win - never clobber an env var the parent process explicitly
 /// set (especially `PATH` if the user passed one). Caller is expected
 /// to invoke this exactly once during boot, before any child process
 /// is spawned.
 pub fn Fn() {
+	if let Some(Pending) = Begin() {
+		Pending.Finish();
+	}
+}
+
+/// Spawn the interactive-shell probe without waiting on it. Returns
+/// `None` when the probe is unnecessary (TTY launch) or the spawn
+/// itself fails. The deadline is anchored at spawn time, so any boot
+/// work the caller performs before `Finish()` counts toward the
+/// shell's budget instead of extending it.
+pub fn Begin() -> Option<Probe> {
 	// TTY = launched from terminal = already has the user's shell env.
 	if IsTty() {
-		return;
+		return None;
 	}
 
 	let Shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
@@ -47,73 +68,81 @@ pub fn Fn() {
 		.stderr(std::process::Stdio::null())
 		.spawn();
 
-	let mut Child = match Output {
-		Ok(C) => C,
+	match Output {
+		// Hard cap so a misbehaving rc-file (network call in `.zshrc`,
+		// blocking `read`) doesn't stall boot. 800 ms from spawn keeps
+		// the worst-case main-thread stall under one frame of perceived
+		// launch delay; the merge must stay on the single-threaded boot
+		// path because `set_var` is unsound once Tokio workers exist.
+		Ok(Child) => Some(Probe { Child, Deadline:std::time::Instant::now() + Duration::from_millis(800) }),
 
-		Err(_) => return,
-	};
+		Err(_) => None,
+	}
+}
 
-	// Hard cap so a misbehaving rc-file (network call in `.zshrc`,
-	// blocking `read`) doesn't stall boot. 2 s is well above the
-	// observed worst-case shells in the wild.
-	let Deadline = std::time::Instant::now() + Duration::from_secs(2);
+impl Probe {
+	/// Wait (bounded by the deadline set at [`Begin`]) for the shell to
+	/// exit, then merge novel keys into `std::env`. Must run on the
+	/// single-threaded boot path before the Tokio runtime is built -
+	/// `set_var` races `getenv` from any other live thread.
+	pub fn Finish(mut self) {
+		loop {
+			match self.Child.try_wait() {
+				Ok(Some(_)) => break,
 
-	loop {
-		match Child.try_wait() {
-			Ok(Some(_)) => break,
+				Ok(None) => {
+					if std::time::Instant::now() >= self.Deadline {
+						let _ = self.Child.kill();
 
-			Ok(None) => {
-				if std::time::Instant::now() >= Deadline {
-					let _ = Child.kill();
+						let _ = self.Child.wait();
 
-					let _ = Child.wait();
+						return;
+					}
 
-					return;
-				}
+					std::thread::sleep(Duration::from_millis(20));
+				},
 
-				std::thread::sleep(Duration::from_millis(20));
-			},
+				Err(_) => return,
+			}
+		}
+
+		let StdoutBytes = match self.Child.wait_with_output() {
+			Ok(O) => O.stdout,
 
 			Err(_) => return,
+		};
+
+		let Text = match String::from_utf8(StdoutBytes) {
+			Ok(S) => S,
+
+			Err(_) => return,
+		};
+
+		for Line in Text.lines() {
+			let Some((Key, Value)) = Line.split_once('=') else { continue };
+
+			let Key = Key.trim();
+
+			if Key.is_empty() || !IsPortableEnvName(Key) {
+				continue;
+			}
+
+			// PATH is special: we only reach this point because IsTty() was
+			// false, meaning the process was launched from Finder/Dock/launchd
+			// with PATH=/usr/bin:/bin:/usr/sbin:/sbin.  That minimal value
+			// is NOT the user's intentional PATH - always let the shell
+			// replace it so git, node, language servers, etc. are all found.
+			// For every other var, preserve any explicit value the user set
+			// (e.g. `FOO=bar open /Applications/X.app`).
+			if Key != "PATH" && std::env::var_os(Key).is_some() {
+				continue;
+			}
+
+			// SAFETY: pre-window, single-threaded boot path. set_var is
+			// safe at this point. Mountain's other modules read env
+			// through `std::env::var` snapshots after this returns.
+			unsafe { std::env::set_var(Key, Value) };
 		}
-	}
-
-	let StdoutBytes = match Child.wait_with_output() {
-		Ok(O) => O.stdout,
-
-		Err(_) => return,
-	};
-
-	let Text = match String::from_utf8(StdoutBytes) {
-		Ok(S) => S,
-
-		Err(_) => return,
-	};
-
-	for Line in Text.lines() {
-		let Some((Key, Value)) = Line.split_once('=') else { continue };
-
-		let Key = Key.trim();
-
-		if Key.is_empty() || !IsPortableEnvName(Key) {
-			continue;
-		}
-
-		// PATH is special: we only reach this point because IsTty() was
-		// false, meaning the process was launched from Finder/Dock/launchd
-		// with PATH=/usr/bin:/bin:/usr/sbin:/sbin.  That minimal value
-		// is NOT the user's intentional PATH - always let the shell
-		// replace it so git, node, language servers, etc. are all found.
-		// For every other var, preserve any explicit value the user set
-		// (e.g. `FOO=bar open /Applications/X.app`).
-		if Key != "PATH" && std::env::var_os(Key).is_some() {
-			continue;
-		}
-
-		// SAFETY: pre-window, single-threaded boot path. set_var is
-		// safe at this point. Mountain's other modules read env
-		// through `std::env::var` snapshots after this returns.
-		unsafe { std::env::set_var(Key, Value) };
 	}
 }
 

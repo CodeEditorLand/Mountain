@@ -1,8 +1,11 @@
-//! Substring search across the workspace, capped at 1,000 matches. Skips
-//! hidden directories plus `node_modules` and `target`. Runs the walk in
-//! `tokio::task::spawn_blocking` so the event loop stays responsive.
+//! Workspace text search delegated to the environment `SearchProvider`
+//! (ripgrep-backed: parallel walk, gitignore-aware, literal patterns
+//! escaped before compilation). Maps the provider's `FileMatch` JSON
+//! into this RPC's `TextMatch` entries.
 
+use serde_json::{Value, json};
 use tonic::{Response, Status};
+use CommonLibrary::Search::SearchProvider::SearchProvider;
 use ::Vine::Generated::{FindTextInFilesRequest, FindTextInFilesResponse, Position, Range, TextMatch, Uri};
 
 use crate::{RPC::CocoonService::CocoonServiceImpl, dev_log};
@@ -18,92 +21,81 @@ pub async fn Fn(
 
 	dev_log!("cocoon", "[CocoonService] find_text_in_files: pattern='{}'", Request.pattern);
 
-	let Roots:Vec<std::path::PathBuf> = Service
+	let QueryValue = json!({
+		"pattern": Request.pattern,
+		"isRegExp": false,
+		"isCaseSensitive": false,
+		"isWordMatch": false,
+	});
+
+	let OptionsValue = json!({
+		"include": if Request.include.is_empty() { Value::Null } else { json!(Request.include) },
+		"exclude": if Request.exclude.is_empty() { Value::Null } else { json!(Request.exclude) },
+		"maxResults": 1000,
+	});
+
+	let Results = Service
 		.environment
-		.ApplicationState
-		.Workspace
-		.WorkspaceFolders
-		.lock()
-		.iter()
-		.map(|F| std::path::PathBuf::from(F.URI.path()))
-		.collect();
+		.TextSearch(QueryValue, OptionsValue)
+		.await
+		.map_err(|Error| Status::internal(format!("find_text_in_files: {}", Error)))?;
 
-	let SearchRoots = if Roots.is_empty() {
-		vec![std::env::current_dir().unwrap_or_default()]
-	} else {
-		Roots
-	};
+	let mut Matches:Vec<TextMatch> = Vec::new();
 
-	let Pattern = Request.pattern.clone();
+	for FileMatch in Results.as_array().map(|A| A.as_slice()).unwrap_or_default() {
+		let Resource = FileMatch.get("resource").and_then(|R| R.as_str()).unwrap_or("");
 
-	let Matches = tokio::task::spawn_blocking(move || {
-		let mut Results:Vec<TextMatch> = Vec::new();
-
-		const MAX_MATCHES:usize = 1000;
-
-		fn WalkAndSearch(Directory:&std::path::Path, Pattern:&str, Results:&mut Vec<TextMatch>) {
-			if Results.len() >= MAX_MATCHES {
-				return;
-			}
-
-			if let Ok(Entries) = std::fs::read_dir(Directory) {
-				for Entry in Entries.flatten() {
-					if Results.len() >= MAX_MATCHES {
-						break;
-					}
-
-					let Path = Entry.path();
-
-					if Path.is_dir() {
-						let Name = Path.file_name().and_then(|N| N.to_str()).unwrap_or("");
-
-						if Name.starts_with('.') || Name == "node_modules" || Name == "target" {
-							continue;
-						}
-
-						WalkAndSearch(&Path, Pattern, Results);
-					} else if Path.is_file() {
-						if let Ok(Content) = std::fs::read_to_string(&Path) {
-							for (LineIndex, Line) in Content.lines().enumerate() {
-								if Results.len() >= MAX_MATCHES {
-									break;
-								}
-
-								if let Some(ColumnIndex) = Line.find(Pattern) {
-									Results.push(TextMatch {
-										uri:Some(Uri { value:format!("file://{}", Path.display()) }),
-										range:Some(Range {
-											start:Some(Position {
-												line:LineIndex as u32,
-												character:ColumnIndex as u32,
-											}),
-											end:Some(Position {
-												line:LineIndex as u32,
-												character:(ColumnIndex + Pattern.len()) as u32,
-											}),
-										}),
-										preview:Line.to_string(),
-									});
-								}
-							}
-						}
-					}
-				}
-			}
+		if Resource.is_empty() {
+			continue;
 		}
 
-		for Root in &SearchRoots {
-			WalkAndSearch(Root, &Pattern, &mut Results);
+		let FileMatches = FileMatch
+			.get("matches")
+			.and_then(|M| M.as_array())
+			.map(|A| A.as_slice())
+			.unwrap_or_default();
 
-			if Results.len() >= MAX_MATCHES {
-				break;
+		for Match in FileMatches {
+			let Preview = Match.get("preview").and_then(|P| P.as_str()).unwrap_or("");
+
+			// `lineNumber` is 1-based from the provider; proto positions
+			// are 0-based.
+			let Line = Match
+				.get("lineNumber")
+				.and_then(|L| L.as_u64())
+				.unwrap_or(1)
+				.saturating_sub(1) as u32;
+
+			let Columns = Match.get("columns").and_then(|C| C.as_array()).map(|A| A.as_slice()).unwrap_or_default();
+
+			// Empty `columns` means match-position lookup failed in the
+			// provider; highlight the whole preview line instead.
+			let Ranges:Vec<(u32, u32)> = if Columns.is_empty() {
+				vec![(0, Preview.chars().count() as u32)]
+			} else {
+				Columns
+					.iter()
+					.map(|C| {
+						(
+							C.get("start").and_then(|S| S.as_u64()).unwrap_or(0) as u32,
+							C.get("end").and_then(|E| E.as_u64()).unwrap_or(0) as u32,
+						)
+					})
+					.collect()
+			};
+
+			for (Start, End) in Ranges {
+				Matches.push(TextMatch {
+					uri:Some(Uri { value:Resource.to_string() }),
+					range:Some(Range {
+						start:Some(Position { line:Line, character:Start }),
+						end:Some(Position { line:Line, character:End }),
+					}),
+					preview:Preview.to_string(),
+				});
 			}
 		}
-
-		Results
-	})
-	.await
-	.unwrap_or_default();
+	}
 
 	dev_log!(
 		"cocoon",

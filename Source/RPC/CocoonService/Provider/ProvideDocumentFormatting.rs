@@ -21,11 +21,15 @@ pub async fn Fn(
 
 	let OptionsDTO = json!({ "tabSize": 4, "insertSpaces": true });
 
-	match Service
-		.environment
-		.ProvideDocumentFormattingEdits(DocumentURI, OptionsDTO)
-		.await
-	{
+	let Forward = Service.environment.ProvideDocumentFormattingEdits(DocumentURI, OptionsDTO);
+
+	let Outcome = match Service.RunCancellable("ProvideDocumentFormatting", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideDocumentFormattingResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideDocumentFormattingResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Document formatting failed: {}", Error))),

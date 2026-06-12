@@ -32,11 +32,15 @@ pub async fn Fn(
 
 	let ContextDTO = json!({ "triggerKind": 1, "isRetrigger": false });
 
-	match Service
-		.environment
-		.ProvideSignatureHelp(DocumentURI, PositionDTO_, ContextDTO)
-		.await
-	{
+	let Forward = Service.environment.ProvideSignatureHelp(DocumentURI, PositionDTO_, ContextDTO);
+
+	let Outcome = match Service.RunCancellable("ProvideSignatureHelp", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideSignatureHelpResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideSignatureHelpResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Signature help failed: {}", Error))),

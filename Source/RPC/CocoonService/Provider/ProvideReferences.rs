@@ -37,11 +37,15 @@ pub async fn Fn(
 
 	let ContextDTO = json!({ "includeDeclaration": true });
 
-	match Service
-		.environment
-		.ProvideReferences(DocumentURI, PositionDTO_, ContextDTO)
-		.await
-	{
+	let Forward = Service.environment.ProvideReferences(DocumentURI, PositionDTO_, ContextDTO);
+
+	let Outcome = match Service.RunCancellable("ProvideReferences", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideReferencesResponse { locations:Vec::new() })),
+	};
+
+	match Outcome {
 		Ok(Some(Locations)) => {
 			let Mapped = Locations
 				.iter()
