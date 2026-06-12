@@ -636,11 +636,11 @@ pub fn Fn() {
 					// decoration updates, model changes) instead of the
 					// Tauri-invoke + Mountain-gRPC double hop. `Disabled` (the
 					// default) skips the bind entirely so the surface stays
-					// pure Tauri. Wiring of the actual handler registry is
-					// staged - this boot-time gate establishes the port and
-					// secret so subsequent atom batches can register handlers
-					// against the existing HandlerRegistry without revisiting
-					// the Mountain boot path.
+					// pure Tauri. The registry's fallback handler bridges every
+					// inbound `{ method, params }` frame into the same dispatch
+					// path the `MountainIPCInvoke` Tauri command uses, so the
+					// full WindServiceHandlers surface is reachable over the
+					// WebSocket without per-method registration.
 					let TierWebSocketSetting = std::env::var("TierWebSocket")
 						.unwrap_or_else(|_| env!("TierWebSocket", "Disabled").to_string());
 
@@ -664,8 +664,47 @@ pub fn Fn() {
 							std::env::set_var("MountainWebSocketPort", "5051");
 						}
 
+						let MistAppHandle = app.handle().clone();
+
 						tokio::spawn(async move {
-							if let Err(Error) = Mist::WebSocket::ServeLocal(5051, MistSecret, MistRegistry).await {
+							MistRegistry
+								.RegisterDefault(std::sync::Arc::new(
+									move |Method:String, Params:serde_json::Value| {
+										let HandleForCall = MistAppHandle.clone();
+
+										Box::pin(async move {
+											let Arguments:Vec<serde_json::Value> = match Params {
+												serde_json::Value::Array(Items) => Items,
+
+												serde_json::Value::Null => vec![],
+
+												Other => vec![Other],
+											};
+
+											crate::IPC::WindServiceHandlers::mountain_ipc_invoke(
+												HandleForCall,
+												Method,
+												Arguments,
+											)
+											.await
+										})
+											as futures_util::future::BoxFuture<
+												'static,
+												Result<serde_json::Value, String>,
+											>
+									},
+								))
+								.await;
+
+							dev_log!(
+								"lifecycle",
+								"[Lifecycle] [Mist] IPC bridge registered - all MountainIPCInvoke methods reachable \
+								 over WebSocket"
+							);
+
+							if let Err(Error) =
+								Mist::WebSocket::ServeLocal(5051, Some(MistSecret), MistRegistry).await
+							{
 								dev_log!("lifecycle", "warn: [Lifecycle] [Mist] WebSocket server exited: {:?}", Error);
 							}
 						});
