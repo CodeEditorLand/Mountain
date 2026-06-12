@@ -114,9 +114,13 @@ impl KeybindingProvider for MountainEnvironment {
 		for Entry in self.ApplicationState.Feature.Keybindings.GetAllKeybindings() {
 			let Rule = KeybindingRule {
 				key:Entry.Keybinding,
+
 				command:Entry.CommandId,
+
 				when:Entry.When,
+
 				args:None,
+
 				source:Some(
 					Entry
 						.Source

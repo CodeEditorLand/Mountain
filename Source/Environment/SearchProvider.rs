@@ -101,8 +101,7 @@ struct TextSearchQuery {
 /// `None` when the field is absent or null.
 fn de_glob_list<'de, D>(Deserializer:D) -> Result<Option<Vec<String>>, D::Error>
 where
-	D:serde::Deserializer<'de>,
-{
+	D: serde::Deserializer<'de>, {
 	use serde::de::Error as _;
 	use serde_json::Value;
 
@@ -110,8 +109,11 @@ where
 
 	match V {
 		None | Some(Value::Null) => Ok(None),
+
 		Some(Value::String(S)) if !S.is_empty() => Ok(Some(vec![S])),
+
 		Some(Value::String(_)) => Ok(None),
+
 		Some(Value::Array(Arr)) => {
 			let Strs = Arr
 				.into_iter()
@@ -121,6 +123,7 @@ where
 
 			Ok(if Strs.is_empty() { None } else { Some(Strs) })
 		},
+
 		Some(Other) => Err(D::Error::custom(format!("expected string or string[]; got {}", Other))),
 	}
 }
@@ -410,9 +413,13 @@ impl SearchProvider for MountainEnvironment {
 		// entry - this is the only mechanism that can stop the
 		// synchronous parallel walk mid-flight (task aborts only land at
 		// await points).
-		let CancelFlag:Option<Arc<std::sync::atomic::AtomicBool>> = Options
-			.search_id
-			.and_then(|Id| self.ApplicationState.Feature.SearchCancellationFlags.get(&Id).map(|F| F.clone()));
+		let CancelFlag:Option<Arc<std::sync::atomic::AtomicBool>> = Options.search_id.and_then(|Id| {
+			self.ApplicationState
+				.Feature
+				.SearchCancellationFlags
+				.get(&Id)
+				.map(|F| F.clone())
+		});
 
 		let AllMatchesRef = AllMatches.clone();
 
@@ -428,7 +435,10 @@ impl SearchProvider for MountainEnvironment {
 		// meaningless. `spawn_blocking` moves it to the blocking pool.
 		let WalkResult = tokio::task::spawn_blocking(move || {
 			for Folder in Folders {
-				if CancelFlag.as_ref().is_some_and(|F| F.load(std::sync::atomic::Ordering::Relaxed)) {
+				if CancelFlag
+					.as_ref()
+					.is_some_and(|F| F.load(std::sync::atomic::Ordering::Relaxed))
+				{
 					break;
 				}
 
@@ -473,7 +483,10 @@ impl SearchProvider for MountainEnvironment {
 						Box::new(move |EntryResult| {
 							// Cancelled via search:cancel - stop all walker
 							// threads.
-							if CancelFlag.as_ref().is_some_and(|F| F.load(std::sync::atomic::Ordering::Relaxed)) {
+							if CancelFlag
+								.as_ref()
+								.is_some_and(|F| F.load(std::sync::atomic::Ordering::Relaxed))
+							{
 								return ignore::WalkState::Quit;
 							}
 
@@ -493,10 +506,8 @@ impl SearchProvider for MountainEnvironment {
 									// Apply include/exclude glob patterns relative
 									// to the workspace folder so `**/*.ts` matches
 									// nested files without requiring absolute paths.
-									let RelPath = EntryPath
-										.strip_prefix(&FolderPath)
-										.unwrap_or(EntryPath)
-										.to_string_lossy();
+									let RelPath =
+										EntryPath.strip_prefix(&FolderPath).unwrap_or(EntryPath).to_string_lossy();
 
 									// Exclude takes priority over include.
 									if !ExcludePatterns.is_empty()

@@ -3,11 +3,7 @@
 
 use CommonLibrary::{
 	Error::CommonError::CommonError,
-	LanguageFeature::DTO::{
-		HoverResultDTO::HoverResultDTO,
-		PositionDTO::PositionDTO,
-		ProviderType::ProviderType,
-	},
+	LanguageFeature::DTO::{HoverResultDTO::HoverResultDTO, PositionDTO::PositionDTO, ProviderType::ProviderType},
 };
 use serde_json::json;
 use url::Url;

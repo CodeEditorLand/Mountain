@@ -143,9 +143,7 @@ mod tests {
 
 	#[test]
 	fn TargetSegmentMatchesCargoBuildPath() {
-		assert!(Fn(
-			"/Volumes/CORSAIR/Land/Target/debug/build/foo-abc/build_script.rcgu.o"
-		));
+		assert!(Fn("/Volumes/CORSAIR/Land/Target/debug/build/foo-abc/build_script.rcgu.o"));
 	}
 
 	#[test]

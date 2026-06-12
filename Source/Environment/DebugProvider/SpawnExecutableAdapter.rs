@@ -67,7 +67,10 @@ pub(crate) async fn Fn(
 
 	let mut Child = Builder.spawn().map_err(|Error| {
 		CommonError::IPCError {
-			Description:format!("Failed to spawn debug adapter '{}' for session {}: {}", Command, SessionID, Error),
+			Description:format!(
+				"Failed to spawn debug adapter '{}' for session {}: {}",
+				Command, SessionID, Error
+			),
 		}
 	})?;
 

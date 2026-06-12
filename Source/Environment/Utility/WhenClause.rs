@@ -8,8 +8,8 @@
 //! - Comparisons: `==`, `!=`, `<`, `<=`, `>`, `>=`
 //! - Regex match: `key =~ /pattern/flags` (only the `i` flag is honoured)
 //! - List membership: `key in otherKey`, `key not in otherKey`
-//! - Literals: `true`, `false`, `'single-quoted'`, `"double-quoted"`,
-//!   numbers, and bare words
+//! - Literals: `true`, `false`, `'single-quoted'`, `"double-quoted"`, numbers,
+//!   and bare words
 //!
 //! Evaluation runs against a JSON object snapshot of context keys supplied
 //! by the caller (Sky owns the live context; Mountain receives snapshots
@@ -125,16 +125,19 @@ fn Tokenize(Source:&str) -> Result<Vec<Token>, String> {
 			' ' | '\t' | '\r' | '\n' => {
 				Index += 1;
 			},
+
 			'(' => {
 				Tokens.push(Token::OpenParen);
 
 				Index += 1;
 			},
+
 			')' => {
 				Tokens.push(Token::CloseParen);
 
 				Index += 1;
 			},
+
 			'!' => {
 				if Bytes.get(Index + 1) == Some(&'=') {
 					Tokens.push(Token::NotEquals);
@@ -146,6 +149,7 @@ fn Tokenize(Source:&str) -> Result<Vec<Token>, String> {
 					Index += 1;
 				}
 			},
+
 			'&' => {
 				if Bytes.get(Index + 1) == Some(&'&') {
 					Tokens.push(Token::AndAnd);
@@ -155,6 +159,7 @@ fn Tokenize(Source:&str) -> Result<Vec<Token>, String> {
 					return Err(format!("Unexpected '&' at offset {} in when clause", Index));
 				}
 			},
+
 			'|' => {
 				if Bytes.get(Index + 1) == Some(&'|') {
 					Tokens.push(Token::OrOr);
@@ -164,6 +169,7 @@ fn Tokenize(Source:&str) -> Result<Vec<Token>, String> {
 					return Err(format!("Unexpected '|' at offset {} in when clause", Index));
 				}
 			},
+
 			'=' => {
 				if Bytes.get(Index + 1) == Some(&'=') {
 					Tokens.push(Token::EqualsEquals);
@@ -179,6 +185,7 @@ fn Tokenize(Source:&str) -> Result<Vec<Token>, String> {
 					return Err(format!("Unexpected '=' at offset {} in when clause", Index));
 				}
 			},
+
 			'<' => {
 				if Bytes.get(Index + 1) == Some(&'=') {
 					Tokens.push(Token::LessOrEqual);
@@ -190,6 +197,7 @@ fn Tokenize(Source:&str) -> Result<Vec<Token>, String> {
 					Index += 1;
 				}
 			},
+
 			'>' => {
 				if Bytes.get(Index + 1) == Some(&'=') {
 					Tokens.push(Token::GreaterOrEqual);
@@ -201,6 +209,7 @@ fn Tokenize(Source:&str) -> Result<Vec<Token>, String> {
 					Index += 1;
 				}
 			},
+
 			'\'' | '"' => {
 				let Quote = Character;
 
@@ -220,6 +229,7 @@ fn Tokenize(Source:&str) -> Result<Vec<Token>, String> {
 
 				Index = End + 1;
 			},
+
 			'/' if ExpectRegex => {
 				let Start = Index + 1;
 
@@ -257,6 +267,7 @@ fn Tokenize(Source:&str) -> Result<Vec<Token>, String> {
 
 				Index = FlagEnd;
 			},
+
 			_ => {
 				if Character.is_ascii_digit()
 					|| (Character == '-' && Bytes.get(Index + 1).is_some_and(|C| C.is_ascii_digit()))
@@ -296,13 +307,18 @@ fn Tokenize(Source:&str) -> Result<Vec<Token>, String> {
 
 					match Word.as_str() {
 						"in" => Tokens.push(Token::In),
+
 						"not" => Tokens.push(Token::NotKeyword),
+
 						_ => Tokens.push(Token::Identifier(Word)),
 					}
 
 					Index = End;
 				} else {
-					return Err(format!("Unexpected character '{}' at offset {} in when clause", Character, Index));
+					return Err(format!(
+						"Unexpected character '{}' at offset {} in when clause",
+						Character, Index
+					));
 				}
 			},
 		}
@@ -338,7 +354,11 @@ impl Parser {
 			Parts.push(self.ParseAnd()?);
 		}
 
-		if Parts.len() == 1 { Ok(Parts.remove(0)) } else { Ok(WhenExpression::Or(Parts)) }
+		if Parts.len() == 1 {
+			Ok(Parts.remove(0))
+		} else {
+			Ok(WhenExpression::Or(Parts))
+		}
 	}
 
 	/// `andExpr := unary ('&&' unary)*`
@@ -351,7 +371,11 @@ impl Parser {
 			Parts.push(self.ParseUnary()?);
 		}
 
-		if Parts.len() == 1 { Ok(Parts.remove(0)) } else { Ok(WhenExpression::And(Parts)) }
+		if Parts.len() == 1 {
+			Ok(Parts.remove(0))
+		} else {
+			Ok(WhenExpression::And(Parts))
+		}
 	}
 
 	/// `unary := '!' unary | primary`
@@ -377,10 +401,13 @@ impl Parser {
 
 				Ok(Inner)
 			},
+
 			Some(Token::Identifier(Key)) => {
 				match Key.as_str() {
 					"true" => return Ok(WhenExpression::True),
+
 					"false" => return Ok(WhenExpression::False),
+
 					_ => {},
 				}
 
@@ -390,11 +417,13 @@ impl Parser {
 
 						Ok(WhenExpression::Equals(Key, self.ParseOperand()?))
 					},
+
 					Some(Token::NotEquals) => {
 						self.Advance();
 
 						Ok(WhenExpression::NotEquals(Key, self.ParseOperand()?))
 					},
+
 					Some(Token::MatchesOperator) => {
 						self.Advance();
 
@@ -402,38 +431,51 @@ impl Parser {
 							Some(Token::Regex(Pattern, CaseInsensitive)) => {
 								Ok(WhenExpression::Matches(Key, Pattern, CaseInsensitive))
 							},
+
 							Some(Token::StringLiteral(Pattern)) => Ok(WhenExpression::Matches(Key, Pattern, false)),
+
 							_ => Err("Expected regex after '=~' in when clause".to_string()),
 						}
 					},
+
 					Some(Token::Less) => {
 						self.Advance();
 
 						Ok(WhenExpression::Compare(Key, CompareOperator::Less, self.ParseNumber()?))
 					},
+
 					Some(Token::LessOrEqual) => {
 						self.Advance();
 
 						Ok(WhenExpression::Compare(Key, CompareOperator::LessOrEqual, self.ParseNumber()?))
 					},
+
 					Some(Token::Greater) => {
 						self.Advance();
 
 						Ok(WhenExpression::Compare(Key, CompareOperator::Greater, self.ParseNumber()?))
 					},
+
 					Some(Token::GreaterOrEqual) => {
 						self.Advance();
 
-						Ok(WhenExpression::Compare(Key, CompareOperator::GreaterOrEqual, self.ParseNumber()?))
+						Ok(WhenExpression::Compare(
+							Key,
+							CompareOperator::GreaterOrEqual,
+							self.ParseNumber()?,
+						))
 					},
+
 					Some(Token::In) => {
 						self.Advance();
 
 						match self.Advance() {
 							Some(Token::Identifier(ListKey)) => Ok(WhenExpression::In(Key, ListKey, false)),
+
 							_ => Err("Expected context key after 'in' in when clause".to_string()),
 						}
 					},
+
 					Some(Token::NotKeyword) => {
 						self.Advance();
 
@@ -443,12 +485,15 @@ impl Parser {
 
 						match self.Advance() {
 							Some(Token::Identifier(ListKey)) => Ok(WhenExpression::In(Key, ListKey, true)),
+
 							_ => Err("Expected context key after 'not in' in when clause".to_string()),
 						}
 					},
+
 					_ => Ok(WhenExpression::Defined(Key)),
 				}
 			},
+
 			Other => Err(format!("Unexpected token {:?} in when clause", Other)),
 		}
 	}
@@ -458,7 +503,9 @@ impl Parser {
 	fn ParseOperand(&mut self) -> Result<String, String> {
 		match self.Advance() {
 			Some(Token::StringLiteral(Text)) => Ok(Text),
+
 			Some(Token::Identifier(Word)) => Ok(Word),
+
 			Some(Token::Number(Number)) => {
 				if Number.fract() == 0.0 {
 					Ok(format!("{}", Number as i64))
@@ -466,6 +513,7 @@ impl Parser {
 					Ok(format!("{}", Number))
 				}
 			},
+
 			Other => Err(format!("Expected literal after comparison, found {:?}", Other)),
 		}
 	}
@@ -473,9 +521,12 @@ impl Parser {
 	fn ParseNumber(&mut self) -> Result<f64, String> {
 		match self.Advance() {
 			Some(Token::Number(Number)) => Ok(Number),
+
 			Some(Token::StringLiteral(Text)) | Some(Token::Identifier(Text)) => {
-				Text.parse::<f64>().map_err(|_| format!("Expected number, found '{}' in when clause", Text))
+				Text.parse::<f64>()
+					.map_err(|_| format!("Expected number, found '{}' in when clause", Text))
 			},
+
 			Other => Err(format!("Expected number after comparison, found {:?}", Other)),
 		}
 	}
@@ -507,9 +558,13 @@ pub(crate) fn Parse(Source:&str) -> Result<WhenExpression, String> {
 fn ValueToComparableString(ContextValue:&Value) -> String {
 	match ContextValue {
 		Value::String(Text) => Text.clone(),
+
 		Value::Bool(Flag) => Flag.to_string(),
+
 		Value::Number(Number) => Number.to_string(),
+
 		Value::Null => "undefined".to_string(),
+
 		Other => Other.to_string(),
 	}
 }
@@ -518,9 +573,13 @@ fn ValueToComparableString(ContextValue:&Value) -> String {
 fn IsTruthy(ContextValue:Option<&Value>) -> bool {
 	match ContextValue {
 		None | Some(Value::Null) => false,
+
 		Some(Value::Bool(Flag)) => *Flag,
+
 		Some(Value::String(Text)) => !Text.is_empty(),
+
 		Some(Value::Number(Number)) => Number.as_f64().is_some_and(|N| N != 0.0),
+
 		Some(Value::Array(_)) | Some(Value::Object(_)) => true,
 	}
 }
@@ -532,23 +591,33 @@ pub(crate) fn Evaluate(Expression:&WhenExpression, Context:&Value) -> bool {
 
 	match Expression {
 		WhenExpression::True => true,
+
 		WhenExpression::False => false,
+
 		WhenExpression::Defined(Key) => IsTruthy(Lookup(Key)),
+
 		WhenExpression::Not(Inner) => !Evaluate(Inner, Context),
+
 		WhenExpression::And(Parts) => Parts.iter().all(|Part| Evaluate(Part, Context)),
+
 		WhenExpression::Or(Parts) => Parts.iter().any(|Part| Evaluate(Part, Context)),
+
 		WhenExpression::Equals(Key, Literal) => {
 			match Lookup(Key) {
 				None => Literal == "undefined" || Literal == "false" || Literal.is_empty(),
+
 				Some(ContextValue) => ValueToComparableString(ContextValue) == *Literal,
 			}
 		},
+
 		WhenExpression::NotEquals(Key, Literal) => {
 			match Lookup(Key) {
 				None => !(Literal == "undefined" || Literal == "false" || Literal.is_empty()),
+
 				Some(ContextValue) => ValueToComparableString(ContextValue) != *Literal,
 			}
 		},
+
 		WhenExpression::Matches(Key, Pattern, CaseInsensitive) => {
 			let Some(ContextValue) = Lookup(Key) else {
 				return false;
@@ -560,13 +629,17 @@ pub(crate) fn Evaluate(Expression:&WhenExpression, Context:&Value) -> bool {
 
 			match regex::Regex::new(&Source) {
 				Ok(Expression) => Expression.is_match(&Subject),
+
 				Err(_) => false,
 			}
 		},
+
 		WhenExpression::Compare(Key, Operator, Operand) => {
 			let Number = match Lookup(Key) {
 				Some(Value::Number(N)) => N.as_f64(),
+
 				Some(Value::String(Text)) => Text.parse::<f64>().ok(),
+
 				_ => None,
 			};
 
@@ -576,18 +649,25 @@ pub(crate) fn Evaluate(Expression:&WhenExpression, Context:&Value) -> bool {
 
 			match Operator {
 				CompareOperator::Less => Left < *Operand,
+
 				CompareOperator::LessOrEqual => Left <= *Operand,
+
 				CompareOperator::Greater => Left > *Operand,
+
 				CompareOperator::GreaterOrEqual => Left >= *Operand,
 			}
 		},
+
 		WhenExpression::In(Key, ListKey, Negated) => {
 			let Needle = Lookup(Key).map(ValueToComparableString).unwrap_or_else(|| Key.clone());
 
 			let Contained = match Lookup(ListKey) {
 				Some(Value::Array(Items)) => Items.iter().any(|Item| ValueToComparableString(Item) == Needle),
+
 				Some(Value::Object(Map)) => Map.contains_key(&Needle),
+
 				Some(Value::String(Text)) => Text.contains(&Needle),
+
 				_ => false,
 			};
 
@@ -602,9 +682,11 @@ pub(crate) fn Evaluate(Expression:&WhenExpression, Context:&Value) -> bool {
 pub(crate) fn EvaluateClause(Clause:Option<&str>, Context:&Value) -> bool {
 	match Clause {
 		None => true,
+
 		Some(Source) => {
 			match Parse(Source) {
 				Ok(Expression) => Evaluate(&Expression, Context),
+
 				Err(_) => false,
 			}
 		},
@@ -618,8 +700,11 @@ pub(crate) fn EvaluateClause(Clause:Option<&str>, Context:&Value) -> bool {
 pub(crate) fn SpecificityOf(Expression:&WhenExpression) -> u32 {
 	match Expression {
 		WhenExpression::True | WhenExpression::False => 0,
+
 		WhenExpression::Not(Inner) => SpecificityOf(Inner),
+
 		WhenExpression::And(Parts) | WhenExpression::Or(Parts) => Parts.iter().map(SpecificityOf).sum(),
+
 		_ => 1,
 	}
 }
@@ -678,6 +763,7 @@ pub(crate) fn NormalizeKeyExpression(Expression:&str) -> String {
 
 #[cfg(test)]
 mod Tests {
+
 	use serde_json::json;
 
 	use super::*;

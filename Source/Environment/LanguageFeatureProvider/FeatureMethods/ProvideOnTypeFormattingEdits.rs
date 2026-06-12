@@ -4,11 +4,7 @@
 
 use CommonLibrary::{
 	Error::CommonError::CommonError,
-	LanguageFeature::DTO::{
-		PositionDTO::PositionDTO,
-		ProviderType::ProviderType,
-		TextEditDTO::TextEditDTO,
-	},
+	LanguageFeature::DTO::{PositionDTO::PositionDTO, ProviderType::ProviderType, TextEditDTO::TextEditDTO},
 };
 use serde_json::{Value, json};
 use url::Url;

@@ -5,11 +5,7 @@
 
 use std::sync::Arc;
 
-use CommonLibrary::{
-	Environment::Requires::Requires,
-	Error::CommonError::CommonError,
-	IPC::IPCProvider::IPCProvider,
-};
+use CommonLibrary::{Environment::Requires::Requires, Error::CommonError::CommonError, IPC::IPCProvider::IPCProvider};
 use serde_json::{Value, json};
 
 use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;

@@ -57,14 +57,16 @@ pub(crate) async fn Fn(
 	let (ReadHalf, WriteHalf) = {
 		// On Windows, named pipes use \\.\pipe\<name>. Tokio's
 		// NamedPipeClient handles both directions.
-		let Stream = tokio::net::windows::named_pipe::ClientOptions::new().open(&PipePath).map_err(|Error| {
-			CommonError::IPCError {
-				Description:format!(
-					"Failed to open named pipe '{}' for session {}: {}",
-					PipePath, SessionID, Error
-				),
-			}
-		})?;
+		let Stream = tokio::net::windows::named_pipe::ClientOptions::new()
+			.open(&PipePath)
+			.map_err(|Error| {
+				CommonError::IPCError {
+					Description:format!(
+						"Failed to open named pipe '{}' for session {}: {}",
+						PipePath, SessionID, Error
+					),
+				}
+			})?;
 
 		tokio::io::split(Stream)
 	};
