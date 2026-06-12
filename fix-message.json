@@ -1,0 +1,3 @@
+{
+	"Message": "fix(Mountain): Correct Rust API documentation URL in README\n\nThe Rust API docs link pointed to the generic `editor.land` domain rather than the dedicated `mountain.editor.land` subdomain. Both the main badge link and the API Reference section footer used the stale URL.\n\nUpdate both occurrences to `rust.documentation.mountain.editor.land` for proper subdomain routing and consistency with Mountain's dedicated documentation infrastructure."
+}

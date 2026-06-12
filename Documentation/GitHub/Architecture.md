@@ -1,6 +1,6 @@
 # Mountain: Native Backend Application 🏔️
 
-This document describes `Mountain`, the primary `Tauri` application and native
+`Mountain` is the primary `Tauri` application and native
 `Rust` backend for the `Land` code editor. `Mountain`:
 
 - Implements every abstract trait from `Common`

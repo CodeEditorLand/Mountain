@@ -41,8 +41,8 @@
 
 # **Mountain** ⛰️ Deep Dive & Architecture
 
-This document provides the technical foundation for implementing VSCode services
-as native Rust services within the Land ecosystem. **Mountain** serves as the
+**Mountain** provides the technical foundation for implementing VSCode services
+as native Rust services within the Land project. **Mountain** serves as the
 concrete implementation layer that brings VSCode service compatibility through
 native Rust implementations, Tauri integration, and gRPC communication.
 
