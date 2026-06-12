@@ -1,7 +1,7 @@
 //! # TauriIPCServer (IPC)
 //!
 //! ## RESPONSIBILITIES
-//! This module serves as the core IPC server orchestrator for Mountain, establishing
+//! Serves as the core IPC server orchestrator for Mountain, establishing
 //! and managing the bidirectional communication bridge between Mountain's Rust backend
 //! and Wind's TypeScript frontend. It coordinates all IPC operations and delegates
 //! specialized tasks to submodules.
@@ -47,11 +47,6 @@
 //! - Async/await for non-blocking operations
 //! - Connection pooling for efficiency
 //!
-//! ## TODO
-//! - Add Message priority queuing
-//! - Implement connection retry logic
-//! - Add Message persistence for offline mode
-//! - Support multiple transport protocols
 
 use std::collections::HashMap;
 
@@ -164,7 +159,7 @@ impl TauriIPCServer {
 
 	/// Initialize the IPC server and set up event listeners
 	///
-	/// This method sets up the connection and processes any queued messages
+	/// Sets up the connection and processes any queued messages
 	/// from previous offline periods.
 	///
 	/// ## Returns
@@ -228,7 +223,7 @@ impl TauriIPCServer {
 
 	/// Send a Message to the Wind frontend
 	///
-	/// This method sends a Message to Wind. If the connection is not active,
+	/// Sends a Message to Wind. If the connection is not active,
 	/// the Message is queued for later delivery.
 	///
 	/// ## Parameters
@@ -442,7 +437,7 @@ impl TauriIPCServer {
 
 	/// Process queued messages
 	///
-	/// This method processes any queued messages from offline periods.
+	/// Processes any queued messages from offline periods.
 	async fn process_message_queue(&self) {
 
 		let mut queue = match self.message_queue.lock() {

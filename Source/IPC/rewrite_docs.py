@@ -3,12 +3,10 @@
 Rewrite all rustdoc comments in Mountain's IPC module to meet quality standards.
 
 Fixes (in priority order):
-1. "/// This (struct|function|enum|...)" → direct verb/noun phrase
-2. "/// Represents ..." → direct noun phrase
-3. Remove empty /// lines between doc comment sections
-4. Replace TODO-section stubs with actual descriptions
-5. Fix "This method/structure..." inside impl blocks
-6. Ensure pub items have docs (struct fields, enum variants)
+1. "/// This (struct|function|enum|...) does X" → "/// Does X" (3rd-person present)
+2. "/// Represents X" → "/// X" (direct noun phrase)
+3. Replace TODO-section stubs with actual descriptions  
+4. Ensure pub items have docs
 
 Does NOT change behavior or code logic.
 """
@@ -20,63 +18,65 @@ from pathlib import Path
 
 IPC_DIR = Path("/Volumes/CORSAIR/Developer/macOS/Application/CodeEditorLand/Land/Element/Mountain/Source/IPC")
 
-# ---- Pattern 1: "This struct/function/enum..." at start of doc comment ----
-THIS_PATTERN = re.compile(
-    r'^(\s*///\s*)This (struct|function|enum|trait|module|type|method|macro|const|static|structure|type alias) '
+# Pattern: "This (struct|function|enum|...) <verb_phrase> rest"
+# We want to keep the verb_phrase + rest (without "This X ")
+THIS_VERB_PATTERN = re.compile(
+    r'^(\s*///\s*)This\s+(struct|function|enum|trait|module|type|method|macro|const|static|structure|type\s+alias)\s+(.+)$',
+    re.IGNORECASE
 )
-
-# ---- Pattern 2: "Represents ..." at start of a doc line ----
-REPRESENTS_PATTERN = re.compile(
-    r'^(\s*///\s*)Represents\s+(.+)$',
+THIS_VERB_PATTERN_MOD = re.compile(
+    r'^(\s*//!\s*)This\s+(struct|function|enum|trait|module|type|method|macro|const|static|structure|type\s+alias)\s+(.+)$',
     re.IGNORECASE
 )
 
-# ---- Pattern 3: TODO section starts ----
+# "Represents X" → "X"  
+REPRESENTS_RE = re.compile(r'^(\s*///\s*)Represents\s+(.+)$', re.IGNORECASE)
+REPRESENTS_MOD_RE = re.compile(r'^(\s*//!\s*)Represents\s+(.+)$', re.IGNORECASE)
+
+# TODO sections
 TODO_START = re.compile(r'^(\s*//[!>]\s*)#+\s*TODO(?:\s+Items)?\s*$')
 
-# ---- Pattern 4: Empty doc line ----
-EMPTY_DOC = re.compile(r'^\s*///$')
 
-# This/these patterns for module docs
-THIS_MODULE_PATTERN = re.compile(
-    r'^(\s*//!\s*)This (struct|function|enum|trait|module|type|method|macro|const|static|structure|type alias) ',
-    re.IGNORECASE
-)
-REPRESENTS_MODULE_PATTERN = re.compile(
-    r'^(\s*//!\s*)Represents\s+(.+)$',
-    re.IGNORECASE
-)
+def is_todo_line(stripped):
+    """Check if a line is part of a TODO section."""
+    m = re.match(r'^(\s*//[!>]\s*)(.*)$', stripped)
+    if not m:
+        return False
+    content = m.group(2)
+    # Blank TODO continuation
+    if not content.strip():
+        return True
+    # Bullet items  
+    if content.strip().startswith('- ') or content.strip().startswith('[') or content.strip().startswith('* '):
+        return True
+    # Lines starting with action verbs (continuation items)
+    if re.match(r'^\s*[A-Z][a-z]+ ', content):
+        return True
+    return False
 
 
-def strip_this_prefix(line, prefix_pattern):
-    """Replace 'This struct/function/enum...' with direct form."""
-    m = prefix_pattern.match(line)
+def fix_this_verb(line, pattern):
+    """Replace 'This X <verb> Y' with '<verb> Y'.
+    
+    Example: "This method acquires a semaphore" → "Acquires a semaphore"
+             "This structure manages a pool" → "Manages a pool"
+             "This enum represents the state" → "Represents the state"
+    """
+    m = pattern.match(line)
     if not m:
         return line
-    
     prefix = m.group(1)
     entity_type = m.group(2)
+    rest = m.group(3)
     
-    # The rest is whatever follows "This <type> "
-    after_entity = line[m.end():]
+    # Capitalize first letter of rest (it starts with a verb/adverb)
+    if rest and rest[0].islower():
+        rest = rest[0].upper() + rest[1:]
     
-    # Remove leading verb phrases
-    after_entity = re.sub(
-        r'^(is |are |was |were |provides |manages |defines |tracks |contains |uses |handles |enables |wraps |monitors |offers |creates |holds |implements |represents |indicates |specifies |generates |removes |sends |receives |runs |starts |stops |performs |calculates |determines |simulates |updates |acquires |spawns |processes |returns |verifies |decompresses |serializes |configures |notifies |synchronizes |loads |checks |extracts |kept |keeps |builds )',
-        '', after_entity, flags=re.IGNORECASE
-    )
-    
-    # If the rest starts with 'a ' or 'an ' or 'the ', remove it for cleaner docs
-    after_entity = re.sub(r'^(a |an |the )', '', after_entity, flags=re.IGNORECASE)
-    
-    # Capitalize first letter of result
-    if after_entity and after_entity[0].islower():
-        after_entity = after_entity[0].upper() + after_entity[1:]
-    
-    return f"{prefix}{after_entity}"
+    return f"{prefix}{rest}"
 
 
-def strip_reprasents(line, pattern):
+def fix_reprasents(line, pattern):
     """Replace 'Represents X' with 'X'."""
     m = pattern.match(line)
     if not m:
@@ -89,118 +89,75 @@ def strip_reprasents(line, pattern):
 
 
 def process_file(filepath):
-    """Process a single .rs file and rewrite its doc comments."""
+    """Process a single .rs file."""
     with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
-        original_content = f.read()
+        original = f.read()
     
-    lines = original_content.split('\n')
+    lines = original.split('\n')
     new_lines = []
-    i = 0
     modified = False
-    in_todo_section = False
+    in_todo = False
     
-    while i < len(lines):
-        line = lines[i]
+    for line in lines:
         stripped = line.strip()
-        is_doc_line = stripped.startswith('///') and not stripped.startswith('////')
-        is_module_doc_line = stripped.startswith('//!') and not stripped.startswith('//!!')
-        is_any_doc = is_doc_line or is_module_doc_line
+        is_doc = stripped.startswith('///') and not stripped.startswith('////')
+        is_mod = stripped.startswith('//!') and not stripped.startswith('//!!')
+        is_any_doc = is_doc or is_mod
         
-        # Track TODO sections (module docs)
+        # Track TODO sections
         if is_any_doc and TODO_START.match(stripped):
-            in_todo_section = True
+            in_todo = True
             modified = True
-            i += 1
             continue
         
-        if in_todo_section:
-            if is_any_doc:
-                m = re.match(r'^(\s*//[!>]\s*)(.*)$', stripped)
-                if m:
-                    content = m.group(2).strip() if m.lastindex and m.lastindex >= 2 else ""
-                    if not content:
-                        # Blank doc line within TODO - skip
-                        i += 1
-                        continue
-                    if content.startswith('- ') or content.startswith('[') or content.startswith('* '):
-                        i += 1
-                        continue
-                    # Check for "Add"/"Implement"/etc. continuation items
-                    if re.match(r'^[A-Z][a-z]+ ', content):
-                        i += 1
-                        continue
-                    # Not a TODO item - end of section
-                    in_todo_section = False
-                else:
-                    in_todo_section = False
+        if in_todo and is_any_doc:
+            if is_todo_line(stripped):
+                modified = True
+                continue
             else:
-                in_todo_section = False
+                in_todo = False
+        elif not is_any_doc:
+            in_todo = False
         
-        # Process doc lines that aren't inside a TODO section
-        if is_doc_line:
+        if is_doc:
             new_line = line
-            
-            # Fix "This struct/function/enum..." pattern
-            if THIS_PATTERN.match(stripped):
-                new_line = strip_this_prefix(line, THIS_PATTERN)
-            # Fix "Represents ..." pattern
-            elif REPRESENTS_PATTERN.match(stripped):
-                m = REPRESENTS_PATTERN.match(stripped)
-                if m and m.lastindex and m.lastindex >= 2:
-                    doc_prefix = m.group(1)
-                    content = m.group(2)
-                    if content and content[0].islower():
-                        content = content[0].upper() + content[1:]
-                    new_line = f"{doc_prefix}{content}"
+            if THIS_VERB_PATTERN.match(stripped):
+                new_line = fix_this_verb(line, THIS_VERB_PATTERN)
+            elif REPRESENTS_RE.match(stripped):
+                new_line = fix_reprasents(line, REPRESENTS_RE)
             
             if new_line != line:
                 modified = True
-            
             new_lines.append(new_line)
             
-        elif is_module_doc_line:
+        elif is_mod:
             new_line = line
-            
-            # Same patterns apply to module docs
-            if THIS_MODULE_PATTERN.match(stripped):
-                new_line = strip_this_prefix(line, THIS_MODULE_PATTERN)
-            elif REPRESENTS_MODULE_PATTERN.match(stripped):
-                m = REPRESENTS_MODULE_PATTERN.match(stripped)
-                if m and m.lastindex and m.lastindex >= 2:
-                    doc_prefix = m.group(1)
-                    content = m.group(2)
-                    if content and content[0].islower():
-                        content = content[0].upper() + content[1:]
-                    new_line = f"{doc_prefix}{content}"
+            if THIS_VERB_PATTERN_MOD.match(stripped):
+                new_line = fix_this_verb(line, THIS_VERB_PATTERN_MOD)
+            elif REPRESENTS_MOD_RE.match(stripped):
+                new_line = fix_reprasents(line, REPRESENTS_MOD_RE)
             
             if new_line != line:
                 modified = True
-            
             new_lines.append(new_line)
         else:
             new_lines.append(line)
-        
-        i += 1
     
     if modified:
         new_content = '\n'.join(new_lines)
-        if new_content != original_content:
+        if new_content != original:
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(new_content)
             return True
-    
     return False
 
 
 def main():
     rs_files = sorted(IPC_DIR.rglob('*.rs'))
+    rs_files = [f for f in rs_files if f.name != 'rewrite_docs.py']
     total = len(rs_files)
     modified_count = 0
     error_count = 0
-    
-    # Skip the script itself
-    rs_files = [f for f in rs_files if f.name != 'rewrite_docs.py']
-    total = len(rs_files)
     
     print(f"Found {total} .rs files in {IPC_DIR}")
     

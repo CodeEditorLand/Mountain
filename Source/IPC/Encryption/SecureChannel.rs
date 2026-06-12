@@ -1,12 +1,12 @@
 //! # Secure Message Channel (IPC Encryption)
 //!
 //! ## RESPONSIBILITIES
-//! This module provides secure message channels using AES-256-GCM encryption
+//! Provides secure message channels using AES-256-GCM encryption
 //! with HMAC authentication. It ensures message confidentiality and integrity
 //! for sensitive IPC communications.
 //!
 //! ## ARCHITECTURAL ROLE
-//! This module is part of the security layer in the IPC architecture, providing
+//! Part of the security layer in the IPC architecture, providing
 //! end-to-end encryption for sensitive messages.
 //!
 //! ## KEY COMPONENTS
@@ -44,7 +44,7 @@ use crate::dev_log;
 
 /// Encrypted message structure
 ///
-/// This structure contains the encrypted message data along with the nonce
+/// Contains the encrypted message data along with the nonce
 /// and HMAC tag needed for decryption and verification.
 ///
 /// ## Message Structure
@@ -93,7 +93,7 @@ impl EncryptedMessage {
 
 /// Secure message channel with encryption and authentication
 ///
-/// This structure provides AES-256-GCM encryption with HMAC authentication
+/// Provides AES-256-GCM encryption with HMAC authentication
 /// for secure IPC communication. It ensures message confidentiality and
 /// integrity.
 ///
@@ -165,7 +165,7 @@ pub struct SecureMessageChannel {
 impl SecureMessageChannel {
 	/// Create a new secure channel with randomly generated keys
 	///
-	/// This method generates cryptographically secure random keys for
+	/// Generates cryptographically secure random keys for
 	/// encryption and HMAC authentication.
 	///
 	/// ## Returns
@@ -206,7 +206,7 @@ impl SecureMessageChannel {
 
 	/// Encrypt and authenticate a message
 	///
-	/// This method serializes the message, encrypts it with AES-256-GCM,
+	/// Serializes the message, encrypts it with AES-256-GCM,
 	/// and adds an HMAC tag for authentication.
 	///
 	/// ## Parameters
@@ -266,7 +266,7 @@ impl SecureMessageChannel {
 
 	/// Decrypt and verify a message
 	///
-	/// This method verifies the HMAC tag, decrypts the message with
+	/// Verifies the HMAC tag, decrypts the message with
 	/// AES-256-GCM, and deserializes it back to the original format.
 	///
 	/// ## Parameters
@@ -326,7 +326,7 @@ impl SecureMessageChannel {
 
 	/// Rotate encryption keys
 	///
-	/// This method generates new encryption and HMAC keys, effectively
+	/// Generates new encryption and HMAC keys, effectively
 	/// rotating the security credentials for the channel.
 	///
 	/// ## Returns

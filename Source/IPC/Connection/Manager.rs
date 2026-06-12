@@ -19,7 +19,7 @@ pub type ConnectionManager = ConnectionPool;
 
 /// Connection pool for IPC operations
 ///
-/// This structure manages a pool of connections, preventing connection
+/// Manages a pool of connections, preventing connection
 /// exhaustion by reusing connections and providing health monitoring.
 ///
 /// ## Pool Architecture
@@ -124,7 +124,7 @@ impl ConnectionPool {
 
 	/// Get a connection Handle from the pool with timeout
 	///
-	/// This method acquires a semaphore permit and creates a new connection
+	/// Acquires a semaphore permit and creates a new connection
 	/// Handle. If the pool is at capacity, it will wait until a connection
 	/// becomes available or the timeout is reached.
 	///
@@ -173,7 +173,7 @@ impl ConnectionPool {
 
 	/// Release a connection Handle back to the pool
 	///
-	/// This method removes the connection from the active connections map,
+	/// Removes the connection from the active connections map,
 	/// allowing the semaphore permit to be reused.
 	///
 	/// ## Parameters
@@ -198,7 +198,7 @@ impl ConnectionPool {
 
 	/// Get connection statistics for monitoring
 	///
-	/// This method returns aggregate statistics about the connection pool,
+	/// Returns aggregate statistics about the connection pool,
 	/// useful for monitoring and debugging.
 	///
 	/// ## Returns
@@ -231,7 +231,7 @@ impl ConnectionPool {
 
 	/// Clean up stale connections
 	///
-	/// This method removes connections that have not been used recently
+	/// Removes connections that have not been used recently
 	/// or are unhealthy, preventing memory leaks and resource exhaustion.
 	///
 	/// Stale connection criteria:
@@ -285,7 +285,7 @@ impl ConnectionPool {
 
 	/// Start health monitoring for a connection
 	///
-	/// This method spawns a background task that periodically checks the
+	/// Spawns a background task that periodically checks the
 	/// health of the connection and updates its health score.
 	///
 	/// ## Parameters

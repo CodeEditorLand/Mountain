@@ -1,12 +1,12 @@
 //! # Connection Types (IPC Connection)
 //!
 //! ## RESPONSIBILITIES
-//! This module defines the core data structures for connection management in
+//! Defines the core data structures for connection management in
 //! the IPC layer, including connection handles, statistics, and status
 //! tracking.
 //!
 //! ## ARCHITECTURAL ROLE
-//! This module provides the type definitions used throughout the connection
+//! Provides the type definitions used throughout the connection
 //! management subsystem, ensuring type safety and consistency.
 //!
 //! ## KEY COMPONENTS
@@ -26,17 +26,12 @@
 //! - Stats are calculated on-demand to avoid overhead
 //! - Simple structures minimize memory footprint
 //!
-//! ## TODO
-//! - Add connection metadata (protocol, endpoint)
-//! - Implement connection duration tracking
-//! - Add connection quality metrics
-//! - Support connection tagging for categorization
 
 use serde::{Deserialize, Serialize};
 
 /// Connection status
 ///
-/// This enum represents the current state of an IPC connection, allowing
+/// Represents the current state of an IPC connection, allowing
 /// the system to track and report connection health.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ConnectionStatus {
@@ -99,7 +94,7 @@ impl From<bool> for ConnectionStatus {
 
 /// Handle representing an active connection
 ///
-/// This structure tracks the state and health of an individual connection
+/// Tracks the state and health of an individual connection
 /// in the connection pool.
 ///
 /// ## Health Scoring
@@ -276,7 +271,7 @@ impl std::fmt::Debug for ConnectionHandle {
 
 /// Connection statistics for monitoring
 ///
-/// This structure provides aggregate statistics about the connection pool,
+/// Provides aggregate statistics about the connection pool,
 /// useful for monitoring and debugging.
 ///
 /// ## Example Usage

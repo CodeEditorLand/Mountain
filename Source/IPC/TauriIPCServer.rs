@@ -1,7 +1,7 @@
 //! # TauriIPCServer - Mountain-Wind IPC Bridge
 //!
 //! **File Responsibilities:**
-//! This module serves as the core IPC (Inter-Process Communication) server for
+//! Serves as the core IPC (Inter-Process Communication) server for
 //! Mountain, establishing and managing the bidirectional communication bridge
 //! between Mountain's Rust backend and Wind's TypeScript frontend. It
 //! implements the Mountain counterpart to Wind's TauriIPCServer.ts, ensuring

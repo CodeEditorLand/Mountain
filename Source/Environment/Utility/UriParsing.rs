@@ -5,9 +5,11 @@
 use url::Url;
 use CommonLibrary::Error::CommonError::CommonError;
 
-/// Helper to get a `Url` from a `serde_json::Value` which is expected to be a
-/// `UriComponents` DTO from VS Code, a plain URI string, or a UriComponents
-/// object without the `external` convenience field.
+/// Parses a `serde_json::Value` into a `Url`, accepting three wire formats:
+/// - A plain URI string (e.g., `"file:///path/to/file"`)
+/// - A VS Code `UriComponents` object with an `"external"` convenience field
+/// - A legacy `{ scheme, authority, path, query, fragment }` object without
+///   the `external` convenience field.
 ///
 /// Cocoon's wire shapes vary by call site:
 ///   - `Diagnostic.Set` and a few others send the URI as a plain string (the

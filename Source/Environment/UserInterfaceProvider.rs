@@ -244,7 +244,7 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 // --- Internal Helper Functions ---
 
-/// A generic helper function to send a request to the Sky UI and wait for a
+/// A generic helper that sends a request to the Sky UI and waits for a
 /// response.
 ///
 /// Atom T1: made `pub(crate)` so Track effect creators

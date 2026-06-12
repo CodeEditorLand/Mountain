@@ -1,7 +1,7 @@
 //! # Wind Advanced Synchronization - Real-time Document & UI Sync
 //!
 //! **File Responsibilities:**
-//! This module implements advanced synchronization features that keep Wind's
+//! Implements advanced synchronization features that keep Wind's
 //! frontend state in sync with Mountain's backend state in real-time. It
 //! handles document changes, UI state updates, and broadcast updates across the
 //! editor ecosystem.

@@ -69,11 +69,6 @@
 //! - All methods are `&self` and safe for concurrent access
 //! - No interior mutability, state is configuration only
 //!
-//! ## TODO Items
-//!
-//! - [ ] Add support for alternative compression algorithms (zstd, brotli)
-//! - [ ] Implement adaptive compression based on message type
-//! - [ ] Add compression statistics tracking
 
 use std::io::{Read, Write};
 
@@ -88,7 +83,7 @@ const MAX_DECOMPRESSED_SIZE:usize = 10 * 1024 * 1024;
 
 /// Message compression utility for optimizing IPC message transfer
 ///
-/// This struct provides Gzip-based compression for IPC messages, adapting the
+/// Provides Gzip-based compression for IPC messages, adapting the
 /// compression level based on payload size and providing graceful fallback on
 /// errors.
 pub struct Compressor {

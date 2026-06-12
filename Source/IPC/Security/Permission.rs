@@ -1,11 +1,11 @@
 //! # Permission Definition (IPC Security)
 //!
 //! ## RESPONSIBILITIES
-//! This module defines the Permission structure used for role-based access
+//! Defines the Permission structure used for role-based access
 //! control (RBAC) in the IPC layer.
 //!
 //! ## ARCHITECTURAL ROLE
-//! This module provides the permission definition that represents individual
+//! Provides the permission definition that represents individual
 //! access rights that can be granted to roles.
 //!
 //! ## KEY COMPONENTS
@@ -22,10 +22,6 @@
 //! - Permission definitions are stored in HashMap for O(1) lookup
 //! - Minimal memory footprint for efficient storage
 //!
-//! ## TODO
-//! - Add permission metadata (creation time, last used)
-//! - Implement permission aliases
-//! - Support permission hierarchies (e.g., "file.*" includes all file
 //!   permissions)
 
 use serde::{Deserialize, Serialize};

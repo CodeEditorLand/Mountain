@@ -74,11 +74,6 @@
 //! - Can be safely shared across threads via Arc
 //! - No interior mutability
 //!
-//! ## TODO Items
-//!
-//! - [ ] Add key derivation from system keychain
-//! - [ ] Implement automatic key rotation schedule
-//! - [ ] Add key versioning for migration support
 
 use std::array::TryFromSliceError;
 

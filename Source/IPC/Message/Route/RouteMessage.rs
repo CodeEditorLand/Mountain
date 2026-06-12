@@ -68,11 +68,6 @@
 //! - HashMap wrapped in Arc<Mutex> for safe concurrent access
 //! - Lock contention minimized by short critical sections
 //!
-//! ## TODO Items
-//!
-//! - [ ] Add listener priority ordering
-//! - [ ] Implement wildcard channel patterns
-//! - [ ] Add channel filtering rules
 
 use std::{
 	collections::HashMap,

@@ -1,7 +1,7 @@
 //! Bidirectional configuration synchronization between Mountain's Rust backend
 //! and Wind's TypeScript frontend.
 //!
-//! This module re-exports types from the parent `ConfigurationBridge.rs` for
+//! Re-exports types from the parent `ConfigurationBridge.rs` for
 //! backward compatibility. The actual `ConfigurationBridge` struct and its
 //! methods live one level up.
 //!

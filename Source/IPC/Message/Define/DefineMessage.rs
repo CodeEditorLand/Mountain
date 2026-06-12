@@ -69,17 +69,12 @@
 //! - All structs derive Clone for safe sharing across threads
 //! - No interior mutability, all state in Arc/Mutex wrapper in parent
 //!
-//! ## TODO Items
-//!
-//! - [ ] Add message versioning for schema evolution
-//! - [ ] Add message validation schema
-//! - [ ] Consider binary protocol option for performance
 
 use serde::{Deserialize, Serialize};
 
 /// IPC message structure matching Wind's ITauriIPCMessage interface
 ///
-/// This structure represents the standard message format for all IPC
+/// Represents the standard message format for all IPC
 /// communication between Mountain's Rust backend and Wind's TypeScript
 /// frontend.
 ///
@@ -196,7 +191,7 @@ impl ConnectionStatus {
 
 /// Listener callback type for message subscription
 ///
-/// This type alias defines the signature for callbacks registered to receive
+/// Alias defines the signature for callbacks registered to receive
 /// messages on specific channels.
 ///
 /// # Thread Safety

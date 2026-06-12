@@ -36,7 +36,7 @@ const MAX_EXTENSION_IDENTIFIER_LENGTH:usize = 128;
 const MAX_TITLE_LENGTH:usize = 256;
 
 /// A struct that holds the complete state for a single Webview panel instance.
-/// This is stored in `ApplicationState` to track all active Webviews managed by
+/// stored in `ApplicationState` to track all active Webviews managed by
 /// the host.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]

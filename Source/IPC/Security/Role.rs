@@ -1,11 +1,11 @@
 //! # Role Definition (IPC Security)
 //!
 //! ## RESPONSIBILITIES
-//! This module defines the Role structure used for role-based access control
+//! Defines the Role structure used for role-based access control
 //! (RBAC) in the IPC layer.
 //!
 //! ## ARCHITECTURAL ROLE
-//! This module provides the role definition that groups permissions for
+//! Provides the role definition that groups permissions for
 //! assignment to users.
 //!
 //! ## KEY COMPONENTS
@@ -22,11 +22,6 @@
 //! - Role definitions are stored in HashMap for O(1) lookup
 //! - Permissions are stored as `Vec<String>` for iteration
 //!
-//! ## TODO
-//! - Add role inheritance support
-//! - Implement role activation/deactivation
-//! - Add role metadata (creation time, last modified)
-//! - Support role aliases
 
 use serde::{Deserialize, Serialize};
 

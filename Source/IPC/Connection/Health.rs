@@ -1,12 +1,12 @@
 //! # Health Checker (IPC Connection)
 //!
 //! ## RESPONSIBILITIES
-//! This module provides connection health checking functionality for the
+//! Provides connection health checking functionality for the
 //! IPC layer. It monitors connection health through periodic checks and
 //! provides metrics for debugging and monitoring.
 //!
 //! ## ARCHITECTURAL ROLE
-//! This module is part of the monitoring subsystem in the connection management
+//! Part of the monitoring subsystem in the connection management
 //! layer, providing health assessments for active connections.
 //!
 //! ## KEY COMPONENTS
@@ -36,7 +36,7 @@ use crate::dev_log;
 
 /// Connection health checker
 ///
-/// This structure provides periodic health checking for connections,
+/// Provides periodic health checking for connections,
 /// monitoring response times and overall connection health.
 ///
 /// ## Health Check Process
@@ -93,7 +93,7 @@ impl HealthChecker {
 
 	/// Check connection health by sending a ping
 	///
-	/// This method simulates a health check by measuring response time.
+	/// Simulates a health check by measuring response time.
 	/// In a production environment, this would send an actual ping message
 	/// through the connection.
 	///

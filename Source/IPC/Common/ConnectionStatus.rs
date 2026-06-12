@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 
 use serde::{Deserialize, Serialize};
 
-/// Represents the current state of an IPC connection
+/// The current state of an IPC connection
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ConnectionState {
 	/// Connection is active and healthy

@@ -37,7 +37,7 @@ const MAX_ACTIVATION_EVENTS:usize = 100;
 
 /// the deserialized content of an extension's `package.json` file,
 /// augmented with location information and other metadata.
-/// This is stored in `ApplicationState` to provide the extension host with the
+/// stored in `ApplicationState` to provide the extension host with the
 /// list of available extensions and their capabilities.
 /// VS Code extensions use camelCase in package.json. Serde renames from
 /// PascalCase Rust fields to camelCase JSON automatically. Fields that

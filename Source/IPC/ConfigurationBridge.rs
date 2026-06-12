@@ -1,7 +1,7 @@
 //! # Configuration Bridge - Bidirectional Configuration Synchronization
 //!
 //! **File Responsibilities:**
-//! This module manages bidirectional synchronization of configuration between
+//! Manages bidirectional synchronization of configuration between
 //! Mountain's Rust backend and Wind's TypeScript frontend. It ensures
 //! configuration consistency across the entire CodeEditorLand ecosystem while
 //! handling conflicts and updates gracefully.

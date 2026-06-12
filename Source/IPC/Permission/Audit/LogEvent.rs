@@ -92,15 +92,6 @@
 //! - Lock contention minimized by short critical sections
 //! - Event struct is Clone for safe sharing
 //!
-//! ## TODO Items
-//!
-//! - [ ] Implement hash chain for tamper-evident logging
-//! - [ ] Add persistent log storage to disk
-//! - [ ] Implement log compression for archival
-//! - [ ] Add anonymization options for PII redaction
-//! - [ ] Support structured queries (SQL-like syntax)
-//! - [ ] Add real-time alerting for critical events
-//! - [ ] Implement log aggregation across multiple instances
 
 use serde::{Deserialize, Serialize};
 

@@ -1,12 +1,12 @@
 //! # Message Compressor (IPC Encryption)
 //!
 //! ## RESPONSIBILITIES
-//! This module provides message compression using Gzip to optimize IPC message
+//! Provides message compression using Gzip to optimize IPC message
 //! transfer. It reduces payload size for better performance, especially for
 //! large messages or high-frequency communication.
 //!
 //! ## ARCHITECTURAL ROLE
-//! This module is part of the performance optimization layer in the IPC
+//! Part of the performance optimization layer in the IPC
 //! architecture, reducing bandwidth usage and improving transfer speeds.
 //!
 //! ## KEY COMPONENTS
@@ -26,11 +26,6 @@
 //! - Batch size 10 aggregates small messages for efficiency
 //! - Gzip provides widely compatible compression format
 //!
-//! ## TODO
-//! - Add compression algorithm selection (LZ4, Zstd)
-//! - Implement adaptive compression based on message size
-//! - Add compression ratio tracking and optimization
-//! - Implement streaming compression for very large messages
 
 use std::io::{Read, Write};
 
@@ -41,7 +36,7 @@ use crate::dev_log;
 
 /// Message compression utility for optimizing IPC message transfer
 ///
-/// This structure provides Gzip-based compression to reduce the size of IPC
+/// Provides Gzip-based compression to reduce the size of IPC
 /// messages, improving transfer speed and reducing bandwidth usage.
 ///
 /// ## Compression Flow
@@ -137,7 +132,7 @@ impl MessageCompressor {
 
 	/// Compress messages using Gzip for efficient transfer
 	///
-	/// This method serializes multiple messages to JSON and compresses them
+	/// Serializes multiple messages to JSON and compresses them
 	/// using Gzip, significantly reducing the payload size.
 	///
 	/// ## Parameters
@@ -192,7 +187,7 @@ impl MessageCompressor {
 
 	/// Decompress messages from compressed data
 	///
-	/// This method decompresses Gzip-compressed data and deserializes it back
+	/// Decompresses Gzip-compressed data and deserializes it back
 	/// into TauriIPCMessage objects.
 	///
 	/// ## Parameters
@@ -240,7 +235,7 @@ impl MessageCompressor {
 
 	/// Check if messages should be batched for compression
 	///
-	/// This method determines if the number of messages meets the threshold
+	/// Determines if the number of messages meets the threshold
 	/// for batch compression.
 	///
 	/// ## Parameters

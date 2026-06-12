@@ -1,13 +1,13 @@
 //! # Message Types (IPC)
 //!
 //! ## RESPONSIBILITIES
-//! This module defines the core data structures used for IPC communication
+//! Defines the core data structures used for IPC communication
 //! between Wind (frontend) and Mountain (backend). It provides type-safe
 //! message formats that are serialized/deserialized for transport across the
 //! IPC boundary.
 //!
 //! ## ARCHITECTURAL ROLE
-//! This module defines the contract for all IPC messages. It's the foundation
+//! Defines the contract for all IPC messages. It's the foundation
 //! of the IPC communication layer, ensuring type safety and consistency across
 //! the Wind-Mountain bridge.
 //!
@@ -30,10 +30,6 @@
 //! - Timestamp uses u64 for compact representation
 //! - Option<> used for optional fields to minimize serialization overhead
 //!
-//! ## TODO
-//! - Add message payload size limits
-//! - Implement message versioning for compatibility
-//! - Add message priority field
 
 use serde::{Deserialize, Serialize};
 
@@ -130,7 +126,7 @@ impl TauriIPCMessage {
 
 /// Connection status message for health monitoring
 ///
-/// This structure is used to report the IPC connection status between Wind
+/// Is used to report the IPC connection status between Wind
 /// and Mountain, enabling the frontend to display connection state to users.
 ///
 /// ## Status Reporting Flow
@@ -152,7 +148,7 @@ impl TauriIPCMessage {
 /// ```
 /// Simple connection status message for health monitoring
 ///
-/// This structure is used to report the IPC connection status between Wind
+/// Is used to report the IPC connection status between Wind
 /// and Mountain, enabling the frontend to display connection state to users.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimpleConnectionStatus {
@@ -176,7 +172,7 @@ impl SimpleConnectionStatus {
 
 /// Listener callback type for handling incoming IPC messages
 ///
-/// This type defines the signature for callbacks that can be registered
+/// Defines the signature for callbacks that can be registered
 /// to handle messages on specific IPC channels.
 ///
 /// ## Callback Signature

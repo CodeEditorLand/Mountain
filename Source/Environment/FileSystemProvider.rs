@@ -61,17 +61,19 @@ mod WriteOperations;
 
 #[async_trait]
 impl FileSystemReader for MountainEnvironment {
-	/// Delegates to ReadOperations module
+	/// Reads the full contents of a file at the given path.
 	async fn ReadFile(&self, path:&PathBuf) -> Result<Vec<u8>, CommonError> {
 		ReadOperations::read_file_impl(self, path).await
 	}
 
-	/// Delegates to ReadOperations module
+	/// Returns metadata (size, modification time, type) for a file at the
+	/// given path.
 	async fn StatFile(&self, path:&PathBuf) -> Result<FileSystemStatDTO, CommonError> {
 		ReadOperations::stat_file_impl(self, path).await
 	}
 
-	/// Delegates to ReadOperations module
+	/// Lists the entries (file names and types) in a directory at the given
+	/// path.
 	async fn ReadDirectory(&self, path:&PathBuf) -> Result<Vec<(String, FileTypeDTO)>, CommonError> {
 		ReadOperations::read_directory_impl(self, path).await
 	}
@@ -79,32 +81,36 @@ impl FileSystemReader for MountainEnvironment {
 
 #[async_trait]
 impl FileSystemWriter for MountainEnvironment {
-	/// Delegates to WriteOperations module
+	/// Writes content to a file, optionally creating or overwriting it.
 	async fn WriteFile(&self, path:&PathBuf, content:Vec<u8>, create:bool, overwrite:bool) -> Result<(), CommonError> {
 		WriteOperations::write_file_impl(self, path, content, create, overwrite).await
 	}
 
-	/// Delegates to WriteOperations module
+	/// Creates a directory at the given path, optionally creating parent
+	/// directories.
 	async fn CreateDirectory(&self, path:&PathBuf, recursive:bool) -> Result<(), CommonError> {
 		WriteOperations::create_directory_impl(self, path, recursive).await
 	}
 
-	/// Delegates to WriteOperations module
+	/// Deletes a file or directory, optionally recursive and using the
+	/// system trash.
 	async fn Delete(&self, path:&PathBuf, recursive:bool, use_trash:bool) -> Result<(), CommonError> {
 		WriteOperations::delete_impl(self, path, recursive, use_trash).await
 	}
 
-	/// Delegates to WriteOperations module
+	/// Renames (moves) a file or directory from source to target, optionally
+	/// overwriting the target.
 	async fn Rename(&self, source:&PathBuf, target:&PathBuf, overwrite:bool) -> Result<(), CommonError> {
 		WriteOperations::rename_impl(self, source, target, overwrite).await
 	}
 
-	/// Delegates to WriteOperations module
+	/// Copies a file from source to target, optionally overwriting the
+	/// target.
 	async fn Copy(&self, source:&PathBuf, target:&PathBuf, overwrite:bool) -> Result<(), CommonError> {
 		WriteOperations::copy_impl(self, source, target, overwrite).await
 	}
 
-	/// Delegates to WriteOperations module
+	/// Creates an empty file at the given path.
 	async fn CreateFile(&self, path:&PathBuf) -> Result<(), CommonError> {
 		WriteOperations::create_file_impl(self, path).await
 	}
