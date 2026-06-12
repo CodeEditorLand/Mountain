@@ -147,6 +147,12 @@ static SESSION_ID:OnceLock<String> = OnceLock::new();
 
 fn SessionId() -> &'static str { SESSION_ID.get_or_init(|| Uuid::new_v4().to_string()) }
 
+/// Process-lifetime cache for the persistent machine ID. Both
+/// `ConstructSandboxConfiguration` and
+/// `ConstructExtensionHostInitializationData` need the ID; without the
+/// cache the machine-id file is read from disk twice per boot.
+static MACHINE_ID:OnceLock<String> = OnceLock::new();
+
 use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,

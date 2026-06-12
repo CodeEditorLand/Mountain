@@ -583,97 +583,128 @@ pub fn AppLifecycleSetup(
 
 		TraceStep!("[Lifecycle] [PostSetup] AppState cloned.");
 
-		// [Config]
-		// First-pass merge runs against the empty `ScannedExtensions`
-		// map (the scan happens later in this lifecycle). User /
-		// workspace `settings.json` overrides land here, but extension
-		// `contributes.configuration.properties[*].default` keys cannot
-		// be collected yet. Without a second pass after the scan,
-		// `getConfiguration('git').get('enabled')` returns undefined,
-		// vscode.git's `_activate` takes the `if (!enabled) return;`
-		// short-circuit, and the SCM viewlet stays empty even though
-		// Cocoon successfully activated the extension. The second pass
-		// below repairs this without disturbing the existing initial
-		// merge that the rest of bootstrap depends on.
-		let ConfigStart = crate::IPC::DevLog::NowNano::Fn();
-
-		let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
-
-		crate::otel_span!("lifecycle:config:initialize", ConfigStart);
+		// [Dirs] Gate on the background userdata-dir task: the first
+		// configuration merge below reads User/settings.json, whose
+		// default content and trust-key injection happen in that task.
+		let _ = DirsReady.await;
 
 		// [Workspace] [Trust] Desktop app - trust local workspace by default
 		AppStateForSetup.Workspace.SetTrustStatus(true);
 
-		// [Extensions] [ScanPaths]
-		let ExtScanStart = crate::IPC::DevLog::NowNano::Fn();
+		// Stage 1: configuration pass 1 ∥ extension scan. Independent -
+		// the merge reads settings.json files while the scan walks
+		// extension directories into `ScannedExtensions`.
+		tokio::join!(
+			async {
+				// [Config]
+				// First-pass merge runs against the (still-populating)
+				// `ScannedExtensions` map. User / workspace
+				// `settings.json` overrides land here, but extension
+				// `contributes.configuration.properties[*].default` keys
+				// cannot be relied on yet. Without a second pass after
+				// the scan, `getConfiguration('git').get('enabled')`
+				// returns undefined, vscode.git's `_activate` takes the
+				// `if (!enabled) return;` short-circuit, and the SCM
+				// viewlet stays empty even though Cocoon successfully
+				// activated the extension. The second pass below repairs
+				// this without disturbing the existing initial merge
+				// that the rest of bootstrap depends on.
+				let ConfigStart = crate::IPC::DevLog::NowNano::Fn();
 
-		let _ = ScanPathConfigureFn(&AppStateForSetup);
+				let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
 
-		// [Extensions] [Scan]
-		let _ = ExtensionPopulateFn(PostSetupAppHandle.clone(), &AppStateForSetup).await;
+				crate::otel_span!("lifecycle:config:initialize", ConfigStart);
+			},
+			async {
+				// [Extensions] [ScanPaths]
+				let ExtScanStart = crate::IPC::DevLog::NowNano::Fn();
 
-		crate::otel_span!("lifecycle:extensions:scan", ExtScanStart);
+				let _ = ScanPathConfigureFn(&AppStateForSetup);
 
-		// [Config] [Re-merge] - now that ScannedExtensions is populated,
-		// run the merge a second time so `collect_default_configurations`
-		// can walk extension manifests and seed `git.enabled = true`,
-		// `git.path = null`, `git.autoRepositoryDetection = true`, plus
-		// every other `contributes.configuration.properties[*].default`
-		// the 113 scanned extensions declare. The first-pass merge logged
-		// "0 top-level keys"; this pass should log a much larger count.
-		// User / workspace overrides applied during the first pass are
-		// preserved because the merge order is Default → User → Workspace
-		// and the cached User/Workspace JSON files are re-read each call.
-		let ConfigRemergeStart = crate::IPC::DevLog::NowNano::Fn();
+				// [Extensions] [Scan]
+				let _ = ExtensionPopulateFn(PostSetupAppHandle.clone(), &AppStateForSetup).await;
 
-		let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
+				crate::otel_span!("lifecycle:extensions:scan", ExtScanStart);
+			}
+		);
 
-		crate::otel_span!("lifecycle:config:remerge-after-extension-scan", ConfigRemergeStart);
+		// Stage 2: configuration re-merge ∥ Vine gRPC server start. The
+		// re-merge needs the finished extension scan (stage 1); Vine only
+		// binds its listeners and needs neither configuration nor scan.
+		tokio::join!(
+			async {
+				// [Config] [Re-merge] - now that ScannedExtensions is populated,
+				// run the merge a second time so `collect_default_configurations`
+				// can walk extension manifests and seed `git.enabled = true`,
+				// `git.path = null`, `git.autoRepositoryDetection = true`, plus
+				// every other `contributes.configuration.properties[*].default`
+				// the 113 scanned extensions declare. The first-pass merge logged
+				// "0 top-level keys"; this pass should log a much larger count.
+				// User / workspace overrides applied during the first pass are
+				// preserved because the merge order is Default → User → Workspace
+				// and the cached User/Workspace JSON files are re-read each call.
+				let ConfigRemergeStart = crate::IPC::DevLog::NowNano::Fn();
 
-		// [Vine] [gRPC]
-		let VineStart = crate::IPC::DevLog::NowNano::Fn();
+				let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
 
-		let _ = VineStartFn(
-			PostSetupAppHandle.clone(),
-			"127.0.0.1:50051".to_string(),
-			"127.0.0.1:50052".to_string(),
-		)
-		.await;
+				crate::otel_span!("lifecycle:config:remerge-after-extension-scan", ConfigRemergeStart);
+			},
+			async {
+				// [Vine] [gRPC]
+				let VineStart = crate::IPC::DevLog::NowNano::Fn();
 
-		crate::otel_span!("lifecycle:vine:start", VineStart);
+				let _ = VineStartFn(
+					PostSetupAppHandle.clone(),
+					"127.0.0.1:50051".to_string(),
+					"127.0.0.1:50052".to_string(),
+				)
+				.await;
 
-		// [Cocoon] [Sidecar] - skipped when Disable=true so the
-		// workbench loads without an extension host. Useful for
-		// bisecting whether typing-input regressions originate in
-		// Cocoon's gRPC handlers or upstream / Tauri / WKWebView.
-		if IsLandDisabled() {
-			dev_log!(
-				"cocoon",
-				"[Cocoon] [Start] Disable=true: Cocoon spawn SKIPPED (workbench will run without extensions)"
-			);
-		} else {
-			let CocoonStart = crate::IPC::DevLog::NowNano::Fn();
+				crate::otel_span!("lifecycle:vine:start", VineStart);
+			}
+		);
 
-			let _ = CocoonStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
+		// Stage 3: Cocoon ∥ Air. Both sidecars connect back to the Vine
+		// pool started in stage 2; Cocoon additionally consumes the
+		// finished extension scan (stage 1) for its init payload. They
+		// have no dependency on each other.
+		tokio::join!(
+			async {
+				// [Cocoon] [Sidecar] - skipped when Disable=true so the
+				// workbench loads without an extension host. Useful for
+				// bisecting whether typing-input regressions originate in
+				// Cocoon's gRPC handlers or upstream / Tauri / WKWebView.
+				if IsLandDisabled() {
+					dev_log!(
+						"cocoon",
+						"[Cocoon] [Start] Disable=true: Cocoon spawn SKIPPED (workbench will run without extensions)"
+					);
+				} else {
+					let CocoonStart = crate::IPC::DevLog::NowNano::Fn();
 
-			crate::otel_span!("lifecycle:cocoon:start", CocoonStart);
-		}
+					let _ = CocoonStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
 
-		// [Air] [Sidecar] - daemon for updates / downloads / signing /
-		// indexing / system monitoring. Spawn parallel to Cocoon; both
-		// are sidecars in the Vine pool. AirStart returns Ok(()) even
-		// on spawn failure (graceful degradation - workbench works
-		// without Air, just without those background capabilities).
-		// Skipped under `Disable=true` for parity with Cocoon.
-		if IsLandDisabled() {
-			dev_log!("grpc", "[Air] [Start] Disable=true: Air spawn SKIPPED");
-		} else {
-			let AirStartT0 = crate::IPC::DevLog::NowNano::Fn();
+					crate::otel_span!("lifecycle:cocoon:start", CocoonStart);
+				}
+			},
+			async {
+				// [Air] [Sidecar] - daemon for updates / downloads / signing /
+				// indexing / system monitoring. Spawn parallel to Cocoon; both
+				// are sidecars in the Vine pool. AirStart returns Ok(()) even
+				// on spawn failure (graceful degradation - workbench works
+				// without Air, just without those background capabilities).
+				// Skipped under `Disable=true` for parity with Cocoon.
+				if IsLandDisabled() {
+					dev_log!("grpc", "[Air] [Start] Disable=true: Air spawn SKIPPED");
+				} else {
+					let AirStartT0 = crate::IPC::DevLog::NowNano::Fn();
 
-			let _ = AirStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
+					let _ = AirStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
 
-			crate::otel_span!("lifecycle:air:start", AirStartT0);
-		}
+					crate::otel_span!("lifecycle:air:start", AirStartT0);
+				}
+			}
+		);
 
 		// [Lifecycle] [Phase] Advance Starting → Ready now that the gRPC
 		// server + Cocoon sidecar + extension scan have all finished. Wind's
