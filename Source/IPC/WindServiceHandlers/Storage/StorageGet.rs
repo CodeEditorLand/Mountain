@@ -31,6 +31,7 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 		.is_empty()
 	{
 		dev_log!("storage", "get: {} (empty-store short-circuit)", key);
+
 		return Ok(Value::Null);
 	}
 

@@ -11,12 +11,12 @@
 //! computing a result nobody is waiting for. A side-car timeout inside the
 //! Vine client likewise fires `CancelOperation`.
 
+use std::sync::Arc;
+
 use CommonLibrary::Error::CommonError::CommonError;
 use serde_json::{Value, json};
-use std::sync::Arc;
 use tokio::sync::watch;
 use ::Vine::{Client::SendRequest::FnCancellable, Error::VineError};
-
 use dashmap::DashMap;
 
 use crate::{ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO, dev_log};
@@ -40,11 +40,7 @@ pub(crate) async fn Fn(
 		.filter(|s| !s.is_empty())
 		.map(String::from);
 
-	let Cancellations = environment
-		.ApplicationState
-		.Feature
-		.LanguageProviderCancellations
-		.clone();
+	let Cancellations = environment.ApplicationState.Feature.LanguageProviderCancellations.clone();
 
 	ForwardCancellable(
 		registration.SideCarIdentifier.clone(),
@@ -99,6 +95,7 @@ pub(crate) async fn ForwardCancellable(
 	}
 
 	let MethodForLog = Method.clone();
+
 	let SideCarForLog = SideCarIdentifier.clone();
 
 	let ForwardTask = tokio::spawn(async move {

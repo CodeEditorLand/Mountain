@@ -40,6 +40,7 @@ impl Default for DecorationsState {
 
 		Self {
 			Entries:Arc::new(Mutex::new(HashMap::new())),
+
 			KnownTypeKeys:Arc::new(Mutex::new(std::collections::HashSet::new())),
 		}
 	}
@@ -76,10 +77,12 @@ impl DecorationsState {
 	/// P4.6: Mark a decoration type key as registered (lazy-register).
 	pub fn RegisterTypeKey(&self, Key:&str) -> bool {
 		let mut Guard = self.KnownTypeKeys.lock();
+
 		if Guard.contains(Key) {
 			false
 		} else {
 			Guard.insert(Key.to_owned());
+
 			true
 		}
 	}

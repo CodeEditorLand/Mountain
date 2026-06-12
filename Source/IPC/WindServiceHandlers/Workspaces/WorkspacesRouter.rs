@@ -211,6 +211,7 @@ pub(crate) async fn route(
 		// Hot-exit backup check — query real dirty state from WorkingCopy.
 		"workspaces:getDirtyWorkspaces" => {
 			let DirtyUris = RunTime.Environment.ApplicationState.Feature.WorkingCopy.GetAllDirty();
+
 			Some(Ok(serde_json::json!(DirtyUris)))
 		},
 

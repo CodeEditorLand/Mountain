@@ -67,7 +67,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				let FallbackArgs = args.clone();
 
-				match command_executor.ExecuteCommand(command_id, args).await.map_err(|e| e.to_string()) {
+				match command_executor
+					.ExecuteCommand(command_id, args)
+					.await
+					.map_err(|e| e.to_string())
+				{
 					Err(E) if IsCommandNotFound(&E) => {
 						dev_log!(
 							"commands",

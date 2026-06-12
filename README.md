@@ -442,7 +442,7 @@ Mountain is designed to be compatible with:
 - [`Air`](https://github.com/CodeEditorLand/Air) - Background daemon
 - [`Mist`](https://github.com/CodeEditorLand/Mist) - Pub/sub message bus
 - [`CHANGELOG.md`](https://github.com/CodeEditorLand/Mountain/tree/Current/CHANGELOG.md)
-  - History of changes specific to Mountain
+    - History of changes specific to Mountain
 
 ---
 

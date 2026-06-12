@@ -5,9 +5,7 @@
 
 use std::sync::Arc;
 
-use serde_json::Value;
-
-use serde_json::json;
+use serde_json::{Value, json};
 
 use crate::{
 	IPC::WindServiceHandlers::Utilities::{
@@ -20,6 +18,7 @@ use crate::{
 
 pub async fn Fn(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let ResourceArg = Arguments.first().ok_or("textFile:save requires a resource argument")?;
+
 	let Uri = ResourceArg.to_string();
 
 	let Path = extract_path_from_arg(ResourceArg).map_err(|E| format!("textFile:save bad resource: {}", E))?;

@@ -9,4 +9,7 @@
 //! - `SwallowMap` — Pattern-matching engine for IPC method routing
 
 pub mod Gate;
+
+pub mod NativeBus;
+
 pub mod SwallowMap;

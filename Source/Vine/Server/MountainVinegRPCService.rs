@@ -830,6 +830,7 @@ impl MountainService for MountainVinegRPCService {
 
 			"WebviewReady" => {
 				let Handle = Parameter.get("handle").and_then(Value::as_str).unwrap_or("?");
+
 				let ViewType = Parameter.get("viewType").and_then(Value::as_str).unwrap_or("?");
 
 				dev_log!("grpc", "[Webview] ready handle={} viewType={}", Handle, ViewType);
@@ -841,6 +842,7 @@ impl MountainService for MountainVinegRPCService {
 
 				// Emit sky://webview/ready so the workbench can react.
 				let Payload = serde_json::json!({ "handle": Handle, "viewType": ViewType });
+
 				let _ = self.ApplicationHandle.emit("sky://webview/ready", &Payload);
 			},
 
@@ -1238,10 +1240,7 @@ impl MountainService for MountainVinegRPCService {
 				// in their manifest are activated. The provider itself is
 				// registered through the same RegisterLanguageProvider path
 				// as all other providers, so handle/registry state is kept.
-				let Scheme = Parameter
-					.get("scheme")
-					.and_then(serde_json::Value::as_str)
-					.unwrap_or("");
+				let Scheme = Parameter.get("scheme").and_then(serde_json::Value::as_str).unwrap_or("");
 
 				if !Scheme.is_empty() {
 					let ActivationEvent = format!("onFileSystem:{}", Scheme);

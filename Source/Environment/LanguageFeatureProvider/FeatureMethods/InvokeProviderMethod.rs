@@ -27,11 +27,7 @@ pub(crate) async fn Fn(
 		.filter(|s| !s.is_empty())
 		.map(String::from);
 
-	let Cancellations = environment
-		.ApplicationState
-		.Feature
-		.LanguageProviderCancellations
-		.clone();
+	let Cancellations = environment.ApplicationState.Feature.LanguageProviderCancellations.clone();
 
 	super::InvokeProvider::ForwardCancellable(
 		registration.SideCarIdentifier.clone(),

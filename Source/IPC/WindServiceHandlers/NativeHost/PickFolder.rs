@@ -34,16 +34,16 @@ pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Val
 
 	// Honour `canSelectFiles` / `canSelectFolders` so VS Code extensions that
 	// declare e.g. only `canSelectFolders: true` get the correct picker type.
-	let CanSelectFiles = Options
-		.get("canSelectFiles")
-		.and_then(Value::as_bool)
-		.unwrap_or(true);
-	let CanSelectFolders = Options
-		.get("canSelectFolders")
-		.and_then(Value::as_bool)
-		.unwrap_or(true);
+	let CanSelectFiles = Options.get("canSelectFiles").and_then(Value::as_bool).unwrap_or(true);
 
-	dev_log!("folder", "pickFolderAndOpen requested (files={}, folders={})", CanSelectFiles, CanSelectFolders);
+	let CanSelectFolders = Options.get("canSelectFolders").and_then(Value::as_bool).unwrap_or(true);
+
+	dev_log!(
+		"folder",
+		"pickFolderAndOpen requested (files={}, folders={})",
+		CanSelectFiles,
+		CanSelectFolders
+	);
 
 	let Handle = ApplicationHandle.clone();
 

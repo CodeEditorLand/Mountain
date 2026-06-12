@@ -259,6 +259,7 @@ macro_rules! forward_to_cocoon {
 			)
 		} else {
 			dev_log!("ipc", "{}: Cocoon disconnected — returning Null fallback", $tag);
+
 			Ok(Value::Null)
 		}
 	}};
@@ -466,18 +467,29 @@ pub async fn mountain_ipc_invoke(
 	if crate::Shim::Gate::is_enabled() {
 		if crate::Shim::SwallowMap::should_swallow(&command) {
 			let target = crate::Shim::SwallowMap::redirect_target(&command);
+
 			match target {
 				crate::Shim::SwallowMap::RedirectTarget::Mountain => {
-					// Handled natively in Mountain — return Null ack
-					return Ok(Value::Null);
-				}
+					// Handle directly in Rust — bypass Cocoon gRPC
+					match crate::Shim::NativeBus::handle(&ApplicationHandle, &command, &Arguments).await {
+						Ok(result) => return Ok(result),
+
+						Err(e) => {
+							dev_log!("shim", "NativeBus error for {}: {}", command, e);
+
+							return Ok(Value::Null);
+						},
+					}
+				},
+
 				crate::Shim::SwallowMap::RedirectTarget::None => {
 					// Discard silently
 					return Ok(Value::Null);
-				}
+				},
+
 				_ => {
 					// Passthrough — fall through to original dispatch
-				}
+				},
 			}
 		}
 	}
@@ -558,6 +570,7 @@ pub async fn mountain_ipc_invoke(
 				// Emit `sky://storage/changed` so Wind's listen() bridge
 				// receives storage events for reactive consumers.
 				let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+
 				let _ = ApplicationHandle.emit("sky://storage/changed", &Payload);
 
 				return Ok(Value::Null);
@@ -709,13 +722,10 @@ pub async fn mountain_ipc_invoke(
 				// `file:*` has its own gate (`TierFileSystem`) — routing raw file
 				// I/O to Cocoon would break disk access since Cocoon has no
 				// disk provider. Keep `model:` / `textFile:` under `TierModel`.
-				_ if command.starts_with("file:")
-					&& tier_routes_to_node(TIER_FILE_SYSTEM, "TierFileSystem") =>
-				{
+				_ if command.starts_with("file:") && tier_routes_to_node(TIER_FILE_SYSTEM, "TierFileSystem") => {
 					forward_to_cocoon!("file", command, Arguments)
 				},
-				_ if (command.starts_with("model:")
-					|| command.starts_with("textFile:"))
+				_ if (command.starts_with("model:") || command.starts_with("textFile:"))
 					&& tier_routes_to_node(TIER_MODEL, "TierModel") =>
 				{
 					forward_to_cocoon!("model", command, Arguments)
@@ -1094,7 +1104,7 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("diagnostic", "[{}] {}{}", Tag, Message, Extras);
 
 					Ok(Value::Null)
-					},
+				},
 
 				// P1.15: diagnostic:getBootMarks — read performance.mark
 				// entries from the webview so the diagnostic dashboard can
@@ -1108,6 +1118,7 @@ pub async fn mountain_ipc_invoke(
 					// with `tauri::Window::eval` paired with a `listen` event.
 					// Return the shape so callers don't crash iterating null.
 					dev_log!("diagnostic", "getBootMarks (stub — eval() is async, needs IPC round-trip)");
+
 					Ok(Value::Array(vec![]))
 				},
 
@@ -1454,9 +1465,8 @@ pub async fn mountain_ipc_invoke(
 						.ok()
 						.and_then(|P| P.parse::<u16>().ok())
 						.unwrap_or(0);
-					let MountainSecret = std::env::var("MountainWebSocketSecret")
-						.ok()
-						.unwrap_or_default();
+
+					let MountainSecret = std::env::var("MountainWebSocketSecret").ok().unwrap_or_default();
 
 					Ok(serde_json::json!({
 						// Cocoon WS (legacy — zero handlers, for Node-side renderer)
@@ -1633,7 +1643,9 @@ pub async fn mountain_ipc_invoke(
 				// listen() bridge receives window state events.
 				"nativeHost:onDidChangeMaximizeState" => {
 					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+
 					let _ = ApplicationHandle.emit("sky://window/maximize-changed", &Payload);
+
 					Ok(Value::Null)
 				},
 				"nativeHost:closeWindow" => {
@@ -2767,6 +2779,7 @@ pub async fn mountain_ipc_invoke(
 							.remove(RequestId)
 						{
 							let _ = Sender.1.send(true);
+
 							dev_log!("language", "[cancelRequest] cancelled requestId={}", RequestId);
 						} else {
 							dev_log!("language", "[cancelRequest] requestId={} not found", RequestId);
