@@ -145,7 +145,7 @@ use std::{
 /// `telemetryInfo.sessionId` across calls see the same value.
 static SESSION_ID:OnceLock<String> = OnceLock::new();
 
-fn SessionId() -> &'static str { SESSION_ID.get_or_init(|| Uuid::new_v4().to_string()) }
+pub(crate) fn SessionId() -> &'static str { SESSION_ID.get_or_init(|| Uuid::new_v4().to_string()) }
 
 /// Process-lifetime cache for the persistent machine ID. Both
 /// `ConstructSandboxConfiguration` and

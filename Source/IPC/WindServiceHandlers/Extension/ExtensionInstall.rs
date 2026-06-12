@@ -76,6 +76,10 @@ pub async fn Fn(
 		.ScannedExtensions
 		.AddOrUpdate(Outcome.Identifier.clone(), Outcome.Description.clone());
 
+	// Invalidate the cached `extensions:getInstalled` responses so the next
+	// read reflects the freshly installed extension.
+	crate::IPC::WindServiceHandlers::Extensions::ExtensionsGetInstalled::BumpScanGeneration();
+
 	let Descriptor = serde_json::to_value(&Outcome.Description).unwrap_or(Value::Null);
 
 	NotifyCocoonDeltaExtensions(vec![Descriptor.clone()], Vec::new());

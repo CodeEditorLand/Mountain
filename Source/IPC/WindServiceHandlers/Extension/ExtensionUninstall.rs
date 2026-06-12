@@ -73,6 +73,10 @@ pub async fn Fn(
 		.ScannedExtensions
 		.Remove(&Identifier);
 
+	// Invalidate the cached `extensions:getInstalled` responses so the next
+	// read no longer lists the removed extension.
+	crate::IPC::WindServiceHandlers::Extensions::ExtensionsGetInstalled::BumpScanGeneration();
+
 	if !RemovedDescriptor.is_null() {
 		NotifyCocoonDeltaExtensions(Vec::new(), vec![RemovedDescriptor]);
 	}

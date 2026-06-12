@@ -59,6 +59,14 @@ pub(crate) fn Fn() -> HashMap<String, String> {
 
 	Env.insert("VSCODE_PARENT_PID".into(), std::process::id().to_string());
 
+	// Same value as `telemetryInfo.sessionId` in the init payloads so
+	// Cocoon's `vscode.env.sessionId` fallback chain resolves to Mountain's
+	// session identity even before the extension-host handshake lands.
+	Env.insert(
+		"CocoonSessionId".into(),
+		crate::ProcessManagement::InitializationData::SessionId().to_string(),
+	);
+
 	Env.insert("MOUNTAIN_GRPC_PORT".into(), super::MOUNTAIN_GRPC_PORT.to_string());
 
 	Env.insert("COCOON_GRPC_PORT".into(), super::COCOON_GRPC_PORT.to_string());

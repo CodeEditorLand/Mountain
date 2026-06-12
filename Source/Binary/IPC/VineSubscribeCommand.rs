@@ -87,7 +87,7 @@ pub async fn vine_subscribe_notifications(channel:Channel<NotificationFramePaylo
 					// Subscriber fell behind; drop-oldest semantics.
 					// Surface the gap count so the consumer can decide
 					// whether to refresh state.
-					dev_log!("grpc", "warn: [VineSubscribe] subscriber lagged; dropped {} frames", N);
+					::Vine::Client::Shared::ReportNotificationLag("VineSubscribeCommand(webview)", N);
 				},
 				Err(tokio::sync::broadcast::error::RecvError::Closed) => {
 					// Producer side closed (process shutdown).

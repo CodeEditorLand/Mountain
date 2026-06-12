@@ -2,10 +2,11 @@
 //!
 //! Contains the logic to initialize and start the Mountain gRPC server.
 //!
-//! This module provides the entry point for starting Vine's gRPC servers:
+//! This module provides the entry point for starting Vine's gRPC server:
 //! - **MountainServiceServer**: Listens for connections from Cocoon sidecar
-//! - **CocoonServiceServer**: Listens for connections from Mountain
-//!   (bidirectional)
+//! - **CocoonServiceServer**: Mountain's typed-rail implementation
+//!   (`CocoonServiceImpl`), mounted on the same port/router as
+//!   MountainServiceServer
 //!
 //! ## Initialization Process
 //!
@@ -17,9 +18,11 @@
 //!
 //! ## Server Configuration
 //!
-//! - **Mountaln Service**: Typically on port 50051 (configurable)
-//! - **Cocoon Service**: Typically on port 50052 (configurable)
-//! - Both servers support compression and message size limits
+//! - **Mountain Service**: Typically on port 50051 (configurable); the typed
+//!   CocoonService is served on the same port
+//! - **Cocoon's own server**: Typically on port 50052, bound by the Cocoon
+//!   process itself (never by Mountain)
+//! - Both services enforce message size limits
 //!
 //! ## Error Handling
 //!
@@ -64,8 +67,9 @@ mod ServerConfig {
 	/// Connection timeout duration
 	pub const CONNECTION_TIMEOUT:Duration = Duration::from_secs(30);
 
-	/// Default message size limit (4MB)
-	pub const MAX_MESSAGE_SIZE:usize = 4 * 1024 * 1024;
+	/// Default message size limit, kept in lockstep with the Vine client's
+	/// [`::Vine::Client::Shared::MAX_MESSAGE_SIZE_BYTES`] (4MB)
+	pub const MAX_MESSAGE_SIZE:usize = ::Vine::Client::Shared::MAX_MESSAGE_SIZE_BYTES;
 }
 
 /// Validates a socket address string before parsing.
@@ -219,6 +223,11 @@ pub fn Initialize(
 					.max_decoding_message_size(ServerConfig::MAX_MESSAGE_SIZE)
 					.max_encoding_message_size(ServerConfig::MAX_MESSAGE_SIZE),
 			)
+			.add_service(
+				CocoonServiceServer::new(cocoon_service_impl)
+					.max_decoding_message_size(ServerConfig::MAX_MESSAGE_SIZE)
+					.max_encoding_message_size(ServerConfig::MAX_MESSAGE_SIZE),
+			)
 			.serve(MountainAddress)
 			.await;
 
@@ -232,13 +241,12 @@ pub fn Initialize(
 		}
 	});
 
-	// NOTE: CocoonService gRPC server is NOT started by Mountain.
-	// Port 50052 is reserved for Cocoon's own gRPC server (started by
-	// Cocoon's Effect-TS bootstrap, Stage 5). Mountain connects to Cocoon
-	// as a CLIENT on 50052 via Vine::Client::ConnectToSideCar.
-	// Starting CocoonServiceServer here would cause EADDRINUSE when Cocoon
-	// tries to bind the same port.
-	let _ = cocoon_service_impl; // suppress unused variable warning
+	// NOTE: CocoonServiceServer (CocoonServiceImpl: RunCancellable + typed
+	// Provider handlers) is mounted on the SAME tonic router as
+	// MountainServiceServer, so both services share the Mountain port.
+	// Port 50052 is still reserved for Cocoon's own gRPC server (started by
+	// Cocoon's Effect-TS bootstrap, Stage 5); Mountain connects to it as a
+	// CLIENT via Vine::Client::ConnectToSideCar and never binds 50052.
 
 	dev_log!(
 		"grpc",
