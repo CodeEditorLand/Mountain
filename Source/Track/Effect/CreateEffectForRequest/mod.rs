@@ -13,6 +13,9 @@
 /// Shared utilities (param parsing, proxy helpers).
 pub mod Utilities;
 
+/// Shim interception layer — gets first crack at every gRPC method.
+pub mod Shim;
+
 /// Authentication effect constructors.
 pub mod Authentication;
 
@@ -123,6 +126,8 @@ pub fn Fn<R:Runtime>(
 			}
 		};
 	}
+
+	Try!(Shim);
 
 	Try!(FileSystem);
 

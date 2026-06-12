@@ -180,74 +180,12 @@ Tasks = []
 Auth = []
 ExtensionHost = []
 
+FileSystem = []
+
 # Shim tier (experimental)
 Shim = []
 
-scm-support = []
-
-child-processes = []
-
-Telemetry = []
-
-Development = []
-
-Test = []
-
-grove = []
-
-cocoon = []
-
-# Subsystem feature flags
-Terminal = []
-SCM = []
-LanguageFeatures = []
-Search = []
-OutputChannel = []
-NativeHost = []
-TreeView = []
-Storage = []
-Model = []
-FileSystem = []
-Encryption = []
-Tasks = []
-Auth = []
-ExtensionHost = []
-
-# ===========================================================================
-# Tier-gating (Plan A §Rust feature flags). Every name here is mirrored by
-# `build.rs::IsDeclaredTierFeature`. Adding a new tier requires editing
-# BOTH places so typos in `.env.Land` fail loud.
-# ===========================================================================
-
-# Tier:RemoteProcedureCall:SharedMemory 🟣 Experimental
-TierRemoteProcedureCallSharedMemory = []
-# Tier:HTTPProxy:Hyper 🟣 Experimental
-TierHTTPProxyHyper = []
-# Tier:Logger:Ring 🟣 Experimental
-TierLoggerRing = []
-# Tier:FileSystem:Layer4 🟣 Experimental
-TierFileSystemLayer4 = []
-# Tier:FindFiles:Layer4 🟣 Experimental
-TierFindFilesLayer4 = []
-# Tier:Glob:Native 🟣 Experimental - globset-compiled patterns
-TierGlobNative = []
-# Tier:FileWatcher:Layer4 🟣 Experimental - notify-rs FS events (dep is already on the crate)
-TierFileWatcherLayer4 = []
-# Tier:SchemeAssets:FileSystem - assets served from disk via static_root fallback
-# (frontendDist: null). Enabled by TierSchemeAssets=FileSystem in .env.Land.
-TierSchemeAssetsFileSystem = []
-# Tier:SchemeAssets:Hybrid 🟣 Experimental
-TierSchemeAssetsHybrid = []
-# Tier:Configuration:Eager 🟣 Experimental
-TierConfigurationEager = []
-# Tier:Diagnostics:Delta 🟣 Experimental
-TierDiagnosticsDelta = []
-# Tier:Clipboard:Layer4 🟣 Experimental - arboard crate is on the crate unconditionally
-TierClipboardLayer4 = []
-# Tier:OpenExternal:Layer4 🟣 Experimental - `open` crate is on the crate unconditionally
-TierOpenExternalLayer4 = []
-# Tier:ExtensionScan:Parallel 🟣 Experimental
-TierExtensionScanParallel = []
+# Tier-gating feature flags — each mirrors a name in build.rs::IsDeclaredTierFeature
 
 [lib]
 name = "Mountain"

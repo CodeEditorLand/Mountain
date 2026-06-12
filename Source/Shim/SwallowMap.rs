@@ -1,6 +1,6 @@
 //! # Shim — SwallowMap (Rust)
 //!
-//! Pattern-matching decision engine for the Land Shim at the Rust/IPC level.
+//! Pattern-matching decision engine for the Shim at the Rust/IPC level.
 //! Given a method name (e.g., "statusbar:set"), decides whether to:
 //!
 //! - **Swallow**: Land handles it, VS Code never sees it

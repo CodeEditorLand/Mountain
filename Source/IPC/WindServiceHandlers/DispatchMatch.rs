@@ -462,6 +462,26 @@ pub async fn mountain_ipc_invoke(
 	// Send across task boundaries).
 	let RunTime:Arc<ApplicationRunTime> = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
+	// Shim interception pre-check (gated behind TierShim)
+	if crate::Shim::Gate::is_enabled() {
+		if crate::Shim::SwallowMap::should_swallow(&command) {
+			let target = crate::Shim::SwallowMap::redirect_target(&command);
+			match target {
+				crate::Shim::SwallowMap::RedirectTarget::Mountain => {
+					// Handled natively in Mountain — return Null ack
+					return Ok(Value::Null);
+				}
+				crate::Shim::SwallowMap::RedirectTarget::None => {
+					// Discard silently
+					return Ok(Value::Null);
+				}
+				_ => {
+					// Passthrough — fall through to original dispatch
+				}
+			}
+		}
+	}
+
 	// Short-circuit known no-op commands BEFORE Echo scheduler submission
 	// to avoid oneshot channel allocation, String clone, and scheduler
 	// overhead for calls that return Ok(Value::Null) unconditionally.
