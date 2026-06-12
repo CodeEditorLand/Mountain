@@ -180,6 +180,12 @@ use crate::{
 /// # Returns
 /// The machine ID as a String
 async fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
+	// Process-lifetime cache: the second caller per boot skips the disk
+	// read entirely.
+	if let Some(Cached) = MACHINE_ID.get() {
+		return Cached.clone();
+	}
+
 	let machine_id_path = app_data_dir.join("machine-id.txt");
 
 	// Try to load existing machine ID using async I/O so the Tokio
@@ -190,7 +196,7 @@ async fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
 		if !trimmed.is_empty() {
 			dev_log!("cocoon", "[InitializationData] Loaded existing machine ID from disk");
 
-			return trimmed.to_string();
+			return MACHINE_ID.get_or_init(|| trimmed.to_string()).clone();
 		}
 	}
 
@@ -219,7 +225,7 @@ async fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
 		dev_log!("cocoon", "[InitializationData] Generated and persisted new machine ID");
 	}
 
-	new_machine_id
+	MACHINE_ID.get_or_init(|| new_machine_id).clone()
 }
 
 /// Constructs the `ISandboxConfiguration` payload needed by the `Sky` frontend.
@@ -359,7 +365,12 @@ pub async fn ConstructSandboxConfiguration(
 	});
 
 	Ok(json!({
-		"windowId": ApplicationHandle.get_webview_window("main").unwrap().label(),
+		// During rapid startup/restart the "main" webview window may not
+		// exist yet; fall back to its known label instead of panicking.
+		"windowId": ApplicationHandle
+			.get_webview_window("main")
+			.map(|Window| Window.label().to_string())
+			.unwrap_or_else(|| "main".to_string()),
 
 		// Persist the machineId to ApplicationState or persistent storage and load
 		// it on subsequent runs. A stable machine identifier is crucial for licensing
@@ -582,6 +593,24 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 	let WorkspaceStorage = AppData.join("User/workspaceStorage");
 
+	// `Url::from_directory_path` fails on relative paths (common in dev
+	// launches); propagate as ConfigurationLoad instead of panicking.
+	let DirectoryUrl = |Path:&std::path::Path| -> Result<url::Url, CommonError> {
+		url::Url::from_directory_path(Path).map_err(|()| {
+			CommonError::ConfigurationLoad {
+				Description:format!("Failed to build directory URL for {}", Path.display()),
+			}
+		})
+	};
+
+	let AppRootUrl = DirectoryUrl(&AppRoot)?;
+
+	let GlobalStorageUrl = DirectoryUrl(&GlobalStorage)?;
+
+	let WorkspaceStorageUrl = DirectoryUrl(&WorkspaceStorage)?;
+
+	let LogsLocationUrl = DirectoryUrl(&LogsLocation)?;
+
 	Ok(json!({
 
 		// Atom I5: product version + commit + quality come from .env.Land via
@@ -613,11 +642,11 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 			"isExtensionTelemetryLoggingOnly": true,
 
-			"appRoot": url::Url::from_directory_path(AppRoot.clone()).unwrap(),
+			"appRoot": AppRootUrl,
 
-			"globalStorageHome": url::Url::from_directory_path(GlobalStorage).unwrap(),
+			"globalStorageHome": GlobalStorageUrl,
 
-			"workspaceStorageHome": url::Url::from_directory_path(WorkspaceStorage).unwrap(),
+			"workspaceStorageHome": WorkspaceStorageUrl,
 
 			"extensionDevelopmentLocationURI": [],
 
@@ -643,7 +672,7 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 		"logLevel": log::max_level() as i32,
 
-		"logsLocation": url::Url::from_directory_path(LogsLocation).unwrap(),
+		"logsLocation": LogsLocationUrl,
 
 		"telemetryInfo": {
 
