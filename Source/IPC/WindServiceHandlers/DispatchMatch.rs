@@ -1095,227 +1095,16 @@ pub async fn mountain_ipc_invoke(
 				| "commands:onDidRegisterCommand"
 				| "commands:onDidExecuteCommand" => Ok(Value::Null),
 
-								// Extension host commands — routed through ExtensionsRouter
-								command if command.starts_with("extensions:") =>
-									Extensions::ExtensionsRouter::route(
-										ApplicationHandle.clone(),
-										RunTime.clone(),
-										&command,
-										Arguments,
-									)
-									.await
-									.unwrap_or_else(|| Ok(Value::Null)),
-
-								// Terminal commands
-						let _ = crate::Vine::Client::SendNotification::Fn(
-							"cocoon-main".to_string(),
-							"$activateByEvent".to_string(),
-							Notification,
-						)
-						.await;
-
-						Ok(Value::Null)
-					}
-				},
-
-				// VS Code's Extensions sidebar →
-				// `ExtensionManagementChannelClient.getInstalled` goes through
-				// `sharedProcessService.getChannel('extensions')`. Sky's
-				// astro.config.ts Step 7b swaps the native SharedProcessService
-				// for a TauriMainProcessService-backed shim, so the call lands
-				// here as `extensions:getInstalled`. The expected return is
-				// `ILocalExtension[]` - a wrapper around each scanned manifest
-				// with `identifier.id`, `manifest`, `location`, `isBuiltin`, etc.
-				// `ExtensionsGetInstalled` builds that envelope;
-				// `ExtensionsGetAll` returns the raw manifest for
-				// callers (Cocoon, Wind Effect services) that want the flat
-				// shape. Do NOT alias these two - the payload shapes differ.
-				"extensions:getInstalled" | "extensions:scanSystemExtensions" => {
-					// Atom H1a: Arguments[0]=type, Arguments[1]=profileLocation URI,
-					// Arguments[2]=productVersion, Arguments[3]=??? (VS Code canonical is
-					// 3; shim appears to add a 4th). Dump to find out what it
-					// contains on post-nav page reloads where the sidebar
-					// renders 0 entries despite Mountain returning 94.
-					let ArgsSummary = Arguments
-						.iter()
-						.enumerate()
-						.map(|(Idx, V)| {
-							let Preview = serde_json::to_string(V).unwrap_or_default();
-
-							// Char-aware truncation - same UTF-8 hazard as
-							// the diagnostic-tag formatter above.
-							let Trimmed = if Preview.len() > 180 {
-								let CutAt = Preview
-									.char_indices()
-									.map(|(Index, _)| Index)
-									.take_while(|Index| *Index <= 180)
-									.last()
-									.unwrap_or(0);
-
-								format!("{}…", &Preview[..CutAt])
-							} else {
-								Preview
-							};
-
-							format!("[{}]={}", Idx, Trimmed)
-						})
-						.collect::<Vec<_>>()
-						.join(" ");
-
-					dev_log!("extensions", "{} Arguments={}", command, ArgsSummary);
-
-					// `scanSystemExtensions` is conceptually
-					// `getInstalled(type=ExtensionType.System)`, so override
-					// `Arguments[0]` to `0` before forwarding. Without the override
-					// a plain alias would inherit whatever the caller passed
-					// in Arguments[0] (which for the VS Code channel client is
-					// usually `null`) and leak User extensions into the
-					// System list - the same bug we just fixed at the
-					// handler layer, one level up.
-					let EffectiveArgs = if command == "extensions:scanSystemExtensions" {
-						let mut Overridden = Arguments.clone();
-
-						if Overridden.is_empty() {
-							Overridden.push(Value::Null);
-						}
-
-						Overridden[0] = json!(0);
-
-						Overridden
-					} else {
-						Arguments.clone()
-					};
-
-					ExtensionsGetInstalled(RunTime.clone(), EffectiveArgs).await
-				},
-				"extensions:scanUserExtensions" => {
-					// User-scope scan. Forward to the unified handler with
-					// `type=ExtensionType.User (1)` so VSIX-installed
-					// extensions under `~/.fiddee/extensions/*` come back
-					// even when the caller didn't pass an explicit type
-					// filter (VS Code's channel client does that on
-					// scan-user-extensions, which is why the sidebar
-					// previously saw an empty list after every
-					// Install-from-VSIX).
-					dev_log!("extensions", "{} (forwarded to getInstalled with type=User)", command);
-
-					let mut UserArgs = Arguments.clone();
-
-					if UserArgs.is_empty() {
-						UserArgs.push(Value::Null);
-					}
-
-					UserArgs[0] = json!(1);
-
-					ExtensionsGetInstalled(RunTime.clone(), UserArgs).await
-				},
-				"extensions:getUninstalled" => {
-					// Uninstalled state (extensions soft-deleted but kept in
-					// the profile) isn't tracked yet; an empty array is the
-					// correct "nothing pending uninstall" response.
-					dev_log!("extensions", "{} (returning [])", command);
-
-					Ok(Value::Array(Vec::new()))
-				},
-				// Gallery is offline: Mountain has no marketplace backend. Return
-				// empty arrays / properly-shaped envelopes for every read, which
-				// mirrors a network-air-gapped VS Code session. Each shape must
-				// match VS Code's `IGalleryQueryResult` exactly so the Extensions
-				// view renders "0 results" instead of crashing with a type error.
-				"extensions:query" | "extensions:getExtensions" | "extensions:getRecommendations" => {
-					dev_log!("extensions", "{} (offline gallery - returning [])", command);
-
-					Ok(Value::Array(Vec::new()))
-				},
-
-				// `ExtensionGalleryService.query()` - called when the user types
-				// in the Extensions search box. Returns `IGalleryQueryResult`:
-				// `{ galleryExtensions: IExtension[], total: number }`. An empty
-				// envelope stops the "loading…" spinner and shows "0 results".
-				"extensions:search" => {
-					dev_log!("extensions", "extensions:search (offline gallery - returning empty)");
-
-					Ok(json!({ "galleryExtensions": [], "total": 0 }))
-				},
-
-				// `ExtensionGalleryService.getCoreTranslation()` - locale bundles.
-				// Returns null so VS Code falls back to the bundled English strings.
-				"extensions:getCoreTranslation" => Ok(Value::Null),
-
-				// `ExtensionGalleryService.download()` - called when installing a
-				// marketplace extension. With no gallery backend the download
-				// always fails. Return an error shape VS Code surfaces to the user
-				// as "marketplace unavailable" rather than a JS TypeError.
-				"extensions:download" => Err("Marketplace download unavailable in offline mode".to_string()),
-				// `IExtensionsControlManifest` - consulted by the Extensions
-				// sidebar on every render (ExtensionEnablementService.ts:793)
-				// to mark malicious / deprecated / auto-updateable entries.
-				// With the gallery offline an empty envelope is correct; the
-				// shape (not null) matters - VS Code destructures each field.
-				"extensions:getExtensionsControlManifest" => {
-					dev_log!("extensions", "{} (offline gallery - empty manifest)", command);
-
-					Ok(json!({
-						"malicious": [],
-						"deprecated": {},
-						"search": [],
-						"autoUpdate": {},
-					}))
-				},
-				// Atom P1: `ExtensionsWorkbenchService.resetPinnedStateForAllUserExtensions`
-				// is invoked when the user toggles pinning semantics in the
-				// sidebar. Pin state is Wind-owned (Cocoon never sees it); the
-				// only Mountain-side cost is an acknowledgement so the
-				// extension-enablement service doesn't retry forever. Payload
-				// is optional - VS Code sometimes passes `{ refreshPinned: true }`.
-				"extensions:resetPinnedStateForAllUserExtensions" => {
-					dev_log!("extensions", "{} (no-op, pin state is UI-local)", command);
-
-					Ok(Value::Null)
-				},
-				// Atom K2: local VSIX install. Wind passes the file path from a
-				// "Install from VSIX…" prompt or drag-and-drop through to us; the
-				// previous stub silently returned `null` and the UI believed it
-				// had succeeded (that's the "VSIX isn't triggering or loading"
-				// regression). We now unpack the archive, stamp a DTO, register
-				// it in ScannedExtensions, and return the ILocalExtension wrapper
-				// so the sidebar refreshes without a window reload.
-				"extensions:install" => {
-					Extension::ExtensionInstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await
-				},
-				"extensions:uninstall" => {
-					Extension::ExtensionUninstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await
-				},
-
-				// `ExtensionManagementChannelClient.getManifest(vsix: URI)` - reads
-				// the `extension/package.json` from a `.vsix` archive without
-				// extracting it. Called by the "Install from VSIX…" preview and
-				// by drag-and-drop onto the Extensions sidebar. The renderer then
-				// accesses `manifest.publisher` / `.name` / `.displayName` on the
-				// returned object unconditionally; a missing handler or an Err
-				// response crashes the webview with
-				// `TypeError: undefined is not an object (evaluating 'manifest.publisher')`.
-				"extensions:getManifest" => {
-					crate::IPC::WindServiceHandlers::Extension::ExtensionGetManifest::Fn(Arguments).await
-				},
-				// `extensions:reinstall` - returns a minimal ILocalExtension envelope
-				// so VS Code's ExtensionManagementService doesn't retry the operation.
-				// No gallery backend is available; the on-disk unpack is unchanged.
-				"extensions:reinstall" => {
-					let ExtId = arg_string(&Arguments, 0);
-
-					dev_log!("extensions", "extensions:reinstall {} (no-op: no gallery)", ExtId);
-
-					Ok(serde_json::json!({ "identifier": { "id": ExtId }, "version": "0.0.0", "type": 0 }))
-				},
-
-				// Metadata update only matters for ratings/icons/readme which Land
-				// does not track. Left as explicit log so the UI doesn't silently fail.
-				"extensions:updateMetadata" => {
-					dev_log!("extensions", "{} (no-op: no gallery backend)", command);
-
-					Ok(Value::Null)
-				},
+				// Extension host commands — routed through ExtensionsRouter
+				command if command.starts_with("extensions:") =>
+					Extensions::ExtensionsRouter::route(
+						ApplicationHandle.clone(),
+						RunTime.clone(),
+						&command,
+						Arguments,
+					)
+					.await
+					.unwrap_or_else(|| Ok(Value::Null)),
 
 				// Terminal commands
 				"terminal:create" => call!(rt, "terminal", "terminal:create", TerminalCreate, Arguments),
@@ -1571,44 +1360,13 @@ pub async fn mountain_ipc_invoke(
 					ModelUpdateContent(RunTime.clone(), Arguments).await
 				},
 
-				// Navigation history commands
-				"history:goBack" => {
-					dev_log!("history", "history:goBack");
+				// Navigation history commands — routed through HistoryRouter
+				command if command.starts_with("history:") =>
+					History::HistoryRouter::route(RunTime.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null)),
 
-					HistoryGoBack(RunTime.clone()).await
-				},
-				"history:goForward" => {
-					dev_log!("history", "history:goForward");
-
-					HistoryGoForward(RunTime.clone()).await
-				},
-				"history:canGoBack" => {
-					dev_log!("history", "history:canGoBack");
-
-					HistoryCanGoBack(RunTime.clone()).await
-				},
-				"history:canGoForward" => {
-					dev_log!("history", "history:canGoForward");
-
-					HistoryCanGoForward(RunTime.clone()).await
-				},
-				"history:push" => {
-					dev_log!("history", "history:push");
-
-					HistoryPush(RunTime.clone(), Arguments).await
-				},
-				"history:clear" => {
-					dev_log!("history", "history:clear");
-
-					HistoryClear(RunTime.clone()).await
-				},
-				"history:getStack" => {
-					dev_log!("history", "history:getStack");
-
-					HistoryGetStack(RunTime.clone()).await
-				},
-
-				// IPC status commands
+								// IPC status commands
 				"mountain_get_status" => {
 					let status = json!({
 						"connected": true,

@@ -21,6 +21,8 @@ pub mod FileSystem;
 
 pub mod Git;
 
+pub mod History;
+
 pub mod Model;
 
 pub mod NativeDialog;

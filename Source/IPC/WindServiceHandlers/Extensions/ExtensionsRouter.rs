@@ -6,14 +6,17 @@ use serde_json::{json, Value};
 
 use super::*;
 use crate::{
-	IPC::WindServiceHandlers::Extensions::{
-		ExtensionsGet::Fn as ExtensionsGet,
-		ExtensionsGetAll::Fn as ExtensionsGetAll,
-		ExtensionsGetInstalled::Fn as ExtensionsGetInstalled,
-		ExtensionsIsActive::Fn as ExtensionsIsActive,
+	IPC::WindServiceHandlers::{
+		Extension::{ExtensionGetManifest, ExtensionInstall, ExtensionUninstall},
+		Extensions::{
+			ExtensionsGet::Fn as ExtensionsGet,
+			ExtensionsGetAll::Fn as ExtensionsGetAll,
+			ExtensionsGetInstalled::Fn as ExtensionsGetInstalled,
+			ExtensionsIsActive::Fn as ExtensionsIsActive,
+		},
+		Utilities::JsonValueHelpers::arg_string,
 	},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Utilities::arg_string,
 	dev_log,
 };
 
@@ -77,8 +80,6 @@ pub(crate) async fn route(
 				.map(|(Idx, V)| {
 					let Preview = serde_json::to_string(V).unwrap_or_default();
 
-					// Char-aware truncation - same UTF-8 hazard as
-					// the diagnostic-tag formatter above.
 					let Trimmed = if Preview.len() > 180 {
 						let CutAt = Preview
 							.char_indices()
@@ -99,9 +100,7 @@ pub(crate) async fn route(
 
 			dev_log!("extensions", "{} Arguments={}", command, ArgsSummary);
 
-			// `scanSystemExtensions` is conceptually
-			// `getInstalled(type=ExtensionType.System)`, so override
-			// `Arguments[0]` to `0` before forwarding.
+			// `scanSystemExtensions` → `getInstalled(type=ExtensionType.System)`.
 			let EffectiveArgs = if *command == *"extensions:scanSystemExtensions" {
 				let mut Overridden = Arguments.clone();
 
@@ -120,11 +119,6 @@ pub(crate) async fn route(
 		},
 
 		"extensions:scanUserExtensions" => {
-			// User-scope scan. Forward to the unified handler with
-			// `type=ExtensionType.User (1)` so VSIX-installed
-			// extensions under `~/.fiddee/extensions/*` come back
-			// even when the caller didn't pass an explicit type
-			// filter.
 			dev_log!("extensions", "{} (forwarded to getInstalled with type=User)", command);
 
 			let mut UserArgs = Arguments.clone();
@@ -139,9 +133,6 @@ pub(crate) async fn route(
 		},
 
 		"extensions:getUninstalled" => {
-			// Uninstalled state (extensions soft-deleted but kept in
-			// the profile) isn't tracked yet; an empty array is the
-			// correct "nothing pending uninstall" response.
 			dev_log!("extensions", "{} (returning [])", command);
 
 			Some(Ok(Value::Array(Vec::new())))
@@ -154,21 +145,16 @@ pub(crate) async fn route(
 			Some(Ok(Value::Array(Vec::new())))
 		},
 
-		// `ExtensionGalleryService.query()` - called when the user types
-		// in the Extensions search box. Returns `IGalleryQueryResult`.
 		"extensions:search" => {
 			dev_log!("extensions", "extensions:search (offline gallery - returning empty)");
 
 			Some(Ok(json!({ "galleryExtensions": [], "total": 0 })))
 		},
 
-		// `ExtensionGalleryService.getCoreTranslation()` - locale bundles.
 		"extensions:getCoreTranslation" => Some(Ok(Value::Null)),
 
-		// `ExtensionGalleryService.download()` - no gallery backend.
 		"extensions:download" => Some(Err("Marketplace download unavailable in offline mode".to_string())),
 
-		// `IExtensionsControlManifest` - consulted by the Extensions sidebar.
 		"extensions:getExtensionsControlManifest" => {
 			dev_log!("extensions", "{} (offline gallery - empty manifest)", command);
 
@@ -180,7 +166,6 @@ pub(crate) async fn route(
 			})))
 		},
 
-		// Pin state is Wind-owned (Cocoon never sees it).
 		"extensions:resetPinnedStateForAllUserExtensions" => {
 			dev_log!("extensions", "{} (no-op, pin state is UI-local)", command);
 
@@ -189,16 +174,16 @@ pub(crate) async fn route(
 
 		// Local VSIX install.
 		"extensions:install" => {
-			Some(Extension::ExtensionInstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await)
+			Some(ExtensionInstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await)
 		},
 
 		"extensions:uninstall" => {
-			Some(Extension::ExtensionUninstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await)
+			Some(ExtensionUninstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await)
 		},
 
 		// Reads `extension/package.json` from a `.vsix` archive.
 		"extensions:getManifest" => {
-			Some(crate::IPC::WindServiceHandlers::Extension::ExtensionGetManifest::Fn(Arguments).await)
+			Some(ExtensionGetManifest::Fn(Arguments).await)
 		},
 
 		// `extensions:reinstall` - no gallery, return minimal envelope.
