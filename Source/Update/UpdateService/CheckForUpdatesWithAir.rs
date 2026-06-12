@@ -21,6 +21,7 @@ use crate::{
 use crate::Update::UpdateService::{CheckForUpdatesViaAir, IsAirAvailable};
 
 #[cfg(not(feature = "AirIntegration"))]
+/// fn.
 pub async fn Fn(
 	ApplicationHandle:AppHandle,
 
@@ -45,6 +46,7 @@ pub async fn Fn(
 }
 
 #[cfg(feature = "AirIntegration")]
+/// fn.
 pub async fn Fn(
 	ApplicationHandle:AppHandle,
 

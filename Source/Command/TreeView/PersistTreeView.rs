@@ -15,6 +15,7 @@ use tauri::{AppHandle, State, Wry, command};
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
 
 #[command]
+/// Persists tree view.
 pub async fn PersistTreeView(
 	_ApplicationHandle:AppHandle<Wry>,
 

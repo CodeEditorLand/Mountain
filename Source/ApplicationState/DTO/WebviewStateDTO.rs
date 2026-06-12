@@ -76,7 +76,6 @@ pub struct WebviewStateDTO {
 
 impl WebviewStateDTO {
 	/// Creates a new WebviewStateDTO with validation.
-	///
 	/// # Arguments
 	/// * `Handle` - Unique Webview handle
 	/// * `ViewType` - Extension-defined view type
@@ -85,7 +84,6 @@ impl WebviewStateDTO {
 	/// * `PanelOptions` - Panel behavior options
 	/// * `SideCarIdentifier` - Sidecar process ID
 	/// * `ExtensionIdentifier` - Extension ID
-	///
 	/// # Returns
 	/// Result containing the DTO or validation error
 	pub fn New(
@@ -148,22 +146,18 @@ impl WebviewStateDTO {
 	}
 
 	/// Updates the focus state of the Webview.
-	///
 	/// # Arguments
 	/// * `IsActive` - New focus state
 	pub fn SetFocus(&mut self, IsActive:bool) { self.IsActive = IsActive; }
 
 	/// Updates the visibility state of the Webview.
-	///
 	/// # Arguments
 	/// * `IsVisible` - New visibility state
 	pub fn SetVisibility(&mut self, IsVisible:bool) { self.IsVisible = IsVisible; }
 
 	/// Updates the Webview title with validation.
-	///
 	/// # Arguments
 	/// * `Title` - New title
-	///
 	/// # Returns
 	/// Result indicating success or error if title too long
 	pub fn UpdateTitle(&mut self, Title:String) -> Result<(), String> {

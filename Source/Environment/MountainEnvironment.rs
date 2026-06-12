@@ -88,10 +88,10 @@ unsafe impl Send for MountainEnvironment {}
 unsafe impl Sync for MountainEnvironment {}
 
 impl MountainEnvironment {
-	/// Creates a new `MountainEnvironment` without an Air client.
+	/// Constructs a new `MountainEnvironment` without an Air client.
 	///
-	/// This is the standard constructor used when the `AirIntegration`
-	/// feature is either disabled or the Air service is not yet available.
+	/// Used when the `AirIntegration` feature is either disabled or the Air
+	/// service is not yet available.
 	pub fn Create(ApplicationHandle:AppHandle<Wry>, ApplicationState:Arc<ApplicationState>) -> Self {
 		dev_log!("lifecycle", "[MountainEnvironment] New instance created.");
 

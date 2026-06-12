@@ -33,15 +33,12 @@ use std::path::Path;
 use crate::dev_log;
 
 /// Resolves the absolute path for a Memento storage file based on scope.
-///
 /// # Arguments
 /// * `ApplicationDataDirectory` - Base application data directory
 /// * `IsGlobalScope` - True for global storage, false for workspace storage
 /// * `WorkspaceIdentifier` - Workspace identifier (ignored for global scope)
-///
 /// # Returns
 /// PathBuf pointing to the memento storage file
-///
 /// # Behavior
 /// - Global scope: `{AppData}/User/globalStorage.json`
 /// - Workspace scope:

@@ -17,6 +17,7 @@ use crate::{
 };
 
 #[command]
+/// Checkouts s c m branch.
 pub async fn CheckoutSCMBranch(State:State<'_, Arc<ApplicationState>>, BranchName:String) -> Result<Value, String> {
 	dev_log!("commands", "checking out branch: {}", BranchName);
 

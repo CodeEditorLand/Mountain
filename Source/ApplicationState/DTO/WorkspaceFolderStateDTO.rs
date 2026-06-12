@@ -19,7 +19,7 @@ const MAX_FOLDER_NAME_LENGTH:usize = 256;
 /// Maximum number of folders in a workspace
 const MAX_WORKSPACE_FOLDERS:usize = 100;
 
-/// Represents a single folder that is part of the current workspace.
+/// a single folder that is part of the current workspace.
 /// Compatible with VS Code's WorkspaceFolder interface.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -38,12 +38,10 @@ pub struct WorkspaceFolderStateDTO {
 
 impl WorkspaceFolderStateDTO {
 	/// Creates a new WorkspaceFolderStateDTO with validation.
-	///
 	/// # Arguments
 	/// * `URI` - Folder URI
 	/// * `Name` - Display name
 	/// * `Index` - Zero-based index in workspace
-	///
 	/// # Returns
 	/// Result containing the DTO or validation error
 	pub fn New(URI:Url, Name:String, Index:usize) -> Result<Self, String> {
@@ -72,10 +70,8 @@ impl WorkspaceFolderStateDTO {
 	}
 
 	/// Updates the name with validation.
-	///
 	/// # Arguments
 	/// * `Name` - New display name
-	///
 	/// # Returns
 	/// Result indicating success or error if name too long
 	pub fn UpdateName(&mut self, Name:String) -> Result<(), String> {
@@ -110,11 +106,9 @@ impl WorkspaceFolderStateDTO {
 	pub fn IsRoot(&self) -> bool { self.Index == 0 }
 
 	/// Creates a new instance from a file path URI.
-	///
 	/// # Arguments
 	/// * `FolderPath` - Folder path as string
 	/// * `Index` - Folder index
-	///
 	/// # Returns
 	/// Result containing the DTO or validation error
 	pub fn FromPath(FolderPath:&str, Index:usize) -> Result<Self, String> {

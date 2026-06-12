@@ -8,4 +8,5 @@
 //!
 //! Implementation: [`::Vine::Multiplexer::Multiplexer`].
 
+/// Type alias for Multiplexer.
 pub type Multiplexer = ::Vine::Multiplexer::Multiplexer;

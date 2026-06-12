@@ -15,7 +15,6 @@ use crate::dev_log;
 ///   Mountain.dev.log without parsing stderr.
 /// - Best-effort: failures don't abort Mountain boot. A real EADDRINUSE later
 ///   will surface via Cocoon's own bootstrap error.
-///
 /// The TCP probe, `lsof`/`kill` subprocesses, and grace-window sleeps all
 /// block the calling thread. Boot calls this from a Tokio worker, so the
 /// body runs under `block_in_place` to hand the worker back to the

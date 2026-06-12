@@ -7,6 +7,7 @@ use std::{fs, path::Path};
 
 use crate::dev_log;
 
+/// fn.
 pub fn Fn(FilePath:&Path, CorruptedContent:&str) {
 	let BackupPath = FilePath.with_extension("json.backup");
 

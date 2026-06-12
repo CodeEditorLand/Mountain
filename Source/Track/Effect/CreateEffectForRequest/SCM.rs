@@ -1,3 +1,4 @@
+/// matches.
 pub fn Matches(MethodName:&str) -> bool {
 	MethodName == "vscode.diff" || MethodName == "$scm:openDiff" || MethodName.starts_with("$scm:")
 }
@@ -19,6 +20,7 @@ use crate::{
 	dev_log,
 };
 
+/// Creates effect.
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	dev_log!("scm", "[SCM] CreateEffect method={}", MethodName);
 

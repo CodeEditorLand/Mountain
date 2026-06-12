@@ -18,8 +18,11 @@
 //! `ApplicationState/Internal/Recovery` flow once the recovery
 //! triggers are formalised.
 
+/// Recoverstatewithbackoff module.
 pub mod RecoverStateWithBackoff;
 
+/// Safestateoperationwithtimeout module.
 pub mod SafeStateOperationWithTimeout;
 
+/// Validateandcleanstate module.
 pub mod ValidateAndCleanState;

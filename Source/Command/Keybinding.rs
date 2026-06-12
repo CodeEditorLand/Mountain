@@ -34,12 +34,17 @@
 //! - Localization, custom schemes (vim/emacs/sublime)
 //! - Keybinding recording, per-profile keybindings, export/import
 
+/// Checkkeybindingconflicts module.
 pub mod CheckKeybindingConflicts;
 
+/// Getresolvedkeybinding module.
 pub mod GetResolvedKeybinding;
 
+/// Getuserkeybindings module.
 pub mod GetUserKeybindings;
 
+/// Registerextensionkeybindings module.
 pub mod RegisterExtensionKeybindings;
 
+/// Unregisterextensionkeybindings module.
 pub mod UnregisterExtensionKeybindings;

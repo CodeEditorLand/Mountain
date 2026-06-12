@@ -7,6 +7,7 @@ use tauri::{AppHandle, Wry, command};
 use crate::{Command::LanguageFeature::Hover, dev_log};
 
 #[command]
+/// Mountains provide hover.
 pub async fn MountainProvideHover(
 	application_handle:AppHandle<Wry>,
 

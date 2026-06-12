@@ -5,4 +5,5 @@ use std::collections::HashSet;
 
 use crate::Telemetry::Gates::RuntimeGates;
 
+/// fn.
 pub fn Fn() -> &'static HashSet<String> { RuntimeGates::Initialise() }

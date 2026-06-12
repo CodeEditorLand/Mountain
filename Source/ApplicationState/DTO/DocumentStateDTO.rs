@@ -40,7 +40,7 @@ const MAX_LINE_LENGTH:usize = 100_000;
 /// Maximum language identifier string length
 const MAX_LANGUAGE_ID_LENGTH:usize = 128;
 
-/// Represents the complete in-memory state of a single text document.
+/// the complete in-memory state of a single text document.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentStateDTO {
@@ -75,15 +75,12 @@ pub struct DocumentStateDTO {
 impl DocumentStateDTO {
 	/// Creates a new `DocumentStateDTO` from its initial content with
 	/// validation.
-	///
 	/// # Arguments
 	/// * `URI` - The document resource URI
 	/// * `LanguageIdentifier` - Optional language ID for syntax highlighting
 	/// * `Content` - The initial document content
-	///
 	/// # Returns
 	/// Result containing the DTO or an error if validation fails
-	///
 	/// # Errors
 	/// Returns `CommonError` if:
 	/// - Language identifier exceeds maximum length
@@ -239,19 +236,16 @@ impl DocumentStateDTO {
 }
 
 /// Applies delta changes to the document text and returns the updated lines.
-///
 /// This function:
 /// 1. Sorts changes in reverse order (by start position) to prevent offset
 ///    corruption
 /// 2. Converts line/column positions to byte offsets in the full text
 /// 3. Applies each change (delete range + insert new text)
 /// 4. Splits the result back into lines
-///
 /// # Arguments
 /// * `Lines` - The current document lines
 /// * `EOL` - The end-of-line sequence to use
 /// * `RPCChange` - Array of changes to apply
-///
 /// # Returns
 /// Updated lines vector after applying all changes
 fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChangeDTO]) -> Vec<String> {
@@ -318,7 +312,6 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 }
 
 /// Converts line/column position to byte offset in text.
-///
 /// VSCode LSP uses 0-based line numbers and 0-based column numbers.
 /// This function matches that convention.
 fn PositionToOffset(Text:&str, EOL:&str, LineNumber:&usize, Column:&usize) -> usize {

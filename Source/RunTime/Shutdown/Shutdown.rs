@@ -8,6 +8,7 @@ use tauri::Emitter;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
+/// shutdown.
 	pub async fn Shutdown(&self) {
 		dev_log!("lifecycle", "[ApplicationRunTime] Initiating graceful shutdown of services...");
 

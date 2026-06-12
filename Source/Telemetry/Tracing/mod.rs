@@ -18,14 +18,19 @@
 //! enabled in any profile; once it ships, wire from `Binary::Main` and
 //! the IPC dispatch hot path.
 
+/// Createspan module.
 pub mod CreateSpan;
 
+/// Initializetracing module.
 pub mod InitializeTracing;
 
+/// Instrumentcommand module.
 pub mod InstrumentCommand;
 
+/// Instrumentrpc module.
 pub mod InstrumentRPC;
 
+/// Measuretime module.
 pub mod MeasureTime;
 
 #[cfg(test)]

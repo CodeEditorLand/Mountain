@@ -64,15 +64,12 @@ struct CacheBlob {
 const MAX_CACHE_AGE:Duration = Duration::from_secs(86_400);
 
 /// Try to load extension descriptors from the pre-baked manifest cache.
-///
 /// Probes two locations in order:
 ///   1. `BinaryDir/extensions.manifest.json` - dev binary next to repo cache
 ///   2. `BinaryDir/../Resources/extensions.manifest.json` - .app bundle path
 ///      (tauri.conf.json copies Sky/Target/extensions.manifest.json there)
-///
 /// Bundled caches skip the stale check: they were written at build time and
 /// are always consistent with the extensions packed into the same .app.
-///
 /// Returns `Ok(Some(map))` on a cache hit, `Ok(None)` when the cache is
 /// missing/stale/incompatible, and `Err(_)` only on unexpected I/O errors.
 pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDescriptionStateDTO>>, CommonError> {

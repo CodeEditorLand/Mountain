@@ -2,6 +2,7 @@
 //! to bulk-query the registry by group.
 
 #[derive(Debug, Clone, PartialEq)]
+/// Enumeration for enum.
 pub enum Enum {
 	/// Experimental features (may change or be removed)
 	Experimental,

@@ -7,6 +7,7 @@ use tauri::{AppHandle, Wry, command};
 use crate::{Command::LanguageFeature::Highlights, dev_log};
 
 #[command]
+/// Mountains provide document highlights.
 pub async fn MountainProvideDocumentHighlights(
 	application_handle:AppHandle<Wry>,
 

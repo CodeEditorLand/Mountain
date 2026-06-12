@@ -18,20 +18,28 @@
 //! Zero callers as of 2026-05-02. Pending wire-up from
 //! `Binary::Main` and the IPC fast paths.
 
+/// Getallmetrics module.
 pub mod GetAllMetrics;
 
+/// Initialize module.
 pub mod Initialize;
 
+/// Metric module.
 pub mod Metric;
 
+/// Metricvalue module.
 pub mod MetricValue;
 
+/// Metricsregistry module.
 pub mod MetricsRegistry;
 
+/// Recordcounter module.
 pub mod RecordCounter;
 
+/// Recordgauge module.
 pub mod RecordGauge;
 
+/// Timer module.
 pub mod Timer;
 
 pub(crate) mod GlobalRegistry;

@@ -79,10 +79,13 @@
 //!   Mountain)
 //! - `CocoonServiceImpl`: Implementation of CocoonService (Mountain → Cocoon)
 
+/// Initialize module.
 pub mod Initialize;
 
+/// Mountainvinegrpcservice module.
 pub mod MountainVinegRPCService;
 
+/// Vinehostimpl module.
 pub mod VineHostImpl;
 
 /// Cocoon → Mountain notification atoms. One handler per file so the

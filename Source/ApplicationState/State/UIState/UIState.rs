@@ -43,7 +43,6 @@ use crate::dev_log;
 #[derive(Clone)]
 pub struct State {
 	/// Pending user interface request organized by request ID.
-	///
 	/// Each request has a oneshot sender for sending the response back.
 	pub PendingUserInterfaceRequest:
 		Arc<Mutex<HashMap<String, tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>>>>,

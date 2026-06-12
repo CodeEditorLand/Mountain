@@ -138,7 +138,6 @@ impl State {
 	/// old one; `removed` contains every folder present in the old list but not
 	/// the new. Comparison is by URI, so re-indexing does not produce spurious
 	/// add/remove pairs.
-	///
 	/// Callers use the delta to drive downstream events such as
 	/// `$deltaWorkspaceFolders` (Cocoon) and `onDidChangeWorkspaceFolders`
 	/// listeners inside extensions.

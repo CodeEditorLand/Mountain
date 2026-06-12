@@ -7,6 +7,7 @@ use CommonLibrary::Error::CommonError::CommonError;
 
 use crate::dev_log;
 
+/// fn.
 pub fn Fn<T, F>(Operation:F, TimeoutMs:u64, OperationName:&str) -> Result<T, CommonError>
 where
 	F: FnOnce() -> Result<T, CommonError> + Send + 'static,

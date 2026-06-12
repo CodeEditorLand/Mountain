@@ -18,6 +18,7 @@ use crate::{
 };
 
 #[command]
+/// Gets tree view item.
 pub async fn GetTreeViewItem(
 	ApplicationHandle:AppHandle<Wry>,
 

@@ -20,10 +20,14 @@
 //! Zero callers as of 2026-05-02 - pending wire-up from
 //! `Environment::StorageProvider` boot path.
 
+/// Attemptmementorecovery module.
 pub mod AttemptMementoRecovery;
 
+/// Createcorruptedbackup module.
 pub mod CreateCorruptedBackup;
 
+/// Loadinitialmementofromdisk module.
 pub mod LoadInitialMementoFromDisk;
 
+/// Loadmementowithrecovery module.
 pub mod LoadMementoWithRecovery;

@@ -2,34 +2,22 @@
 //!
 //! Initializes and starts the Vine gRPC server.
 
-/// Starts the Vine gRPC server at the specified addresses.
+/// Starts the Vine gRPC server at the specified primary and secondary addresses.
 ///
-/// # Arguments
+/// # Parameters
 ///
-/// * `ApplicationHandle` - The Tauri application handle
-/// * `PrimaryAddress` - The primary server address (e.g., "\\[::1\\]:50051")
-/// * `SecondaryAddress` - The secondary server address (e.g.,
-///   "\\[::1\\]:50052")
+/// - `ApplicationHandle` — Tauri application handle used for service registration.
+/// - `PrimaryAddress` — Primary server address, e.g. `[::1]:50051`.
+/// - `SecondaryAddress` — Secondary server address, e.g. `[::1]:50052`.
 ///
 /// # Returns
 ///
-/// A `Result` indicating success or failure.
-///
-/// # Vine Server Functionality
-///
-/// The Vine gRPC server provides:
-/// - Inter-service communication infrastructure
-/// - gRPC method handling for various services
-/// - Multi-port support for different service types
-///
-/// # Addresses
-///
-/// - Primary: `[::1]:50051` - Main service communication
-/// - Secondary: `[::1]:50052` - Auxiliary service communication
+/// `Ok(())` on success, or `Err(String)` if server initialization fails.
 ///
 /// # Errors
 ///
-/// Returns an error if Vine server initialization fails.
+/// Returns an error if the Vine gRPC server fails to bind or initialize on
+/// either address.
 pub async fn Fn(
 	ApplicationHandle:tauri::AppHandle,
 

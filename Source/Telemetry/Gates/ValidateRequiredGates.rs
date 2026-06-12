@@ -4,6 +4,7 @@
 
 use crate::Telemetry::Gates::GetRuntimeGates;
 
+/// fn.
 pub fn Fn(FeatureName:&str, RequiredGates:&[&str]) -> Result<(), String> {
 	let Enabled = GetRuntimeGates::Fn();
 

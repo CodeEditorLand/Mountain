@@ -49,7 +49,6 @@ pub type MappedEffect =
 
 /// Wraps an async body into the full `MappedEffect` closure boilerplate.
 /// `$run_time` names the `Arc<ApplicationRunTime>` parameter inside the body.
-///
 /// Before:
 /// ```rust
 /// let effect = move |run_time: Arc<ApplicationRunTime>|

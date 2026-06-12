@@ -7,6 +7,7 @@ use CommonLibrary::Error::CommonError::CommonError;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
+/// Shutdowns with recovery.
 	pub async fn ShutdownWithRecovery(&self) -> Result<(), CommonError> {
 		dev_log!("lifecycle", "[ApplicationRunTime] Initiating robust shutdown with recovery...");
 

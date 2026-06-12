@@ -18,6 +18,7 @@ use crate::{
 };
 
 #[command]
+/// Executes s c m command.
 pub async fn ExecuteSCMCommand(
 	State:State<'_, Arc<ApplicationState>>,
 

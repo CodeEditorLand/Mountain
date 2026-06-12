@@ -164,17 +164,14 @@ fn IsTestOnlyExtension(Name:&str) -> bool { TEST_ONLY_EXTENSIONS.iter().any(|Tes
 /// Return `true` if the given scan path represents a user-writable extension
 /// directory (i.e. where `extensions:install` drops VSIX payloads), not a
 /// bundled "built-in" path that ships with the app.
-///
 /// VS Code's sidebar categorises installed extensions by `IsBuiltin`:
 /// `true` appears under **Built-in**, `false` under **Installed**
 /// (accessible via `@installed`). Previously this classifier was
 /// hardcoded to `true` for every scan path, so user-installed VSIXes
 /// showed up under Built-in and `@installed` was empty.
-///
 /// The canonical user extension root on macOS/Linux is `~/.fiddee/extensions`
 /// (VS Code's equivalent is `~/.vscode/extensions`). We also honour a
 /// `Lodge` override in case callers remap it.
-///
 /// Everything else - the Mountain build's own `Resources/extensions`,
 /// Sky's `Static/Application/extensions`, the VS Code submodule's
 /// `Dependency/…/extensions` - is treated as built-in.
@@ -221,7 +218,6 @@ pub(crate) fn IsUserExtensionScanPath(DirectoryPath:&std::path::Path) -> bool {
 }
 
 /// Scans a single directory for valid extensions.
-///
 /// This function iterates through a given directory, looking for subdirectories
 /// that contain a `package.json` file. It then attempts to parse this file
 /// into an `ExtensionDescriptionStateDTO`.
@@ -519,7 +515,6 @@ fn ManifestContainsNLSPlaceholders(Value:&Value) -> bool {
 /// map. Returns `None` if the bundle is absent or unreadable; placeholders stay
 /// as-is in that case. Entries can be bare strings or `{message, comment}`
 /// objects - we only keep `message`.
-///
 /// The `PlaceholdersNeeded` flag downgrades the "no bundle" warning when the
 /// caller already proved the manifest has no `%placeholder%` entries to
 /// resolve - in that case the bundle is optional and its absence is benign

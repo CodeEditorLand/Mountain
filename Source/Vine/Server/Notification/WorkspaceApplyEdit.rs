@@ -13,6 +13,7 @@ use serde_json::Value;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
+/// Workspaces apply edit.
 pub async fn WorkspaceApplyEdit(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let RunTime = Arc::clone(Service.RunTime());
 

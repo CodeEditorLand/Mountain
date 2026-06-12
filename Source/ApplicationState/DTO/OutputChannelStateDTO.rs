@@ -24,7 +24,7 @@ const MAX_LANGUAGE_ID_LENGTH:usize = 128;
 /// accumulation.
 const MAX_BUFFER_SIZE:usize = 10_000_000;
 
-/// Represents the complete state of a single output channel, including its
+/// the complete state of a single output channel, including its
 /// buffered content and visibility status.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "camelCase")]
@@ -47,11 +47,9 @@ pub struct OutputChannelStateDTO {
 
 impl OutputChannelStateDTO {
 	/// Creates a new `OutputChannelStateDTO` with validation.
-	///
 	/// # Arguments
 	/// * `Name` - Channel name
 	/// * `LanguageIdentifier` - Optional language identifier
-	///
 	/// # Returns
 	/// Result containing the DTO or validation error
 	pub fn Create(Name:&str, LanguageIdentifier:Option<String>) -> Result<Self, String> {
@@ -77,10 +75,8 @@ impl OutputChannelStateDTO {
 	}
 
 	/// Appends content to the buffer with size validation.
-	///
 	/// # Arguments
 	/// * `Content` - Content to append
-	///
 	/// # Returns
 	/// Result indicating success or error if buffer would exceed limit
 	pub fn Append(&mut self, Content:&str) -> Result<(), String> {
@@ -105,7 +101,6 @@ impl OutputChannelStateDTO {
 	pub fn GetFormattedBufferSize(&self) -> String { FormatBytes(self.Buffer.len()) }
 
 	/// Sets the visibility status.
-	///
 	/// # Arguments
 	/// * `IsVisible` - New visibility status
 	pub fn SetVisibility(&mut self, IsVisible:bool) { self.IsVisible = IsVisible; }

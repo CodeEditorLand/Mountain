@@ -36,17 +36,13 @@ use CommonLibrary::Error::CommonError::CommonError;
 use crate::dev_log;
 
 /// Asynchronously saves Memento storage data to a JSON file.
-///
 /// # Arguments
 /// * `StorageFilePath` - Path to the memento storage file
 /// * `MementoData` - The memento data to save
-///
 /// # Returns
 /// Result indicating success or CommonError on failure
-///
 /// # Errors
 /// Returns CommonError for file I/O or serialization errors
-///
 /// # Behavior
 /// - Creates parent directory if it doesn't exist
 /// - Serializes data to JSON

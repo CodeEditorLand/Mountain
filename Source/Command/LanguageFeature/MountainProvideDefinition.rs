@@ -7,6 +7,7 @@ use tauri::{AppHandle, Wry, command};
 use crate::{Command::LanguageFeature::Definition, dev_log};
 
 #[command]
+/// Mountains provide definition.
 pub async fn MountainProvideDefinition(
 	application_handle:AppHandle<Wry>,
 

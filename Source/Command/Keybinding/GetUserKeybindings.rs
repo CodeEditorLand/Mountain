@@ -13,6 +13,7 @@ use tauri::{AppHandle, Manager, Wry, command};
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 #[command]
+/// Gets user keybindings.
 pub async fn GetUserKeybindings(ApplicationHandle:AppHandle<Wry>) -> Result<Value, String> {
 	dev_log!("keybinding", "getting user keybindings for UI");
 

@@ -29,13 +29,10 @@
 
 /// Analyzes text content to determine its line endings and splits it into a
 /// vector of lines.
-///
 /// # Arguments
 /// * `TextContent` - The text content to analyze
-///
 /// # Returns
 /// Tuple containing (`Vec<String>` of lines, String of detected EOL)
-///
 /// # Behavior
 /// - Detects CRLF ("\r\n") or LF ("\n") line endings
 /// - Splits text into lines vector using detected EOL

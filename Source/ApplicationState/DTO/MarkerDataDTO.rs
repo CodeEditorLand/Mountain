@@ -32,7 +32,7 @@ const MAX_MARKER_MESSAGE_LENGTH:usize = 10_000;
 /// Maximum source string length
 const MAX_SOURCE_LENGTH:usize = 256;
 
-/// Represents a single diagnostic marker, such as a compiler error or a linter
+/// a single diagnostic marker, such as a compiler error or a linter
 /// warning. This structure is compatible with VS Code's `IMarkerData`
 /// interface and is used by the Diagnostic service.
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -80,7 +80,6 @@ pub struct MarkerDataDTO {
 
 impl MarkerDataDTO {
 	/// Creates a new MarkerDataDTO with validation.
-	///
 	/// # Arguments
 	/// * `Severity` - Marker severity level
 	/// * `Message` - Diagnostic message
@@ -88,7 +87,6 @@ impl MarkerDataDTO {
 	/// * `StartColumn` - Start column (0-based)
 	/// * `EndLineNumber` - End line (0-based)
 	/// * `EndColumn` - End column (0-based)
-	///
 	/// # Returns
 	/// Result containing the DTO or validation error
 	pub fn New(
@@ -140,7 +138,6 @@ impl MarkerDataDTO {
 	}
 
 	/// Validates the marker's position data.
-	///
 	/// # Returns
 	/// Result indicating valid position or error with reason
 	pub fn ValidatePosition(&self) -> Result<(), String> {
@@ -156,10 +153,8 @@ impl MarkerDataDTO {
 	}
 
 	/// Sets the source with length validation.
-	///
 	/// # Arguments
 	/// * `Source` - Diagnostic source string
-	///
 	/// # Returns
 	/// Result indicating success or error if source too long
 	pub fn SetSource(&mut self, Source:String) -> Result<(), String> {
@@ -173,7 +168,6 @@ impl MarkerDataDTO {
 	}
 
 	/// Gets the severity as a MarkerSeverity enum if valid.
-	///
 	/// # Returns
 	/// Option containing MarkerSeverity or None if invalid
 	pub fn GetSeverity(&self) -> Option<MarkerSeverity> {
@@ -191,12 +185,10 @@ impl MarkerDataDTO {
 	}
 
 	/// Creates a simple error marker.
-	///
 	/// # Arguments
 	/// * `Message` - Error message
 	/// * `LineNumber` - Line number (0-based)
 	/// * `Column` - Column number (0-based)
-	///
 	/// # Returns
 	/// New MarkerDataDTO configured as an error
 	pub fn Error(Message:String, LineNumber:u32, Column:u32) -> Self {
@@ -217,12 +209,10 @@ impl MarkerDataDTO {
 	}
 
 	/// Creates a simple warning marker.
-	///
 	/// # Arguments
 	/// * `Message` - Warning message
 	/// * `LineNumber` - Line number (0-based)
 	/// * `Column` - Column number (0-based)
-	///
 	/// # Returns
 	/// New MarkerDataDTO configured as a warning
 	pub fn Warning(Message:String, LineNumber:u32, Column:u32) -> Self {

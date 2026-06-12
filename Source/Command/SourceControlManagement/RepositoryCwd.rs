@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use crate::ApplicationState::State::ApplicationState::ApplicationState;
 
+/// fn.
 pub fn Fn(State:&Arc<ApplicationState>) -> Result<String, String> {
 	State
 		.Workspace

@@ -1,6 +1,7 @@
 //! Single file result inside `SearchFilesResponse`.
 
 #[derive(Debug, Clone)]
+/// Data for struct.
 pub struct Struct {
 	pub path:String,
 

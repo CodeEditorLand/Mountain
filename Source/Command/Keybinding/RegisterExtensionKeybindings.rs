@@ -18,6 +18,7 @@ use tauri::{AppHandle, Manager, Wry, command};
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 #[command]
+/// Registers extension keybindings.
 pub async fn RegisterExtensionKeybindings(
 	ApplicationHandle:AppHandle<Wry>,
 

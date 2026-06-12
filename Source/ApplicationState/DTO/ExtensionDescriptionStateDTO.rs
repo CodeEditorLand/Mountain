@@ -35,9 +35,8 @@ const MAX_PUBLISHER_LENGTH:usize = 64;
 /// Maximum number of activation events
 const MAX_ACTIVATION_EVENTS:usize = 100;
 
-/// Represents the deserialized content of an extension's `package.json` file,
+/// the deserialized content of an extension's `package.json` file,
 /// augmented with location information and other metadata.
-///
 /// This is stored in `ApplicationState` to provide the extension host with the
 /// list of available extensions and their capabilities.
 /// VS Code extensions use camelCase in package.json. Serde renames from
@@ -55,7 +54,6 @@ pub struct ExtensionDescriptionStateDTO {
 	pub Identifier:Value,
 
 	/// Extension name (from package.json "name")
-	///
 	/// Always serialized, even when empty, because VS Code's scanner and
 	/// the trusted-publishers migration (`extensions.contribution.ts`) both
 	/// evaluate `extension.manifest.name.toLowerCase()` unconditionally.
@@ -65,7 +63,6 @@ pub struct ExtensionDescriptionStateDTO {
 	pub Name:String,
 
 	/// Semantic version string (e.g., "1.0.0").
-	///
 	/// Always serialized for the same reason as `Name` / `Publisher`: the
 	/// renderer reads `manifest.version` in several hot paths and crashes
 	/// if the field is missing outright.
@@ -73,7 +70,6 @@ pub struct ExtensionDescriptionStateDTO {
 	pub Version:String,
 
 	/// Publisher name or identifier.
-	///
 	/// Always serialized, even when empty. VS Code's
 	/// `extensions.contribution.ts` trusted-publishers migration runs on
 	/// every User-extension at workbench boot and executes
@@ -129,7 +125,6 @@ pub struct ExtensionDescriptionStateDTO {
 	/// VS Code category tags ("Themes", "Programming Languages",
 	/// "Snippets", "Language Packs", "Debuggers", "Formatters",
 	/// "Keymaps", "SCM Providers", "Testing", "Education", "Other").
-	///
 	/// Atom TH1: Wind's Extensions sidebar filters `@builtin category:themes`
 	/// against this array. Without the field the filter never matches -
 	/// user reported theme extensions absent on @builtin search despite
@@ -208,7 +203,6 @@ pub struct ExtensionDescriptionStateDTO {
 
 impl ExtensionDescriptionStateDTO {
 	/// Validates the extension description data.
-	///
 	/// # Returns
 	/// Result indicating success or validation error with reason
 	pub fn Validate(&self) -> Result<(), String> {
@@ -241,13 +235,11 @@ impl ExtensionDescriptionStateDTO {
 	}
 
 	/// Creates a minimal extension description for testing or placeholder use.
-	///
 	/// # Arguments
 	/// * `Identifier` - Extension identifier value
 	/// * `Name` - Extension name
 	/// * `Version` - Extension version
 	/// * `Publisher` - Publisher name
-	///
 	/// # Returns
 	/// A new ExtensionDescriptionStateDTO with minimal required fields
 	pub fn CreateMinimal(Identifier:Value, Name:String, Version:String, Publisher:String) -> Result<Self, String> {

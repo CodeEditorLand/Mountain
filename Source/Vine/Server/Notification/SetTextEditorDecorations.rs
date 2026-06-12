@@ -2,6 +2,7 @@ use serde_json::Value;
 
 use crate::Vine::Server::MountainVinegRPCService::MountainVinegRPCService;
 
+/// Sets text editor decorations.
 pub async fn SetTextEditorDecorations(Service:&MountainVinegRPCService, Parameter:&Value) {
 	::Vine::Server::Notification::SetTextEditorDecorations::SetTextEditorDecorations(Service, Parameter).await;
 

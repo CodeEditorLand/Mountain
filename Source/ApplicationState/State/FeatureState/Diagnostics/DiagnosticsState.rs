@@ -41,7 +41,6 @@ use crate::{ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO, dev_log};
 #[derive(Clone)]
 pub struct DiagnosticsState {
 	/// Diagnostics map organized by owner and resource URI.
-	///
 	/// Structure: owner -> resource URI -> list of markers
 	pub DiagnosticsMap:Arc<Mutex<HashMap<String, HashMap<String, Vec<MarkerDataDTO>>>>>,
 }

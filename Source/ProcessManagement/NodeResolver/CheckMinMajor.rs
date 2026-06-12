@@ -5,6 +5,7 @@
 
 use crate::dev_log;
 
+/// fn.
 pub fn Fn(VersionString:&str) {
 	let Trimmed = VersionString.trim_start_matches('v');
 

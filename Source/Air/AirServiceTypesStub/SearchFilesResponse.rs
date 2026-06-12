@@ -3,6 +3,7 @@
 use crate::Air::AirServiceTypesStub::FileResultProtoDTO;
 
 #[derive(Debug, Clone)]
+/// Data for struct.
 pub struct Struct {
 	pub results:Vec<FileResultProtoDTO::Struct>,
 

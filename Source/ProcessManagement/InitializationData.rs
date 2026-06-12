@@ -170,13 +170,10 @@ use crate::{
 };
 
 /// Loads or generates a persistent machine ID.
-///
 /// The machine ID is stored in the app data directory as a simple text file.
 /// If the file doesn't exist, a new UUID is generated and saved.
-///
 /// # Arguments
 /// * `app_data_dir` - The application data directory path
-///
 /// # Returns
 /// The machine ID as a String
 async fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {

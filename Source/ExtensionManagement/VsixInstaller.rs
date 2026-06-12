@@ -214,7 +214,6 @@ fn ReadManifestFacts(VsixPath:&Path) -> Result<ManifestFacts, InstallError> {
 /// the archive to disk. Used by the IPC `extensions:getManifest` handler so
 /// the "Install from VSIX…" preview dialog and drag-and-drop flow can inspect
 /// a manifest before the user confirms installation.
-///
 /// The returned value is the raw parsed JSON (`serde_json::Value`) - callers
 /// can project it into VS Code's `IExtensionManifest` shape. No NLS bundle
 /// resolution is performed here (the renderer only needs publisher/name/
@@ -391,7 +390,6 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 /// the exec-bit promotion landed don't need to manually `chmod` shipped
 /// binaries (`rust-analyzer/server/rust-analyzer`,
 /// `openai.chatgpt/bin/<triple>/codex`, `Dart-Code/bin/dart`, etc.).
-///
 /// Errors are swallowed - this is a best-effort heal, never the reason
 /// an install fails. A file we can't open or stat just keeps its
 /// existing mode and the extension's `spawn` will surface the same

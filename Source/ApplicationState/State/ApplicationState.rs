@@ -63,6 +63,7 @@ use crate::{Environment::TestProvider::TestProviderState::Struct as TestProvider
 /// The central, shared, thread-safe state for the entire Mountain application.
 pub type SharedApplicationState = Arc<ApplicationState>;
 
+/// Data for application state.
 pub struct ApplicationState {
 	/// Workspace state containing workspace folders, trust, and active
 	/// document.

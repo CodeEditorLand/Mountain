@@ -17,7 +17,7 @@ use crate::dev_log;
 /// paths
 const MAX_CONFIGURATION_DEPTH:usize = 50;
 
-/// Represents the final, effective configuration after merging settings from
+/// the final, effective configuration after merging settings from
 /// all sources (default, user, workspace, folder). This merged view is what
 /// is queried by application features.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -29,20 +29,16 @@ pub struct MergedConfigurationStateDTO {
 
 impl MergedConfigurationStateDTO {
 	/// Creates a new `MergedConfigurationStateDTO` from a `serde_json::Value`.
-	///
 	/// # Arguments
 	/// * `Data` - The merged configuration JSON value
-	///
 	/// # Returns
 	/// New MergedConfigurationStateDTO instance
 	pub fn Create(Data:Value) -> Self { Self { Data } }
 
 	/// Gets a specific value from the configuration using a dot-separated path.
 	/// If the section is `None`, it returns the entire configuration object.
-	///
 	/// # Arguments
 	/// * `Section` - Optional dot-separated path (e.g., "editor.fontSize")
-	///
 	/// # Returns
 	/// The configuration value at the path, or Null if not found
 	pub fn GetValue(&self, Section:Option<&str>) -> Value {
@@ -71,11 +67,9 @@ impl MergedConfigurationStateDTO {
 
 	/// Sets a value in the configuration using a dot-separated path.
 	/// Creates nested objects as needed.
-	///
 	/// # Arguments
 	/// * `Section` - Dot-separated path
 	/// * `Value` - Value to set
-	///
 	/// # Returns
 	/// Result indicating success or error if path too deep
 	pub fn SetValue(&mut self, Section:&str, Value:Value) -> Result<(), String> {
@@ -118,11 +112,9 @@ impl MergedConfigurationStateDTO {
 	}
 
 	/// Gets a boolean value from configuration with default fallback.
-	///
 	/// # Arguments
 	/// * `Section` - Dot-separated path
 	/// * `Default` - Default value if path doesn't exist or isn't a boolean
-	///
 	/// # Returns
 	/// Boolean value or default
 	pub fn GetBool(&self, Section:&str, Default:bool) -> bool {
@@ -130,11 +122,9 @@ impl MergedConfigurationStateDTO {
 	}
 
 	/// Gets a numeric value from configuration with default fallback.
-	///
 	/// # Arguments
 	/// * `Section` - Dot-separated path
 	/// * `Default` - Default value if path doesn't exist or isn't a number
-	///
 	/// # Returns
 	/// f64 value or default
 	pub fn GetNumber(&self, Section:&str, Default:f64) -> f64 {
@@ -142,11 +132,9 @@ impl MergedConfigurationStateDTO {
 	}
 
 	/// Gets a string value from configuration with default fallback.
-	///
 	/// # Arguments
 	/// * `Section` - Dot-separated path
 	/// * `Default` - Default value if path doesn't exist or isn't a string
-	///
 	/// # Returns
 	/// String value or default
 	pub fn GetString(&self, Section:&str, Default:&str) -> String {

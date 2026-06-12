@@ -5,6 +5,7 @@
 //! `ParseWorkspaceFile::Fn` resolves each path through the canonical-path
 //! cache and converts it to a `file://` URI.
 
+/// Parseworkspacefile module.
 pub mod ParseWorkspaceFile;
 
 pub(crate) mod WorkspaceFile;

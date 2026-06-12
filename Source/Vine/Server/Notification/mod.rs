@@ -12,8 +12,11 @@
 //!   `TauriRendererEmitter` before calling Vine's coalescer; exposed so
 //!   Mountain code outside the dispatcher can drive output-channel coalescing.
 
+/// Support module.
 pub mod Support;
 
+/// Outputchannelcoalesce module.
 pub mod OutputChannelCoalesce;
 
+/// Terminalenvcollection module.
 pub mod TerminalEnvCollection;

@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::Command::Hover::Interface::{HoverContent, Range};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Data for struct.
 pub struct Struct {
 	pub contents:Vec<HoverContent::Enum>,
 
@@ -19,8 +20,10 @@ impl Default for Struct {
 }
 
 impl Struct {
+/// new.
 	pub fn new(contents:Vec<HoverContent::Enum>) -> Self { Self { contents, range:None } }
 
+/// Withs range.
 	pub fn WithRange(contents:Vec<HoverContent::Enum>, range:Range::Struct) -> Self {
 		Self { contents, range:Some(range) }
 	}

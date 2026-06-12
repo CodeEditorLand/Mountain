@@ -3,4 +3,5 @@
 //! without spinning up the tracing subscriber.
 
 #[inline]
+/// Fn.
 pub const fn Fn() -> bool { cfg!(feature = "MetricsCollection") }

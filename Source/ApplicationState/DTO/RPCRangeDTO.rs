@@ -19,7 +19,7 @@ const MAX_LINE_NUMBER:usize = 1_000_000;
 /// Maximum column number to prevent invalid ranges
 const MAX_COLUMN_NUMBER:usize = 1_000_000;
 
-/// Represents a line and column-based range in a text document.
+/// a line and column-based range in a text document.
 /// Compatible with VS Code LSP position/range definitions.
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -39,13 +39,11 @@ pub struct RPCRangeDTO {
 
 impl RPCRangeDTO {
 	/// Creates a new RPCRangeDTO with validation.
-	///
 	/// # Arguments
 	/// * `StartLineNumber` - Start line (0-based)
 	/// * `StartColumn` - Start column (0-based)
 	/// * `EndLineNumber` - End line (0-based)
 	/// * `EndColumn` - End column (0-based)
-	///
 	/// # Returns
 	/// Result containing the DTO or validation error
 	pub fn New(StartLineNumber:usize, StartColumn:usize, EndLineNumber:usize, EndColumn:usize) -> Result<Self, String> {
@@ -76,11 +74,9 @@ impl RPCRangeDTO {
 	pub fn IsEmpty(&self) -> bool { self.StartLineNumber == self.EndLineNumber && self.StartColumn == self.EndColumn }
 
 	/// Creates a range for inserting/replacing text at a specific position.
-	///
 	/// # Arguments
 	/// * `LineNumber` - Line number (0-based)
 	/// * `Column` - Column number (0-based)
-	///
 	/// # Returns
 	/// New RPCRangeDTO for position-based operations
 	pub fn Position(LineNumber:usize, Column:usize) -> Result<Self, String> {
@@ -88,12 +84,10 @@ impl RPCRangeDTO {
 	}
 
 	/// Creates a range for a single line.
-	///
 	/// # Arguments
 	/// * `LineNumber` - Line number (0-based)
 	/// * `StartColumn` - Start column
 	/// * `EndColumn` - End column
-	///
 	/// # Returns
 	/// New RPCRangeDTO for single-line range
 	pub fn LineRange(LineNumber:usize, StartColumn:usize, EndColumn:usize) -> Result<Self, String> {

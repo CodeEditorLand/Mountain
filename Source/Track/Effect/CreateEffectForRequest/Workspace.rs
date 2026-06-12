@@ -1,3 +1,4 @@
+/// matches.
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"applyEdit"
@@ -28,6 +29,7 @@ use crate::{
 	dev_log,
 };
 
+/// Creates effect.
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"applyEdit" => {

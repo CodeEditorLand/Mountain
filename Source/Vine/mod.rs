@@ -81,8 +81,11 @@
 //! - [`self::Generated`]: Auto-generated protobuf code from Vine.proto
 //! - [`self::Server`]: gRPC server implementations for Mountain services
 
+/// Client module.
 pub mod Client;
 
+/// Error module.
 pub mod Error;
 
+/// Server module.
 pub mod Server;

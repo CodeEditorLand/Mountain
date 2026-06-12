@@ -17,6 +17,7 @@ use crate::{
 };
 
 #[command]
+/// Gets s c m commit history.
 pub async fn GetSCMCommitHistory(
 	State:State<'_, Arc<ApplicationState>>,
 

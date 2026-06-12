@@ -1,3 +1,4 @@
+/// matches.
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"config.get" | "config.update" | "Configuration.Inspect" | "Configuration.Update" => true,
@@ -85,6 +86,7 @@ async fn UpdateConfigurationValueAndNotify(
 	result.map(|_| json!(null)).map_err(|e| e.to_string())
 }
 
+/// Creates effect.
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"config.get" => {

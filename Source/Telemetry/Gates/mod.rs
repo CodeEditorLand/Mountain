@@ -18,26 +18,37 @@
 //! Zero callers as of 2026-05-02. Wire into IPC dispatch and
 //! command execution once the gates are read from runtime config.
 
+/// Enableruntimegate module.
 pub mod EnableRuntimeGate;
 
+/// Getruntimegates module.
 pub mod GetRuntimeGates;
 
+/// Isdebugbuild module.
 pub mod IsDebugBuild;
 
+/// Isdevelopmentbuild module.
 pub mod IsDevelopmentBuild;
 
+/// Isdistributedtracingenabled module.
 pub mod IsDistributedTracingEnabled;
 
+/// Isfeatureflagsenabled module.
 pub mod IsFeatureFlagsEnabled;
 
+/// Ismetricsenabled module.
 pub mod IsMetricsEnabled;
 
+/// Istelemetryenabled module.
 pub mod IsTelemetryEnabled;
 
+/// Listenabledgates module.
 pub mod ListEnabledGates;
 
+/// Runtimegateenabled module.
 pub mod RuntimeGateEnabled;
 
+/// Validaterequiredgates module.
 pub mod ValidateRequiredGates;
 
 pub(crate) mod RuntimeGates;

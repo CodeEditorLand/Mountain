@@ -14,6 +14,7 @@ use crate::{
 	dev_log,
 };
 
+/// Terminals env collection dispatch.
 pub async fn TerminalEnvCollectionDispatch(_Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
 	let Suffix = MethodName.strip_prefix("terminal.envCollection.").unwrap_or(MethodName);
 

@@ -3,6 +3,8 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Certificate status snapshot with existence, validity, expiry timeline,
+/// renewal flag, and the RFC 3339 expiry timestamp.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CertificateStatus {
 	pub exists:bool,

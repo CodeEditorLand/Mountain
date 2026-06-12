@@ -56,7 +56,7 @@ use ::Vine::Client;
 use super::MountainEnvironment::MountainEnvironment;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-/// An enum representing the different ways a command can be handled.
+/// Command dispatch strategy.
 ///
 /// Commands are either implemented as native Rust functions or
 /// delegated to extension sidecar processes via RPC.

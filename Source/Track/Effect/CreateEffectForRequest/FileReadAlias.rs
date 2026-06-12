@@ -1,3 +1,4 @@
+/// matches.
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"openDocument" | "readFile" | "stat" => true,
@@ -17,6 +18,7 @@ use crate::Track::Effect::{
 	MappedEffectType::MappedEffect,
 };
 
+/// Creates effect.
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"openDocument" | "readFile" | "stat" => {

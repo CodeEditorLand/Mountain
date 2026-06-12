@@ -16,7 +16,7 @@ use uuid::Uuid;
 use super::super::MountainEnvironment::MountainEnvironment;
 use crate::dev_log;
 
-/// Represents a Webview message
+/// Webview message envelope with identifier, type tag, payload, and source.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebviewMessage {
 	pub MessageIdentifier:String,

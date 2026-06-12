@@ -13,6 +13,7 @@ pub struct TauriRendererEmitter {
 }
 
 impl TauriRendererEmitter {
+/// new.
 	pub fn New(Handle:AppHandle) -> Self { Self { Handle } }
 }
 
@@ -20,6 +21,7 @@ impl ::Vine::Host::RendererEmitter for TauriRendererEmitter {
 	fn Emit(&self, Channel:&str, Payload:Value) { let _ = self.Handle.emit(Channel, Payload); }
 }
 
+/// Updates scm group markers.
 pub fn UpdateScmGroupMarkers(RunTime:&Arc<ApplicationRunTime>, ScmHandle:u32, GroupId:&str, ResourceStates:&Value) {
 	let mut Resources = RunTime
 		.Environment

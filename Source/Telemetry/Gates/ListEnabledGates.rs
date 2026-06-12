@@ -4,4 +4,5 @@
 
 use crate::Telemetry::Gates::GetRuntimeGates;
 
+/// fn.
 pub fn Fn() -> Vec<String> { GetRuntimeGates::Fn().iter().cloned().collect() }

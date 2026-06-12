@@ -41,10 +41,8 @@ const MAX_BADGE_LENGTH:usize = 2048;
 /// Holds the static options and provider for a tree view instance that has been
 /// registered by an extension or natively. This is stored in `ApplicationState`
 /// to track active tree views.
-///
-/// This struct holds references to either a native (Rust) provider or metadata
+/// holds references to either a native (Rust) provider or metadata
 /// for a proxied (extension) provider.
-///
 /// NOTE: This struct does not derive Serialize/Deserialize because `Arc<dyn
 /// ...>` is not serializable. It is intended for in-memory state management
 /// only.
@@ -88,7 +86,6 @@ pub struct TreeViewStateDTO {
 
 impl TreeViewStateDTO {
 	/// Creates a new TreeViewStateDTO with validation.
-	///
 	/// # Arguments
 	/// * `ViewIdentifier` - Unique view identifier
 	/// * `Provider` - Optional native provider
@@ -96,7 +93,6 @@ impl TreeViewStateDTO {
 	/// * `CanSelectMany` - Multi-selection support
 	/// * `HasHandleDrag` - Drag support
 	/// * `HasHandleDrop` - Drop support
-	///
 	/// # Returns
 	/// Result containing the DTO or validation error
 	pub fn New(
@@ -146,10 +142,8 @@ impl TreeViewStateDTO {
 	}
 
 	/// Sets the UI message with validation.
-	///
 	/// # Arguments
 	/// * `Message` - Message text
-	///
 	/// # Returns
 	/// Result indicating success or error if message too long
 	pub fn SetMessage(&mut self, Message:String) -> Result<(), String> {
@@ -163,10 +157,8 @@ impl TreeViewStateDTO {
 	}
 
 	/// Sets the title with validation.
-	///
 	/// # Arguments
 	/// * `Title` - Title text
-	///
 	/// # Returns
 	/// Result indicating success or error if title too long
 	pub fn SetTitle(&mut self, Title:String) -> Result<(), String> {
@@ -180,10 +172,8 @@ impl TreeViewStateDTO {
 	}
 
 	/// Sets the description with validation.
-	///
 	/// # Arguments
 	/// * `Description` - Description text
-	///
 	/// # Returns
 	/// Result indicating success or error if description too long
 	pub fn SetDescription(&mut self, Description:String) -> Result<(), String> {
@@ -200,10 +190,8 @@ impl TreeViewStateDTO {
 	}
 
 	/// Sets the badge with validation.
-	///
 	/// # Arguments
 	/// * `Badge` - Badge value (typically a count or string)
-	///
 	/// # Returns
 	/// Result indicating success or error if badge too long
 	pub fn SetBadge(&mut self, Badge:String) -> Result<(), String> {

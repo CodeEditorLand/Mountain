@@ -36,18 +36,26 @@
 //! - Diff viewing and resource decoration
 //! - SCM input-box interactions
 
+/// Checkoutscmbranch module.
 pub mod CheckoutSCMBranch;
 
+/// Executescmcommand module.
 pub mod ExecuteSCMCommand;
 
+/// Getallsourcecontrolmanagementstate module.
 pub mod GetAllSourceControlManagementState;
 
+/// Getscmbranches module.
 pub mod GetSCMBranches;
 
+/// Getscmcommithistory module.
 pub mod GetSCMCommitHistory;
 
+/// Getscmresourcechanges module.
 pub mod GetSCMResourceChanges;
 
+/// Repositorycwd module.
 pub mod RepositoryCwd;
 
+/// Stagescmresource module.
 pub mod StageSCMResource;

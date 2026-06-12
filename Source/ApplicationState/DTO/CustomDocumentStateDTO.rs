@@ -62,13 +62,11 @@ pub struct CustomDocumentStateDTO {
 
 impl CustomDocumentStateDTO {
 	/// Creates a new CustomDocumentStateDTO with validation.
-	///
 	/// # Arguments
 	/// * `URI` - The document resource URI
 	/// * `ViewType` - The custom editor type identifier
 	/// * `SideCarIdentifier` - The sidecar process identifier
 	/// * `IsEditable` - Whether the document is user-editable
-	///
 	/// # Returns
 	/// Result containing the DTO or an error if validation fails
 	pub fn New(URI:Url, ViewType:String, SideCarIdentifier:String, IsEditable:bool) -> Result<Self, String> {
@@ -101,11 +99,9 @@ impl CustomDocumentStateDTO {
 	}
 
 	/// Adds an edit entry to the edits map with bounds checking.
-	///
 	/// # Arguments
 	/// * `EditID` - The edit identifier
 	/// * `EditData` - The edit data
-	///
 	/// # Returns
 	/// Result indicating success or failure if map is full
 	pub fn AddEdit(&mut self, EditID:u32, EditData:serde_json::Value) -> Result<(), String> {

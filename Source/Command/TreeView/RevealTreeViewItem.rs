@@ -16,6 +16,7 @@ use crate::{
 };
 
 #[command]
+/// Reveals tree view item.
 pub async fn RevealTreeViewItem(
 	ApplicationHandle:AppHandle<Wry>,
 

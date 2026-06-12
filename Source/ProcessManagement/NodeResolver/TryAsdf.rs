@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use crate::ProcessManagement::NodeResolver::{NodeExecutableName, NodeSource, ResolvedNode};
 
+/// fn.
 pub fn Fn() -> Option<ResolvedNode::Struct> {
 	let AsdfDataDir = std::env::var("ASDF_DATA_DIR").ok().or_else(|| {
 		std::env::var("HOME")

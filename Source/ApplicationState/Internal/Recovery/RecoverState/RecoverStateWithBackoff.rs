@@ -7,6 +7,7 @@ use CommonLibrary::Error::CommonError::CommonError;
 
 use crate::dev_log;
 
+/// fn.
 pub async fn Fn<F, T>(Operation:F, MaxAttempts:u32, OperationName:&str) -> Result<T, CommonError>
 where
 	F: Fn() -> Result<T, CommonError> + Send, {

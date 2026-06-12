@@ -18,25 +18,17 @@ use crate::{Environment::MountainEnvironment::MountainEnvironment, ProcessManage
 /// 5. Waits for gRPC server to be ready
 /// 6. Establishes Vine connection
 /// 7. Sends initialization payload and validates response
-///
 /// # Arguments
-///
 /// * `ApplicationHandle` - Tauri application handle for resolving resource
 ///   paths
 /// * `Environment` - Mountain environment containing application state
-///
 /// # Returns
-///
 /// * `Ok(())` - Cocoon process spawned, connected, and initialized successfully
 /// * `Err(CommonError)` - Any failure during the initialization sequence
-///
 /// # Errors
-///
 /// - `FileSystemNotFound`: Bootstrap script not found in resources
 /// - `IPCError`: Failed to spawn process, connect gRPC, or complete handshake
-///
 /// # Lifecycle
-///
 /// The process runs as a background task with IO redirection for logging.
 /// Process failures are logged but not automatically restarted (callers should
 /// implement restart strategies based on their requirements).

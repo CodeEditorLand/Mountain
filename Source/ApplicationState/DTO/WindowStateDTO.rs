@@ -40,12 +40,10 @@ pub struct WindowStateDTO {
 
 impl WindowStateDTO {
 	/// Creates a new WindowStateDTO with validation.
-	///
 	/// # Arguments
 	/// * `IsFocused` - Focus state
 	/// * `IsFullScreen` - Fullscreen state
 	/// * `ZoomLevel` - Zoom level
-	///
 	/// # Returns
 	/// Result containing the DTO or validation error
 	pub fn New(IsFocused:bool, IsFullScreen:bool, ZoomLevel:f64) -> Result<Self, String> {
@@ -61,10 +59,8 @@ impl WindowStateDTO {
 	}
 
 	/// Sets the zoom level with validation.
-	///
 	/// # Arguments
 	/// * `ZoomLevel` - New zoom level
-	///
 	/// # Returns
 	/// Result indicating success or error if out of range
 	pub fn SetZoomLevel(&mut self, ZoomLevel:f64) -> Result<(), String> {
@@ -81,10 +77,8 @@ impl WindowStateDTO {
 	}
 
 	/// Increases the zoom level by a step.
-	///
 	/// # Arguments
 	/// * `Step` - Zoom increment amount
-	///
 	/// # Returns
 	/// Result indicating success or error if would exceed range
 	pub fn ZoomIn(&mut self, Step:f64) -> Result<(), String> {
@@ -94,10 +88,8 @@ impl WindowStateDTO {
 	}
 
 	/// Decreases the zoom level by a step.
-	///
 	/// # Arguments
 	/// * `Step` - Zoom decrement amount
-	///
 	/// # Returns
 	/// Result indicating success or error if would exceed range
 	pub fn ZoomOut(&mut self, Step:f64) -> Result<(), String> {

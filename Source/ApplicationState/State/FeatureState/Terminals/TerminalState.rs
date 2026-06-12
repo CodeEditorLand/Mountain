@@ -44,7 +44,6 @@ use parking_lot::Mutex;
 use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, dev_log};
 
 /// Auto-reply rule stored by `localPty:installAutoReply`.
-///
 /// When the PTY reader task encounters a line containing `Match`, it
 /// immediately writes `Answer` back to the PTY input channel. This is
 /// used by VS Code's shell-integration layer for pseudo-tty prompts
@@ -74,14 +73,12 @@ pub struct TerminalState {
 	pub NextTerminalIdentifier:Arc<AtomicU64>,
 
 	/// Map from old (pre-reload) terminal ID to newly assigned ID.
-	///
 	/// Populated by `localPty:reviveTerminalProcesses`; consumed by
 	/// `localPty:getRevivedPtyNewId`. Each entry is popped on first
 	/// read so the map stays small across reloads.
 	pub RevivedIdMap:Arc<Mutex<HashMap<u64, u64>>>,
 
 	/// Auto-reply rules installed via `localPty:installAutoReply`.
-	///
 	/// Shared across all terminals for the session. The PTY output
 	/// reader in `TerminalProvider` checks every output chunk against
 	/// these rules and writes the answer back when a match is found.

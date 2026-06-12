@@ -13,6 +13,7 @@
 //! Marker severity levels (aligned with VS Code)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u32)]
+/// Enumeration for marker severity.
 pub enum MarkerSeverity {
 	/// Something not allowed by the rules of a language
 	Error = 8,

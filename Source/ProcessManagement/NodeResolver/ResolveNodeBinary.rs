@@ -14,6 +14,7 @@ use crate::{
 
 static RESOLVED:OnceLock<ResolvedNode::Struct> = OnceLock::new();
 
+/// fn.
 pub fn Fn<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode::Struct {
 	if let Some(Cached) = RESOLVED.get() {
 		return Cached.clone();

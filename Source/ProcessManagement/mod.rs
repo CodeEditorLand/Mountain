@@ -50,10 +50,14 @@
 //! - [`self::CocoonManagement`]: Cocoon sidecar process lifecycle management
 //! - [`self::InitializationData`]: Initialization data construction
 
+/// Cocoonmanagement module.
 pub mod CocoonManagement;
 
+/// Extractdevtag module.
 pub mod ExtractDevTag;
 
+/// Initializationdata module.
 pub mod InitializationData;
 
+/// Noderesolver module.
 pub mod NodeResolver;

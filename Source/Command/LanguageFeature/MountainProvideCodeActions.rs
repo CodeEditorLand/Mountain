@@ -7,6 +7,7 @@ use tauri::{AppHandle, Wry, command};
 use crate::{Command::LanguageFeature::CodeActions, dev_log};
 
 #[command]
+/// Mountains provide code actions.
 pub async fn MountainProvideCodeActions(
 	application_handle:AppHandle<Wry>,
 

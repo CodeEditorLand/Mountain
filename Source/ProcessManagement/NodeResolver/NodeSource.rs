@@ -3,6 +3,7 @@
 //! lines.
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Enumeration for enum.
 pub enum Enum {
 	/// `Pick` environment variable.
 	Override,
@@ -32,6 +33,7 @@ pub enum Enum {
 }
 
 impl Enum {
+/// Ass label.
 	pub fn AsLabel(self) -> &'static str {
 		match self {
 			Self::Override => "override",

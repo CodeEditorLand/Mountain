@@ -32,16 +32,22 @@
 //! - Document color, folding/selection range
 //! - Request dedupe and cancellation tokens for long-running ops
 
+/// Mountainprovidecodeactions module.
 pub mod MountainProvideCodeActions;
 
+/// Mountainprovidecompletions module.
 pub mod MountainProvideCompletions;
 
+/// Mountainprovidedefinition module.
 pub mod MountainProvideDefinition;
 
+/// Mountainprovidedocumenthighlights module.
 pub mod MountainProvideDocumentHighlights;
 
+/// Mountainprovidehover module.
 pub mod MountainProvideHover;
 
+/// Mountainprovidereferences module.
 pub mod MountainProvideReferences;
 
 pub(crate) mod CodeActions;

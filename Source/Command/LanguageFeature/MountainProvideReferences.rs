@@ -7,6 +7,7 @@ use tauri::{AppHandle, Wry, command};
 use crate::{Command::LanguageFeature::References, dev_log};
 
 #[command]
+/// Mountains provide references.
 pub async fn MountainProvideReferences(
 	application_handle:AppHandle<Wry>,
 

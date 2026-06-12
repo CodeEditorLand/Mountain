@@ -11,6 +11,7 @@ use tauri::{AppHandle, Manager, Wry, command};
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 #[command]
+/// Gets resolved keybinding.
 pub async fn GetResolvedKeybinding(ApplicationHandle:AppHandle<Wry>) -> Result<Value, String> {
 	dev_log!("keybinding", "getting resolved keybindings for UI");
 

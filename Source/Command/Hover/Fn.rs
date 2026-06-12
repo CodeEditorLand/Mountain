@@ -46,18 +46,13 @@ fn ValidateRequest(uri:&str, position:&Value) -> Result<HoverRequest, String> {
 }
 
 /// Provides hover information at the given document position.
-///
 /// This function is the main entry point for the hover command,
 /// called by the Tauri command dispatcher.
-///
 /// # Arguments
-///
 /// * `application_handle` - The Tauri application handle
 /// * `uri` - The URI of the document
 /// * `position` - The position in the document to get hover for
-///
 /// # Returns
-///
 /// Returns a `HoverResponse` containing the hover contents, or an error string.
 pub async fn Hover(application_handle:AppHandle<Wry>, uri:String, position:Value) -> Result<HoverResponse, String> {
 	dev_log!("commands", "[Hover] Providing hover for: {} at {:?}", uri, position);
@@ -79,7 +74,6 @@ pub async fn Hover(application_handle:AppHandle<Wry>, uri:String, position:Value
 }
 
 /// Internal implementation to get hover from a provider.
-///
 /// This would typically invoke the language feature provider registry
 /// to find an appropriate provider for the document.
 async fn ProvideHover(_uri:Url, _position:Position) -> Result<HoverResponse, String> {

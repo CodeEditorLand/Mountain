@@ -2,4 +2,5 @@
 //! delegation. Currently dormant - zero call sites; kept atomized for the
 //! eventual Help → Check for Updates wire-up.
 
+/// Updateservice module.
 pub mod UpdateService;

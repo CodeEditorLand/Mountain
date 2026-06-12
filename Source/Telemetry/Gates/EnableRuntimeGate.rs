@@ -9,4 +9,5 @@
 //! it is a no-op that preserves the signature so call sites compile, and
 //! returns Ok so flow control continues.
 
+/// fn.
 pub fn Fn(_GateName:String) -> Result<(), String> { Ok(()) }

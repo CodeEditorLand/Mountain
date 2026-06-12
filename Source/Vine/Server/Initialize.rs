@@ -73,11 +73,9 @@ mod ServerConfig {
 }
 
 /// Validates a socket address string before parsing.
-///
 /// # Parameters
 /// - `AddressString`: The address string to validate
 /// - `ServerName`: Name of the server for error messages
-///
 /// # Returns
 /// - `Ok(SocketAddr)`: Validated and parsed socket address
 /// - `Err(VineError)`: Invalid address format
@@ -116,33 +114,26 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 }
 
 /// Initializes and starts the gRPC servers on background tasks.
-///
 /// This function retrieves the core `ApplicationRunTime` from Tauri's managed
 /// state, instantiates the gRPC service implementations
 /// (`MountainVinegRPCService` and `CocoonServiceServer`), and uses `tonic` to
 /// serve them at the specified addresses.
-///
 /// # Parameters
 /// - `ApplicationHandle`: The Tauri application handle
 /// - `MountainAddressString`: The address and port to bind the Mountain server
 ///   to (e.g., `"[::1]:50051"`)
 /// - `CocoonAddressString`: The address and port to bind the Cocoon server to
 ///   (e.g., `"[::1]:50052"`)
-///
 /// # Returns
 /// - `Ok(())`: Successfully initialized and started both servers
 /// - `Err(VineError)`: Initialization failed (invalid address, missing runtime,
 ///   etc.)
-///
 /// # Errors
-///
 /// This function will return an error if:
 /// - Either socket address string is invalid or unparseable
 /// - ApplicationRunTime is not available in Tauri state
 /// - Server task spawning fails (rare)
-///
 /// # Example
-///
 /// ```rust,no_run
 /// # use Vine::Server::Initialize::Initialize;
 /// # use tauri::AppHandle;
@@ -151,9 +142,7 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 /// # Ok(())
 /// # }
 /// ```
-///
 /// # Notes
-///
 /// - Servers run as detached tokio tasks
 /// - Initialization is async-safe but function is synchronous
 /// - Servers log errors independently after startup

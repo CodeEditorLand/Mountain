@@ -16,6 +16,7 @@ use crate::{
 };
 
 #[command]
+/// Gets s c m branches.
 pub async fn GetSCMBranches(
 	State:State<'_, Arc<ApplicationState>>,
 

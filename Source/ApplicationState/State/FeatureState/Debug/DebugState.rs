@@ -53,7 +53,6 @@ pub struct DebugAdapterDescriptorFactoryRegistration {
 /// session-id (`Uuid::new_v4()` allocated by `DebugProvider::StartDebugging`)
 /// so subsequent `SendCommand` calls can resolve the writer end of the
 /// spawned adapter's stdin pipe and `DisposeSession` can kill the process.
-///
 /// `StdinSender` is `None` for debug-types whose adapter descriptor wasn't
 /// of the executable kind we know how to spawn (TCP `server` descriptors,
 /// `inlineImplementation` descriptors handled entirely in Cocoon, etc.).

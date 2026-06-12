@@ -5,7 +5,6 @@ use parking_lot::Mutex;
 use crate::dev_log;
 
 /// Tracks the editor navigation history stack (back/forward).
-///
 /// Implements a cursor-based navigation stack where `Index` points to the
 /// current position. GoBack decrements the index; GoForward increments it.
 /// Pushing a new entry truncates forward history.

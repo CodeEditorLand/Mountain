@@ -4,7 +4,6 @@
 /// Return the subset of `Patterns` for which at least one workspace folder
 /// contains a matching file or directory. Patterns are interpreted the same
 /// way VS Code does for `workspaceContains:<pattern>` activation events:
-///
 /// - A bare filename (no slash, no wildcards) matches an entry with that name
 ///   at the workspace root (e.g. `package.json`).
 /// - A path with slashes but no wildcards matches a direct descendant relative
@@ -12,7 +11,6 @@
 /// - A glob with `**/` prefix matches any descendant up to a bounded depth.
 /// - Any other wildcard form is matched via a simple segment-by-segment walk
 ///   honouring `*` (single segment) and `**` (any number of segments).
-///
 /// Matching is bounded to depth 3 and 4096 total directory entries per
 /// workspace root to keep the cost sub-100 ms on large monorepos. Anything
 /// deeper is rare for activation-event triggers; the trade-off is

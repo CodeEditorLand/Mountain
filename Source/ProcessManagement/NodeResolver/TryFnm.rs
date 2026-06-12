@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use crate::ProcessManagement::NodeResolver::{NodeExecutableName, NodeSource, ResolvedNode};
 
+/// fn.
 pub fn Fn() -> Option<ResolvedNode::Struct> {
 	if let Ok(Multishell) = std::env::var("FNM_MULTISHELL_PATH") {
 		let Candidate = PathBuf::from(Multishell).join("bin").join(NodeExecutableName::Fn());

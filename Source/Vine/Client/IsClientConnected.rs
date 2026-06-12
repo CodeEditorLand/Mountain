@@ -3,4 +3,5 @@
 //! for boot-race callers that need to know whether `SendRequest` would
 //! short-circuit *before* paying the serialization + lock-acquire cost.
 
+/// fn.
 pub fn Fn(SideCarIdentifier:&str) -> bool { ::Vine::Client::IsClientConnected::Fn(SideCarIdentifier) }

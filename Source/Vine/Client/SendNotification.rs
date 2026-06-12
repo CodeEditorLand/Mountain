@@ -9,6 +9,7 @@ use serde_json::Value;
 
 use crate::Vine::Error::VineError;
 
+/// fn.
 pub async fn Fn(SideCarIdentifier:String, Method:String, Parameters:Value) -> Result<(), VineError> {
 	::Vine::Client::SendNotification::Fn(SideCarIdentifier, Method, Parameters).await
 }

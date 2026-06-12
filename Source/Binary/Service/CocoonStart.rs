@@ -10,25 +10,20 @@ use crate::{
 
 /// Starts the Cocoon sidecar process for build tool support.
 ///
-/// # Arguments
+/// # Parameters
 ///
-/// * `ApplicationHandle` - The Tauri application handle
-/// * `Environment` - The Mountain environment instance
+/// - `ApplicationHandle` — Tauri application handle for service registration.
+/// - `Environment` — Mountain environment instance providing configuration.
 ///
 /// # Returns
 ///
-/// A `Result` indicating success or failure.
-///
-/// # Cocoon Sidecar Functionality
-///
-/// The Cocoon sidecar provides:
-/// - Build tool integration
-/// - Process management for external tools
-/// - Communication bridge with external build processes
+/// `Ok(())` on success, or `Err(String)` if initialization fails. Cocoon
+/// failure is non-fatal — the workbench continues in degraded mode.
 ///
 /// # Errors
 ///
-/// Returns an error if Cocoon initialization fails.
+/// Returns an error if Cocoon initialization fails (binary not found,
+/// gRPC connection timeout, etc.).
 pub async fn Fn(
 	ApplicationHandle:&tauri::AppHandle,
 

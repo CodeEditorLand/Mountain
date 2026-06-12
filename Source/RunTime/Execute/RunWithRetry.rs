@@ -13,6 +13,7 @@ use CommonLibrary::{
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
+/// Runs with retry.
 	pub async fn RunWithRetry<TCapabilityProvider, TError, TOutput>(
 		&self,
 

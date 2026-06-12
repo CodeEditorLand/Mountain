@@ -11,6 +11,7 @@
 //! - UIState: pending UI requests and state
 
 //! Workspace state management.
+/// Workspacestate module.
 pub mod WorkspaceState;
 
 /// Configuration and storage state.

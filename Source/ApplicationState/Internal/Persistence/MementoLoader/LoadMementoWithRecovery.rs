@@ -12,6 +12,7 @@ use serde_json::Value;
 
 use crate::{ApplicationState::Internal::Persistence::MementoLoader::CreateCorruptedBackup, dev_log};
 
+/// fn.
 pub fn Fn(StorageFilePath:&Path) -> Result<HashMap<String, Value>, CommonError> {
 	if !StorageFilePath.exists() {
 		dev_log!(

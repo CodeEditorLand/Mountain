@@ -8,6 +8,7 @@ use std::{
 
 use crate::Telemetry::Metrics::GlobalRegistry;
 
+/// Data for struct.
 pub struct Struct {
 	Name:String,
 
@@ -17,14 +18,17 @@ pub struct Struct {
 }
 
 impl Struct {
+/// start.
 	pub fn Start(Name:&str) -> Self { Self { Name:Name.to_string(), Labels:HashMap::new(), Start:Instant::now() } }
 
+/// Withs label.
 	pub fn WithLabel(mut self, Key:&str, Value:&str) -> Self {
 		self.Labels.insert(Key.to_string(), Value.to_string());
 
 		self
 	}
 
+/// Stops and record.
 	pub fn StopAndRecord(self) -> Duration {
 		let Elapsed = self.Start.elapsed();
 

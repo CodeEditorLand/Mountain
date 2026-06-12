@@ -1,3 +1,4 @@
+/// matches.
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"Task.Fetch" | "Task.Execute" | "terminate_task" | "Task.Terminate" => true,
@@ -18,6 +19,7 @@ use crate::{
 	dev_log,
 };
 
+/// Creates effect.
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Task.Fetch" => {

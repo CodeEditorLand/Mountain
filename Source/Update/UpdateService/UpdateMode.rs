@@ -1,6 +1,7 @@
 //! Delegation mode controlling which update mechanism to use.
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+/// Enumeration for enum.
 pub enum Enum {
 	/// Use Air if available, otherwise fall through to Tauri.
 	#[default]

@@ -11,6 +11,7 @@ use Echo::Scheduler::Scheduler::Scheduler;
 use crate::{Environment::MountainEnvironment::MountainEnvironment, dev_log};
 
 #[derive(Clone)]
+/// Data for application run time.
 pub struct ApplicationRunTime {
 	/// Shared handle to the application's central scheduler.
 	pub Scheduler:Arc<Scheduler>,
@@ -20,6 +21,7 @@ pub struct ApplicationRunTime {
 }
 
 impl ApplicationRunTime {
+/// create.
 	pub fn Create(Scheduler:Arc<Scheduler>, Environment:Arc<MountainEnvironment>) -> Self {
 		dev_log!("lifecycle", "new Echo-based instance created");
 

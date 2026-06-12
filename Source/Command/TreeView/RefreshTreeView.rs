@@ -15,6 +15,7 @@ use crate::{
 };
 
 #[command]
+/// Refreshs tree view.
 pub async fn RefreshTreeView(
 	ApplicationHandle:AppHandle<Wry>,
 

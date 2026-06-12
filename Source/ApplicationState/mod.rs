@@ -14,6 +14,7 @@
 /// Serializable data transfer objects used for state persistence.
 pub mod DTO;
 
+/// State module.
 pub mod State;
 
 /// Internal services: extension scanning, path resolution, persistence,

@@ -30,18 +30,26 @@
 //! - Drag-and-drop, multi-column, badge / tooltip / icon-theming support
 //! - Tree-item validation
 
+/// Gettreeviewchildren module.
 pub mod GetTreeViewChildren;
 
+/// Gettreeviewitem module.
 pub mod GetTreeViewItem;
 
+/// Ontreeviewexpansionchanged module.
 pub mod OnTreeViewExpansionChanged;
 
+/// Ontreeviewselectionchanged module.
 pub mod OnTreeViewSelectionChanged;
 
+/// Persisttreeview module.
 pub mod PersistTreeView;
 
+/// Refreshtreeview module.
 pub mod RefreshTreeView;
 
+/// Restoretreeview module.
 pub mod RestoreTreeView;
 
+/// Revealtreeviewitem module.
 pub mod RevealTreeViewItem;

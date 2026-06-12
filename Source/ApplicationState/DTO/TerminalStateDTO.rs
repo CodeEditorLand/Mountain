@@ -52,7 +52,6 @@ const MAX_ENV_VARS:usize = 1000;
 /// Holds the complete state and runtime resources for a single pseudo-terminal
 /// (PTY) instance. This includes configuration, process identifiers, and
 /// handles for I/O tasks.
-///
 /// `Debug` is implemented manually at the bottom of this file because the
 /// `PTYMaster` field stores `dyn MasterPty + Send`, which does not itself
 /// implement `Debug`. The manual impl prints the master handle as an opaque
@@ -123,13 +122,11 @@ pub struct TerminalStateDTO {
 impl TerminalStateDTO {
 	/// Creates a new `TerminalStateDTO` by parsing terminal options from a
 	/// `serde_json::Value` with validation.
-	///
 	/// # Arguments
 	/// * `Identifier` - Unique terminal identifier
 	/// * `Name` - Terminal display name
 	/// * `OptionsValue` - Terminal options JSON
 	/// * `DefaultShellPath` - Default shell if not specified
-	///
 	/// # Returns
 	/// Result containing the DTO or validation error
 	pub fn Create(Identifier:u64, Name:String, OptionsValue:&Value, DefaultShellPath:String) -> Result<Self, String> {

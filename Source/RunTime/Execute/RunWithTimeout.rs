@@ -13,6 +13,7 @@ use CommonLibrary::{
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 impl ApplicationRunTime {
+/// Runs with timeout.
 	pub async fn RunWithTimeout<TCapabilityProvider, TError, TOutput>(
 		&self,
 

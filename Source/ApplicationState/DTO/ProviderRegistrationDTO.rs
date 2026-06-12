@@ -49,14 +49,12 @@ pub struct ProviderRegistrationDTO {
 
 impl ProviderRegistrationDTO {
 	/// Creates a new ProviderRegistrationDTO with validation.
-	///
 	/// # Arguments
 	/// * `Handle` - Unique registration handle
 	/// * `ProviderType` - Type of feature provider
 	/// * `Selector` - Document selector value
 	/// * `SideCarIdentifier` - Sidecar process identifier
 	/// * `ExtensionIdentifier` - Extension identifier value
-	///
 	/// # Returns
 	/// Result containing the DTO or validation error
 	pub fn New(
@@ -89,17 +87,14 @@ impl ProviderRegistrationDTO {
 	}
 
 	/// Updates the provider options.
-	///
 	/// # Arguments
 	/// * `Options` - New options value
 	pub fn UpdateOptions(&mut self, Options:Value) { self.Options = Some(Options); }
 
 	/// Checks if this provider matches a given document selector.
-	///
 	/// # Arguments
 	/// * `DocumentURI` - Document URI to check
 	/// * `LanguageIdentifier` - Document language identifier
-	///
 	/// # Returns
 	/// True if provider selector matches the document
 	pub fn MatchesSelector(&self, _DocumentURI:&str, LanguageIdentifier:&str) -> bool {

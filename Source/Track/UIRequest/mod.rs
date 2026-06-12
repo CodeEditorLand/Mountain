@@ -2,4 +2,5 @@
 //! `ResolveUIRequest.rs`; callers spell
 //! `Track::UIRequest::ResolveUIRequest::ResolveUIRequest`.
 
+/// Resolveuirequest module.
 pub mod ResolveUIRequest;

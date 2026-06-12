@@ -69,54 +69,75 @@ use crate::{
 };
 
 #[path = "CocoonManagement/BuildCocoonEnvironment.rs"]
+/// Buildcocoonenvironment module.
 pub mod BuildCocoonEnvironment;
 
 #[path = "CocoonManagement/CocoonProcessState.rs"]
+/// Cocoonprocessstate module.
 pub mod CocoonProcessState;
 
 #[path = "CocoonManagement/ConnectToCocoonGrpc.rs"]
+/// Connecttococoongrpc module.
 pub mod ConnectToCocoonGrpc;
 
 #[path = "CocoonManagement/FindMatchingWorkspaceContainsPatterns.rs"]
+/// Findmatchingworkspacecontainspatterns module.
 pub mod FindMatchingWorkspaceContainsPatterns;
 
 #[path = "CocoonManagement/FireRootConfigActivationEvents.rs"]
+/// Firerootconfigactivationevents module.
 pub mod FireRootConfigActivationEvents;
 
 #[path = "CocoonManagement/FireWorkspaceContainsEvents.rs"]
+/// Fireworkspacecontainsevents module.
 pub mod FireWorkspaceContainsEvents;
 
 #[path = "CocoonManagement/HardKillCocoon.rs"]
+/// Hardkillcocoon module.
 pub mod HardKillCocoon;
 
 #[path = "CocoonManagement/LaunchAndManageCocoonSideCar.rs"]
+/// Launchandmanagecocoonsidecar module.
 pub mod LaunchAndManageCocoonSideCar;
 
 #[path = "CocoonManagement/MonitorCocoonHealthTask.rs"]
+/// Monitorcocoonhealthtask module.
 pub mod MonitorCocoonHealthTask;
 
+/// Patternmatchesanyentry module.
 pub mod PatternMatchesAnyEntry;
 
+/// Resolvebootstrapscript module.
 pub mod ResolveBootstrapScript;
 
+/// Restorewebviewpanels module.
 pub mod RestoreWebviewPanels;
 
+/// Seedopendocuments module.
 pub mod SeedOpenDocuments;
 
+/// Seedopenterminals module.
 pub mod SeedOpenTerminals;
 
+/// Segmentmatch module.
 pub mod SegmentMatch;
 
+/// Sendinitializationhandshake module.
 pub mod SendInitializationHandshake;
 
+/// Singlesegmentmatch module.
 pub mod SingleSegmentMatch;
 
+/// Spawncocoonioforwarders module.
 pub mod SpawnCocoonIoForwarders;
 
+/// Spawnrestarthandler module.
 pub mod SpawnRestartHandler;
 
+/// Spawnstartupactivationtask module.
 pub mod SpawnStartupActivationTask;
 
+/// Sweepstalecocoon module.
 pub mod SweepStaleCocoon;
 
 /// Configuration constants for Cocoon process management
@@ -149,8 +170,10 @@ fn InitializeWsConfig() {
 	});
 }
 
+/// Wss port.
 pub fn WsPort() -> u16 { *COCOON_WS_PORT_CELL.get().unwrap_or(&0) }
 
+/// Wss secret hex.
 pub fn WsSecretHex() -> String { COCOON_WS_SECRET_CELL.get().cloned().unwrap_or_default() }
 
 const MOUNTAIN_GRPC_PORT:u16 = 50051;
@@ -162,7 +185,6 @@ const BOOTSTRAP_SCRIPT_PATH:&str = "scripts/cocoon/bootstrap-fork.js";
 /// (port 50052) starts as Stage 3 (before MountainConnection), so the port
 /// is available within 2-5 seconds of spawn. Budget raised to 30 s as a
 /// defensive buffer for slow hardware or contended startup.
-///
 /// Policy: start at 50 ms, double each attempt up to a 2 s ceiling,
 /// with a hard 30 s total-budget. Under healthy spawn timing (Cocoon
 /// binds 50052 within 2-3s) this converges on attempts 5-8 in <~3s total;
@@ -212,36 +234,26 @@ pub fn GetCocoonPid() -> Option<u32> {
 }
 
 /// The main entry point for initializing the Cocoon sidecar process manager.
-///
 /// This orchestrates the complete initialization sequence including:
 /// - Validating feature flags and dependencies
 /// - Launching the Cocoon process with proper configuration
 /// - Establishing gRPC communication
 /// - Performing the initialization handshake
 /// - Setting up process health monitoring
-///
 /// # Arguments
-///
 /// * `ApplicationHandle` - Tauri application handle for path resolution
 /// * `Environment` - Mountain environment containing application state and
 ///   services
-///
 /// # Returns
-///
 /// * `Ok(())` - Cocoon initialized successfully and ready to accept extension
 ///   requests
 /// * `Err(CommonError)` - Initialization failed with detailed error context
-///
 /// # Errors
-///
 /// - `FileSystemNotFound`: Bootstrap script not found
 /// - `IPCError`: Failed to spawn process or establish gRPC connection
-///
 /// # Example
-///
 /// ```rust,no_run
 /// use crate::Source::ProcessManagement::CocoonManagement::InitializeCocoon;
-///
 /// InitializeCocoon(&app_handle, &environment).await?;
 /// ```
 pub async fn InitializeCocoon(
@@ -285,7 +297,6 @@ pub async fn InitializeCocoon(
 /// still alive, then resets COCOON_STATE. This plugs the "Mountain exits
 /// cleanly but child stays running" leak that leads to zombie-Cocoon
 /// zombies holding the gRPC port.
-///
 /// Call AFTER the graceful $shutdown attempt - we don't want to race the
 /// child's own cleanup. Safe to call with no stored child (no-op).
 pub async fn HardKillCocoon() { self::HardKillCocoon::Fn().await }

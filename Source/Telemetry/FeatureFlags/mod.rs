@@ -19,22 +19,31 @@
 //! Wired up but unused as of 2026-05-02. Hydrate from `MountainEnvironment`
 //! and gate flag-driven code paths.
 
+/// Disable module.
 pub mod Disable;
 
+/// Enable module.
 pub mod Enable;
 
+/// Featureflag module.
 pub mod FeatureFlag;
 
+/// Featureflagerror module.
 pub mod FeatureFlagError;
 
+/// Featureflagregistry module.
 pub mod FeatureFlagRegistry;
 
+/// Flagcategory module.
 pub mod FlagCategory;
 
+/// Getallflags module.
 pub mod GetAllFlags;
 
+/// Initialize module.
 pub mod Initialize;
 
+/// Isenabled module.
 pub mod IsEnabled;
 
 pub(crate) mod GlobalRegistry;

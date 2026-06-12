@@ -31,14 +31,11 @@ use url::Url;
 use crate::dev_log;
 
 /// Serializes a URL to a JSON string value.
-///
 /// # Arguments
 /// * `URLInstance` - The URL to serialize
 /// * `SerializerInstance` - The serde serializer instance
-///
 /// # Returns
 /// Result containing the serialized string or serialization error
-///
 /// # Behavior
 /// - Converts URL to its string representation
 /// - Uses the serializer to create a JSON string value

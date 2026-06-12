@@ -2,4 +2,5 @@
 //! Development`. Used to gate verbose log output and developer-only menus.
 
 #[inline]
+/// Fn.
 pub const fn Fn() -> bool { cfg!(feature = "Development") || cfg!(debug_assertions) }

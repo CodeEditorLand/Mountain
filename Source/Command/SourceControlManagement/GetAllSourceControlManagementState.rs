@@ -10,6 +10,7 @@ use tauri::{State, command};
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
 
 #[command]
+/// Gets all source control management state.
 pub async fn GetAllSourceControlManagementState(State:State<'_, Arc<ApplicationState>>) -> Result<Value, String> {
 	dev_log!("commands", "getting all SCM state for UI");
 

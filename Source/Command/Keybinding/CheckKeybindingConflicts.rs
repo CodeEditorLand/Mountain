@@ -19,6 +19,7 @@ use tauri::{AppHandle, Manager, Wry, command};
 use crate::{Environment::Utility::WhenClause, RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 #[command]
+/// Checks keybinding conflicts.
 pub async fn CheckKeybindingConflicts(ApplicationHandle:AppHandle<Wry>, Keybinding:String) -> Result<Value, String> {
 	dev_log!("keybinding", "checking conflicts for keybinding: {}", Keybinding);
 

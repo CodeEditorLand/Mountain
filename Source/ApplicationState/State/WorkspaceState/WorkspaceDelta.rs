@@ -40,7 +40,6 @@ fn FolderToWire(Folder:&WorkspaceFolderStateDTO) -> serde_json::Value {
 
 /// Dispatch `$deltaWorkspaceFolders` to Cocoon. Returns immediately if both
 /// arrays are empty - no point waking the sidecar for a no-op mutation.
-///
 /// Errors are logged and swallowed: the workspace state is already updated by
 /// the caller, so a failed notification should not roll the mutation back. The
 /// log tag `[LandFix:WsDelta]` keeps the event grep-able in dev logs and is
@@ -79,7 +78,6 @@ pub async fn DispatchDeltaWorkspaceFolders(Added:Vec<WorkspaceFolderStateDTO>, R
 }
 
 /// Convenience wrapper: update the state and fire the delta in one call.
-///
 /// Spawns the notification on the current tokio runtime so callers in sync
 /// contexts (Tauri command handlers, boot-time seeding) don't have to build an
 /// async scope just to reach Cocoon. If no runtime is available (very early

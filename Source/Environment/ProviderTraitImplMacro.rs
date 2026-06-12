@@ -23,7 +23,7 @@
 //! reported by the Rust compiler on the generated `impl` block, not on the
 //! macro call site.
 
-/// Macro to generate `Requires<dyn T>` trait implementations for
+/// Macro that generates `Requires<dyn T>` trait implementations for
 /// `MountainEnvironment`.
 ///
 /// # Arguments

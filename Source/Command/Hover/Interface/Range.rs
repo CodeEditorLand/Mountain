@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::Command::Hover::Interface::Position;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Data for struct.
 pub struct Struct {
 	pub start:Position::Struct,
 

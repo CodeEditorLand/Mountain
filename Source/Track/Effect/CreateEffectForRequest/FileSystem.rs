@@ -1,3 +1,4 @@
+/// matches.
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"FileSystem.ReadFile"
@@ -44,6 +45,7 @@ fn require_non_empty_path(method:&str, path:&str) -> Result<(), String> {
 	}
 }
 
+/// Creates effect.
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"FileSystem.ReadFile" => {

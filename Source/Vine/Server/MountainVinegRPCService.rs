@@ -65,7 +65,6 @@ mod ServiceConfig {
 }
 
 /// The concrete implementation of the `MountainService` gRPC service.
-///
 /// This service handles all incoming RPC calls from the Cocoon sidecar,
 /// validating requests, dispatching to appropriate handlers, and returning
 /// responses in the expected gRPC format.
@@ -100,11 +99,9 @@ impl MountainVinegRPCService {
 
 impl MountainVinegRPCService {
 	/// Creates a new instance of the Mountain gRPC service.
-	///
 	/// # Parameters
 	/// - `ApplicationHandle`: Tauri app handle for framework integration
 	/// - `RunTime`: Application runtime with core dependencies
-	///
 	/// # Returns
 	/// New MountainVinegRPCService instance
 	pub fn Create(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) -> Self {
@@ -122,10 +119,8 @@ impl MountainVinegRPCService {
 	/// Registers an operation for potential cancellation.
 	/// Call this only from handlers that will also call UnregisterOperation
 	/// on both the success and error completion paths.
-	///
 	/// # Parameters
 	/// - `request_id`: The request identifier for the operation
-	///
 	/// # Returns
 	/// A cancellation token that can be used to cancel the operation
 	pub async fn RegisterOperation(&self, request_id:u64) -> tokio_util::sync::CancellationToken {
@@ -145,7 +140,6 @@ impl MountainVinegRPCService {
 	/// Unregisters an operation after completion.
 	/// Must be called on both success and error paths for any operation
 	/// that called RegisterOperation.
-	///
 	/// # Parameters
 	/// - `request_id`: The request identifier to unregister
 	pub async fn UnregisterOperation(&self, request_id:u64) {
@@ -155,10 +149,8 @@ impl MountainVinegRPCService {
 	}
 
 	/// Validates a generic request before processing.
-	///
 	/// # Parameters
 	/// - `request`: The request to validate
-	///
 	/// # Returns
 	/// - `Ok(())`: Request is valid
 	/// - `Err(Status)`: Validation failed with appropriate gRPC status
@@ -513,7 +505,6 @@ impl MountainService for MountainVinegRPCService {
 	}
 
 	/// Handles generic request-response RPCs from Cocoon.
-	///
 	/// Every request registers a cancellation token in `ActiveOperations`
 	/// keyed by the wire `RequestIdentifier` (allocated by Cocoon's
 	/// `generateRequestId`). `cancel_operation` fires the token; the dispatch

@@ -14,6 +14,7 @@ use tauri::{AppHandle, State, Wry, command};
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
 
 #[command]
+/// Ons tree view selection changed.
 pub async fn OnTreeViewSelectionChanged(
 	_ApplicationHandle:AppHandle<Wry>,
 

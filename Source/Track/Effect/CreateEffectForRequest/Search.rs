@@ -1,3 +1,4 @@
+/// matches.
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"findFiles" | "findTextInFiles" | "Search.TextSearch" => true,
@@ -18,6 +19,7 @@ use CommonLibrary::{
 
 use crate::Track::Effect::{CreateEffectForRequest::Utilities::Params::val_at, MappedEffectType::MappedEffect};
 
+/// Creates effect.
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"findFiles" | "findTextInFiles" => {

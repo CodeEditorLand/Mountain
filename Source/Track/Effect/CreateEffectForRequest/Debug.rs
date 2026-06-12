@@ -1,3 +1,4 @@
+/// matches.
 pub fn Matches(MethodName:&str) -> bool {
 	match MethodName {
 		"debug.dap-response" | "Debug.Start" | "Debug.RegisterConfigurationProvider" | "Debug.Stop" => true,
@@ -18,6 +19,7 @@ use crate::Track::Effect::{
 	MappedEffectType::MappedEffect,
 };
 
+/// Creates effect.
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		// Cocoon's `Debug/Namespace.ts:63` sends `debug.dap-response` as a

@@ -10,6 +10,7 @@ use tauri::{State, command};
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
 
 #[command]
+/// Gets s c m resource changes.
 pub async fn GetSCMResourceChanges(
 	State:State<'_, Arc<ApplicationState>>,
 

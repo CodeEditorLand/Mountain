@@ -14,7 +14,7 @@ use serde::Deserialize;
 
 use super::RPCRangeDTO::RPCRangeDTO;
 
-/// Represents a single text change operation, including the range to be
+/// a single text change operation, including the range to be
 /// replaced and the new text to insert. This is part of a collection sent when
 /// a document is edited.
 #[derive(Deserialize, Debug, Clone)]
@@ -29,11 +29,9 @@ pub struct RPCModelContentChangeDTO {
 
 impl RPCModelContentChangeDTO {
 	/// Creates a new RPCModelContentChangeDTO with validation.
-	///
 	/// # Arguments
 	/// * `Range` - The range to replace
 	/// * `Text` - The text to insert
-	///
 	/// # Returns
 	/// Result containing the DTO or validation error
 	pub fn New(Range:RPCRangeDTO, Text:String) -> Result<Self, String> {

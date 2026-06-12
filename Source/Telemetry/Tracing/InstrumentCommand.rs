@@ -8,6 +8,7 @@ use CommonLibrary::Error::CommonError::CommonError;
 use crate::dev_log;
 
 #[cfg(feature = "Telemetry")]
+/// fn.
 pub async fn Fn<F, T>(CommandName:&str, Operation:F) -> Result<T, CommonError>
 where
 	F: std::future::Future<Output = Result<T, CommonError>>, {
@@ -52,6 +53,7 @@ where
 }
 
 #[cfg(not(feature = "Telemetry"))]
+/// fn.
 pub async fn Fn<F, T>(_CommandName:&str, Operation:F) -> Result<T, CommonError>
 where
 	F: std::future::Future<Output = Result<T, CommonError>>, {

@@ -324,26 +324,26 @@ pub struct CocoonServiceImpl {
 }
 
 impl CocoonServiceImpl {
-	/// Creates a new instance of the CocoonService server
+	/// Constructs a new `CocoonServiceImpl`.
 	///
-	/// # Parameters
-	/// - `environment`: Mountain environment with access to all services
+	/// ## Parameters
+	/// - `environment`: Mountain environment providing access to all services.
 	///
-	/// # Returns
-	/// A new CocoonService instance
+	/// ## Returns
+	/// A new `CocoonService` instance.
 	pub fn new(environment:Arc<MountainEnvironment>) -> Self {
 		dev_log!("cocoon", "[CocoonService] New instance created");
 
 		Self { environment, ActiveOperations:Arc::new(RwLock::new(HashMap::new())) }
 	}
 
-	/// Registers an operation for potential cancellation
+	/// Registers an operation for potential cancellation.
 	///
-	/// # Parameters
-	/// - `request_id`: The request identifier for the operation
+	/// ## Parameters
+	/// - `request_id`: The request identifier for the operation.
 	///
-	/// # Returns
-	/// A cancellation token that can be used to cancel the operation
+	/// ## Returns
+	/// A cancellation token that can be used to cancel the operation.
 	pub async fn RegisterOperation(&self, request_id:u64) -> tokio_util::sync::CancellationToken {
 		let token = tokio_util::sync::CancellationToken::new();
 
@@ -354,10 +354,10 @@ impl CocoonServiceImpl {
 		token
 	}
 
-	/// Unregisters an operation after completion
+	/// Unregisters an operation after completion.
 	///
-	/// # Parameters
-	/// - `request_id`: The request identifier to unregister
+	/// ## Parameters
+	/// - `request_id`: The request identifier to unregister.
 	pub async fn UnregisterOperation(&self, request_id:u64) {
 		self.ActiveOperations.write().await.remove(&request_id);
 
@@ -414,12 +414,12 @@ impl CocoonServiceImpl {
 	/// Converts the gRPC request fields into a `ProviderRegistrationDTO` and
 	/// stores it in `ApplicationState.Extension.ProviderRegistration`.
 	///
-	/// # Parameters
-	/// - `handle`: Unique provider handle
-	/// - `provider_type`: The type of language feature
-	/// - `language_selector`: Language scope (e.g. "typescript")
-	/// - `extension_id`: Extension that registered this provider
-	fn RegisterProvider(&self, handle:u32, provider_type:ProviderType, language_selector:&str, extension_id:&str) {
+	/// ## Parameters
+	/// - `handle`: Unique provider handle.
+	/// - `provider_type`: The type of language feature.
+	/// - `language_selector`: Language scope (e.g. `"typescript"`).
+	/// - `extension_id`: Extension that registered this provider.
+	fn RegisterProvider
 		// SideCarIdentifier = "cocoon-main" so FeatureMethods::invoke_provider can
 		// route back via Vine::Client::SendRequestToSideCar("cocoon-main", ...).
 		// Selector stored as array so ProviderLookup::get_matching_provider's

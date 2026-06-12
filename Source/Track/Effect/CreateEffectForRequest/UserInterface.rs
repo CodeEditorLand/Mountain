@@ -1,3 +1,4 @@
+/// matches.
 pub fn Matches(MethodName:&str) -> bool {
 	MethodName.starts_with("UserInterface.") || MethodName.starts_with("Window.")
 }
@@ -20,6 +21,7 @@ use crate::{
 	dev_log,
 };
 
+/// Creates effect.
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"UserInterface.ShowMessage" => {

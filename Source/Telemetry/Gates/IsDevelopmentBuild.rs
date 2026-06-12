@@ -3,4 +3,5 @@
 //! builds without flipping a feature flag.
 
 #[inline]
+/// Fn.
 pub const fn Fn() -> bool { cfg!(feature = "Development") || cfg!(debug_assertions) }

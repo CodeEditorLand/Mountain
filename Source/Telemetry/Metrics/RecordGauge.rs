@@ -4,4 +4,5 @@ use std::collections::HashMap;
 
 use crate::Telemetry::Metrics::GlobalRegistry;
 
+/// fn.
 pub fn Fn(Name:&str, Value:f64) { GlobalRegistry::REGISTRY.RecordGauge(Name, Value, HashMap::new()); }

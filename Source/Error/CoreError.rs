@@ -129,24 +129,28 @@ impl ErrorContext {
 		}
 	}
 
+/// with kind.
 	pub fn with_kind(mut self, kind:ErrorKind) -> Self {
 		self.kind = kind;
 
 		self
 	}
 
+/// with severity.
 	pub fn with_severity(mut self, severity:ErrorSeverity) -> Self {
 		self.severity = severity;
 
 		self
 	}
 
+/// with operation.
 	pub fn with_operation(mut self, operation:impl Into<String>) -> Self {
 		self.operation = Some(operation.into());
 
 		self
 	}
 
+/// with component.
 	pub fn with_component(mut self, component:impl Into<String>) -> Self {
 		self.component = Some(component.into());
 

@@ -2,4 +2,5 @@
 
 use crate::Telemetry::FeatureFlags::{FeatureFlag, GlobalRegistry};
 
+/// fn.
 pub fn Fn() -> Vec<FeatureFlag::Struct> { GlobalRegistry::REGISTRY.GetAllFlags() }

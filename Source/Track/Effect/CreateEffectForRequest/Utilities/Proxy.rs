@@ -16,6 +16,7 @@ use serde_json::Value;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
+/// proxy cocoon.
 pub async fn proxy_cocoon(
 	run_time:&Arc<ApplicationRunTime>,
 

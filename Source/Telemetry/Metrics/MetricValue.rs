@@ -5,6 +5,7 @@
 use std::time::Duration;
 
 #[derive(Debug, Clone)]
+/// Enumeration for enum.
 pub enum Enum {
 	/// A single numerical value that can go up or down
 	Counter(f64),

@@ -14,6 +14,7 @@ use tauri::{AppHandle, State, Wry, command};
 use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
 
 #[command]
+/// Restores tree view.
 pub async fn RestoreTreeView(
 	_ApplicationHandle:AppHandle<Wry>,
 

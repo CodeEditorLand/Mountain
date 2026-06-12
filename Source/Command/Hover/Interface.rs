@@ -10,12 +10,17 @@
 //! - `HoverResponse::Struct` - outbound response DTO with `contents` list and
 //!   optional `Range::Struct`.
 
+/// Hovercontent module.
 pub mod HoverContent;
 
+/// Hoverrequest module.
 pub mod HoverRequest;
 
+/// Hoverresponse module.
 pub mod HoverResponse;
 
+/// Position module.
 pub mod Position;
 
+/// Range module.
 pub mod Range;

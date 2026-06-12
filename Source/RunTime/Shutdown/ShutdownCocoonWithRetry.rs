@@ -11,6 +11,7 @@ use CommonLibrary::{Environment::Requires::Requires, Error::CommonError::CommonE
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
+/// Shutdowns cocoon with retry.
 	pub async fn ShutdownCocoonWithRetry(&self) -> Result<(), CommonError> {
 		let IPCProvider:Arc<dyn IPCProvider> = self.Environment.Require();
 

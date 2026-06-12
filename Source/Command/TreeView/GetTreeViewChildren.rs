@@ -19,6 +19,7 @@ use crate::{
 };
 
 #[command]
+/// Gets tree view children.
 pub async fn GetTreeViewChildren(
 	ApplicationHandle:AppHandle<Wry>,
 

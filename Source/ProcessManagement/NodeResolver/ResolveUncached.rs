@@ -20,6 +20,7 @@ use crate::{
 	dev_log,
 };
 
+/// fn.
 pub fn Fn<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode::Struct {
 	if let Some(Found) = TryOverride::Fn() {
 		return Found;

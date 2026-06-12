@@ -18,6 +18,7 @@ use crate::{
 };
 
 #[command]
+/// Stages s c m resource.
 pub async fn StageSCMResource(
 	State:State<'_, Arc<ApplicationState>>,
 
