@@ -1,10 +1,12 @@
-// # CocoonServiceImpl - thin-wrapper dispatcher
-//
-// Domain files hold all typed RPC implementations. This module keeps:
-// - CocoonServiceImpl struct + helper methods
-// - process_mountain_request (legacy generic router, ~600 lines)
-// - send_mountain_notification (push dispatcher, ~400 lines)
-// - One-line delegates for all 78 typed RPCs
+//! # CocoonService
+//!
+//! Thin-wrapper dispatcher for the `CocoonService` gRPC server. Domain
+//! submodules hold all typed RPC implementations. This file keeps:
+//!
+//! - `CocoonServiceImpl` struct + helper methods
+//! - `process_mountain_request` (legacy generic router, ~600 lines)
+//! - `send_mountain_notification` (push dispatcher, ~400 lines)
+//! - One-line delegates for all 78 typed RPCs
 
 pub mod Auth;
 
@@ -307,17 +309,17 @@ lazy_static! {
 		DashMap::new();
 }
 
-/// Implementation of the CocoonService gRPC server
+/// Implementation of the `CocoonService` gRPC server.
 ///
-/// This struct handles all incoming requests from the Cocoon extension host
-/// sidecar and dispatches them to the appropriate Mountain services.
+/// Dispatches all incoming requests from the Cocoon extension host sidecar
+/// to the appropriate Mountain services.
 #[derive(Clone)]
 pub struct CocoonServiceImpl {
-	/// Mountain environment providing access to all services
+	/// environment — Mountain environment providing access to all services.
 	environment:Arc<MountainEnvironment>,
 
-	/// Registry of active operations with their cancellation tokens
-	/// Maps request ID to cancellation token for operation cancellation
+	/// ActiveOperations — Registry of active operations keyed by request ID,
+	/// each with a cancellation token for operation cancellation.
 	ActiveOperations:Arc<RwLock<HashMap<u64, tokio_util::sync::CancellationToken>>>,
 }
 
