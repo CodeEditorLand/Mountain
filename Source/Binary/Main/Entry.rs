@@ -770,7 +770,9 @@ pub fn Fn() {
 				// and dispatch through the existing file handler.
 				let AppHandle = ctx.app_handle().clone();
 
-				std::thread::spawn(move || {
+				// Blocking pool (sync body, disk IO on miss) - see the
+				// vscode-file handler above.
+				tauri::async_runtime::spawn_blocking(move || {
 					let Original = request.uri().to_string();
 
 					let RewrittenUri = match Original.strip_prefix("vscode-resource://") {

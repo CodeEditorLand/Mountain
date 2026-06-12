@@ -124,7 +124,15 @@ pub async fn Fn(
 
 	let PositionDTO_ = PositionDTO { LineNumber:Line, Column:Character };
 
-	match Service.environment.PrepareCallHierarchy(DocumentURI, PositionDTO_).await {
+	let Forward = Service.environment.PrepareCallHierarchy(DocumentURI, PositionDTO_);
+
+	let Outcome = match Service.RunCancellable("PrepareCallHierarchy", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideCallHierarchyResponse::default())),
+	};
+
+	match Outcome {
 		Ok(Some(Items)) => {
 			let Calls:Vec<CallHierarchyCall> = Items
 				.as_array()

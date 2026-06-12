@@ -19,7 +19,15 @@ pub async fn Fn(
 		"uri": Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or(""),
 	});
 
-	match Service.environment.ProvideTypeHierarchySubtypes(ItemDTO).await {
+	let Forward = Service.environment.ProvideTypeHierarchySubtypes(ItemDTO);
+
+	let Outcome = match Service.RunCancellable("ProvideTypeHierarchySubtypes", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(<ProvideTypeHierarchyResponse>::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(<ProvideTypeHierarchyResponse>::default())),
 
 		Err(Error) => Err(Status::internal(format!("type hierarchy subtypes failed: {}", Error))),

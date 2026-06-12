@@ -29,7 +29,15 @@ pub async fn Fn(
 		Column:Position_.map(|P| P.character).unwrap_or(0),
 	};
 
-	match Service.environment.ProvideDocumentHighlights(DocumentURI, PositionDTO_).await {
+	let Forward = Service.environment.ProvideDocumentHighlights(DocumentURI, PositionDTO_);
+
+	let Outcome = match Service.RunCancellable("ProvideDocumentHighlights", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideDocumentHighlightsResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideDocumentHighlightsResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Document highlights failed: {}", Error))),

@@ -17,7 +17,15 @@ pub async fn Fn(
 		Request.query
 	);
 
-	match Service.environment.ProvideWorkspaceSymbols(Request.query).await {
+	let Forward = Service.environment.ProvideWorkspaceSymbols(Request.query);
+
+	let Outcome = match Service.RunCancellable("ProvideWorkspaceSymbols", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideWorkspaceSymbolsResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideWorkspaceSymbolsResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Workspace symbols failed: {}", Error))),

@@ -33,11 +33,15 @@ pub async fn Fn(
 		Column:Position_.map(|P| P.character).unwrap_or(0),
 	};
 
-	match Service
-		.environment
-		.ProvideRenameEdits(DocumentURI, PositionDTO_, Request.new_name)
-		.await
-	{
+	let Forward = Service.environment.ProvideRenameEdits(DocumentURI, PositionDTO_, Request.new_name);
+
+	let Outcome = match Service.RunCancellable("ProvideRenameEdits", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideRenameEditsResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideRenameEditsResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Rename edits failed: {}", Error))),

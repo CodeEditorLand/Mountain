@@ -305,8 +305,15 @@ pub fn AppLifecycleSetup(
 
 	// -------------------------------------------------------------------------
 	// [Backend] [Dirs] Ensure userdata directories exist
+	//
+	// The cheap, order-sensitive pieces stay synchronous (path-root statics
+	// the IPC handlers read, memento hydration the first `storage:getItems`
+	// depends on). The 14 `create_dir_all` calls, default-file writes, and
+	// the settings.json trust-key injection move to the blocking pool;
+	// PostSetup awaits `DirsReady` before its first configuration merge so
+	// the trust key is always present when settings.json is read.
 	// -------------------------------------------------------------------------
-	{
+	let DirsReady = {
 		let PathResolver = app.path();
 
 		let AppDataDir = PathResolver.app_data_dir().unwrap_or_default();
@@ -372,103 +379,15 @@ pub fn AppLifecycleSetup(
 			SkyTargetDir.display()
 		);
 
-		// Every directory VS Code may stat or readdir during startup
-		let Dirs = [
-			// User profile directories
-			AppDataDir.join("User"),
-			AppDataDir.join("User/globalStorage"),
-			AppDataDir.join("User/workspaceStorage"),
-			AppDataDir.join("User/workspaceStorage/vscode-chat-images"),
-			AppDataDir.join("User/extensions"),
-			AppDataDir.join("User/profiles/__default__profile__"),
-			AppDataDir.join("User/snippets"),
-			AppDataDir.join("User/prompts"),
-			AppDataDir.join("User/caches"),
-			// Configuration cache
-			AppDataDir.join("CachedConfigurations/defaults/__default__profile__-configurationDefaultsOverrides"),
-			// Log directories - VS Code stats {logsPath}/window1/output_{timestamp}
-			LogDir.join("window1"),
-			// System extensions directory - VS Code scans appRoot/../extensions
-			// which resolves to /Static/Application/extensions (mapped to Sky Target).
-			SkyTargetDir.join("Static/Application/extensions"),
-			// Agent directories VS Code probes for (create to avoid stat errors)
-			HomeDir.join(".claude/agents"),
-			HomeDir.join(".copilot/agents"),
-		];
-
-		for Dir in &Dirs {
-			if let Err(Error) = std::fs::create_dir_all(Dir) {
-				dev_log!(
-					"lifecycle",
-					"warn: [Lifecycle] [Dirs] Failed to create {}: {}",
-					Dir.display(),
-					Error
-				);
-			}
-		}
-
-		// Default empty files VS Code reads on startup
-		let DefaultFiles:&[(&std::path::Path, &str)] = &[
-			(&AppDataDir.join("User/settings.json"), "{}"),
-			(&AppDataDir.join("User/keybindings.json"), "[]"),
-			(&AppDataDir.join("User/tasks.json"), "{}"),
-			(&AppDataDir.join("User/extensions.json"), "[]"),
-			(&AppDataDir.join("User/mcp.json"), "{}"),
-		];
-
-		for (FilePath, DefaultContent) in DefaultFiles {
-			if !FilePath.exists() {
-				let _ = std::fs::write(FilePath, DefaultContent);
-			}
-		}
-
-		// Atom I7: ensure `security.workspace.trust.enabled: false` lives
-		// in User/settings.json. Without it, opening the Land repo as a
-		// workspace triggers VS Code's workspace-trust gate: built-in
-		// extensions whose `location` is inside the picked folder are
-		// marked `DisabledByTrustRequirement` (see
-		// `extensionEnablementService.ts:549`). Since our built-ins ship
-		// under `Element/Sky/Target/Static/Application/extensions/` -
-		// which IS inside the repo - any user picking the repo as a
-		// workspace hits this filter for every extension. Disabling the
-		// trust system wholesale is the correct Land-level policy; we're
-		// a personal editor, not a multi-user sandbox. Users can opt
-		// back in by flipping this key in their User/settings.json.
-		{
-			let SettingsPath = AppDataDir.join("User/settings.json");
-
-			let Current = std::fs::read_to_string(&SettingsPath).unwrap_or_else(|_| "{}".to_string());
-
-			if !Current.contains("\"security.workspace.trust.enabled\"") {
-				if let Ok(mut Parsed) = serde_json::from_str::<serde_json::Value>(&Current) {
-					if !Parsed.is_object() {
-						Parsed = serde_json::json!({});
-					}
-
-					if let Some(Obj) = Parsed.as_object_mut() {
-						Obj.insert("security.workspace.trust.enabled".to_string(), serde_json::Value::Bool(false));
-					}
-
-					if let Ok(Serialized) = serde_json::to_string_pretty(&Parsed) {
-						let _ = std::fs::write(&SettingsPath, Serialized);
-
-						dev_log!(
-							"lifecycle",
-							"[Lifecycle] [Dirs] Injected default 'security.workspace.trust.enabled=false' into {}",
-							SettingsPath.display()
-						);
-					}
-				}
-			}
-		}
-
 		// Set GlobalMementoPath now that we know the real Tauri app data dir
 		let GlobalMementoFile = AppDataDir.join("User/globalStorage/global.json");
 
-		let mut Path = app_state.GlobalMementoPath.lock();
+		{
+			let mut Path = app_state.GlobalMementoPath.lock();
 
-		*Path = GlobalMementoFile.clone();
-		dev_log!("lifecycle", "[Lifecycle] [Dirs] GlobalMementoPath: {}", Path.display());
+			*Path = GlobalMementoFile.clone();
+			dev_log!("lifecycle", "[Lifecycle] [Dirs] GlobalMementoPath: {}", Path.display());
+		}
 
 		// Boot-time memento hydration: use the crash-safe best-effort loader.
 		// A corrupted global.json (partial write during a previous crash, disk
@@ -476,6 +395,8 @@ pub fn AppLifecycleSetup(
 		// `.json.corrupted.<ts>` sibling and the in-memory map starts empty
 		// rather than panicking the boot path. Workspace memento is loaded on
 		// `UpdateWorkspaceMementoPathAndReload` so we only hydrate global here.
+		// Kept synchronous: the webview's first `storage:getItems` must see
+		// the hydrated map or the workbench loses its persisted state.
 		{
 			let LoadedGlobal =
 				crate::ApplicationState::Internal::Persistence::MementoLoader::LoadInitialMementoFromDisk::Fn(
@@ -494,12 +415,104 @@ pub fn AppLifecycleSetup(
 			app_state.Configuration.SetGlobalMemento(LoadedGlobal);
 		}
 
-		dev_log!(
-			"lifecycle",
-			"[Lifecycle] [Dirs] Userdata directories ensured at {}",
-			AppDataDir.display()
-		);
-	}
+		tauri::async_runtime::spawn_blocking(move || {
+			// Every directory VS Code may stat or readdir during startup
+			let Dirs = [
+				// User profile directories
+				AppDataDir.join("User"),
+				AppDataDir.join("User/globalStorage"),
+				AppDataDir.join("User/workspaceStorage"),
+				AppDataDir.join("User/workspaceStorage/vscode-chat-images"),
+				AppDataDir.join("User/extensions"),
+				AppDataDir.join("User/profiles/__default__profile__"),
+				AppDataDir.join("User/snippets"),
+				AppDataDir.join("User/prompts"),
+				AppDataDir.join("User/caches"),
+				// Configuration cache
+				AppDataDir.join("CachedConfigurations/defaults/__default__profile__-configurationDefaultsOverrides"),
+				// Log directories - VS Code stats {logsPath}/window1/output_{timestamp}
+				LogDir.join("window1"),
+				// System extensions directory - VS Code scans appRoot/../extensions
+				// which resolves to /Static/Application/extensions (mapped to Sky Target).
+				SkyTargetDir.join("Static/Application/extensions"),
+				// Agent directories VS Code probes for (create to avoid stat errors)
+				HomeDir.join(".claude/agents"),
+				HomeDir.join(".copilot/agents"),
+			];
+
+			for Dir in &Dirs {
+				if let Err(Error) = std::fs::create_dir_all(Dir) {
+					dev_log!(
+						"lifecycle",
+						"warn: [Lifecycle] [Dirs] Failed to create {}: {}",
+						Dir.display(),
+						Error
+					);
+				}
+			}
+
+			// Default empty files VS Code reads on startup
+			let DefaultFiles:&[(&std::path::Path, &str)] = &[
+				(&AppDataDir.join("User/settings.json"), "{}"),
+				(&AppDataDir.join("User/keybindings.json"), "[]"),
+				(&AppDataDir.join("User/tasks.json"), "{}"),
+				(&AppDataDir.join("User/extensions.json"), "[]"),
+				(&AppDataDir.join("User/mcp.json"), "{}"),
+			];
+
+			for (FilePath, DefaultContent) in DefaultFiles {
+				if !FilePath.exists() {
+					let _ = std::fs::write(FilePath, DefaultContent);
+				}
+			}
+
+			// Atom I7: ensure `security.workspace.trust.enabled: false` lives
+			// in User/settings.json. Without it, opening the Land repo as a
+			// workspace triggers VS Code's workspace-trust gate: built-in
+			// extensions whose `location` is inside the picked folder are
+			// marked `DisabledByTrustRequirement` (see
+			// `extensionEnablementService.ts:549`). Since our built-ins ship
+			// under `Element/Sky/Target/Static/Application/extensions/` -
+			// which IS inside the repo - any user picking the repo as a
+			// workspace hits this filter for every extension. Disabling the
+			// trust system wholesale is the correct Land-level policy; we're
+			// a personal editor, not a multi-user sandbox. Users can opt
+			// back in by flipping this key in their User/settings.json.
+			{
+				let SettingsPath = AppDataDir.join("User/settings.json");
+
+				let Current = std::fs::read_to_string(&SettingsPath).unwrap_or_else(|_| "{}".to_string());
+
+				if !Current.contains("\"security.workspace.trust.enabled\"") {
+					if let Ok(mut Parsed) = serde_json::from_str::<serde_json::Value>(&Current) {
+						if !Parsed.is_object() {
+							Parsed = serde_json::json!({});
+						}
+
+						if let Some(Obj) = Parsed.as_object_mut() {
+							Obj.insert("security.workspace.trust.enabled".to_string(), serde_json::Value::Bool(false));
+						}
+
+						if let Ok(Serialized) = serde_json::to_string_pretty(&Parsed) {
+							let _ = std::fs::write(&SettingsPath, Serialized);
+
+							dev_log!(
+								"lifecycle",
+								"[Lifecycle] [Dirs] Injected default 'security.workspace.trust.enabled=false' into {}",
+								SettingsPath.display()
+							);
+						}
+					}
+				}
+			}
+
+			dev_log!(
+				"lifecycle",
+				"[Lifecycle] [Dirs] Userdata directories ensured at {}",
+				AppDataDir.display()
+			);
+		})
+	};
 
 	// -------------------------------------------------------------------------
 	// [Backend] [Env] Mountain environment

@@ -30,11 +30,15 @@ pub async fn Fn(
 
 	let OptionsDTO = json!({ "tabSize": 4, "insertSpaces": true });
 
-	match Service
-		.environment
-		.ProvideDocumentRangeFormattingEdits(DocumentURI, RangeDTO, OptionsDTO)
-		.await
-	{
+	let Forward = Service.environment.ProvideDocumentRangeFormattingEdits(DocumentURI, RangeDTO, OptionsDTO);
+
+	let Outcome = match Service.RunCancellable("ProvideDocumentRangeFormatting", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideDocumentRangeFormattingResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideDocumentRangeFormattingResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Document range formatting failed: {}", Error))),

@@ -32,11 +32,16 @@ pub async fn Fn(
 
 	let OptionsDTO = json!({ "tabSize": 4, "insertSpaces": true });
 
-	match Service
-		.environment
-		.ProvideOnTypeFormattingEdits(DocumentURI, PositionDTO_, Request.character, OptionsDTO)
-		.await
-	{
+	let Forward =
+		Service.environment.ProvideOnTypeFormattingEdits(DocumentURI, PositionDTO_, Request.character, OptionsDTO);
+
+	let Outcome = match Service.RunCancellable("ProvideOnTypeFormatting", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideOnTypeFormattingResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideOnTypeFormattingResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("On-type formatting failed: {}", Error))),

@@ -18,7 +18,15 @@ pub async fn Fn(
 
 	let DocumentURI = Url::parse(URI).map_err(|E| Status::invalid_argument(format!("Invalid URI: {}", E)))?;
 
-	match Service.environment.ProvideFoldingRanges(DocumentURI).await {
+	let Forward = Service.environment.ProvideFoldingRanges(DocumentURI);
+
+	let Outcome = match Service.RunCancellable("ProvideFoldingRanges", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideFoldingRangesResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideFoldingRangesResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Folding ranges failed: {}", Error))),

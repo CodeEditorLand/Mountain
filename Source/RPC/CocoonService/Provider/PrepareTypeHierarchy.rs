@@ -121,7 +121,15 @@ pub async fn Fn(
 
 	let PositionDTO_ = PositionDTO { LineNumber:Line, Column:Character };
 
-	match Service.environment.PrepareTypeHierarchy(DocumentURI, PositionDTO_).await {
+	let Forward = Service.environment.PrepareTypeHierarchy(DocumentURI, PositionDTO_);
+
+	let Outcome = match Service.RunCancellable("PrepareTypeHierarchy", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideTypeHierarchyResponse::default())),
+	};
+
+	match Outcome {
 		Ok(Some(Items)) => {
 			let Mapped:Vec<TypeHierarchyItem> = Items
 				.as_array()

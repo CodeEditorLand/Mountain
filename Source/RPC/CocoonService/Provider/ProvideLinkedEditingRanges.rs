@@ -29,7 +29,15 @@ pub async fn Fn(
 		Column:Position_.map(|P| P.character).unwrap_or(0),
 	};
 
-	match Service.environment.ProvideLinkedEditingRanges(DocumentURI, PositionDTO_).await {
+	let Forward = Service.environment.ProvideLinkedEditingRanges(DocumentURI, PositionDTO_);
+
+	let Outcome = match Service.RunCancellable("ProvideLinkedEditingRanges", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideLinkedEditingRangesResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideLinkedEditingRangesResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Linked editing ranges failed: {}", Error))),

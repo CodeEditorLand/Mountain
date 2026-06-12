@@ -28,7 +28,15 @@ pub async fn Fn(
 		.map(|P| PositionDTO { LineNumber:P.line, Column:P.character })
 		.collect();
 
-	match Service.environment.ProvideSelectionRanges(DocumentURI, PositionDTOs).await {
+	let Forward = Service.environment.ProvideSelectionRanges(DocumentURI, PositionDTOs);
+
+	let Outcome = match Service.RunCancellable("ProvideSelectionRanges", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideSelectionRangesResponse::default())),
+	};
+
+	match Outcome {
 		Ok(_) => Ok(Response::new(ProvideSelectionRangesResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Selection ranges failed: {}", Error))),

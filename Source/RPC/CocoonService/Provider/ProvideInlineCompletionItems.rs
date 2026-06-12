@@ -53,11 +53,15 @@ pub async fn Fn(
 			.unwrap_or(""),
 	});
 
-	match Service
-		.environment
-		.ProvideInlineCompletionItems(DocumentURI, PositionDTO_, Context)
-		.await
-	{
+	let Forward = Service.environment.ProvideInlineCompletionItems(DocumentURI, PositionDTO_, Context);
+
+	let Outcome = match Service.RunCancellable("ProvideInlineCompletionItems", Forward).await {
+		Some(Outcome) => Outcome,
+
+		None => return Ok(Response::new(ProvideInlineCompletionResponse::default())),
+	};
+
+	match Outcome {
 		Ok(Some(Raw)) => {
 			// Raw is a JSON Value returned by Cocoon's provider.
 			// Shape: { items: [{ insertText, range?, isSnippet?, command? }] }
