@@ -18,20 +18,6 @@
 // (`WindServiceHandlers::Utilities::foo`).
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
-use Cocoon::{
-	ExtensionHostMessage::Fn as CocoonExtensionHostMessage,
-	Notify::Fn as CocoonNotify,
-	Request::Fn as CocoonRequest,
-};
-use ExtensionHost::{
-	DebugServiceClose::Fn as ExtensionHostDebugClose,
-	DebugServiceReload::Fn as ExtensionHostDebugReload,
-	StarterCreate::Fn as ExtensionHostStarterCreate,
-	StarterGetExitInfo::Fn as ExtensionHostStarterGetExitInfo,
-	StarterKill::Fn as ExtensionHostStarterKill,
-	StarterStart::Fn as ExtensionHostStarterStart,
-	StarterWaitForExit::Fn as ExtensionHostStarterWaitForExit,
-};
 use Sky::ReplayEvents::Fn as SkyReplayEvents;
 use TreeView::GetChildren::Fn as TreeGetChildren;
 use Update::{
@@ -126,13 +112,6 @@ use NativeHost::{
 	UninstallShellCommand::Fn as UninstallShellCommand,
 };
 use Navigation::{
-	HistoryCanGoBack::Fn as HistoryCanGoBack,
-	HistoryCanGoForward::Fn as HistoryCanGoForward,
-	HistoryClear::Fn as HistoryClear,
-	HistoryGetStack::Fn as HistoryGetStack,
-	HistoryGoBack::Fn as HistoryGoBack,
-	HistoryGoForward::Fn as HistoryGoForward,
-	HistoryPush::Fn as HistoryPush,
 	LabelGetBase::Fn as LabelGetBase,
 	LabelGetURI::Fn as LabelGetURI,
 	LabelGetWorkspace::Fn as LabelGetWorkspace,
@@ -145,23 +124,6 @@ use Storage::{
 	StorageKeys::Fn as StorageKeys,
 	StorageSet::Fn as StorageSet,
 	StorageUpdateItems::Fn as StorageUpdateItems,
-};
-use Terminal::{
-	AttachToProcess::Fn as AttachToProcess,
-	DetachFromProcess::Fn as DetachFromProcess,
-	LocalPTYCreateProcess::Fn as LocalPTYCreateProcess,
-	LocalPTYFreePortKillProcess::Fn as LocalPTYFreePortKillProcess,
-	LocalPTYGetDefaultShell::Fn as LocalPTYGetDefaultShell,
-	LocalPTYGetEnvironment::Fn as LocalPTYGetEnvironment,
-	LocalPTYGetProfiles::Fn as LocalPTYGetProfiles,
-	LocalPTYResize::Fn as LocalPTYResize,
-	ReviveTerminalProcesses::Fn as ReviveTerminalProcesses,
-	SerializeTerminalState::Fn as SerializeTerminalState,
-	TerminalCreate::Fn as TerminalCreate,
-	TerminalDispose::Fn as TerminalDispose,
-	TerminalHide::Fn as TerminalHide,
-	TerminalSendText::Fn as TerminalSendText,
-	TerminalShow::Fn as TerminalShow,
 };
 use UI::{
 	DecorationsClear::Fn as DecorationsClear,
@@ -193,10 +155,6 @@ use UI::{
 	WorkingCopyGetDirtyCount::Fn as WorkingCopyGetDirtyCount,
 	WorkingCopyIsDirty::Fn as WorkingCopyIsDirty,
 	WorkingCopySetDirty::Fn as WorkingCopySetDirty,
-	WorkspacesAddFolder::Fn as WorkspacesAddFolder,
-	WorkspacesGetFolders::Fn as WorkspacesGetFolders,
-	WorkspacesGetName::Fn as WorkspacesGetName,
-	WorkspacesRemoveFolder::Fn as WorkspacesRemoveFolder,
 };
 use Utilities::{
 	ApplicationRoot::{Get::Fn as get_static_application_root, Set::Fn as set_static_application_root},
