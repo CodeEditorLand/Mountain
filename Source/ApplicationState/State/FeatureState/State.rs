@@ -45,6 +45,7 @@ use std::{
 
 use dashmap::DashMap;
 use parking_lot::Mutex;
+use tokio::sync::watch;
 
 use super::{
 	Debug::DebugState::DebugState,
@@ -132,6 +133,13 @@ pub struct State {
 
 	/// Monotonically increasing counter for minting search IDs.
 	pub SearchIdCounter:Arc<AtomicU64>,
+
+	/// Pending language-provider cancellation signals, keyed by the
+	/// renderer-supplied request identifier. `language:cancelRequest`
+	/// looks up the sender and flips it; the provider forward's
+	/// `ForwardCancellable` receives the signal via `FnCancellable`
+	/// and delivers `CancelOperation` on the wire.
+	pub LanguageProviderCancellations:Arc<DashMap<String, watch::Sender<bool>>>,
 }
 
 /// Registration entry for a `vscode.window.registerExternalUriOpener` call.
@@ -189,6 +197,8 @@ impl Default for State {
 			SearchCancellationFlags:Arc::new(DashMap::new()),
 
 			SearchIdCounter:Arc::new(AtomicU64::new(1)),
+
+			LanguageProviderCancellations:Arc::new(DashMap::new()),
 		}
 	}
 }

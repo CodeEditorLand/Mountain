@@ -7,6 +7,8 @@ use std::sync::Arc;
 
 use serde_json::Value;
 
+use serde_json::json;
+
 use crate::{
 	IPC::WindServiceHandlers::Utilities::{
 		MetadataEncoding::Fn as metadata_to_istat,
@@ -18,6 +20,7 @@ use crate::{
 
 pub async fn Fn(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let ResourceArg = Arguments.first().ok_or("textFile:save requires a resource argument")?;
+	let Uri = ResourceArg.to_string();
 
 	let Path = extract_path_from_arg(ResourceArg).map_err(|E| format!("textFile:save bad resource: {}", E))?;
 
@@ -28,7 +31,17 @@ pub async fn Fn(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Resul
 	}
 
 	match tokio::fs::metadata(&Path).await {
-		Ok(Meta) => Ok(metadata_to_istat(&Meta)),
+		Ok(Meta) => {
+			// T1.4 - notify Cocoon that the model on disk matches the editor
+			// buffer, firing `onDidSaveTextDocument` for extensions.
+			let _ = crate::Vine::Client::SendNotification::Fn(
+				"cocoon-main".to_string(),
+				"$acceptModelSaved".to_string(),
+				json!({ "uri": Uri }),
+			);
+
+			Ok(metadata_to_istat(&Meta))
+		},
 
 		// Propagate stat failure - returning Ok(Null) causes TextFileEditorModel
 		// to call .mtime on null → TypeError, flipping the document to conflict

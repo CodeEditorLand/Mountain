@@ -829,11 +829,19 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			"WebviewReady" => {
-				dev_log!(
-					"grpc",
-					"[Webview] ready handle={}",
-					Parameter.get("handle").and_then(Value::as_str).unwrap_or("?")
-				);
+				let Handle = Parameter.get("handle").and_then(Value::as_str).unwrap_or("?");
+				let ViewType = Parameter.get("viewType").and_then(Value::as_str).unwrap_or("?");
+
+				dev_log!("grpc", "[Webview] ready handle={} viewType={}", Handle, ViewType);
+
+				// Mark webview as ready in WebviewProvider state.
+				// TODO: WebviewStateDTO doesn't have a `ready` field yet;
+				// ready state tracking is deferred to future DTO work.
+				// self.RunTime.Environment.ApplicationState.Feature.Webviews.MarkReady(Handle);
+
+				// Emit sky://webview/ready so the workbench can react.
+				let Payload = serde_json::json!({ "handle": Handle, "viewType": ViewType });
+				let _ = self.ApplicationHandle.emit("sky://webview/ready", &Payload);
 			},
 
 			"progress.start" => {
@@ -1272,12 +1280,20 @@ impl MountainService for MountainVinegRPCService {
 			| "register_type_hierarchy_provider"
 			| "register_uri_handler"
 			| "register_workspace_symbol_provider" => {
-				let _ = ::Vine::Server::Notification::RegisterLanguageProvider::RegisterLanguageProvider(
+				let Recognised = ::Vine::Server::Notification::RegisterLanguageProvider::RegisterLanguageProvider(
 					self,
 					&MethodName,
 					&Parameter,
 				)
 				.await;
+
+				if !Recognised {
+					dev_log!(
+						"grpc",
+						"warn: [register] unroutable provider type '{}' - returning false",
+						MethodName
+					);
+				}
 			},
 
 			"markers.change" | "language.markers.change" => {

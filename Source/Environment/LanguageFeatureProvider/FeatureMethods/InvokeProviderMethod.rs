@@ -12,7 +12,7 @@ use serde_json::{Value, json};
 use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
 
 pub(crate) async fn Fn(
-	_environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 
 	registration:&ProviderRegistrationDTO,
 
@@ -20,10 +20,25 @@ pub(crate) async fn Fn(
 
 	arguments:Vec<Value>,
 ) -> Result<Value, CommonError> {
+	// Extract renderer-supplied requestId from the fourth argument if present.
+	let RequestIdentifier = arguments
+		.get(3)
+		.and_then(|v| v.as_str())
+		.filter(|s| !s.is_empty())
+		.map(String::from);
+
+	let Cancellations = environment
+		.ApplicationState
+		.Feature
+		.LanguageProviderCancellations
+		.clone();
+
 	super::InvokeProvider::ForwardCancellable(
 		registration.SideCarIdentifier.clone(),
 		method.to_string(),
 		json!(arguments),
+		Cancellations,
+		RequestIdentifier,
 	)
 	.await
 }

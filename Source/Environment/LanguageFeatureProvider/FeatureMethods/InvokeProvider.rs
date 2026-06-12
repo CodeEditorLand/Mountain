@@ -13,8 +13,11 @@
 
 use CommonLibrary::Error::CommonError::CommonError;
 use serde_json::{Value, json};
+use std::sync::Arc;
 use tokio::sync::watch;
 use ::Vine::{Client::SendRequest::FnCancellable, Error::VineError};
+
+use dashmap::DashMap;
 
 use crate::{ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO, dev_log};
 
@@ -22,7 +25,7 @@ use crate::{ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistration
 const FORWARD_TIMEOUT_MILLISECONDS:u64 = 5000;
 
 pub(crate) async fn Fn(
-	_environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 
 	registration:&ProviderRegistrationDTO,
 
@@ -30,7 +33,27 @@ pub(crate) async fn Fn(
 ) -> Result<Value, CommonError> {
 	let rpc_method = format!("$provide{}", registration.ProviderType.to_string());
 
-	ForwardCancellable(registration.SideCarIdentifier.clone(), rpc_method, json!(arguments)).await
+	// Extract renderer-supplied requestId from the fourth argument if present.
+	let RequestIdentifier = arguments
+		.get(3)
+		.and_then(|v| v.as_str())
+		.filter(|s| !s.is_empty())
+		.map(String::from);
+
+	let Cancellations = environment
+		.ApplicationState
+		.Feature
+		.LanguageProviderCancellations
+		.clone();
+
+	ForwardCancellable(
+		registration.SideCarIdentifier.clone(),
+		rpc_method,
+		json!(arguments),
+		Cancellations,
+		RequestIdentifier,
+	)
+	.await
 }
 
 /// Flips the watch signal on drop unless disarmed, so a dropped forward
@@ -52,17 +75,30 @@ impl Drop for CancelOnDrop {
 /// Sends `Method` to `SideCarIdentifier` on a detached task wired to a
 /// cancel-on-drop guard; dropping the returned future delivers
 /// `CocoonService.CancelOperation` for the allocated wire request id.
-pub(super) async fn ForwardCancellable(
+///
+/// When `RequestIdentifier` is `Some`, the cancel sender is also stored in
+/// `Cancellations` so that `language:cancelRequest` can flip it externally
+/// before the future is dropped.
+pub(crate) async fn ForwardCancellable(
 	SideCarIdentifier:String,
 
 	Method:String,
 
 	Arguments:Value,
+
+	Cancellations:Arc<DashMap<String, watch::Sender<bool>>>,
+
+	RequestIdentifier:Option<String>,
 ) -> Result<Value, CommonError> {
 	let (CancelSender, CancelReceiver) = watch::channel(false);
 
-	let MethodForLog = Method.clone();
+	// If the renderer provided a request identifier, register the sender
+	// so that `language:cancelRequest` can trigger cancellation externally.
+	if let Some(ref Id) = RequestIdentifier {
+		Cancellations.insert(Id.clone(), CancelSender.clone());
+	}
 
+	let MethodForLog = Method.clone();
 	let SideCarForLog = SideCarIdentifier.clone();
 
 	let ForwardTask = tokio::spawn(async move {
@@ -81,6 +117,11 @@ pub(super) async fn ForwardCancellable(
 	let Outcome = ForwardTask.await;
 
 	Guard.Armed = false;
+
+	// Remove the cancellation entry now that the forward has finished.
+	if let Some(ref Id) = RequestIdentifier {
+		Cancellations.remove(Id);
+	}
 
 	match Outcome {
 		Ok(Ok(Response)) => Ok(Response),

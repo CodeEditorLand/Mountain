@@ -9,14 +9,30 @@ pub fn Matches(MethodName:&str) -> bool {
 
 use std::sync::Arc;
 
-use CommonLibrary::{Command::CommandExecutor::CommandExecutor, Environment::Requires::Requires};
+use CommonLibrary::{
+	Command::CommandExecutor::CommandExecutor,
+	Environment::Requires::Requires,
+	IPC::DTO::ProxyTarget::ProxyTarget,
+};
 use serde_json::{Value, json};
 use tauri::{Emitter, Runtime};
 
-use crate::Track::Effect::{
-	CreateEffectForRequest::Utilities::Params::{string_at, val_at},
-	MappedEffectType::MappedEffect,
+use crate::{
+	Track::Effect::{
+		CreateEffectForRequest::Utilities::{
+			Params::{string_at, val_at},
+			Proxy::proxy_cocoon,
+		},
+		MappedEffectType::MappedEffect,
+	},
+	dev_log,
 };
+
+/// True when the stringified `CommonError::CommandNotFound` shape is seen -
+/// the registry dead-end where the command id is unknown to Mountain. Other
+/// execution errors (handler threw, IPC failure) must NOT trigger the Cocoon
+/// fallback: the command was found and already ran.
+fn IsCommandNotFound(Error:&str) -> bool { Error.starts_with("Command '") && Error.ends_with("' not found") }
 
 /// Creates effect.
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
@@ -47,10 +63,31 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					(Id, A)
 				};
 
-				command_executor
-					.ExecuteCommand(command_id, args)
-					.await
-					.map_err(|e| e.to_string())
+				let FallbackId = command_id.clone();
+
+				let FallbackArgs = args.clone();
+
+				match command_executor.ExecuteCommand(command_id, args).await.map_err(|e| e.to_string()) {
+					Err(E) if IsCommandNotFound(&E) => {
+						dev_log!(
+							"commands",
+							"[executeCommand] '{}' missing from Mountain registry; forwarding to Cocoon extension \
+							 host.",
+							FallbackId
+						);
+
+						proxy_cocoon(
+							&run_time,
+							ProxyTarget::ExtHostCommands,
+							"ExecuteContributedCommand",
+							json!([FallbackId, FallbackArgs]),
+							30_000,
+						)
+						.await
+					},
+
+					Other => Other,
+				}
 			})
 		},
 
@@ -72,6 +109,34 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					.ExecuteCommand(command_id, args)
 					.await
 					.map_err(|e| e.to_string());
+
+				// Palette-invoked extension commands: when the id never made
+				// it into Mountain's registry (lost/raced `registerCommand`
+				// notification and no `onCommand:` activation event), forward
+				// to the Cocoon extension host over the same proxied-RPC
+				// method `CommandProvider` uses for registered Proxied
+				// commands, instead of dead-ending with CommandNotFound.
+				let ExecResult = match ExecResult {
+					Err(E) if IsCommandNotFound(&E) => {
+						dev_log!(
+							"commands",
+							"[Command.Execute] '{}' missing from Mountain registry; forwarding to Cocoon extension \
+							 host.",
+							BroadcastId
+						);
+
+						proxy_cocoon(
+							&run_time,
+							ProxyTarget::ExtHostCommands,
+							"ExecuteContributedCommand",
+							json!([BroadcastId.clone(), BroadcastArgs.clone()]),
+							30_000,
+						)
+						.await
+					},
+
+					Other => Other,
+				};
 
 				// `vscode.commands.onDidExecuteCommand` symmetry. The
 				// renderer-originated `commands:execute` Tauri-IPC arm

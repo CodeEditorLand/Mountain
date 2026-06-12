@@ -208,8 +208,11 @@ pub(crate) async fn route(
 		// Workspace display name (delegates to LabelGetWorkspace)
 		"workspaces:getWorkspaceName" => Some(LabelGetWorkspace::Fn(RunTime.clone()).await),
 
-		// Hot-exit backup check — Mountain has no backup service.
-		"workspaces:getDirtyWorkspaces" => Some(Ok(json!([]))),
+		// Hot-exit backup check — query real dirty state from WorkingCopy.
+		"workspaces:getDirtyWorkspaces" => {
+			let DirtyUris = RunTime.Environment.ApplicationState.Feature.WorkingCopy.GetAllDirty();
+			Some(Ok(serde_json::json!(DirtyUris)))
+		},
 
 		_ => None,
 	}

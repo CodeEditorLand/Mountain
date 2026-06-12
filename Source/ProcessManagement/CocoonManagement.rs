@@ -185,11 +185,12 @@ const BOOTSTRAP_SCRIPT_PATH:&str = "scripts/cocoon/bootstrap-fork.js";
 /// (port 50052) starts as Stage 3 (before MountainConnection), so the port
 /// is available within 2-5 seconds of spawn. Budget raised to 30 s as a
 /// defensive buffer for slow hardware or contended startup.
-/// Policy: start at 50 ms, double each attempt up to a 2 s ceiling,
+/// Policy: start at 200 ms (matching real Cocoon bind times of
+/// 150–600 ms), double each attempt up to a 2 s ceiling,
 /// with a hard 30 s total-budget. Under healthy spawn timing (Cocoon
 /// binds 50052 within 2-3s) this converges on attempts 5-8 in <~3s total;
 /// under a genuinely dead Cocoon the loop abandons at the budget.
-const GRPC_CONNECT_INITIAL_MS:u64 = 50;
+const GRPC_CONNECT_INITIAL_MS:u64 = 200;
 
 const GRPC_CONNECT_MAX_DELAY_MS:u64 = 2_000;
 

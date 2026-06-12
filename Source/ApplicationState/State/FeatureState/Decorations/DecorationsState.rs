@@ -23,17 +23,25 @@ pub struct DecorationData {
 }
 
 /// Stores per-URI file decorations (git badges, error squiggles, custom
-/// badges).
+/// badges) and a registry of known decoration type keys.
 #[derive(Clone)]
 pub struct DecorationsState {
 	Entries:Arc<Mutex<HashMap<String, Value>>>,
+
+	/// P4.6: Track which decoration type keys have been registered so
+	/// setTextEditorDecorations can auto-register unknown types instead
+	/// of silently dropping their decorations.
+	KnownTypeKeys:Arc<Mutex<std::collections::HashSet<String>>>,
 }
 
 impl Default for DecorationsState {
 	fn default() -> Self {
 		dev_log!("decorations", "[DecorationsState] Initializing default decorations state...");
 
-		Self { Entries:Arc::new(Mutex::new(HashMap::new())) }
+		Self {
+			Entries:Arc::new(Mutex::new(HashMap::new())),
+			KnownTypeKeys:Arc::new(Mutex::new(std::collections::HashSet::new())),
+		}
 	}
 }
 
@@ -61,4 +69,18 @@ impl DecorationsState {
 
 	/// Return all stored decorations as a cloned map.
 	pub fn GetAll(&self) -> HashMap<String, Value> { self.Entries.lock().clone() }
+
+	/// P4.6: Check if a decoration type key is already registered.
+	pub fn IsTypeKeyKnown(&self, Key:&str) -> bool { self.KnownTypeKeys.lock().contains(Key) }
+
+	/// P4.6: Mark a decoration type key as registered (lazy-register).
+	pub fn RegisterTypeKey(&self, Key:&str) -> bool {
+		let mut Guard = self.KnownTypeKeys.lock();
+		if Guard.contains(Key) {
+			false
+		} else {
+			Guard.insert(Key.to_owned());
+			true
+		}
+	}
 }
