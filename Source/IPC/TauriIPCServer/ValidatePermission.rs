@@ -3,13 +3,7 @@
 
 use super::{PermissionManager, SecurityContext, SecurityEvent, SecurityEventType};
 
-pub(crate) async fn Fn(
-	Manager:&PermissionManager,
-
-	operation:&str,
-
-	context:&SecurityContext,
-) -> Result<(), String> {
+pub(crate) async fn Fn(Manager:&PermissionManager, operation:&str, context:&SecurityContext) -> Result<(), String> {
 	// Check if operation requires specific permissions
 	let required_permissions = Manager.get_required_permissions(operation).await;
 
