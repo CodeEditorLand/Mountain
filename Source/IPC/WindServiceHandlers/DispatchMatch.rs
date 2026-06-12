@@ -977,12 +977,23 @@ pub async fn mountain_ipc_invoke(
 
 				// `env:asExternalUri` / `env:resolveExternalUri` - VS Code resolves
 				// extension-provided URIs through these before opening them externally
-				// or embedding them in webviews. Without Mountain registering an
-				// opener, the URI passes through unchanged.
+				// or embedding them in webviews. VS Code's `Uri.revive()` destructures
+				// UriComponents: { scheme, authority, path, query, fragment }.
 				"env:asExternalUri" | "env:resolveExternalUri" => {
 					let UriStr = arg_string(&Arguments, 0);
 
-					Ok(serde_json::json!({ "uri": UriStr }))
+					// Parse the URI into its components so VS Code can reconstruct
+					// the Uri object without undefined fields.
+					let Parsed = UriStr.parse::<url::Url>().unwrap_or_else(|_| url::Url::parse("file:///").unwrap());
+
+					Ok(serde_json::json!({
+						"scheme": Parsed.scheme(),
+						"authority": Parsed.authority(),
+						"path": Parsed.path(),
+						"query": Parsed.query().unwrap_or(""),
+						"fragment": Parsed.fragment().unwrap_or(""),
+						"uri": UriStr,
+					}))
 				},
 
 				// Native host commands
@@ -1834,11 +1845,77 @@ pub async fn mountain_ipc_invoke(
 				"nativeHost:toggleDevTools" => ToggleDevTools(ApplicationHandle.clone(), Arguments).await,
 
 				// Power
-				"nativeHost:getSystemIdleState" => Ok(json!("active")),
-				"nativeHost:getSystemIdleTime" => Ok(json!(0)),
+				"nativeHost:getSystemIdleState" => {
+					// Query CGEventSource for last keyboard/mouse event on macOS.
+					// Falls back to "unknown" when the API is unavailable.
+					#[cfg(target_os = "macos")]
+					{
+						use std::ffi::c_double;
+						unsafe extern "C" {
+							fn CGEventSourceSecondsSinceLastEventType(
+								eventSourceState: i32,
+								eventType: u32,
+							) -> c_double;
+						}
+						const kCGEventSourceStateHIDSystemState:i32 = 1;
+						const kCGEventKeyDown:u32 = 10;
+						const kCGEventLeftMouseDown:u32 = 1;
+						let Idle = unsafe {
+							let Key = CGEventSourceSecondsSinceLastEventType(
+								kCGEventSourceStateHIDSystemState,
+								kCGEventKeyDown,
+							);
+							let Mouse = CGEventSourceSecondsSinceLastEventType(
+								kCGEventSourceStateHIDSystemState,
+								kCGEventLeftMouseDown,
+							);
+							Key.min(Mouse)
+						};
+						if Idle > 60.0 {
+							Ok(json!("idle"))
+						} else {
+							Ok(json!("active"))
+						}
+					}
+					#[cfg(not(target_os = "macos"))]
+					Ok(json!("unknown"))
+				},
+				"nativeHost:getSystemIdleTime" => {
+					#[cfg(target_os = "macos")]
+					{
+						use std::ffi::c_double;
+						unsafe extern "C" {
+							fn CGEventSourceSecondsSinceLastEventType(
+								eventSourceState: i32,
+								eventType: u32,
+							) -> c_double;
+						}
+						const kCGEventSourceStateHIDSystemState:i32 = 1;
+						const kCGEventKeyDown:u32 = 10;
+						const kCGEventLeftMouseDown:u32 = 1;
+						let Idle = unsafe {
+							let Key = CGEventSourceSecondsSinceLastEventType(
+								kCGEventSourceStateHIDSystemState,
+								kCGEventKeyDown,
+							);
+							let Mouse = CGEventSourceSecondsSinceLastEventType(
+								kCGEventSourceStateHIDSystemState,
+								kCGEventLeftMouseDown,
+							);
+							Key.min(Mouse)
+						};
+						Ok(json!((Idle * 1000.0) as u64))
+					}
+					#[cfg(not(target_os = "macos"))]
+					Ok(json!(0))
+				},
 				"nativeHost:getCurrentThermalState" => Ok(json!("nominal")),
 				"nativeHost:isOnBatteryPower" => Ok(json!(false)),
-				"nativeHost:startPowerSaveBlocker" => Ok(json!(0)),
+				"nativeHost:startPowerSaveBlocker" => {
+					static NEXT_BLOCKER_ID:std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+					let Id = NEXT_BLOCKER_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+					Ok(json!(Id))
+				},
 				"nativeHost:stopPowerSaveBlocker" => Ok(json!(false)),
 				"nativeHost:isPowerSaveBlockerStarted" => Ok(json!(false)),
 
