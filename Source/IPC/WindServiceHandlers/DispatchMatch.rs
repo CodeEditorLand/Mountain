@@ -1153,20 +1153,16 @@ pub async fn mountain_ipc_invoke(
 					call!(rt, "quickinput", "quickInput:showInputBox", QuickInputShowInputBox, Arguments)
 				},
 
-				// Workspaces commands. VS Code's `IWorkspacesService`
-				// channel uses `getWorkspaceFolders` /
-				// `addWorkspaceFolders`; Mountain's rail uses the
-				// shorter `getFolders` / `addFolder`. Alias both.
-				"workspaces:getFolders" | "workspaces:getWorkspaceFolders" | "workspaces:getWorkspace" => {
-					call!(rt, "workspaces", WorkspacesGetFolders)
-				},
-				"workspaces:addFolder" | "workspaces:addWorkspaceFolders" => {
-					call!(rt, "workspaces", WorkspacesAddFolder, Arguments)
-				},
-				"workspaces:removeFolder" | "workspaces:removeWorkspaceFolders" => {
-					call!(rt, "workspaces", WorkspacesRemoveFolder, Arguments)
-				},
-				"workspaces:getName" => call!(rt, "workspaces", WorkspacesGetName),
+				// Workspaces commands — routed through WorkspacesRouter
+				command if command.starts_with("workspaces:") =>
+					Workspaces::WorkspacesRouter::route(
+						ApplicationHandle.clone(),
+						RunTime.clone(),
+						&command,
+						Arguments,
+					)
+					.await
+					.unwrap_or_else(|| Ok(Value::Null)),
 				// Themes commands
 				"themes:getActive" => call!(rt, "themes", "themes:getActive", ThemesGetActive),
 				"themes:list" => call!(rt, "themes", "themes:list", ThemesList),

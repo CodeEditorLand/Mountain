@@ -20,6 +20,7 @@ use crate::{
 			},
 			RecentlyOpened::{
 				Mutate::Fn as MutateRecentlyOpened,
+				Read::Fn as ReadRecentlyOpened,
 			},
 		},
 		Workspaces::{
@@ -70,6 +71,12 @@ pub(crate) async fn route(
 		},
 
 		// Recently-opened bookkeeping
+		"workspaces:getRecentlyOpened" => {
+			dev_log!("workspaces", "workspaces:getRecentlyOpened");
+
+			Some(ReadRecentlyOpened())
+		},
+
 		"workspaces:removeRecentlyOpened" => {
 			dev_log!("workspaces", "workspaces:removeRecentlyOpened");
 
