@@ -2227,12 +2227,14 @@ pub async fn mountain_ipc_invoke(
 					let Payload = json!({ "uri": Uri, "selections": Selections, "viewColumn": ViewColumn });
 
 					tokio::spawn(async move {
-						let _ = crate::Vine::Client::SendNotification::Fn(
-							"cocoon-main".to_string(),
-							"window.didChangeTextEditorSelection".to_string(),
-							Payload,
-						)
-						.await;
+						tokio::spawn(async move {
+							let _ = crate::Vine::Client::SendNotification::Fn(
+								"cocoon-main".to_string(),
+								"window.didChangeTextEditorSelection".to_string(),
+								Payload,
+							)
+							.await;
+						});
 					});
 
 					Ok(Value::Null)
@@ -2311,12 +2313,14 @@ pub async fn mountain_ipc_invoke(
 					let _ = ApplicationHandle.emit("sky://editor/active-changed", Payload.clone());
 
 					tokio::spawn(async move {
-						let _ = crate::Vine::Client::SendNotification::Fn(
-							"cocoon-main".to_string(),
-							"window.didChangeActiveTextEditor".to_string(),
-							Payload,
-						)
-						.await;
+						tokio::spawn(async move {
+							let _ = crate::Vine::Client::SendNotification::Fn(
+								"cocoon-main".to_string(),
+								"window.didChangeActiveTextEditor".to_string(),
+								Payload,
+							)
+							.await;
+						});
 					});
 
 					// Fire onLanguage:<id> activation event for the newly
@@ -2365,12 +2369,14 @@ pub async fn mountain_ipc_invoke(
 					let Payload = arg_val(&Arguments, 0);
 
 					tokio::spawn(async move {
-						let _ = crate::Vine::Client::SendNotification::Fn(
-							"cocoon-main".to_string(),
-							"$acceptVisibleEditorsChanged".to_string(),
-							Payload,
-						)
-						.await;
+						tokio::spawn(async move {
+							let _ = crate::Vine::Client::SendNotification::Fn(
+								"cocoon-main".to_string(),
+								"$acceptVisibleEditorsChanged".to_string(),
+								Payload,
+							)
+							.await;
+						});
 					});
 
 					Ok(Value::Null)
@@ -2389,12 +2395,14 @@ pub async fn mountain_ipc_invoke(
 					let Payload = arg_val(&Arguments, 0);
 
 					tokio::spawn(async move {
-						let _ = crate::Vine::Client::SendNotification::Fn(
-							"cocoon-main".to_string(),
-							"$acceptTabsChanged".to_string(),
-							Payload,
-						)
-						.await;
+						tokio::spawn(async move {
+							let _ = crate::Vine::Client::SendNotification::Fn(
+								"cocoon-main".to_string(),
+								"$acceptTabsChanged".to_string(),
+								Payload,
+							)
+							.await;
+						});
 					});
 
 					Ok(Value::Null)
@@ -2412,12 +2420,14 @@ pub async fn mountain_ipc_invoke(
 					let Payload = arg_val(&Arguments, 0);
 
 					tokio::spawn(async move {
-						let _ = crate::Vine::Client::SendNotification::Fn(
-							"cocoon-main".to_string(),
-							"$acceptVisibleRangesChanged".to_string(),
-							Payload,
-						)
-						.await;
+						tokio::spawn(async move {
+							let _ = crate::Vine::Client::SendNotification::Fn(
+								"cocoon-main".to_string(),
+								"$acceptVisibleRangesChanged".to_string(),
+								Payload,
+							)
+							.await;
+						});
 					});
 
 					Ok(Value::Null)
@@ -2435,12 +2445,14 @@ pub async fn mountain_ipc_invoke(
 					let Payload = arg_val(&Arguments, 0);
 
 					tokio::spawn(async move {
-						let _ = crate::Vine::Client::SendNotification::Fn(
-							"cocoon-main".to_string(),
-							"$acceptTextEditorOptionsChanged".to_string(),
-							Payload,
-						)
-						.await;
+						tokio::spawn(async move {
+							let _ = crate::Vine::Client::SendNotification::Fn(
+								"cocoon-main".to_string(),
+								"$acceptTextEditorOptionsChanged".to_string(),
+								Payload,
+							)
+							.await;
+						});
 					});
 
 					Ok(Value::Null)
@@ -2457,12 +2469,14 @@ pub async fn mountain_ipc_invoke(
 					let Payload = arg_val(&Arguments, 0);
 
 					tokio::spawn(async move {
-						let _ = crate::Vine::Client::SendNotification::Fn(
-							"cocoon-main".to_string(),
-							"$acceptTextEditorDiffInformationChanged".to_string(),
-							Payload,
-						)
-						.await;
+						tokio::spawn(async move {
+							let _ = crate::Vine::Client::SendNotification::Fn(
+								"cocoon-main".to_string(),
+								"$acceptTextEditorDiffInformationChanged".to_string(),
+								Payload,
+							)
+							.await;
+						});
 					});
 
 					Ok(Value::Null)
@@ -2479,12 +2493,14 @@ pub async fn mountain_ipc_invoke(
 					let Payload = arg_val(&Arguments, 0);
 
 					tokio::spawn(async move {
-						let _ = crate::Vine::Client::SendNotification::Fn(
-							"cocoon-main".to_string(),
-							"$acceptTextEditorViewColumnChanged".to_string(),
-							Payload,
-						)
-						.await;
+						tokio::spawn(async move {
+							let _ = crate::Vine::Client::SendNotification::Fn(
+								"cocoon-main".to_string(),
+								"$acceptTextEditorViewColumnChanged".to_string(),
+								Payload,
+							)
+							.await;
+						});
 					});
 
 					Ok(Value::Null)
