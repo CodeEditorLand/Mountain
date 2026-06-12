@@ -2,16 +2,17 @@
 //! method name instead of the `$provide{ProviderType}` convention. Used for
 //! prepare steps (`$prepareCallHierarchyItems`, `$prepareTypeHierarchyItems`)
 //! where the method prefix differs from the provider type string.
+//!
+//! Shares [`super::InvokeProvider::ForwardCancellable`], so a drop of the
+//! calling future delivers `CocoonService.CancelOperation` to the side-car.
 
-use std::sync::Arc;
-
-use CommonLibrary::{Environment::Requires::Requires, Error::CommonError::CommonError, IPC::IPCProvider::IPCProvider};
+use CommonLibrary::Error::CommonError::CommonError;
 use serde_json::{Value, json};
 
 use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
 
 pub(crate) async fn Fn(
-	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	_environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 
 	registration:&ProviderRegistrationDTO,
 
@@ -19,14 +20,10 @@ pub(crate) async fn Fn(
 
 	arguments:Vec<Value>,
 ) -> Result<Value, CommonError> {
-	let ipc_provider:Arc<dyn IPCProvider> = environment.Require();
-
-	ipc_provider
-		.SendRequestToSideCar(
-			registration.SideCarIdentifier.clone(),
-			method.to_string(),
-			json!(arguments),
-			5000,
-		)
-		.await
+	super::InvokeProvider::ForwardCancellable(
+		registration.SideCarIdentifier.clone(),
+		method.to_string(),
+		json!(arguments),
+	)
+	.await
 }
