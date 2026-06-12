@@ -40,11 +40,7 @@ use crate::{Environment::MountainEnvironment::MountainEnvironment, ProcessManage
 /// The process runs as a background task with IO redirection for logging.
 /// Process failures are logged but not automatically restarted (callers should
 /// implement restart strategies based on their requirements).
-pub(crate) async fn Fn(
-	ApplicationHandle:AppHandle,
-
-	Environment:Arc<MountainEnvironment>,
-) -> Result<(), CommonError> {
+pub(crate) async fn Fn(ApplicationHandle:AppHandle, Environment:Arc<MountainEnvironment>) -> Result<(), CommonError> {
 	let SideCarIdentifier = super::COCOON_SIDE_CAR_IDENTIFIER.to_string();
 
 	let ScriptPath = super::ResolveBootstrapScript::Fn(&ApplicationHandle)?;

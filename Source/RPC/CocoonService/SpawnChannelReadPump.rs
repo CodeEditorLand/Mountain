@@ -103,6 +103,10 @@ pub(crate) fn Fn(
 		// not retained.
 		super::CHANNEL_REGISTRY.remove(&ChannelId);
 
-		dev_log!("cocoon", "[CocoonService] open_channel_from_mountain channel_id={} closed", ChannelId);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] open_channel_from_mountain channel_id={} closed",
+			ChannelId
+		);
 	});
 }

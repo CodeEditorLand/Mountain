@@ -337,12 +337,12 @@ pub async fn ConstructSandboxConfiguration(
 	});
 
 	let ProductConfig = json!({
-		"nameShort": std::env::var("ProductNameShort").unwrap_or_else(|_| "FIDDEE".into()),
-		"nameLong": std::env::var("ProductNameLong").unwrap_or_else(|_| "FIDDEE".into()),
-		"applicationName": std::env::var("ProductApplicationName").unwrap_or_else(|_| "fiddee".into()),
-		"embedderIdentifier": std::env::var("ProductEmbedderIdentifier").unwrap_or_else(|_| "fiddee-desktop".into()),
-		"dataFolderName": std::env::var("ProductDataFolderName").unwrap_or_else(|_| ".fiddee".into()),
-		"sharedDataFolderName": std::env::var("ProductDataFolderName").unwrap_or_else(|_| ".fiddee".into()),
+		"nameShort": std::env::var("ProductNameShort").unwrap_or_else(|_| "FCD".into()),
+		"nameLong": std::env::var("ProductNameLong").unwrap_or_else(|_| "FCD".into()),
+		"applicationName": std::env::var("ProductApplicationName").unwrap_or_else(|_| "fcd".into()),
+		"embedderIdentifier": std::env::var("ProductEmbedderIdentifier").unwrap_or_else(|_| "fcdd".into()),
+		"dataFolderName": std::env::var("ProductDataFolderName").unwrap_or_else(|_| ".fcd".into()),
+		"sharedDataFolderName": std::env::var("ProductDataFolderName").unwrap_or_else(|_| ".fcd".into()),
 		"version": std::env::var("ProductVersion").unwrap_or_else(|_| "1.0.0".into()),
 	});
 

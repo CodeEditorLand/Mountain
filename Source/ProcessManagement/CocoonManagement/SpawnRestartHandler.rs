@@ -46,8 +46,7 @@ pub(crate) async fn Fn(ApplicationHandle:&tauri::AppHandle, Environment:&Arc<Mou
 						Guard.ChildProcess = None;
 					}
 
-					match super::LaunchAndManageCocoonSideCar::Fn(RestartAppHandle.clone(), RestartEnv.clone()).await
-					{
+					match super::LaunchAndManageCocoonSideCar::Fn(RestartAppHandle.clone(), RestartEnv.clone()).await {
 						Ok(()) => {
 							dev_log!("cocoon", "[CocoonRestart] Cocoon restarted successfully");
 

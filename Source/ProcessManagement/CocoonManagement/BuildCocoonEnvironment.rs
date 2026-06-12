@@ -71,8 +71,7 @@ pub(crate) fn Fn() -> HashMap<String, String> {
 	// TierCommandEventBroadcast in mod.rs) - reading only the process env
 	// silently disabled WS for every launch that did not re-export
 	// TierWebSocket in the shell.
-	let TierWS = std::env::var("TierWebSocket")
-		.unwrap_or_else(|_| env!("TierWebSocket", "Disabled").to_string());
+	let TierWS = std::env::var("TierWebSocket").unwrap_or_else(|_| env!("TierWebSocket", "Disabled").to_string());
 
 	if TierWS != "Disabled" {
 		super::InitializeWsConfig();
