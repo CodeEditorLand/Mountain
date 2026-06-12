@@ -490,7 +490,7 @@ pub async fn mountain_ipc_invoke(
 			},
 
 			"logger:log" | "logger:info" | "logger:debug" | "logger:trace"
-			| "logger:flush" | "logger:setLevel" | "logger:getLevel"
+			| "logger:flush" | "logger:setLevel"
 			| "logger:createLogger" | "logger:registerLogger"
 			| "logger:deregisterLogger" | "logger:getRegisteredLoggers"
 			| "logger:setVisibility"
@@ -836,6 +836,10 @@ pub async fn mountain_ipc_invoke(
 				| "logger:registerLogger"
 				| "logger:deregisterLogger"
 				| "logger:setVisibility" => Ok(Value::Null),
+
+			// `logger:getLevel` — VS Code expects a numeric LogLevel enum.
+			// Mapping: Trace=0, Debug=1, Info=2, Warning=3, Error=4, Critical=5
+			"logger:getLevel" => Ok(json!(log::max_level() as u32)),
 
 				// Return an empty array so the VS Code Output view can
 				// iterate the result without crashing on null.
@@ -2896,12 +2900,18 @@ pub async fn mountain_ipc_invoke(
 				// without requiring a Mountain dispatch arm.
 				_ => {
 					use std::str::FromStr;
+					use std::sync::OnceLock;
 
 					// Check if command should defer to Cocoon's Node.js runtime.
 					// The env var is baked in at build time via rustc-env from
 					// build.rs; at runtime we also accept it via process env for
-					// debug overrides.
-					let TierIPC = std::env::var("TierIPC").unwrap_or_else(|_| "Mountain".into());
+					// debug overrides. Cache the result — this runs per unknown
+					// command and env lookup is a syscall.
+					static TIER_IPC_CACHE:OnceLock<String> = OnceLock::new();
+
+					let TierIPC:&str = TIER_IPC_CACHE.get_or_init(|| {
+						std::env::var("TierIPC").unwrap_or_else(|_| "Mountain".into())
+					});
 
 					let ShouldDefer = TierIPC == "NodeDeferred" || TierIPC == "Node";
 
