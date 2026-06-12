@@ -1076,22 +1076,22 @@ pub async fn mountain_ipc_invoke(
 					Ok(Value::Null)
 					},
 
-					// P1.15: diagnostic:getBootMarks — read performance.mark
-					// entries from the webview so the diagnostic dashboard can
-					// surface boot-phase timings (land:*, TTFB, DOMContentLoaded,
-					// etc.) alongside the Rust-side Mountain.dev.log stream.
-					"diagnostic:getBootMarks" => {
-						// TODO: Tauri's `Window.eval()` is fire-and-forget (returns `()`),
-						// not a sync read of the JS runtime. To collect the actual
-						// performance marks, this needs a webview IPC round-trip
-						// (emit → Sky listener → oneshot response) or a Tauri command
-						// with `tauri::Window::eval` paired with a `listen` event.
-						// Return the shape so callers don't crash iterating null.
-						dev_log!("diagnostic", "getBootMarks (stub — eval() is async, needs IPC round-trip)");
-						Ok(Value::Array(vec![]))
-					},
+				// P1.15: diagnostic:getBootMarks — read performance.mark
+				// entries from the webview so the diagnostic dashboard can
+				// surface boot-phase timings (land:*, TTFB, DOMContentLoaded,
+				// etc.) alongside the Rust-side Mountain.dev.log stream.
+				"diagnostic:getBootMarks" => {
+					// TODO: Tauri's `Window.eval()` is fire-and-forget (returns `()`),
+					// not a sync read of the JS runtime. To collect the actual
+					// performance marks, this needs a webview IPC round-trip
+					// (emit → Sky listener → oneshot response) or a Tauri command
+					// with `tauri::Window::eval` paired with a `listen` event.
+					// Return the shape so callers don't crash iterating null.
+					dev_log!("diagnostic", "getBootMarks (stub — eval() is async, needs IPC round-trip)");
+					Ok(Value::Array(vec![]))
+				},
 
-					// Command registry commands. Stock VS Code
+				// Command registry commands. Stock VS Code
 				// `MainThreadCommands` / `CommandService` channel methods
 				// are `executeCommand` and `getCommands`; Mountain's
 				// Effect-TS rail uses `execute` / `getAll`. Alias both.
