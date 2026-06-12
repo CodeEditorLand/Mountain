@@ -136,11 +136,6 @@ default = [
 	"Tasks",
 	"Auth",
 	"ExtensionHost",
-	// 🟠🔵 Shim tiers (gated, experimental — 2026-06-13)
-	// TierShim=None → none active, zero overhead
-	// TierShim=Proxy|Replace → "shim" feature
-	// TierShim=Own → "shim-own" feature  
-	// TierShim=Preempt → "shim-preempt" feature
 ]
 
 ExtensionHostCocoon = []
@@ -155,6 +150,38 @@ AirIntegration = []
 terminals = []
 
 debug-protocol = []
+
+scm-support = []
+
+child-processes = []
+
+Development = []
+
+# Tier flags
+TierExtensionScanParallel = []
+TierFileWatcherLayer4 = []
+TierFindFilesLayer4 = []
+TierGlobNative = []
+TierFileSystemLayer4 = []
+TierRemoteProcedureCallSharedMemory = []
+
+# Subsystem features
+Terminal = []
+SCM = []
+LanguageFeatures = []
+Search = []
+OutputChannel = []
+NativeHost = []
+TreeView = []
+Storage = []
+Model = []
+Encryption = []
+Tasks = []
+Auth = []
+ExtensionHost = []
+
+# Shim tier (experimental)
+Shim = []
 
 scm-support = []
 
