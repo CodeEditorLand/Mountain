@@ -111,11 +111,7 @@ use NativeHost::{
 	ToggleDevTools::Fn as ToggleDevTools,
 	UninstallShellCommand::Fn as UninstallShellCommand,
 };
-use Navigation::{
-	LabelGetBase::Fn as LabelGetBase,
-	LabelGetURI::Fn as LabelGetURI,
-	LabelGetWorkspace::Fn as LabelGetWorkspace,
-};
+use Navigation::{};
 use Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchFindInFiles};
 use Storage::{
 	StorageDelete::Fn as StorageDelete,
@@ -196,6 +192,8 @@ use CommonLibrary::Configuration::DTO::{
 	ConfigurationTarget as ConfigurationTargetModule,
 };
 
+use super::Keybinding::Router::route as KeybindingRoute;
+use super::Themes::Router::route as ThemesRoute;
 use super::*;
 use crate::dev_log;
 
@@ -1238,15 +1236,12 @@ pub async fn mountain_ipc_invoke(
 					.await
 					.unwrap_or_else(|| Ok(Value::Null))
 				},
-				// Themes commands
-				"themes:getActive" => call!(rt, "themes", "themes:getActive", ThemesGetActive),
-				"themes:list" => call!(rt, "themes", "themes:list", ThemesList),
-				"themes:set" => call!(rt, "themes", "themes:set", ThemesSet, Arguments),
-				// `IThemeService.getColorTheme()` - workbench channel method used
-				// by tokenization, decoration, and the colour-picker to read the
-				// active theme object. Wire shape differs from `themes:getActive`
-				// only in name; alias to the same handler.
-				"themes:getColorTheme" => call!(rt, "themes", "themes:getColorTheme (→ getActive)", ThemesGetActive),
+				// Themes commands - routed through ThemesRouter
+				command if command.starts_with("themes:") => {
+					ThemesRoute(ApplicationHandle.clone(), RunTime.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
+				},
 
 				// Search commands. Stock VS Code `SearchService` channel
 				// uses `textSearch` / `fileSearch`; Mountain's Effect-TS
@@ -1275,16 +1270,11 @@ pub async fn mountain_ipc_invoke(
 					call!(rt, "workingcopy", "workingCopy:getDirtyCount", WorkingCopyGetDirtyCount)
 				},
 
-				// Keybinding commands
-				"keybinding:add" => call!(rt, "keybinding", "keybinding:add", KeybindingAdd, Arguments),
-				"keybinding:remove" => call!(rt, "keybinding", "keybinding:remove", KeybindingRemove, Arguments),
-				"keybinding:lookup" => call!(rt, "keybinding", "keybinding:lookup", KeybindingLookup, Arguments),
-				"keybinding:getAll" => call!(rt, "keybinding", "keybinding:getAll", KeybindingGetAll),
-				"keybinding:resolve" => {
-					call!(rt, "keybinding", "keybinding:resolve", KeybindingResolve, Arguments)
-				},
-				"keybinding:evaluateWhen" => {
-					call!(rt, "keybinding", "keybinding:evaluateWhen", KeybindingEvaluateWhen, Arguments)
+				// Keybinding commands - routed through KeybindingRouter
+				command if command.starts_with("keybinding:") => {
+					KeybindingRoute(RunTime.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
 				},
 
 				// Lifecycle commands
@@ -1348,21 +1338,11 @@ pub async fn mountain_ipc_invoke(
 					Ok(json!(RunTime.Environment.ApplicationState.Feature.Lifecycle.GetPhase()))
 				},
 
-				// Label commands
-				"label:getUri" => {
-					dev_log!("label", "label:getUri");
-
-					LabelGetURI(RunTime.clone(), Arguments).await
-				},
-				"label:getWorkspace" => {
-					dev_log!("label", "label:getWorkspace");
-
-					LabelGetWorkspace(RunTime.clone()).await
-				},
-				"label:getBase" => {
-					dev_log!("label", "label:getBase");
-
-					LabelGetBase(Arguments).await
+				// Label commands - routed through LabelRouter
+				command if command.starts_with("label:") => {
+					Label::LabelRouter::route(RunTime.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
 				},
 
 				// Navigation history commands - routed through HistoryRouter

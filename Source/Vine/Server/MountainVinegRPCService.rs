@@ -1090,6 +1090,46 @@ impl MountainService for MountainVinegRPCService {
 				::Vine::Server::Notification::DisposeStatusBarItem::DisposeStatusBarItem(self, &Parameter).await;
 			},
 
+			"tests.controller_created" => {
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://tests/controller-created",
+					&Parameter,
+					"grpc",
+					"[Tests] controller created",
+				);
+			},
+
+			"tests.run_started" => {
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://tests/run-started",
+					&Parameter,
+					"grpc",
+					"[Tests] run started",
+				);
+			},
+
+			"tests.run_ended" => {
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://tests/run-ended",
+					&Parameter,
+					"grpc",
+					"[Tests] run ended",
+				);
+			},
+
+			"tests.result" => {
+				::Vine::Server::Notification::Support::RelayToSky::Fn(
+					self,
+					"sky://tests/result",
+					&Parameter,
+					"grpc",
+					"[Tests] result",
+				);
+			},
+
 			"output.create" => {
 				::Vine::Server::Notification::Support::RelayToSky::Fn(
 					self,

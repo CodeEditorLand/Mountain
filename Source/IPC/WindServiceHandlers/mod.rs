@@ -23,6 +23,10 @@ pub mod Git;
 
 pub mod History;
 
+pub mod Keybinding;
+
+pub mod Label;
+
 pub mod Model;
 
 pub mod NativeDialog;
@@ -41,6 +45,8 @@ pub mod Sky;
 pub mod Storage;
 
 pub mod Terminal;
+
+pub mod Themes;
 
 pub mod UI;
 
