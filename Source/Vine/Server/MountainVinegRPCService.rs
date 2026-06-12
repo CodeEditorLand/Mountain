@@ -1231,6 +1231,53 @@ impl MountainService for MountainVinegRPCService {
 				::Vine::Server::Notification::SecurityIncident::SecurityIncident(self, &Parameter).await;
 			},
 
+			"register_file_system_provider" => {
+				// When an extension registers a file-system provider for a
+				// virtual scheme, fire `onFileSystem:{scheme}` activation so
+				// extensions that declare `"activationEvents": ["onFileSystem:xyz"]`
+				// in their manifest are activated. The provider itself is
+				// registered through the same RegisterLanguageProvider path
+				// as all other providers, so handle/registry state is kept.
+				let Scheme = Parameter
+					.get("scheme")
+					.and_then(serde_json::Value::as_str)
+					.unwrap_or("");
+
+				if !Scheme.is_empty() {
+					let ActivationEvent = format!("onFileSystem:{}", Scheme);
+
+					dev_log!(
+						"provider-register",
+						"[FileSystemProvider] scheme={} → firing $activateByEvent({})",
+						Scheme,
+						ActivationEvent
+					);
+
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"$activateByEvent".to_string(),
+						serde_json::json!({ "activationEvent": ActivationEvent }),
+					)
+					.await;
+				}
+
+				// Also register the provider via the standard language-feature
+				// registry so handle tracking works.
+				let Recognised = ::Vine::Server::Notification::RegisterLanguageProvider::RegisterLanguageProvider(
+					self,
+					&MethodName,
+					&Parameter,
+				)
+				.await;
+
+				if !Recognised {
+					dev_log!(
+						"grpc",
+						"warn: [register] file_system provider registered but not in language-feature map"
+					);
+				}
+			},
+
 			"register_authentication_provider"
 			| "register_call_hierarchy_provider"
 			| "register_code_actions_provider"
@@ -1251,7 +1298,6 @@ impl MountainService for MountainVinegRPCService {
 			| "register_evaluatable_expression_provider"
 			| "register_external_uri_opener"
 			| "register_file_decoration_provider"
-			| "register_file_system_provider"
 			| "register_folding_range_provider"
 			| "register_hover_provider"
 			| "register_implementation_provider"
