@@ -1095,28 +1095,18 @@ pub async fn mountain_ipc_invoke(
 				| "commands:onDidRegisterCommand"
 				| "commands:onDidExecuteCommand" => Ok(Value::Null),
 
-				// Extension host commands
-				"extensions:getAll" => call!(rt, "extensions", "extensions:getAll", ExtensionsGetAll),
-				"extensions:get" => call!(rt, "extensions", "extensions:get", ExtensionsGet, Arguments),
-				"extensions:isActive" => call!(rt, "extensions", "extensions:isActive", ExtensionsIsActive, Arguments),
-				// `extensions:activate(extensionId)` - send `$activateByEvent`
-				// to Cocoon so the extension host starts the extension. VS Code
-				// normally drives activation via the workbench's activation events
-				// (onStartupFinished, onLanguage:*, etc.); this path lets Wind's
-				// ExtensionsService trigger activation programmatically.
-				"extensions:activate" => {
-					let ExtensionId = arg_string(&Arguments, 0);
+								// Extension host commands — routed through ExtensionsRouter
+								command if command.starts_with("extensions:") =>
+									Extensions::ExtensionsRouter::route(
+										ApplicationHandle.clone(),
+										RunTime.clone(),
+										&command,
+										Arguments,
+									)
+									.await
+									.unwrap_or_else(|| Ok(Value::Null)),
 
-					dev_log!("extensions", "extensions:activate id={}", ExtensionId);
-
-					if ExtensionId.is_empty() {
-						Ok(Value::Null)
-					} else {
-						let Notification = json!({
-							"event": format!("onCustom:{}", ExtensionId),
-							"extensionId": ExtensionId,
-						});
-
+								// Terminal commands
 						let _ = crate::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
 							"$activateByEvent".to_string(),

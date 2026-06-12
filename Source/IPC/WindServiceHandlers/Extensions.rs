@@ -24,3 +24,5 @@ pub mod ExtensionsGetAll;
 pub mod ExtensionsGetInstalled;
 
 pub mod ExtensionsIsActive;
+
+pub mod ExtensionsRouter;
