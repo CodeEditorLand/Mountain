@@ -416,7 +416,17 @@ pub async fn mountain_ipc_invoke(
 			| "commands:unregisterCommand"
 			| "commands:onDidRegisterCommand"
 			| "commands:onDidExecuteCommand"
-	);
+			// Editor model + view events — per-keystroke/scroll frequency
+			| "sky:model:contentChanged"
+			| "sky:editor:selectionChanged"
+			| "sky:editor:activeChanged"
+			| "sky:editor:visibleChanged"
+			| "sky:editor:tabsChanged"
+			| "sky:editor:visibleRangesChanged"
+			| "sky:editor:optionsChanged"
+			| "sky:editor:diffInformationChanged"
+			| "sky:editor:viewColumnChanged"
+			);
 
 	let OTLPStart = if IsHighFrequencyCommand { 0 } else { crate::IPC::DevLog::NowNano::Fn() };
 
@@ -632,8 +642,8 @@ pub async fn mountain_ipc_invoke(
 				// BEFORE any Mountain-native arm so `Tier<Family>=Node` cleanly
 				// reroutes the whole family to Cocoon (Routing-Schema.md "Tier
 				// resolution" table; keep that file in lockstep). Defaults are
-				// Mountain (Rust-native); tasks/auth default Node and their
-				// arms below forward unconditionally. `NodeDeferred` keeps the
+				// Mountain (Rust-native); tasks/auth default Node so their
+				// gates route to Cocoon out of the box. `NodeDeferred` keeps the
 				// Mountain arms and lets unimplemented family members defer to
 				// Cocoon via the unknown-command catch-all. The storage and
 				// git gates live with their family arms (predate this block);
@@ -676,6 +686,12 @@ pub async fn mountain_ipc_invoke(
 					&& tier_routes_to_node(TIER_DEBUG, "TierDebug") =>
 				{
 					forward_to_cocoon!("debug", command, Arguments)
+				},
+				_ if command.starts_with("tasks:") && tier_routes_to_node(TIER_TASKS, "TierTasks") => {
+					forward_to_cocoon!("tasks", command, Arguments)
+				},
+				_ if command.starts_with("auth:") && tier_routes_to_node(TIER_AUTH, "TierAuth") => {
+					forward_to_cocoon!("auth", command, Arguments)
 				},
 				_ if command.starts_with("encryption:") && tier_routes_to_node(TIER_ENCRYPTION, "TierEncryption") => {
 					forward_to_cocoon!("encryption", command, Arguments)
@@ -1034,7 +1050,7 @@ pub async fn mountain_ipc_invoke(
 				| "commands:onDidRegisterCommand"
 				| "commands:onDidExecuteCommand" => Ok(Value::Null),
 
-				// Extension host commands — routed through ExtensionsRouter
+				// Extension host commands - routed through ExtensionsRouter
 				command if command.starts_with("extensions:") =>
 					Extensions::ExtensionsRouter::route(
 						ApplicationHandle.clone(),
@@ -1045,7 +1061,7 @@ pub async fn mountain_ipc_invoke(
 					.await
 					.unwrap_or_else(|| Ok(Value::Null)),
 
-				// Terminal commands — routed through TerminalRouter
+				// Terminal commands - routed through TerminalRouter
 				command if command.starts_with("terminal:") || command.starts_with("localPty:") =>
 					Terminal::TerminalRouter::route(
 						RunTime.clone(),
@@ -1056,13 +1072,13 @@ pub async fn mountain_ipc_invoke(
 					.await
 					.unwrap_or_else(|| Ok(Value::Null)),
 
-								// Output channel commands — routed through OutputRouter
+								// Output channel commands - routed through OutputRouter
 								command if command.starts_with("output:") =>
 									Output::OutputRouter::route(ApplicationHandle.clone(), &command, Arguments)
 										.await
 										.unwrap_or_else(|| Ok(Value::Null)),
 
-								// Text model + textFile commands — routed through ModelRouter
+								// Text model + textFile commands - routed through ModelRouter
 								command if command.starts_with("textFile:") || command.starts_with("model:") || command.starts_with("text:") || command == "workspace:openTextDocument" =>
 									Model::ModelRouter::route(ApplicationHandle.clone(), RunTime.clone(), &command, Arguments)
 										.await
@@ -1115,7 +1131,7 @@ pub async fn mountain_ipc_invoke(
 					call!(rt, "quickinput", "quickInput:showInputBox", QuickInputShowInputBox, Arguments)
 				},
 
-				// Workspaces commands — routed through WorkspacesRouter
+				// Workspaces commands - routed through WorkspacesRouter
 				command if command.starts_with("workspaces:") =>
 					Workspaces::WorkspacesRouter::route(
 						ApplicationHandle.clone(),
@@ -1125,7 +1141,7 @@ pub async fn mountain_ipc_invoke(
 					)
 					.await
 					.unwrap_or_else(|| Ok(Value::Null)),
-					// Extension host commands — routed through ExtensionHostRouter
+					// Extension host commands - routed through ExtensionHostRouter
 				command if command.starts_with("extensionHostStarter:")
 					|| command.starts_with("extensionhostdebugservice:")
 					|| command == "cocoon:extensionHostMessage" =>
@@ -1264,7 +1280,7 @@ pub async fn mountain_ipc_invoke(
 					LabelGetBase(Arguments).await
 				},
 
-				// Navigation history commands — routed through HistoryRouter
+				// Navigation history commands - routed through HistoryRouter
 				command if command.starts_with("history:") =>
 					History::HistoryRouter::route(RunTime.clone(), &command, Arguments)
 						.await
@@ -2206,12 +2222,14 @@ pub async fn mountain_ipc_invoke(
 					// pane number in split-editor layouts.
 					let Payload = json!({ "uri": Uri, "selections": Selections, "viewColumn": ViewColumn });
 
-					let _ = crate::Vine::Client::SendNotification::Fn(
-						"cocoon-main".to_string(),
-						"window.didChangeTextEditorSelection".to_string(),
-						Payload,
-					)
-					.await;
+					tokio::spawn(async move {
+						let _ = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							"window.didChangeTextEditorSelection".to_string(),
+							Payload,
+						)
+						.await;
+					});
 
 					Ok(Value::Null)
 				},
@@ -2268,6 +2286,8 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				"sky:editor:activeChanged" => {
+					use tauri::Emitter;
+
 					let Payload = arg_val(&Arguments, 0);
 
 					let Uri = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
@@ -2282,12 +2302,18 @@ pub async fn mountain_ipc_invoke(
 							.SetActiveDocumentURI(Some(Uri.clone()));
 					}
 
-					let _ = crate::Vine::Client::SendNotification::Fn(
-						"cocoon-main".to_string(),
-						"window.didChangeActiveTextEditor".to_string(),
-						Payload,
-					)
-					.await;
+					// Canonical renderer event (SkyEvent.EditorActiveChanged) so
+					// Wind's Editor layer tracks the active editor.
+					let _ = ApplicationHandle.emit("sky://editor/active-changed", Payload.clone());
+
+					tokio::spawn(async move {
+						let _ = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							"window.didChangeActiveTextEditor".to_string(),
+							Payload,
+						)
+						.await;
+					});
 
 					// Fire onLanguage:<id> activation event for the newly
 					// active editor so extensions that gate on the language
@@ -2334,12 +2360,14 @@ pub async fn mountain_ipc_invoke(
 				"sky:editor:visibleChanged" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = crate::Vine::Client::SendNotification::Fn(
-						"cocoon-main".to_string(),
-						"$acceptVisibleEditorsChanged".to_string(),
-						Payload,
-					)
-					.await;
+					tokio::spawn(async move {
+						let _ = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							"$acceptVisibleEditorsChanged".to_string(),
+							Payload,
+						)
+						.await;
+					});
 
 					Ok(Value::Null)
 				},
@@ -2356,12 +2384,14 @@ pub async fn mountain_ipc_invoke(
 				"sky:editor:tabsChanged" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = crate::Vine::Client::SendNotification::Fn(
-						"cocoon-main".to_string(),
-						"$acceptTabsChanged".to_string(),
-						Payload,
-					)
-					.await;
+					tokio::spawn(async move {
+						let _ = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							"$acceptTabsChanged".to_string(),
+							Payload,
+						)
+						.await;
+					});
 
 					Ok(Value::Null)
 				},
@@ -2377,12 +2407,14 @@ pub async fn mountain_ipc_invoke(
 				"sky:editor:visibleRangesChanged" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = crate::Vine::Client::SendNotification::Fn(
-						"cocoon-main".to_string(),
-						"$acceptVisibleRangesChanged".to_string(),
-						Payload,
-					)
-					.await;
+					tokio::spawn(async move {
+						let _ = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							"$acceptVisibleRangesChanged".to_string(),
+							Payload,
+						)
+						.await;
+					});
 
 					Ok(Value::Null)
 				},
@@ -2398,12 +2430,14 @@ pub async fn mountain_ipc_invoke(
 				"sky:editor:optionsChanged" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = crate::Vine::Client::SendNotification::Fn(
-						"cocoon-main".to_string(),
-						"$acceptTextEditorOptionsChanged".to_string(),
-						Payload,
-					)
-					.await;
+					tokio::spawn(async move {
+						let _ = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							"$acceptTextEditorOptionsChanged".to_string(),
+							Payload,
+						)
+						.await;
+					});
 
 					Ok(Value::Null)
 				},
@@ -2418,12 +2452,14 @@ pub async fn mountain_ipc_invoke(
 				"sky:editor:diffInformationChanged" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = crate::Vine::Client::SendNotification::Fn(
-						"cocoon-main".to_string(),
-						"$acceptTextEditorDiffInformationChanged".to_string(),
-						Payload,
-					)
-					.await;
+					tokio::spawn(async move {
+						let _ = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							"$acceptTextEditorDiffInformationChanged".to_string(),
+							Payload,
+						)
+						.await;
+					});
 
 					Ok(Value::Null)
 				},
@@ -2438,12 +2474,14 @@ pub async fn mountain_ipc_invoke(
 				"sky:editor:viewColumnChanged" => {
 					let Payload = arg_val(&Arguments, 0);
 
-					let _ = crate::Vine::Client::SendNotification::Fn(
-						"cocoon-main".to_string(),
-						"$acceptTextEditorViewColumnChanged".to_string(),
-						Payload,
-					)
-					.await;
+					tokio::spawn(async move {
+						let _ = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							"$acceptTextEditorViewColumnChanged".to_string(),
+							Payload,
+						)
+						.await;
+					});
 
 					Ok(Value::Null)
 				},

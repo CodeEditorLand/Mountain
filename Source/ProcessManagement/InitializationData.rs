@@ -404,6 +404,10 @@ pub async fn ConstructSandboxConfiguration(
 
 		"logsPath": LogsPath.to_string_lossy(),
 
+		// `ISandboxConfiguration.codeCachePath` - read without a null-guard
+		// by the bundled workbench's V8 code-cache loader.
+		"codeCachePath": AppDataDir.join("code-cache").to_string_lossy(),
+
 		// Required non-optional fields in INativeWindowConfiguration.
 		// Missing these causes crashes in NativeWorkbenchEnvironmentService getters
 		// that access them without null-checks.
@@ -435,6 +439,9 @@ pub async fn ConstructSandboxConfiguration(
 		"sqmId": "",
 		"devDeviceId": "",
 		"isPortable": false,
+		"autoDetectHighContrast": true,
+		"accessibilitySupport": false,
+		"isInitialStartup": false,
 	}))
 }
 
