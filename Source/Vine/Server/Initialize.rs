@@ -1,8 +1,6 @@
-//! # Initialize (Vine Server)
+//! Initializes and starts the Mountain gRPC server.
 //!
-//! Contains the logic to initialize and start the Mountain gRPC server.
-//!
-//! This module provides the entry point for starting Vine's gRPC server:
+//! Provides the entry point for starting Vine's gRPC server:
 //! - **MountainServiceServer**: Listens for connections from Cocoon sidecar
 //! - **CocoonServiceServer**: Mountain's typed-rail implementation
 //!   (`CocoonServiceImpl`), mounted on the same port/router as
@@ -31,12 +29,11 @@
 //!
 //! ## Lifecycle
 //!
-//! Servers run as detached tokio tasks. They will:
+//! Servers run as detached tokio tasks. They:
 //! - Start immediately when spawned
 //! - Continue until process termination or tokio runtime shutdown
 //! - Log errors to the logging system
-//! - Not automatically restart on failure (caller should implement retry logic
-//!   if needed)
+//! - Do not automatically restart on failure
 use std::{net::SocketAddr, sync::Arc};
 
 use tauri::{AppHandle, Manager};
@@ -113,7 +110,7 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 }
 
 /// Initializes and starts the gRPC servers on background tasks.
-/// the core `ApplicationRunTime` from Tauri's managed
+/// Retrieves the core `ApplicationRunTime` from Tauri's managed
 /// state, instantiates the gRPC service implementations
 /// (`MountainVinegRPCService` and `CocoonServiceServer`), and uses `tonic` to
 /// serve them at the specified addresses.
@@ -128,7 +125,7 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 /// - `Err(VineError)`: Initialization failed (invalid address, missing runtime,
 ///   etc.)
 /// # Errors
-/// return an error if:
+/// Returns an error if:
 /// - Either socket address string is invalid or unparseable
 /// - ApplicationRunTime is not available in Tauri state
 /// - Server task spawning fails (rare)
@@ -143,9 +140,9 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 /// ```
 /// # Notes
 /// - Servers run as detached tokio tasks
-/// - Initialization is async-safe but function is synchronous
+/// - Initialization is async-safe but the function is synchronous
 /// - Servers log errors independently after startup
-/// - Use `Default` addresses for development (localhost with default ports)
+/// - Uses `Default` addresses for development (localhost with default ports)
 pub fn Initialize(
 	ApplicationHandle:AppHandle,
 

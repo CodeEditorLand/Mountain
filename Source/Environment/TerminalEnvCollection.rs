@@ -29,30 +29,45 @@ use std::{
 
 use serde_json::Value;
 
+/// Supported environment variable mutation operations.
+///
+/// Mirrors VS Code's `EnvironmentVariableMutatorType`:
+/// `Replace` sets the value outright, `Append` adds to the inherited value,
+/// `Prepend` prefixes the inherited value.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum MutatorType {
+	/// Replaces the variable value entirely, discarding the inherited value.
 	Replace = 1,
-
+	/// Appends the value to the inherited variable value.
 	Append = 2,
-
+	/// Prepends the value before the inherited variable value.
 	Prepend = 3,
 }
 
+/// A single environment variable mutation registered by an extension.
+///
+/// Carries the variable name, the value to apply, and the mutation strategy.
 #[derive(Clone, Debug)]
 pub struct Mutator {
+	/// The name of the environment variable to mutate.
 	pub Variable:String,
-
+	/// The value to set, append, or prepend.
 	pub Value:String,
-
+	/// The mutation strategy (Replace, Append, or Prepend).
 	pub Kind:MutatorType,
 }
 
+/// All environment variable mutations registered by a single extension.
+///
+/// Each extension gets one `ExtensionCollection` holding its mutations along
+/// with persistence and description metadata.
 #[derive(Clone, Default)]
 pub struct ExtensionCollection {
+	/// Whether these mutations survive a window reload.
 	pub Persistent:bool,
-
+	/// User-facing label for this collection.
 	pub Description:Option<String>,
-
+	/// Per-variable mutations registered by this extension.
 	pub Mutators:HashMap<String, Mutator>,
 }
 
@@ -60,6 +75,8 @@ static REGISTRY:OnceLock<Mutex<HashMap<String, ExtensionCollection>>> = OnceLock
 
 fn Get() -> &'static Mutex<HashMap<String, ExtensionCollection>> { REGISTRY.get_or_init(|| Mutex::new(HashMap::new())) }
 
+/// Replaces the value of a variable for the given extension, discarding any
+/// inherited value.
 pub fn Replace(ExtensionId:&str, Variable:String, Value:String) {
 	if let Ok(mut Guard) = Get().lock() {
 		let Entry = Guard.entry(ExtensionId.to_string()).or_default();
