@@ -24,7 +24,7 @@
 				<picture>
 					<source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/stars/CodeEditorLand/Mountain?style=flat&label=Star&logo=github&color=black&labelColor=black&logoColor=white&logoWidth=0" />
 					<source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/stars/CodeEditorLand/Mountain?style=flat&label=Star&logo=github&color=white&labelColor=white&logoColor=black&logoWidth=0" />
-					<img src="https://img.shields.io/github/stars/CodeEditorLand/Mountain?style=flat&label=Star&logo=github&color=black&labelColor=black&logoColor=white&logoWidth=0" alt="Star" />
+					<img src="https://img.shields.io/github/stars/CodeEditorLand/Mountain?style=flat&label=Star&logo=github&color=black&labelColor=black&logoColor=white&logoWidth=0" alt="Star" title="Star" />
 				</picture>
 			</a>
 			<br />
@@ -39,7 +39,7 @@
 	</tr>
 </table>
 
-The Bedrock of `Land`: Native Backend & Service Host.
+The Native `Rust`/`Tauri` Desktop Shell for Land&#x2001;🏞️
 
 > **The RAM tax is not optional.** `VS Code` with a medium project: 500 MB to
 > 1.5 GB of RAM. Three open windows means three `Chromium` renderer processes,
@@ -49,11 +49,10 @@ The Bedrock of `Land`: Native Backend & Service Host.
 _"Where `Electron` takes 200 ms to open a dialog, `Mountain` takes 2."_
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](https://github.com/CodeEditorLand/Mountain/tree/Current/LICENSE)
-[<img src="https://editor.land/Image/Rust.svg" width="14" alt="Rust" />](https://www.rust-lang.org/)
-[![Rust Version](https://img.shields.io/badge/Rust-1.77+-blue.svg)](https://www.rust-lang.org/)
-[<img src="https://editor.land/Image/Tauri.svg" width="14" alt="Tauri" />](https://tauri.app/)
-[![Tauri Version](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://tauri.app/)
-[![Tonic gRPC Version](https://img.shields.io/badge/Tonic-v0.11-blueviolet.svg)](https://github.com/hyperium/tonic)
+[<img src="https://editor.land/Image/Rust.svg" width="14" alt="Rust" />](https://www.rust-lang.org/)&#x2001;[![Crates.io](https://img.shields.io/crates/v/Mountain.svg)](https://crates.io/crates/Mountain)
+[<img src="https://editor.land/Image/Rust.svg" width="14" alt="Rust" />](https://www.rust-lang.org/)&#x2001;[![Rust Version](https://img.shields.io/badge/Rust-1.77+-orange.svg)](https://www.rust-lang.org/)
+[<img src="https://editor.land/Image/Tauri.svg" width="14" alt="Tauri" />](https://tauri.app/)&#x2001;[![Tauri Version](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://tauri.app/)
+[<img src="https://editor.land/Image/ProtocolBuffers.svg" width="14" alt="Protocol Buffers" />](https://protobuf.dev/)&#x2001;[![Tonic gRPC Version](https://img.shields.io/badge/Tonic-v0.11-blueviolet.svg)](https://github.com/hyperium/tonic)
 
 **[Rust API Documentation](https://rust.documentation.mountain.editor.land/)**&#x2001;📖
 
@@ -61,7 +60,7 @@ _"Where `Electron` takes 200 ms to open a dialog, `Mountain` takes 2."_
 
 ## Overview
 
-**Mountain** ⛰️ is the foundational `Rust`/`Tauri` backend for the `Land` 🏞️
+**Mountain** is the foundational `Rust`/`Tauri` backend for the **Land** 🏞️
 Code Editor. It implements the abstract service `trait`s defined in the
 `Common` crate, providing native-speed implementations for filesystem I/O,
 process management, secure storage, and more. It manages the application
@@ -76,19 +75,19 @@ calls, a work-stealing scheduler (`Echo` ⚡), and a `gRPC`-based sidecar
 protocol. The result: dialogs open in 2 ms instead of 200, and memory usage is
 a fraction of `Electron`'s.
 
-**Mountain** ⛰️ is engineered to:
+**Mountain is engineered to:**
 
-1. **Be the Native Core:** Act as the primary `Rust` application, leveraging
+1. **Be the Native Core** — Act as the primary `Rust` application, leveraging
    `Tauri` to create a lightweight, cross-platform windowing and `WebView`
    host.
-2. **Provide High-Performance Services:** Implement the abstract service
+2. **Provide High-Performance Services** — Implement the abstract service
    `trait`s defined in the `Common` crate, offering native-speed
    implementations for filesystem I/O, process management, secure storage,
    and more.
-3. **Orchestrate Sidecars:** Reliably launch, manage, and communicate with the
+3. **Orchestrate Sidecars** — Reliably launch, manage, and communicate with the
    `Cocoon` 🦋 (`Node.js`) extension host sidecar via a robust `gRPC` 🌿
    interface.
-4. **Power the User Interface:** Serve as the backend for the `Wind` 🌬️ layer,
+4. **Power the User Interface** — Serve as the backend for the `Wind` 🌬️ layer,
    responding to requests via `Tauri` commands and pushing state updates via
    `Tauri` events.
 
@@ -138,18 +137,18 @@ reporting and automatic restart.
 
 ## Core Architecture Principles&#x2001;🏗️
 
-| Principle                       | Description                                                                                                                                    | Key Components                                   |
-| :------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------- |
-| **Implementation of Contracts** | Implement the abstract service `trait`s from `Common`, providing concrete logic for the application's architecture.                            | `Environment/*` providers                        |
-| **Separation of Concerns**      | Isolate service logic into distinct `Environment` provider modules, each responsible for a specific domain (e.g., `FileSystem`, `Documents`).  | `Environment/*`, `Command/*`                     |
-| **Declarative Logic**           | Express complex operations as `ActionEffect`s, executed by `ApplicationRunTime` — composable, testable, and robust.                            | `RunTime/*`, `Track/*`, `Common`                 |
-| **Centralized State**           | Maintain a single, thread-safe `ApplicationState` struct managed by `Tauri` for data consistency across the entire application.                | `ApplicationState/*`                             |
-| **Secure & Performant IPC**     | Use `gRPC` for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary.                         | `Vine/*`                                         |
-| **UI-Backend Decoupling**       | Interact with `Wind` exclusively through asynchronous `Tauri` commands and events, keeping the backend UI-agnostic.                            | `Binary/*` (invoke handler), `Command/*`         |
+| Principle | Description | Key Components |
+|-----------|-------------|----------------|
+| **Implementation of Contracts** | Implement the abstract service `trait`s from `Common`, providing concrete logic for the application's architecture. | `Environment/*` providers |
+| **Separation of Concerns** | Isolate service logic into distinct `Environment` provider modules, each responsible for a specific domain (e.g., `FileSystem`, `Documents`). | `Environment/*`, `Command/*` |
+| **Declarative Logic** | Express complex operations as `ActionEffect`s, executed by `ApplicationRunTime` — composable, testable, and robust. | `RunTime/*`, `Track/*`, `Common` |
+| **Centralized State** | Maintain a single, thread-safe `ApplicationState` struct managed by `Tauri` for data consistency across the entire application. | `ApplicationState/*` |
+| **Secure & Performant IPC** | Use `gRPC` for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary. | `Vine/*` |
+| **UI-Backend Decoupling** | Interact with `Wind` exclusively through asynchronous `Tauri` commands and events, keeping the backend UI-agnostic. | `Binary/*` (invoke handler), `Command/*` |
 
 ---
 
-## System Architecture
+## System Architecture&#x2001;
 
 ```mermaid
 graph LR
@@ -163,7 +162,7 @@ graph LR
     subgraph MOUNTAIN["Mountain ⛰️ - Native Rust/Tauri Backend"]
         direction TB
         subgraph INIT["Binary/ - App Lifecycle"]
-            TauriRuntime["Tauri Window &amp; WebView 🚀"]:::mountain
+            TauriRuntime["Tauri Window & WebView 🚀"]:::mountain
             AppState["ApplicationState 🗄️"]:::mountain
         end
         subgraph DISPATCH["Track/ - Request Dispatcher"]
@@ -184,7 +183,7 @@ graph LR
         subgraph RPC_LAYER["RPC/ - gRPC Handlers"]
             CocoonRPC["CocoonService handlers"]:::mountain
         end
-        CommonCrate["Common - Traits &amp; DTOs 📐"]:::common
+        CommonCrate["Common - Traits & DTOs 📐"]:::common
 
         TauriRuntime --> WindHandlers
         WindHandlers --> TrackDispatcher
@@ -223,28 +222,28 @@ graph LR
 
 ## Key Components
 
-| Component           | Path                          | Description                                                                                            |
-| ------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Library Entry Point | `Source/Library.rs`           | Library entry point, Tauri setup.                                                                      |
-| LandFixTier         | `Source/LandFixTier.rs`       | Compile-time tier variable boot banner.                                                                |
-| ApplicationState    | `Source/ApplicationState/`    | Thread-safe state machine with DTOs, persistence, recovery, and feature state.                         |
-| Binary              | `Source/Binary/`              | Application lifecycle, Tauri command registration, initialization, shutdown.                           |
-| Command             | `Source/Command/`             | Tauri command handlers grouped by domain (Keybinding, LanguageFeature, SCM, TreeView, Hover).          |
-| Environment         | `Source/Environment/`         | Concrete implementations of Common provider traits (filesystem, documents, terminal, webview, etc.).   |
-| ExtensionManagement | `Source/ExtensionManagement/` | Extension discovery, manifest parsing, NLS resolution, and VSIX installation.                          |
-| FileSystem          | `Source/FileSystem/`          | Native file-explorer tree-view provider for the workspace sidebar.                                     |
-| IPC                 | `Source/IPC/`                 | Inter-process communication: Tauri IPC server, Wind service handlers, dev logging, Sky event emission. |
-| ProcessManagement   | `Source/ProcessManagement/`   | Sidecar process lifecycle, Node.js binary resolution (nvm, fnm, asdf, volta, homebrew, shipped).       |
-| RPC                 | `Source/RPC/`                 | gRPC service implementations (CocoonService, CommandService, TelemetryService, WorkspaceService).      |
-| RunTime             | `Source/RunTime/`             | Effect execution engine (ApplicationRunTime, Execute with retry/timeout, graceful Shutdown).           |
-| Telemetry           | `Source/Telemetry/`           | Feature flags, runtime gates, metrics recording, and distributed tracing (OpenTelemetry).              |
-| Track               | `Source/Track/`               | Central request dispatcher routing frontend, sidecar, and webview commands into ActionEffects.         |
-| Update              | `Source/Update/`              | Application update service: check, download, and apply updates via Air daemon.                         |
-| Vine                | `Source/Vine/`                | gRPC IPC layer: server implementation, client multiplexer, notification publishing.                    |
-| Workspace           | `Source/Workspace/`           | Workspace file (.code-workspace) parsing and multi-root folder resolution.                             |
-| Cache               | `Source/Cache/`               | Asset memory mapping and path canonicalization cache.                                                  |
-| Error               | `Source/Error/`               | Unified error types: ConfigurationError, CoreError, FileSystemError, IPCError, ProviderError.         |
-| Proto               | `Proto/Vine.proto`            | The gRPC contract definition file for the Vine protocol.                                               |
+| Component | Path | Description |
+|-----------|------|-------------|
+| Library Entry Point | `Source/Library.rs` | Library entry point, Tauri setup. |
+| LandFixTier | `Source/LandFixTier.rs` | Compile-time tier variable boot banner. |
+| ApplicationState | `Source/ApplicationState/` | Thread-safe state machine with DTOs, persistence, recovery, and feature state. |
+| Binary | `Source/Binary/` | Application lifecycle, Tauri command registration, initialization, shutdown. |
+| Command | `Source/Command/` | Tauri command handlers grouped by domain (Keybinding, LanguageFeature, SCM, TreeView, Hover). |
+| Environment | `Source/Environment/` | Concrete implementations of Common provider traits (filesystem, documents, terminal, webview, etc.). |
+| ExtensionManagement | `Source/ExtensionManagement/` | Extension discovery, manifest parsing, NLS resolution, and VSIX installation. |
+| FileSystem | `Source/FileSystem/` | Native file-explorer tree-view provider for the workspace sidebar. |
+| IPC | `Source/IPC/` | Inter-process communication: Tauri IPC server, Wind service handlers, dev logging, Sky event emission. |
+| ProcessManagement | `Source/ProcessManagement/` | Sidecar process lifecycle, Node.js binary resolution (nvm, fnm, asdf, volta, homebrew, shipped). |
+| RPC | `Source/RPC/` | gRPC service implementations (CocoonService, CommandService, TelemetryService, WorkspaceService). |
+| RunTime | `Source/RunTime/` | Effect execution engine (ApplicationRunTime, Execute with retry/timeout, graceful Shutdown). |
+| Telemetry | `Source/Telemetry/` | Feature flags, runtime gates, metrics recording, and distributed tracing (OpenTelemetry). |
+| Track | `Source/Track/` | Central request dispatcher routing frontend, sidecar, and webview commands into ActionEffects. |
+| Update | `Source/Update/` | Application update service: check, download, and apply updates via Air daemon. |
+| Vine | `Source/Vine/` | gRPC IPC layer: server implementation, client multiplexer, notification publishing. |
+| Workspace | `Source/Workspace/` | Workspace file (.code-workspace) parsing and multi-root folder resolution. |
+| Cache | `Source/Cache/` | Asset memory mapping and path canonicalization cache. |
+| Error | `Source/Error/` | Unified error types: ConfigurationError, CoreError, FileSystemError, IPCError, ProviderError. |
+| Proto | `Proto/Vine.proto` | The gRPC contract definition file for the Vine protocol. |
 
 ---
 
@@ -368,23 +367,23 @@ cargo run --release
 
 **Key Dependencies:**
 
-| Crate / Package        | Purpose                                           |
-| :--------------------- | :------------------------------------------------ |
-| `Common`               | Local path dependency — abstract traits & DTOs    |
-| `Echo`                 | Local path dependency — work-stealing scheduler   |
-| `Air`                  | Local path dependency — OTA update daemon client  |
-| `Mist`                 | Local path dependency — pub/sub message bus       |
-| `Vine`                 | Local path dependency — gRPC protocol definitions |
-| `Cache`                | Local path dependency — memory-mapped caches      |
-| `keyring`              | Secure OS keychain access                         |
-| `log` & `env_logger`   | Structured logging                                |
-| `portable-pty`         | Cross-platform native PTY for integrated terminal |
-| `serde` & `serde_json` | Serialization / deserialization                   |
-| `tauri`                | `^2.x` — windowing, WebView, command dispatch     |
-| `tokio`                | Async runtime                                     |
-| `tonic`                | `gRPC` server implementation                      |
-| `opentelemetry`        | Distributed tracing                               |
-| `posthog-rs`           | Product analytics                                 |
+| Crate / Package | Purpose |
+|-----------------|---------|
+| `Common` | Local path dependency — abstract traits & DTOs |
+| `Echo` | Local path dependency — work-stealing scheduler |
+| `Air` | Local path dependency — OTA update daemon client |
+| `Mist` | Local path dependency — pub/sub message bus |
+| `Vine` | Local path dependency — gRPC protocol definitions |
+| `Cache` | Local path dependency — memory-mapped caches |
+| `keyring` | Secure OS keychain access |
+| `log` & `env_logger` | Structured logging |
+| `portable-pty` | Cross-platform native PTY for integrated terminal |
+| `serde` & `serde_json` | Serialization / deserialization |
+| `tauri` | `^2.x` — windowing, WebView, command dispatch |
+| `tokio` | Async runtime |
+| `tonic` | `gRPC` server implementation |
+| `opentelemetry` | Distributed tracing |
+| `posthog-rs` | Product analytics |
 
 ---
 
@@ -401,13 +400,30 @@ Mountain enforces security at multiple layers:
 | **Secure storage** | Native OS keychain via `keyring` for secrets, tokens, and credentials |
 | **Certificate management** | `Binary/Build/CertificateManager` — TLS certificate generation, renewal, and health monitoring |
 | **Path security** | `Environment/Utility/PathSecurity` — validates file paths to prevent directory traversal attacks |
-| **Message compression** | `IPC/Enhanced/MessageCompressor` — batched compression with multiple algorithm support |
+
+---
+
+## Compatibility
+
+Mountain is designed to be compatible with:
+
+| Target | Integration |
+|--------|-------------|
+| **Wind** 🌬️ | Serves as the backend via `Tauri` commands and `sky://` events |
+| **Cocoon** 🦋 | Communicates via `gRPC` on port 50052 for extension host operations |
+| **Sky** | Hosts the `Sky` WebView as the primary UI surface |
+| **Air** 🪁 | Connects via `AirClient` gRPC for OTA updates and file operations |
+| **Common** | Implements all abstract service `trait`s from the `Common` crate |
+| **Echo** ⚡ | Integrates with the work-stealing scheduler for task execution |
+| **Vine** 🌿 | Uses the `Vine.proto` gRPC protocol for all IPC |
+| **Mist** 🌫️ | Connects to the pub/sub message bus for event-driven workflows |
+| **Grove** 🌳 | Supports native Rust/WASM extension hosting via `gRPC` |
 
 ---
 
 ## API Reference
 
-- [Rust API Documentation](https://rust.documentation.mountain.editor.land/)&#x2001;📖
+- **[Rust API Documentation](https://rust.documentation.mountain.editor.land/)**&#x2001;📖
 
 ---
 
@@ -437,12 +453,6 @@ This project is funded through
 [NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund established by
 [NLnet](https://NLnet.NL) with financial support from the European Commission's
 Next Generation Internet program, under grant agreement No 101135429.
-
-**Mountain** ⛰️ is a core element of the **Land** 🏞️ ecosystem. This project
-is funded through [NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund
-established by [NLnet](https://NLnet.NL) with financial support from the
-European Commission's [Next Generation Internet](https://ngi.eu) program. Learn
-more at the [NLnet project page](https://NLnet.NL/project/Land).
 
 The project is operated by PlayForm, based in Sofia, Bulgaria. PlayForm acts as
 the open-source steward for Code Editor Land under the NGI0 Commons Fund grant.
