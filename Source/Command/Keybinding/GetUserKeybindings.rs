@@ -6,10 +6,7 @@
 
 use std::sync::Arc;
 
-use CommonLibrary::{
-	Effect::ApplicationRunTime::ApplicationRunTime as _,
-	FileSystem::ReadFile::ReadFile,
-};
+use CommonLibrary::{Effect::ApplicationRunTime::ApplicationRunTime as _, FileSystem::ReadFile::ReadFile};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Wry, command};
 
@@ -31,11 +28,13 @@ pub async fn GetUserKeybindings(ApplicationHandle:AppHandle<Wry>) -> Result<Valu
 		Ok(Content) => {
 			match serde_json::from_slice::<Value>(&Content) {
 				Ok(Value::Array(Rules)) => Rules,
+
 				Ok(_) => {
 					dev_log!("keybinding", "warn: keybindings.json is not an array");
 
 					Vec::new()
 				},
+
 				Err(Error) => {
 					dev_log!("keybinding", "warn: keybindings.json is malformed: {}", Error);
 
@@ -43,6 +42,7 @@ pub async fn GetUserKeybindings(ApplicationHandle:AppHandle<Wry>) -> Result<Valu
 				},
 			}
 		},
+
 		// Absent file is the normal first-run state.
 		Err(_) => Vec::new(),
 	};

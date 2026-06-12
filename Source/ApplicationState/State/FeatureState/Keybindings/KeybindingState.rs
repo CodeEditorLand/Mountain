@@ -61,14 +61,14 @@ impl KeybindingState {
 
 		Guard.retain(|E| !(E.CommandId == CommandId && E.Source.as_deref() == Some(Source.as_str())));
 
-		Guard.push(KeybindingEntry {
-			CommandId:CommandId.clone(),
-			Keybinding,
-			When,
-			Source:Some(Source.clone()),
-		});
+		Guard.push(KeybindingEntry { CommandId:CommandId.clone(), Keybinding, When, Source:Some(Source.clone()) });
 
-		dev_log!("keybinding", "[KeybindingState] Keybinding added for: {} (source: {})", CommandId, Source);
+		dev_log!(
+			"keybinding",
+			"[KeybindingState] Keybinding added for: {} (source: {})",
+			CommandId,
+			Source
+		);
 	}
 
 	/// Remove every dynamic keybinding registered by a source. Returns the
@@ -82,7 +82,12 @@ impl KeybindingState {
 
 		let Removed = Before - Guard.len();
 
-		dev_log!("keybinding", "[KeybindingState] {} keybinding(s) removed for source: {}", Removed, Source);
+		dev_log!(
+			"keybinding",
+			"[KeybindingState] {} keybinding(s) removed for source: {}",
+			Removed,
+			Source
+		);
 
 		Removed
 	}

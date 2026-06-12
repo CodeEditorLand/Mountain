@@ -125,12 +125,14 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 	// shutdown via SIGTERM from the OS or its own gRPC `Shutdown` RPC.
 	let SpawnResult = tokio::process::Command::new(&BinaryPath)
 		.env("AIR_GRPC_ADDRESS", AIR_GRPC_ADDRESS)
+
 		// Air's Configuration layer reads `AIR_GRPC_BIND_ADDRESS` (prefix
 		// `AIR_` + `grpc.bind_address`); `AIR_GRPC_ADDRESS` above is kept
 		// for the AirClient-side convention.
 		.env("AIR_GRPC_BIND_ADDRESS", AIR_GRPC_ADDRESS)
 		.env(
 			"AIR_LOG_DIR",
+
 			std::env::var("AIR_LOG_DIR").unwrap_or_else(|_| "/tmp/air-log".to_string()),
 		)
 		.stdin(std::process::Stdio::null())

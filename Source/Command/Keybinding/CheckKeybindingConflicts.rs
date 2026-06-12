@@ -16,11 +16,7 @@ use CommonLibrary::{Environment::Requires::Requires, Keybinding::KeybindingProvi
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Wry, command};
 
-use crate::{
-	Environment::Utility::WhenClause,
-	RunTime::ApplicationRunTime::ApplicationRunTime as Runtime,
-	dev_log,
-};
+use crate::{Environment::Utility::WhenClause, RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 #[command]
 pub async fn CheckKeybindingConflicts(ApplicationHandle:AppHandle<Wry>, Keybinding:String) -> Result<Value, String> {

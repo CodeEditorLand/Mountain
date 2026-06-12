@@ -276,11 +276,13 @@ fn CommandSaveDocument(
 		let ArgumentURI = match &Argument {
 			Value::String(S) if !S.is_empty() => Some(S.clone()),
 			Value::Array(Items) => Items.first().and_then(Value::as_str).map(str::to_owned),
-			Value::Object(Object) => Object
-				.get("external")
-				.or_else(|| Object.get("uri"))
-				.and_then(Value::as_str)
-				.map(str::to_owned),
+			Value::Object(Object) => {
+				Object
+					.get("external")
+					.or_else(|| Object.get("uri"))
+					.and_then(Value::as_str)
+					.map(str::to_owned)
+			},
 			_ => None,
 		};
 

@@ -8,8 +8,8 @@
 //! - `GetAllSourceControlManagementState` - full snapshot of every provider,
 //!   group, and resource.
 //! - `GetSCMResourceChanges` - per-provider resource list.
-//! - `ExecuteSCMCommand` - commit / push / pull / fetch via `git`
-//!   subprocess (shared `Git::Shared::RunGit` runner).
+//! - `ExecuteSCMCommand` - commit / push / pull / fetch via `git` subprocess
+//!   (shared `Git::Shared::RunGit` runner).
 //! - `GetSCMBranches` - branch picker data from `git branch -a`.
 //! - `CheckoutSCMBranch` - working-tree switch via `git checkout`.
 //! - `GetSCMCommitHistory` - Timeline-panel commit log via `git log`.
@@ -29,8 +29,8 @@
 //!
 //! ## Planned Work
 //!
-//! - Multi-root: pick the repository from the provider's rootUri instead
-//!   of the first workspace folder
+//! - Multi-root: pick the repository from the provider's rootUri instead of the
+//!   first workspace folder
 //! - Progress reporting and cancellation for long push/pull operations
 //! - Stash / merge / rebase operations
 //! - Diff viewing and resource decoration

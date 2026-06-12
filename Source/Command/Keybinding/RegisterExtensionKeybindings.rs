@@ -33,7 +33,9 @@ pub async fn RegisterExtensionKeybindings(
 
 	let Entries:Vec<Value> = match Keybindings {
 		Value::Array(Items) => Items,
+
 		Single @ Value::Object(_) => vec![Single],
+
 		_ => {
 			return Err("Keybindings must be an object or an array of objects".to_string());
 		},
@@ -52,15 +54,11 @@ pub async fn RegisterExtensionKeybindings(
 			(Some(Key), Some(Command)) => {
 				let When = Entry.get("when").and_then(Value::as_str).map(str::to_owned);
 
-				Registry.AddKeybindingFromSource(
-					Command.to_owned(),
-					Key.to_owned(),
-					When,
-					ExtensionIdentifier.clone(),
-				);
+				Registry.AddKeybindingFromSource(Command.to_owned(), Key.to_owned(), When, ExtensionIdentifier.clone());
 
 				Registered += 1;
 			},
+
 			_ => {
 				Skipped += 1;
 			},

@@ -9,11 +9,11 @@
 //!   after merging extension contributions + dynamic registry + user.
 //! - `GetUserKeybindings::GetUserKeybindings` - user `keybindings.json`
 //!   overrides (including `-command` unbind rules).
-//! - `RegisterExtensionKeybindings::RegisterExtensionKeybindings` -
-//!   runtime registration into `ApplicationState::Feature::Keybindings`,
-//!   tagged by extension identifier.
-//! - `UnregisterExtensionKeybindings::UnregisterExtensionKeybindings` -
-//!   removes everything tagged with the extension identifier.
+//! - `RegisterExtensionKeybindings::RegisterExtensionKeybindings` - runtime
+//!   registration into `ApplicationState::Feature::Keybindings`, tagged by
+//!   extension identifier.
+//! - `UnregisterExtensionKeybindings::UnregisterExtensionKeybindings` - removes
+//!   everything tagged with the extension identifier.
 //! - `CheckKeybindingConflicts::CheckKeybindingConflicts` - normalised
 //!   key-expression overlap detection (chord-aware, modifier aliasing).
 //!

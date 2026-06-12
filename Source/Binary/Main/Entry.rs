@@ -658,7 +658,7 @@ pub fn Fn() {
 					Ok(())
 				}
 			})
-			.register_asynchronous_uri_scheme_protocol("fiddee", |_ctx, request, responder| {
+			.register_asynchronous_uri_scheme_protocol("fcd", |_ctx, request, responder| {
 				// Implemented: delegate to synchronous scheme handler
 				let response = crate::Binary::Build::Scheme::land_scheme_handler(&request);
 
