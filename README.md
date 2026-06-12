@@ -70,22 +70,22 @@ for the `Wind` 🌬️ layer through `Tauri` commands and events.
 
 `Electron` ships an entire `Chromium` renderer per window, each carrying a full
 heap. Every OS interaction crosses a serialized JSON IPC pipe. **Mountain**
-replaces that with a single `Rust` binary backed by `Tauri` — OS-level native
+replaces that with a single `Rust` binary backed by `Tauri` - OS-level native
 calls, a work-stealing scheduler (`Echo` ⚡), and a `gRPC`-based sidecar
 protocol. The result: dialogs open in 2 ms instead of 200, and memory usage is a
 fraction of `Electron`'s.
 
 **Mountain is engineered to:**
 
-1. **Be the Native Core** — Act as the primary `Rust` application, leveraging
+1. **Be the Native Core** - Act as the primary `Rust` application, leveraging
    `Tauri` to create a lightweight, cross-platform windowing and `WebView` host.
-2. **Provide High-Performance Services** — Implement the abstract service
+2. **Provide High-Performance Services** - Implement the abstract service
    `trait`s defined in the `Common` crate, offering native-speed implementations
    for filesystem I/O, process management, secure storage, and more.
-3. **Orchestrate Sidecars** — Reliably launch, manage, and communicate with the
+3. **Orchestrate Sidecars** - Reliably launch, manage, and communicate with the
    `Cocoon` 🦋 (`Node.js`) extension host sidecar via a robust `gRPC` 🌿
    interface.
-4. **Power the User Interface** — Serve as the backend for the `Wind` 🌬️ layer,
+4. **Power the User Interface** - Serve as the backend for the `Wind` 🌬️ layer,
    responding to requests via `Tauri` commands and pushing state updates via
    `Tauri` events.
 
@@ -93,41 +93,41 @@ fraction of `Electron`'s.
 
 ## Key Features&#x2001;⛰️
 
-**Declarative Effect System** — Built on a `Rust` `ActionEffect` system defined
+**Declarative Effect System** - Built on a `Rust` `ActionEffect` system defined
 in the `Common` crate. Business logic is described as declarative, composable
 effects, executed by a central `ApplicationRunTime`. Every incoming request
 (from `Wind`, `Cocoon`, or internal triggers) maps to an effect that the runtime
 executes with retry and timeout semantics.
 
-**`gRPC`-Powered IPC** — Hosts a `tonic`-based `gRPC` server (`Vine` 🌿) on port
+**`gRPC`-Powered IPC** - Hosts a `tonic`-based `gRPC` server (`Vine` 🌿) on port
 50052 to provide a strongly-typed, high-performance communication channel for
 the `Cocoon` 🦋 extension host. All extension host ↔ native communication flows
 through this channel.
 
-**Centralized State Management** — Utilizes a thread-safe, `Tauri`-managed
+**Centralized State Management** - Utilizes a thread-safe, `Tauri`-managed
 `ApplicationState` as the single source of truth for the entire application's
 state, from open documents to provider registrations. State is persisted to disk
 via `Memento` save/load with corruption recovery and validation.
 
-**Native PTY Management** — Implements a full-featured integrated terminal
+**Native PTY Management** - Implements a full-featured integrated terminal
 service by spawning and managing native pseudo-terminals (`PTY`) using the
 `portable-pty` crate, with shell integration, environment collection, and
 terminal state serialization for hot reload.
 
-**Secure Storage Integration** — Leverages the native OS keychain via the
+**Secure Storage Integration** - Leverages the native OS keychain via the
 `keyring` crate to securely store sensitive data like authentication tokens, API
 keys, and extension secrets.
 
-**Robust Command Dispatching** — A central `Track` dispatcher intelligently
+**Robust Command Dispatching** - A central `Track` dispatcher intelligently
 routes all incoming requests from `Wind`, `Cocoon`, and `Webview` panels to the
 appropriate native `Environment` provider or `ActionEffect`, with permission
 validation and audit logging.
 
-**Extension Management** — Discovery, manifest parsing, and VSIX installation
+**Extension Management** - Discovery, manifest parsing, and VSIX installation
 for VS Code-compatible extensions. Includes NLS (National Language Support)
 resolution and default configuration merging.
 
-**Over-the-Air Updates** — Integrated update system using the `Air` 🪁 daemon
+**Over-the-Air Updates** - Integrated update system using the `Air` 🪁 daemon
 for checking, downloading, and applying application updates with progress
 reporting and automatic restart.
 
@@ -139,7 +139,7 @@ reporting and automatic restart.
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
 | **Implementation of Contracts** | Implement the abstract service `trait`s from `Common`, providing concrete logic for the application's architecture.                           | `Environment/*` providers                |
 | **Separation of Concerns**      | Isolate service logic into distinct `Environment` provider modules, each responsible for a specific domain (e.g., `FileSystem`, `Documents`). | `Environment/*`, `Command/*`             |
-| **Declarative Logic**           | Express complex operations as `ActionEffect`s, executed by `ApplicationRunTime` — composable, testable, and robust.                           | `RunTime/*`, `Track/*`, `Common`         |
+| **Declarative Logic**           | Express complex operations as `ActionEffect`s, executed by `ApplicationRunTime` - composable, testable, and robust.                           | `RunTime/*`, `Track/*`, `Common`         |
 | **Centralized State**           | Maintain a single, thread-safe `ApplicationState` struct managed by `Tauri` for data consistency across the entire application.               | `ApplicationState/*`                     |
 | **Secure & Performant IPC**     | Use `gRPC` for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary.                        | `Vine/*`                                 |
 | **UI-Backend Decoupling**       | Interact with `Wind` exclusively through asynchronous `Tauri` commands and events, keeping the backend UI-agnostic.                           | `Binary/*` (invoke handler), `Command/*` |
@@ -317,7 +317,7 @@ component in the `Land` 🏞️ monorepo. It depends on:
 
 | Component             | Protocol                           | Role                                                 |
 | --------------------- | ---------------------------------- | ---------------------------------------------------- |
-| **Wind** 🌬️ / **Sky** | `tauri::invoke` + `sky://` events  | UI WebView — command dispatch and state push         |
+| **Wind** 🌬️ / **Sky** | `tauri::invoke` + `sky://` events  | UI WebView - command dispatch and state push         |
 | **Cocoon** 🦋         | `gRPC` via `Vine` 🌿 on port 50052 | Node.js extension host sidecar                       |
 | **Air** 🪁            | `AirClient` gRPC                   | Background daemon for file indexing, search, updates |
 | **Grove** 🌳          | `gRPC` via `Vine` 🌿               | Native Rust/WASM extension host (future)             |
@@ -334,7 +334,7 @@ is built as part of the monorepo. For detailed build instructions, see
 
 - **Rust** 1.77 or later
 - **Tauri** v2 CLI (`cargo install tauri-cli`)
-- Protocol Buffer compiler (`protoc`) — required for `Vine.proto` codegen
+- Protocol Buffer compiler (`protoc`) - required for `Vine.proto` codegen
 - macOS, Linux, or Windows build toolchain
 
 ### Build
@@ -367,17 +367,17 @@ cargo run --release
 
 | Crate / Package        | Purpose                                           |
 | ---------------------- | ------------------------------------------------- |
-| `Common`               | Local path dependency — abstract traits & DTOs    |
-| `Echo`                 | Local path dependency — work-stealing scheduler   |
-| `Air`                  | Local path dependency — OTA update daemon client  |
-| `Mist`                 | Local path dependency — pub/sub message bus       |
-| `Vine`                 | Local path dependency — gRPC protocol definitions |
-| `Cache`                | Local path dependency — memory-mapped caches      |
+| `Common`               | Local path dependency - abstract traits & DTOs    |
+| `Echo`                 | Local path dependency - work-stealing scheduler   |
+| `Air`                  | Local path dependency - OTA update daemon client  |
+| `Mist`                 | Local path dependency - pub/sub message bus       |
+| `Vine`                 | Local path dependency - gRPC protocol definitions |
+| `Cache`                | Local path dependency - memory-mapped caches      |
 | `keyring`              | Secure OS keychain access                         |
 | `log` & `env_logger`   | Structured logging                                |
 | `portable-pty`         | Cross-platform native PTY for integrated terminal |
 | `serde` & `serde_json` | Serialization / deserialization                   |
-| `tauri`                | `^2.x` — windowing, WebView, command dispatch     |
+| `tauri`                | `^2.x` - windowing, WebView, command dispatch     |
 | `tokio`                | Async runtime                                     |
 | `tonic`                | `gRPC` server implementation                      |
 | `opentelemetry`        | Distributed tracing                               |
@@ -391,13 +391,13 @@ Mountain enforces security at multiple layers:
 
 | Layer                      | Mechanism                                                                                           |
 | -------------------------- | --------------------------------------------------------------------------------------------------- |
-| **Process isolation**      | `Cocoon` 🦋 runs as a separate OS process — a crash in an extension does not take down the editor   |
+| **Process isolation**      | `Cocoon` 🦋 runs as a separate OS process - a crash in an extension does not take down the editor   |
 | **gRPC boundary**          | All extension host ↔ native communication crosses the `Vine` 🌿 `gRPC` protocol with typed messages |
-| **Permission system**      | `IPC/Permission/` — role-based access control (Admin, Developer, User, Standard) with audit logging |
-| **Message encryption**     | `IPC/Encryption/SecureChannel` — encrypted message channels with configurable security policies     |
+| **Permission system**      | `IPC/Permission/` - role-based access control (Admin, Developer, User, Standard) with audit logging |
+| **Message encryption**     | `IPC/Encryption/SecureChannel` - encrypted message channels with configurable security policies     |
 | **Secure storage**         | Native OS keychain via `keyring` for secrets, tokens, and credentials                               |
-| **Certificate management** | `Binary/Build/CertificateManager` — TLS certificate generation, renewal, and health monitoring      |
-| **Path security**          | `Environment/Utility/PathSecurity` — validates file paths to prevent directory traversal attacks    |
+| **Certificate management** | `Binary/Build/CertificateManager` - TLS certificate generation, renewal, and health monitoring      |
+| **Path security**          | `Environment/Utility/PathSecurity` - validates file paths to prevent directory traversal attacks    |
 
 ---
 
@@ -427,22 +427,22 @@ Mountain is designed to be compatible with:
 
 ## Related Documentation
 
-- [Architecture Overview](https://Editor.Land/Doc/architecture) — Internal
+- [Architecture Overview](https://Editor.Land/Doc/architecture) - Internal
   module structure
-- [Deep Dive](Documentation/GitHub/DeepDive.md) — In-depth technical details
-- [Land Documentation](../../Documentation/GitHub/README.md) — Complete
+- [Deep Dive](Documentation/GitHub/DeepDive.md) - In-depth technical details
+- [Land Documentation](../../Documentation/GitHub/README.md) - Complete
   documentation index
 - [Why `Rust`](https://Editor.Land/Doc/why-rust)
 - [Why `Tauri`](https://Editor.Land/Doc/why-tauri)
-- [`Cocoon`](https://github.com/CodeEditorLand/Cocoon) — Extension host sidecar
-- [`Grove`](https://github.com/CodeEditorLand/Grove) — Native Rust/WASM
+- [`Cocoon`](https://github.com/CodeEditorLand/Cocoon) - Extension host sidecar
+- [`Grove`](https://github.com/CodeEditorLand/Grove) - Native Rust/WASM
   extension host
-- [`Vine`](https://github.com/CodeEditorLand/Vine) — gRPC protocol
-- [`Echo`](https://github.com/CodeEditorLand/Echo) — Work-stealing scheduler
-- [`Air`](https://github.com/CodeEditorLand/Air) — Background daemon
-- [`Mist`](https://github.com/CodeEditorLand/Mist) — Pub/sub message bus
+- [`Vine`](https://github.com/CodeEditorLand/Vine) - gRPC protocol
+- [`Echo`](https://github.com/CodeEditorLand/Echo) - Work-stealing scheduler
+- [`Air`](https://github.com/CodeEditorLand/Air) - Background daemon
+- [`Mist`](https://github.com/CodeEditorLand/Mist) - Pub/sub message bus
 - [`CHANGELOG.md`](https://github.com/CodeEditorLand/Mountain/tree/Current/CHANGELOG.md)
-  — History of changes specific to Mountain
+  - History of changes specific to Mountain
 
 ---
 
