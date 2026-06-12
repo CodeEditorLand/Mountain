@@ -831,7 +831,6 @@ pub async fn mountain_ipc_invoke(
 				},
 				"logger:flush"
 				| "logger:setLevel"
-				| "logger:getLevel"
 				| "logger:createLogger"
 				| "logger:registerLogger"
 				| "logger:deregisterLogger"
