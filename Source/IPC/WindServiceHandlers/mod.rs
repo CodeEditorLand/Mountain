@@ -52,8 +52,6 @@ pub mod Workspaces;
 
 pub mod DispatchMatch;
 
-pub mod Dispatcher;
-
 pub mod Utilities;
 
 // ============================================================================

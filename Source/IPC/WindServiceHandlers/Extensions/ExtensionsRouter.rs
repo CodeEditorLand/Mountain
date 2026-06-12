@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use super::*;
 use crate::{
@@ -173,18 +173,14 @@ pub(crate) async fn route(
 		},
 
 		// Local VSIX install.
-		"extensions:install" => {
-			Some(ExtensionInstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await)
-		},
+		"extensions:install" => Some(ExtensionInstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await),
 
 		"extensions:uninstall" => {
 			Some(ExtensionUninstall::Fn(ApplicationHandle.clone(), RunTime.clone(), Arguments).await)
 		},
 
 		// Reads `extension/package.json` from a `.vsix` archive.
-		"extensions:getManifest" => {
-			Some(ExtensionGetManifest::Fn(Arguments).await)
-		},
+		"extensions:getManifest" => Some(ExtensionGetManifest::Fn(Arguments).await),
 
 		// `extensions:reinstall` - no gallery, return minimal envelope.
 		"extensions:reinstall" => {
@@ -192,7 +188,9 @@ pub(crate) async fn route(
 
 			dev_log!("extensions", "extensions:reinstall {} (no-op: no gallery)", ExtId);
 
-			Some(Ok(serde_json::json!({ "identifier": { "id": ExtId }, "version": "0.0.0", "type": 0 })))
+			Some(Ok(
+				serde_json::json!({ "identifier": { "id": ExtId }, "version": "0.0.0", "type": 0 }),
+			))
 		},
 
 		// Metadata update only matters for ratings/icons/readme.

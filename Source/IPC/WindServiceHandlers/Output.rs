@@ -26,3 +26,5 @@ pub mod OutputDispose;
 pub mod OutputReplace;
 
 pub mod OutputShow;
+
+pub mod OutputRouter;

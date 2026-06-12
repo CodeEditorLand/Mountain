@@ -1,4 +1,4 @@
-# **Mountain** 🏔️
+# **Mountain**&#x2001;🏔️
 
 <table>
 	<tr>
@@ -55,8 +55,7 @@ _"Where `Electron` takes 200 ms to open a dialog, `Mountain` takes 2."_
 [![Tauri Version](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://tauri.app/)
 [![Tonic gRPC Version](https://img.shields.io/badge/Tonic-v0.11-blueviolet.svg)](https://github.com/hyperium/tonic)
 
-**[Rust API Documentation](https://Rust.Documentation.editor.land/Mountain/)**
-📖
+**[Rust API Documentation](https://Rust.Documentation.editor.land/Mountain/)**&#x2001;📖
 
 **Mountain** 🏔️ is the native `Rust` backend and `Tauri` application shell for
 the `Land` Code Editor. It serves as the foundational bedrock for the entire
@@ -91,7 +90,7 @@ orchestrates native OS operations, launches and communicates with the `Cocoon`
 system, Mountain solves the problem of Electron's heavyweight architecture by
 delivering native performance with a fraction of the memory footprint.
 
-### Key Features 🔐
+### Key Features&#x2001;🔐
 
 - **Declarative Effect System:** Built on a `Rust` `ActionEffect` system defined
   in the `Common` crate. Business logic is described as declarative, composable
@@ -199,7 +198,7 @@ for the entire `Land` application.
 
 ---
 
-## Core Architecture Principles 🏗️
+## Core Architecture Principles&#x2001;🏗️
 
 | Principle                       | Description                                                                                                                                   | Key Components                                   |
 | :------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------- |
@@ -212,7 +211,7 @@ for the entire `Land` application.
 
 ---
 
-## Deep Dive & Component Breakdown 🔬
+## Deep Dive &amp; Component Breakdown&#x2001;🔬
 
 To understand how `Mountain`'s internal components are structured and how they
 implement the application's core logic, see
@@ -237,7 +236,7 @@ component in the Land monorepo. It depends on:
 
 ---
 
-## Getting Started 🛠️
+## Getting Started&#x2001;🛠️
 
 `Mountain` is a `Rust` crate and a core component of the **Land** repository. It
 is built as part of the monorepo. For detailed build instructions, see
@@ -261,7 +260,7 @@ is built as part of the monorepo. For detailed build instructions, see
 
 ## API Reference
 
-- [Rust API Documentation](https://Rust.Documentation.editor.land/Mountain/) 📖
+- [Rust API Documentation](https://Rust.Documentation.editor.land/Mountain/)&#x2001;📖
 
 ---
 

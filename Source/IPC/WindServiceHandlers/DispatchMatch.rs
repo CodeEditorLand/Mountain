@@ -89,16 +89,6 @@ use FileSystem::{
 		FileWriteNative::Fn as FileWriteNative,
 	},
 };
-use Model::{
-	ModelClose::Fn as ModelClose,
-	ModelGet::Fn as ModelGet,
-	ModelGetAll::Fn as ModelGetAll,
-	ModelOpen::Fn as ModelOpen,
-	ModelUpdateContent::Fn as ModelUpdateContent,
-	TextfileRead::Fn as TextfileRead,
-	TextfileSave::Fn as TextfileSave,
-	TextfileWrite::Fn as TextfileWrite,
-};
 use NativeHost::{
 	ClipboardHas::Fn as NativeHasClipboard,
 	ClipboardReadBuffer::Fn as NativeReadClipboardBuffer,
@@ -146,15 +136,6 @@ use Navigation::{
 	LabelGetBase::Fn as LabelGetBase,
 	LabelGetURI::Fn as LabelGetURI,
 	LabelGetWorkspace::Fn as LabelGetWorkspace,
-};
-use Output::{
-	OutputAppend::Fn as OutputAppend,
-	OutputAppendLine::Fn as OutputAppendLine,
-	OutputClear::Fn as OutputClear,
-	OutputCreate::Fn as OutputCreate,
-	OutputDispose::Fn as OutputDispose,
-	OutputReplace::Fn as OutputReplace,
-	OutputShow::Fn as OutputShow,
 };
 use Search::{FindFiles::Fn as SearchFindFiles, FindInFiles::Fn as SearchFindInFiles};
 use Storage::{
@@ -1113,19 +1094,17 @@ pub async fn mountain_ipc_invoke(
 				"terminal:show" => call!(rt, "terminal", "terminal:show", TerminalShow, Arguments),
 				"terminal:hide" => call!(rt, "terminal", "terminal:hide", TerminalHide, Arguments),
 
-				// Output channel commands
-				"output:create" => OutputCreate(ApplicationHandle.clone(), Arguments).await,
-				"output:append" => call!(app, "output", "output:append", OutputAppend, Arguments),
-				"output:appendLine" => call!(app, "output", "output:appendLine", OutputAppendLine, Arguments),
-				"output:clear" => call!(app, "output", "output:clear", OutputClear, Arguments),
-				"output:show" => call!(app, "output", "output:show", OutputShow, Arguments),
-				"output:replace" => call!(app, "output", "output:replace", OutputReplace, Arguments),
-				"output:dispose" => call!(app, "output", "output:dispose", OutputDispose, Arguments),
+								// Output channel commands — routed through OutputRouter
+								command if command.starts_with("output:") =>
+									Output::OutputRouter::route(ApplicationHandle.clone(), &command, Arguments)
+										.await
+										.unwrap_or_else(|| Ok(Value::Null)),
 
-				// TextFile commands
-				"textFile:read" => call!(rt, "textfile", "textFile:read", TextfileRead, Arguments),
-				"textFile:write" => call!(rt, "textfile", "textFile:write", TextfileWrite, Arguments),
-				"textFile:save" => TextfileSave(RunTime.clone(), Arguments).await,
+								// Text model + textFile commands — routed through ModelRouter
+								command if command.starts_with("textFile:") || command.starts_with("model:") || command.starts_with("text:") || command == "workspace:openTextDocument" =>
+									Model::ModelRouter::route(ApplicationHandle.clone(), RunTime.clone(), &command, Arguments)
+										.await
+										.unwrap_or_else(|| Ok(Value::Null)),
 
 				// Storage commands (additional)
 				"storage:delete" => call!(rt, "storage", "storage:delete", StorageDelete, Arguments),
@@ -1313,51 +1292,6 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("label", "label:getBase");
 
 					LabelGetBase(Arguments).await
-				},
-
-				// Model (text model registry) commands
-				"model:open" => {
-					dev_log!("model", "model:open");
-
-					ModelOpen(RunTime.clone(), Arguments).await
-				},
-				"model:close" => {
-					dev_log!("model", "model:close");
-
-					ModelClose(RunTime.clone(), Arguments).await
-				},
-				"model:get" => {
-					dev_log!("model", "model:get");
-
-					ModelGet(RunTime.clone(), Arguments).await
-				},
-				"model:getAll" => {
-					dev_log!("model", "model:getAll");
-
-					ModelGetAll(RunTime.clone()).await
-				},
-
-				// `workspace.openTextDocument(uri)` - Sky-side Cocoon call that
-				// asks Mountain to relay the open intent to Sky so Monaco loads
-				// the document and emits `onDidOpenTextDocument`.
-				"text:open" | "workspace:openTextDocument" => {
-					let UriStr = arg_string(&Arguments, 0);
-
-					if !UriStr.is_empty() {
-						// A failed emit is intentionally ignored: the open intent is
-						// fire-and-forget, and Sky may not be listening yet during
-						// boot. The caller treats Null as "request relayed".
-						let _ = ApplicationHandle
-							.emit("sky://window/showTextDocument", serde_json::json!({ "uri": UriStr }));
-					}
-
-					Ok(Value::Null)
-				},
-
-				"model:updateContent" => {
-					dev_log!("model", "model:updateContent");
-
-					ModelUpdateContent(RunTime.clone(), Arguments).await
 				},
 
 				// Navigation history commands — routed through HistoryRouter

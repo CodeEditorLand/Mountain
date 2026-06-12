@@ -54,3 +54,5 @@ pub mod TerminalHide;
 pub mod TerminalSendText;
 
 pub mod TerminalShow;
+
+pub mod TerminalRouter;

@@ -7,6 +7,8 @@ pub mod DebugServiceClose;
 
 pub mod DebugServiceReload;
 
+pub mod ExtensionHostRouter;
+
 pub mod StarterCreate;
 
 pub mod StarterGetExitInfo;
