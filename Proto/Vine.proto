@@ -725,6 +725,8 @@ message ShowTextDocumentResponse {
 // Request to show a message.
 message ShowMessageRequest {
   string Message = 1;
+  // Optional action-button labels shown alongside the message.
+  repeated string Items = 2;
 }
 
 // Response for showing a message.

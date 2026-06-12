@@ -16,9 +16,12 @@ pub async fn Fn(
 ) -> Result<Response<ShowMessageResponse>, Status> {
 	dev_log!("cocoon", "error: [CocoonService] show_error_message: {}", Request.message);
 
+	let Items:Option<serde_json::Value> =
+		if Request.items.is_empty() { None } else { Some(serde_json::json!(Request.items)) };
+
 	let _ = Service
 		.environment
-		.ShowMessage(MessageSeverity::Error, Request.message, None)
+		.ShowMessage(MessageSeverity::Error, Request.message, Items)
 		.await;
 
 	Ok(Response::new(ShowMessageResponse { success:true }))

@@ -52,42 +52,7 @@ pub(crate) fn Fn<R:tauri::Runtime>(
 		})
 		.unwrap_or("");
 
-	// Strip /out/ prefix if present - our assets are at /Static/Application/vs/
-	// not /Static/Application/out/vs/
-	let CleanPath = if FilePath.starts_with("Static/Application//out/") {
-		FilePath.replacen("Static/Application//out/", "Static/Application/", 1)
-	} else if FilePath.starts_with("Static/Application/out/") {
-		FilePath.replacen("Static/Application/out/", "Static/Application/", 1)
-	} else {
-		FilePath.to_string()
-	};
-
-	// VS Code's nodeModulesPath = 'vs/../../node_modules' resolves ../../ from
-	// Static/Application/vs/ up to Static/. The browser canonicalizes this to
-	// Static/node_modules/ but our files live at Static/Application/node_modules/.
-	let CleanPath = if CleanPath.starts_with("Static/node_modules/") {
-		CleanPath.replacen("Static/node_modules/", "Static/Application/node_modules/", 1)
-	} else {
-		CleanPath
-	};
-
-	// Strip `?<query>` and `#<fragment>` from the resolved path so
-	// filesystem / asset-resolver lookups operate on a clean path
-	// component. Roo's runtime sourcemap-probe (`vZt` in its bundle)
-	// fetches `<src>?source-map=true` which would otherwise hit the
-	// asset_resolver as a literal `index.js?source-map=true` filename
-	// and either 404 or fall through to the SPA-fallback `index.html`
-	// (5765 bytes served as `application/octet-stream`). With the
-	// strip, `index.js?source-map=true` → `index.js`, which exists on
-	// disk and serves correctly with the right MIME. Equivalent for
-	// `#<fragment>`. Sourcemap-probe URLs that point to non-existent
-	// suffixes (`index.map.json`, `index.sourcemap`) still 404
-	// silently; that is the intended behavior of `vZt`'s preload list.
-	let CleanPath = match CleanPath.split_once(['?', '#']) {
-		Some((Before, _)) => Before.to_string(),
-
-		None => CleanPath,
-	};
+	let CleanPath = NormalizePath(FilePath);
 
 	// P1.5 fix: DevTools fetches `*.js.map` for every bundled script it loads
 	// to render pretty stack traces. Our `Static/Application/` tree ships the
@@ -187,85 +152,90 @@ pub(crate) fn Fn<R:tauri::Runtime>(
 
 		let FilesystemPath = std::path::Path::new(&AbsolutePath);
 
-		dev_log!(
-			"scheme-assets",
-			"[LandFix:VscodeFile] os-abs candidate {} (exists={}, is_file={})",
-			AbsolutePath,
-			FilesystemPath.exists(),
-			FilesystemPath.is_file()
-		);
+		dev_log!("scheme-assets", "[LandFix:VscodeFile] os-abs candidate {}", AbsolutePath);
 
-		if FilesystemPath.exists() && FilesystemPath.is_file() {
-			// LAND-PATCH B7.P01: route through the mmap cache. First
-			// hit on a path mmaps the file; subsequent hits are
-			// wait-free DashMap reads. Brotli sibling (`<file>.br`)
-			// is auto-discovered and served when the request offers
-			// `Accept-Encoding: br`.
-			match ::Cache::AssetMemoryMap::LoadOrInsert::Fn(FilesystemPath) {
-				Ok(Entry) => {
-					let AcceptsBrotli = Request
-						.headers()
-						.get("accept-encoding")
-						.and_then(|V| V.to_str().ok())
-						.map(|S| S.contains("br"))
-						.unwrap_or(false);
+		// LAND-PATCH B7.P01: route through the mmap cache. First
+		// hit on a path mmaps the file; subsequent hits are
+		// wait-free DashMap reads. Brotli sibling (`<file>.br`)
+		// is auto-discovered and served when the request offers
+		// `Accept-Encoding: br`. The open itself is the existence
+		// probe - `NotFound` is the miss path, so no separate
+		// `exists()` / `is_file()` stat() pair runs per request.
+		match ::Cache::AssetMemoryMap::LoadOrInsert::Fn(FilesystemPath) {
+			Ok(Entry) => {
+				let CacheControl = CacheControlFor(&CleanPath);
 
-					let (Body, Encoding):(Vec<u8>, Option<&str>) = if AcceptsBrotli {
-						match Entry.AsBrotliSlice() {
-							Some(Slice) => (Slice.to_vec(), Some("br")),
+				if IfNoneMatchSatisfied(Request, &Entry.ETag) {
+					dev_log!("scheme-assets", "[LandFix:VscodeFile] os-abs 304 {}", AbsolutePath);
 
-							None => (Entry.AsSlice().to_vec(), None),
-						}
-					} else {
-						(Entry.AsSlice().to_vec(), None)
-					};
+					return BuildNotModified(&Entry.ETag, CacheControl);
+				}
 
-					dev_log!(
-						"scheme-assets",
-						"[LandFix:VscodeFile] os-abs served {} ({}, {} bytes, encoding={:?})",
-						AbsolutePath,
-						Entry.Mime,
-						Body.len(),
-						Encoding
-					);
+				let AcceptsBrotli = Request
+					.headers()
+					.get("accept-encoding")
+					.and_then(|V| V.to_str().ok())
+					.map(|S| S.contains("br"))
+					.unwrap_or(false);
 
-					// `Cross-Origin-Resource-Policy: cross-origin` lets the
-					// COEP-isolated webview iframe (which Mountain serves
-					// from the `vscode-webview://` scheme with
-					// `Cross-Origin-Embedder-Policy: require-corp`) load
-					// these assets via `<script src=…>` / `<link href=…>`.
-					// Without it WebKit refuses to expose the response to
-					// the embedder document and the extension's React
-					// bundle / CSS / fonts come up as cross-origin
-					// resource-policy blocks.
-					let mut B = Builder::new()
-						.status(200)
-						.header("Content-Type", Entry.Mime)
-						.header("Access-Control-Allow-Origin", "*")
-						.header("Cross-Origin-Resource-Policy", "cross-origin")
-						.header("Cross-Origin-Embedder-Policy", "require-corp")
-						.header("Cache-Control", "public, max-age=3600");
+				let (Body, Encoding):(Vec<u8>, Option<&str>) = if AcceptsBrotli {
+					match Entry.AsBrotliSlice() {
+						Some(Slice) => (Slice.to_vec(), Some("br")),
 
-					if let Some(Enc) = Encoding {
-						B = B.header("Content-Encoding", Enc);
+						None => (Entry.AsSlice().to_vec(), None),
 					}
+				} else {
+					(Entry.AsSlice().to_vec(), None)
+				};
 
-					return B
-						.body(Body)
-						.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
-				},
+				dev_log!(
+					"scheme-assets",
+					"[LandFix:VscodeFile] os-abs served {} ({}, {} bytes, encoding={:?})",
+					AbsolutePath,
+					Entry.Mime,
+					Body.len(),
+					Encoding
+				);
 
-				Err(Error) => {
-					dev_log!(
-						"lifecycle",
-						"warn: [LandFix:VscodeFile] os-abs mmap failure {}: {}",
-						AbsolutePath,
-						Error
-					);
-				},
-			}
-		} else {
-			dev_log!("lifecycle", "warn: [LandFix:VscodeFile] os-abs not on disk: {}", AbsolutePath);
+				// `Cross-Origin-Resource-Policy: cross-origin` lets the
+				// COEP-isolated webview iframe (which Mountain serves
+				// from the `vscode-webview://` scheme with
+				// `Cross-Origin-Embedder-Policy: require-corp`) load
+				// these assets via `<script src=…>` / `<link href=…>`.
+				// Without it WebKit refuses to expose the response to
+				// the embedder document and the extension's React
+				// bundle / CSS / fonts come up as cross-origin
+				// resource-policy blocks.
+				let mut B = Builder::new()
+					.status(200)
+					.header("Content-Type", Entry.Mime)
+					.header("Access-Control-Allow-Origin", "*")
+					.header("Cross-Origin-Resource-Policy", "cross-origin")
+					.header("Cross-Origin-Embedder-Policy", "require-corp")
+					.header("ETag", Entry.ETag.as_str())
+					.header("Cache-Control", CacheControl);
+
+				if let Some(Enc) = Encoding {
+					B = B.header("Content-Encoding", Enc);
+				}
+
+				return B
+					.body(Body)
+					.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
+			},
+
+			Err(Error) if Error.kind() == std::io::ErrorKind::NotFound => {
+				dev_log!("lifecycle", "warn: [LandFix:VscodeFile] os-abs not on disk: {}", AbsolutePath);
+			},
+
+			Err(Error) => {
+				dev_log!(
+					"lifecycle",
+					"warn: [LandFix:VscodeFile] os-abs mmap failure {}: {}",
+					AbsolutePath,
+					Error
+				);
+			},
 		}
 	}
 
@@ -278,6 +248,16 @@ pub(crate) fn Fn<R:tauri::Runtime>(
 
 	if let Some(Asset) = AssetResult {
 		let Mime = MimeFromExtension::Fn(&CleanPath);
+
+		let CacheControl = CacheControlFor(&CleanPath);
+
+		let ETag = EmbeddedETag(&CleanPath, &Asset.bytes);
+
+		if IfNoneMatchSatisfied(Request, &ETag) {
+			dev_log!("scheme-assets", "[SchemeAssets] serve source=embedded path={} 304", CleanPath);
+
+			return BuildNotModified(&ETag, CacheControl);
+		}
 
 		dev_log!(
 			"lifecycle",
@@ -301,7 +281,8 @@ pub(crate) fn Fn<R:tauri::Runtime>(
 			.header("Access-Control-Allow-Origin", "*")
 			.header("Cross-Origin-Resource-Policy", "cross-origin")
 			.header("Cross-Origin-Embedder-Policy", "require-corp")
-			.header("Cache-Control", "public, max-age=31536000, immutable")
+			.header("ETag", ETag.as_str())
+			.header("Cache-Control", CacheControl)
 			.body(Asset.bytes.to_vec())
 			.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
 	}
@@ -312,73 +293,85 @@ pub(crate) fn Fn<R:tauri::Runtime>(
 	if let Some(Root) = StaticRoot {
 		let FilesystemPath = std::path::Path::new(&Root).join(&CleanPath);
 
-		if FilesystemPath.exists() && FilesystemPath.is_file() {
-			// LAND-PATCH B7.P01: mmap-cache the StaticRoot fallback
-			// path so dev-mode workbench reloads pay the syscall
-			// once per asset for the entire session.
-			match ::Cache::AssetMemoryMap::LoadOrInsert::Fn(&FilesystemPath) {
-				Ok(Entry) => {
-					let AcceptsBrotli = Request
-						.headers()
-						.get("accept-encoding")
-						.and_then(|V| V.to_str().ok())
-						.map(|S| S.contains("br"))
-						.unwrap_or(false);
+		// LAND-PATCH B7.P01: mmap-cache the StaticRoot fallback
+		// path so dev-mode workbench reloads pay the syscall
+		// once per asset for the entire session. The open is the
+		// existence probe - `NotFound` falls through to the 404
+		// below without the former `exists()` / `is_file()`
+		// double-stat.
+		match ::Cache::AssetMemoryMap::LoadOrInsert::Fn(&FilesystemPath) {
+			Ok(Entry) => {
+				let CacheControl = CacheControlFor(&CleanPath);
 
-					let (Body, Encoding):(Vec<u8>, Option<&str>) = if AcceptsBrotli {
-						match Entry.AsBrotliSlice() {
-							Some(Slice) => (Slice.to_vec(), Some("br")),
+				if IfNoneMatchSatisfied(Request, &Entry.ETag) {
+					dev_log!("scheme-assets", "[LandFix:VscodeFile] fs-mmap 304 {}", CleanPath);
 
-							None => (Entry.AsSlice().to_vec(), None),
-						}
-					} else {
-						(Entry.AsSlice().to_vec(), None)
-					};
+					return BuildNotModified(&Entry.ETag, CacheControl);
+				}
 
-					dev_log!(
-						"lifecycle",
-						"[LandFix:VscodeFile] Serving (fs-mmap) {} ({}, {} bytes, encoding={:?})",
-						CleanPath,
-						Entry.Mime,
-						Body.len(),
-						Encoding
-					);
+				let AcceptsBrotli = Request
+					.headers()
+					.get("accept-encoding")
+					.and_then(|V| V.to_str().ok())
+					.map(|S| S.contains("br"))
+					.unwrap_or(false);
 
-					// `Cross-Origin-Resource-Policy: cross-origin` lets the
-					// COEP-isolated webview iframe (which Mountain serves
-					// from the `vscode-webview://` scheme with
-					// `Cross-Origin-Embedder-Policy: require-corp`) load
-					// these assets via `<script src=…>` / `<link href=…>`.
-					// Without it WebKit refuses to expose the response to
-					// the embedder document and the extension's React
-					// bundle / CSS / fonts come up as cross-origin
-					// resource-policy blocks.
-					let mut B = Builder::new()
-						.status(200)
-						.header("Content-Type", Entry.Mime)
-						.header("Access-Control-Allow-Origin", "*")
-						.header("Cross-Origin-Resource-Policy", "cross-origin")
-						.header("Cross-Origin-Embedder-Policy", "require-corp")
-						.header("Cache-Control", "public, max-age=3600");
+				let (Body, Encoding):(Vec<u8>, Option<&str>) = if AcceptsBrotli {
+					match Entry.AsBrotliSlice() {
+						Some(Slice) => (Slice.to_vec(), Some("br")),
 
-					if let Some(Enc) = Encoding {
-						B = B.header("Content-Encoding", Enc);
+						None => (Entry.AsSlice().to_vec(), None),
 					}
+				} else {
+					(Entry.AsSlice().to_vec(), None)
+				};
 
-					return B
-						.body(Body)
-						.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
-				},
+				dev_log!(
+					"lifecycle",
+					"[LandFix:VscodeFile] Serving (fs-mmap) {} ({}, {} bytes, encoding={:?})",
+					CleanPath,
+					Entry.Mime,
+					Body.len(),
+					Encoding
+				);
 
-				Err(Error) => {
-					dev_log!(
-						"lifecycle",
-						"warn: [LandFix:VscodeFile] Failed to read {}: {}",
-						FilesystemPath.display(),
-						Error
-					);
-				},
-			}
+				// `Cross-Origin-Resource-Policy: cross-origin` lets the
+				// COEP-isolated webview iframe (which Mountain serves
+				// from the `vscode-webview://` scheme with
+				// `Cross-Origin-Embedder-Policy: require-corp`) load
+				// these assets via `<script src=…>` / `<link href=…>`.
+				// Without it WebKit refuses to expose the response to
+				// the embedder document and the extension's React
+				// bundle / CSS / fonts come up as cross-origin
+				// resource-policy blocks.
+				let mut B = Builder::new()
+					.status(200)
+					.header("Content-Type", Entry.Mime)
+					.header("Access-Control-Allow-Origin", "*")
+					.header("Cross-Origin-Resource-Policy", "cross-origin")
+					.header("Cross-Origin-Embedder-Policy", "require-corp")
+					.header("ETag", Entry.ETag.as_str())
+					.header("Cache-Control", CacheControl);
+
+				if let Some(Enc) = Encoding {
+					B = B.header("Content-Encoding", Enc);
+				}
+
+				return B
+					.body(Body)
+					.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
+			},
+
+			Err(Error) if Error.kind() == std::io::ErrorKind::NotFound => {},
+
+			Err(Error) => {
+				dev_log!(
+					"lifecycle",
+					"warn: [LandFix:VscodeFile] Failed to read {}: {}",
+					FilesystemPath.display(),
+					Error
+				);
+			},
 		}
 	}
 
@@ -390,4 +383,126 @@ pub(crate) fn Fn<R:tauri::Runtime>(
 	);
 
 	build_error_response(404, &format!("Not Found: {}", CleanPath))
+}
+
+/// Single-pass normalization of the post-authority resource path.
+///
+/// 1. Truncate at the first `?` or `#` so filesystem / asset-resolver
+///    lookups operate on a clean path component. Roo's runtime
+///    sourcemap-probe (`vZt` in its bundle) fetches
+///    `<src>?source-map=true` which would otherwise hit the
+///    asset_resolver as a literal `index.js?source-map=true` filename
+///    and either 404 or fall through to the SPA-fallback `index.html`
+///    (5765 bytes served as `application/octet-stream`). With the
+///    strip, `index.js?source-map=true` → `index.js`, which exists on
+///    disk and serves correctly with the right MIME. Sourcemap-probe
+///    URLs that point to non-existent suffixes (`index.map.json`,
+///    `index.sourcemap`) still 404 silently; that is the intended
+///    behavior of `vZt`'s preload list.
+/// 2. Strip the `/out/` prefix if present - our assets are at
+///    `/Static/Application/vs/` not `/Static/Application/out/vs/`.
+/// 3. Remap `Static/node_modules/` → `Static/Application/node_modules/`.
+///    VS Code's nodeModulesPath = 'vs/../../node_modules' resolves
+///    `../../` from `Static/Application/vs/` up to `Static/`; the
+///    browser canonicalizes this to `Static/node_modules/` but our
+///    files live at `Static/Application/node_modules/`.
+///
+/// Rules 2 and 3 are mutually exclusive on the prefix, so the single
+/// `if`/`else` chain applies exactly the rewrite the former sequential
+/// `replacen` passes did.
+fn NormalizePath(FilePath:&str) -> String {
+	let WithoutQuery = match FilePath.find(['?', '#']) {
+		Some(Index) => &FilePath[..Index],
+
+		None => FilePath,
+	};
+
+	if let Some(Rest) = WithoutQuery.strip_prefix("Static/Application//out/") {
+		format!("Static/Application/{}", Rest)
+	} else if let Some(Rest) = WithoutQuery.strip_prefix("Static/Application/out/") {
+		format!("Static/Application/{}", Rest)
+	} else if let Some(Rest) = WithoutQuery.strip_prefix("Static/node_modules/") {
+		format!("Static/Application/node_modules/{}", Rest)
+	} else {
+		WithoutQuery.to_string()
+	}
+}
+
+/// Cache-Control policy for a resolved path. Fingerprinted bundle
+/// assets (content-hashed `js` / `css` / `woff2` filenames under the
+/// `Static/` bundle tree) never change bytes under the same URL, so
+/// they are safe to mark `immutable`. HTML and everything else -
+/// including absolute-OS extension files, which can change on disk
+/// between sessions - stays on a short max-age and revalidates via
+/// `ETag` / `If-None-Match`.
+fn CacheControlFor(CleanPath:&str) -> &'static str {
+	if CleanPath.starts_with("Static/")
+		&& (CleanPath.ends_with(".js") || CleanPath.ends_with(".css") || CleanPath.ends_with(".woff2"))
+	{
+		"public, max-age=31536000, immutable"
+	} else {
+		"public, max-age=3600"
+	}
+}
+
+/// True when the request carries an `If-None-Match` header that
+/// matches `ETag` (exact tag match or `*`).
+fn IfNoneMatchSatisfied(Request:&tauri::http::request::Request<Vec<u8>>, ETag:&str) -> bool {
+	Request
+		.headers()
+		.get("if-none-match")
+		.and_then(|Value| Value.to_str().ok())
+		.map(|Header| {
+			Header.split(',').any(|Candidate| {
+				let Trimmed = Candidate.trim();
+
+				Trimmed == "*" || Trimmed == ETag
+			})
+		})
+		.unwrap_or(false)
+}
+
+/// `304 Not Modified` carrying the same `ETag` / `Cache-Control` /
+/// CORS surface as the corresponding `200` response, with an empty
+/// body.
+fn BuildNotModified(ETag:&str, CacheControl:&str) -> Response<Vec<u8>> {
+	Builder::new()
+		.status(304)
+		.header("ETag", ETag)
+		.header("Cache-Control", CacheControl)
+		.header("Access-Control-Allow-Origin", "*")
+		.header("Cross-Origin-Resource-Policy", "cross-origin")
+		.body(Vec::new())
+		.unwrap_or_else(|_| build_error_response(500, "Failed to build response"))
+}
+
+/// Weak ETag for embedded (asset_resolver) bytes. Embedded assets have
+/// no mtime, so hash the content once per path and memoize the tag;
+/// the format matches the mmap-cache `W/"<a>-<b>"` shape.
+fn EmbeddedETag(CleanPath:&str, Bytes:&[u8]) -> String {
+	use std::{
+		collections::HashMap,
+		hash::Hasher,
+		sync::{OnceLock, RwLock},
+	};
+
+	static TAGS:OnceLock<RwLock<HashMap<String, String>>> = OnceLock::new();
+
+	let Lock = TAGS.get_or_init(|| RwLock::new(HashMap::new()));
+
+	if let Some(Existing) = Lock.read().ok().and_then(|Guard| Guard.get(CleanPath).cloned()) {
+		return Existing;
+	}
+
+	let mut Hash = std::collections::hash_map::DefaultHasher::new();
+
+	Hash.write(Bytes);
+
+	let Tag = format!("W/\"{:x}-{:x}\"", Hash.finish(), Bytes.len());
+
+	if let Ok(mut Guard) = Lock.write() {
+		Guard.insert(CleanPath.to_string(), Tag.clone());
+	}
+
+	Tag
 }

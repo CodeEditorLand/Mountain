@@ -260,6 +260,20 @@ pub fn Fn() {
 
 			let mut Candidates:Vec<std::path::PathBuf> = Vec::new();
 
+			// Most-likely first: this branch only runs for non-TTY (bundle /
+			// Finder / `open`) launches where cwd is `/`, so the cwd-based
+			// probes below essentially never hit. The real `.env.Land` sits a
+			// fixed number of hops above the executable in both layouts
+			// (Element/Mountain/Target/<profile>/<bin> → Land/, and the
+			// bundled .app's ancestor dirs), so probing `.env.Land` up the
+			// exe ancestry first short-circuits in one or two stat()s instead
+			// of walking the full list.
+			if let Ok(Exe) = std::env::current_exe() {
+				for Candidate in Exe.ancestors().skip(1).take(6) {
+					Candidates.push(Candidate.join(".env.Land"));
+				}
+			}
+
 			if let Ok(Cwd) = std::env::current_dir() {
 				Candidates.push(Cwd.join(".env.Land"));
 
@@ -274,13 +288,10 @@ pub fn Fn() {
 				}
 			}
 
-			// Repo-layout probe: Target/debug/<bin> → four hops up lands at Land/.
+			// Repo-layout fallback: `.env.Land.Sample` up the exe ancestry
+			// (the `.env.Land` siblings were already probed first above).
 			if let Ok(Exe) = std::env::current_exe() {
-				let Ancestors:Vec<&std::path::Path> = Exe.ancestors().collect();
-
-				for Candidate in Ancestors.iter().take(6) {
-					Candidates.push(Candidate.join(".env.Land"));
-
+				for Candidate in Exe.ancestors().skip(1).take(6) {
 					Candidates.push(Candidate.join(".env.Land.Sample"));
 				}
 			}
@@ -288,7 +299,10 @@ pub fn Fn() {
 			let mut Loaded = false;
 
 			for Candidate in Candidates {
-				if Candidate.exists() && LoadEnvFile(&Candidate) {
+				// `LoadEnvFile` returns false when the read fails, so the
+				// open doubles as the existence probe - no separate
+				// `exists()` stat() per candidate.
+				if LoadEnvFile(&Candidate) {
 					crate::dev_log!("lifecycle", "[Boot] [Env] Loaded env from {}", Candidate.display());
 
 					Loaded = true;
@@ -555,45 +569,63 @@ pub fn Fn() {
 					// ---------------------------------------------------------
 					// [DNS Server] Start the Hickory DNS server
 					// ---------------------------------------------------------
-					// The DNS server must start BEFORE any webview loads to ensure
-					// that land:// protocol_resolution is available
-					dev_log!("lifecycle", "[Lifecycle] [Setup] Starting DNS server on preferred port 5380...");
+					// The bind only has to complete before the first land://
+					// request, and none can arrive until `WindowBuild` (inside
+					// `AppLifecycleSetup` below) navigates the webview - after
+					// the directory/config work in the lifecycle setup. Binding
+					// on the blocking pool overlaps the port probe with the
+					// rest of setup instead of serializing it here. The task
+					// installs the `DnsPort` managed state the moment the bind
+					// resolves; `Mist::dns_port()` exposes the same value
+					// process-wide for anything that races the task.
+					dev_log!(
+						"lifecycle",
+						"[Lifecycle] [Setup] Starting DNS server in background (preferred port 5380)..."
+					);
 
-					let dns_port = Mist::start(5380).unwrap_or_else(|e| {
-						dev_log!(
-							"lifecycle",
-							"warn: [Lifecycle] [Setup] Failed to start DNS server on port 5380: {}",
-							e
-						);
+					let DnsAppHandle = app.handle().clone();
 
-						// Fallback to random port if preferred port fails
-						Mist::start(0).unwrap_or_else(|e| {
+					tauri::async_runtime::spawn_blocking(move || {
+						let BoundPort = Mist::start(5380).unwrap_or_else(|e| {
 							dev_log!(
 								"lifecycle",
-								"error: [Lifecycle] [Setup] Completely failed to start DNS server: {}",
+								"warn: [Lifecycle] [Setup] Failed to start DNS server on port 5380: {}",
 								e
 							);
 
-							0 // Return 0 as error indicator
-						})
+							// Fallback to random port if preferred port fails
+							Mist::start(0).unwrap_or_else(|e| {
+								dev_log!(
+									"lifecycle",
+									"error: [Lifecycle] [Setup] Completely failed to start DNS server: {}",
+									e
+								);
+
+								0 // Return 0 as error indicator
+							})
+						});
+
+						if BoundPort == 0 {
+							dev_log!(
+								"lifecycle",
+								"warn: [Lifecycle] [Setup] DNS server failed to start, land:// protocol will not be \
+								 available"
+							);
+						} else {
+							dev_log!(
+								"lifecycle",
+								"[Lifecycle] [Setup] DNS server started successfully on port {}",
+								BoundPort
+							);
+
+							// Initialize DNS startup time for tracking
+							crate::Binary::Build::DnsCommands::StartupTime::init_dns_startup_time();
+						}
+
+						// Register DnsPort as managed state for Tauri commands
+						// (0 on failure, matching the former synchronous path).
+						DnsAppHandle.manage(DnsPort(BoundPort));
 					});
-
-					if dns_port == 0 {
-						dev_log!(
-							"lifecycle",
-							"warn: [Lifecycle] [Setup] DNS server failed to start, land:// protocol will not be \
-							 available"
-						);
-					} else {
-						dev_log!(
-							"lifecycle",
-							"[Lifecycle] [Setup] DNS server started successfully on port {}",
-							dns_port
-						);
-
-						// Initialize DNS startup time for tracking
-						crate::Binary::Build::DnsCommands::StartupTime::init_dns_startup_time();
-					}
 
 					// ---------------------------------------------------------
 					// [Mist WebSocket] Optional Sky↔Mountain direct transport
@@ -644,9 +676,6 @@ pub fn Fn() {
 							TierWebSocketSetting
 						);
 					}
-
-					// Register DnsPort as managed state for Tauri commands
-					app.manage(DnsPort(dns_port));
 
 					let AppHandle = app.handle().clone();
 

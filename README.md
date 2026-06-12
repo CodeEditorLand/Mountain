@@ -52,7 +52,7 @@ _"Where `Electron` takes 200 ms to open a dialog, `Mountain` takes 2."_
 [<img src="https://editor.land/Image/Rust.svg" width="14" alt="Rust" />](https://www.rust-lang.org/)&#x2001;[![Crates.io](https://img.shields.io/crates/v/Mountain.svg)](https://crates.io/crates/Mountain)
 [<img src="https://editor.land/Image/Rust.svg" width="14" alt="Rust" />](https://www.rust-lang.org/)&#x2001;[![Rust Version](https://img.shields.io/badge/Rust-1.77+-orange.svg)](https://www.rust-lang.org/)
 [<img src="https://editor.land/Image/Tauri.svg" width="14" alt="Tauri" />](https://tauri.app/)&#x2001;[![Tauri Version](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://tauri.app/)
-[<img src="https://editor.land/Image/ProtocolBuffers.svg" width="14" alt="Protocol Buffers" />](https://protobuf.dev/)&#x2001;[![Tonic gRPC Version](https://img.shields.io/badge/Tonic-v0.11-blueviolet.svg)](https://github.com/hyperium/tonic)
+[![gRPC](https://img.shields.io/badge/gRPC-tonic-blueviolet.svg)](https://github.com/hyperium/tonic)
 
 **[Rust API Documentation](https://rust.documentation.mountain.editor.land/)**&#x2001;📖
 

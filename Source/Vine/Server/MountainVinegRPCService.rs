@@ -76,10 +76,10 @@ pub struct MountainVinegRPCService {
 	/// Application runtime containing core dependencies
 	RunTime:Arc<ApplicationRunTime>,
 
-	/// Registry of active operations with their cancellation tokens.
-	/// Only populated for operations that explicitly opt into cancellation
-	/// by calling RegisterOperation from within their handler body.
-	/// Handlers MUST call UnregisterOperation on completion (success or error).
+	/// Registry of active operations with their cancellation tokens, keyed
+	/// by the wire `RequestIdentifier`. `process_cocoon_request` registers
+	/// every request and unregisters it on all exit paths, so the map stays
+	/// bounded by in-flight requests; `cancel_operation` fires the token.
 	ActiveOperations:Arc<RwLock<HashMap<u64, tokio_util::sync::CancellationToken>>>,
 }
 
@@ -514,11 +514,14 @@ impl MountainService for MountainVinegRPCService {
 
 	/// Handles generic request-response RPCs from Cocoon.
 	///
-	/// Operations that require cancellation support must call RegisterOperation
-	/// from within their handler and UnregisterOperation on completion.
-	/// process_cocoon_request itself does NOT register operations
-	/// unconditionally to avoid an unbounded ActiveOperations map (one leaked
-	/// entry per RPC).
+	/// Every request registers a cancellation token in `ActiveOperations`
+	/// keyed by the wire `RequestIdentifier` (allocated by Cocoon's
+	/// `generateRequestId`). `cancel_operation` fires the token; the dispatch
+	/// future is raced against it with `tokio::select!`, so a
+	/// `CancelOperation` from Cocoon aborts the in-flight dispatch and
+	/// returns a `-32800` (request cancelled) error response. The entry is
+	/// unregistered on every exit path, so the map stays bounded by the
+	/// number of in-flight requests.
 	async fn process_cocoon_request(
 		&self,
 
@@ -564,34 +567,97 @@ impl MountainService for MountainVinegRPCService {
 		if let Err(status) = self.ValidateRequest(&RequestData) {
 			dev_log!("grpc", "warn: [MountainVinegRPCService] Request validation failed: {}", status);
 
+			let ErrorData = serde_json::to_vec(
+				&json!({ "method": &MethodName, "detail": status.message() }),
+			)
+			.ok();
+
 			return Ok(Response::new(Self::CreateErrorResponse(
 				RequestIdentifier,
 				-32602,
 				status.message().to_string(),
-				None,
+				ErrorData,
 			)));
 		}
 
-		let ParametersValue:Value = match serde_json::from_slice(&RequestData.parameter) {
-			Ok(v) => v,
+		// Skip the serde parse (and its `Value` tree allocation) for the
+		// empty / trivially-empty parameter payloads that fire-and-forget
+		// and parameterless methods send. Full per-method lazy
+		// deserialization would require threading raw bytes through
+		// `DispatchSideCarRequest`.
+		let ParametersValue:Value = match RequestData.parameter.as_slice() {
+			b"" | b"null" => Value::Null,
 
-			Err(e) => {
-				let msg = format!("Failed to deserialize parameters for method '{}': {}", MethodName, e);
+			b"{}" => Value::Object(serde_json::Map::new()),
 
-				dev_log!("grpc", "error: {}", msg);
+			_ => {
+				match serde_json::from_slice(&RequestData.parameter) {
+					Ok(v) => v,
 
-				return Ok(Response::new(Self::CreateErrorResponse(RequestIdentifier, -32700, msg, None)));
+					Err(e) => {
+						let msg =
+							format!("Failed to deserialize parameters for method '{}': {}", MethodName, e);
+
+						dev_log!("grpc", "error: {}", msg);
+
+						let ErrorData = serde_json::to_vec(
+							&json!({ "method": &MethodName, "detail": e.to_string() }),
+						)
+						.ok();
+
+						return Ok(Response::new(Self::CreateErrorResponse(
+							RequestIdentifier,
+							-32700,
+							msg,
+							ErrorData,
+						)));
+					},
+				}
 			},
 		};
 
-		let DispatchResult = Track::SideCarRequest::DispatchSideCarRequest::DispatchSideCarRequest(
+		// Register this request so `cancel_operation` can abort it: Cocoon's
+		// `MountainClientService.cancelOperation(requestIdentifier)` sends
+		// the same wire id, the lookup fires this token, and the `select!`
+		// below drops the in-flight dispatch future.
+		let CancellationToken = self.RegisterOperation(RequestIdentifier).await;
+
+		let DispatchFuture = Track::SideCarRequest::DispatchSideCarRequest::DispatchSideCarRequest(
 			self.ApplicationHandle.clone(),
 			self.RunTime.clone(),
 			"cocoon-main",
 			MethodName.clone(),
 			ParametersValue,
-		)
-		.await;
+		);
+
+		let DispatchResult = tokio::select! {
+			_ = CancellationToken.cancelled() => {
+				self.UnregisterOperation(RequestIdentifier).await;
+
+				dev_log!(
+					"grpc",
+					"[MountainVinegRPCService] Request [ID: {}] '{}' cancelled before completion",
+					RequestIdentifier,
+					MethodName
+				);
+
+				let ErrorData = serde_json::to_vec(
+					&json!({ "method": &MethodName, "detail": "cancelled via CancelOperation" }),
+				)
+				.ok();
+
+				return Ok(Response::new(Self::CreateErrorResponse(
+					RequestIdentifier,
+					-32800,
+					format!("Request '{}' cancelled", MethodName),
+					ErrorData,
+				)));
+			},
+
+			Result_ = DispatchFuture => Result_,
+		};
+
+		self.UnregisterOperation(RequestIdentifier).await;
 
 		match DispatchResult {
 			Ok(SuccessfulResult) => {
@@ -649,11 +715,16 @@ impl MountainService for MountainVinegRPCService {
 
 				let ErrorCode = if LooksLike404 { -32004 } else { -32000 };
 
+				let ErrorData = serde_json::to_vec(
+					&json!({ "method": &MethodName, "detail": &ErrorString }),
+				)
+				.ok();
+
 				Ok(Response::new(Self::CreateErrorResponse(
 					RequestIdentifier,
 					ErrorCode,
 					ErrorString,
-					None,
+					ErrorData,
 				)))
 			},
 		}

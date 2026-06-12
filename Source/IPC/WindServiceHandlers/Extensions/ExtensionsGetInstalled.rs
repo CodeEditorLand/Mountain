@@ -30,11 +30,15 @@
 //! coerce to `{}` and inject `publisher`/`name`/`version` defaults.
 
 use std::{
-	sync::{Arc, OnceLock},
+	sync::{
+		Arc,
+		atomic::{AtomicU64, Ordering},
+	},
 	time::Duration,
 };
 
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
+use parking_lot::Mutex;
 use serde_json::{Value, json};
 
 use crate::{
@@ -49,11 +53,28 @@ const EXTENSION_TYPE_USER:u8 = 1;
 
 const SCAN_WAIT_CAP_MS:u64 = 5000;
 
-// Per-type cached responses. Extensions don't change during a session so
-// building the ILocalExtension[] once per type and returning the cached Value
-// on subsequent calls avoids re-serializing ~1.8 MB on every getInstalled call.
-// Keyed by TypeFilter: index 0=None(all), 1=System(0), 2=User(1).
-static INSTALLED_CACHE:[OnceLock<Value>; 3] = [OnceLock::new(), OnceLock::new(), OnceLock::new()];
+// Per-type cached responses. Building the ILocalExtension[] once per type and
+// returning the cached Value on subsequent calls avoids re-serializing ~1.8 MB
+// on every getInstalled call. Keyed by TypeFilter: index 0=None(all),
+// 1=System(0), 2=User(1).
+//
+// Each slot stores the `SCAN_GENERATION` it was built against and is valid
+// only while that generation is current. The scanner notifies `ScanReady` as
+// soon as the pre-baked (builtins-only) manifest cache lands and merges the
+// user-path scan results afterwards in the background; a builtins-only
+// response cached during that window must not survive the merge, so the
+// scanner bumps the generation and the next call rebuilds from the merged map.
+static INSTALLED_CACHE:[Mutex<Option<(u64, Value)>>; 3] = [Mutex::new(None), Mutex::new(None), Mutex::new(None)];
+
+// Monotonic generation counter for `ScannedExtensions` content. Bumped by the
+// extension scanner whenever the map changes after `ScanReady` has fired
+// (supplementary user-path merge, full-scan completion, rescans).
+static SCAN_GENERATION:AtomicU64 = AtomicU64::new(0);
+
+/// Invalidates every cached `extensions:getInstalled` response by advancing
+/// the scan generation. Called by the extension scanner after it merges new
+/// results into `ScannedExtensions`.
+pub fn BumpScanGeneration() { SCAN_GENERATION.fetch_add(1, Ordering::SeqCst); }
 
 fn CacheIndex(TypeFilter:Option<u8>) -> usize {
 	match TypeFilter {
@@ -70,21 +91,33 @@ fn CacheIndex(TypeFilter:Option<u8>) -> usize {
 pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let TypeFilter:Option<u8> = Arguments.first().and_then(|V| V.as_u64()).map(|N| N as u8);
 
-	// Fast path: return cached response if available (built on first call per
-	// type).
+	// Fast path: return the cached response if it was built against the
+	// current scan generation. Capture the generation BEFORE reading any
+	// extension state: if the scanner merges + bumps while this call is
+	// building, the stored pair carries the stale generation and the next
+	// call rebuilds.
 	let CacheSlot = CacheIndex(TypeFilter);
 
-	if let Some(Cached) = INSTALLED_CACHE[CacheSlot].get() {
-		let Count = Cached.as_array().map(|A| A.len()).unwrap_or(0);
+	let GenerationAtRead = SCAN_GENERATION.load(Ordering::SeqCst);
 
-		dev_log!(
-			"extensions",
-			"extensions:getInstalled type={:?} returning {} entries (cache hit)",
-			TypeFilter,
-			Count
-		);
+	{
+		let Guard = INSTALLED_CACHE[CacheSlot].lock();
 
-		return Ok(Cached.clone());
+		if let Some((Generation, Cached)) = Guard.as_ref()
+			&& *Generation == GenerationAtRead
+		{
+			let Count = Cached.as_array().map(|A| A.len()).unwrap_or(0);
+
+			dev_log!(
+				"extensions",
+				"extensions:getInstalled type={:?} returning {} entries (cache hit, generation {})",
+				TypeFilter,
+				Count,
+				GenerationAtRead
+			);
+
+			return Ok(Cached.clone());
+		}
 	}
 
 	// Subscribe to the scan-ready notify BEFORE calling GetExtensions() to
@@ -213,8 +246,10 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 	// Only cache non-empty responses - an empty response on first call (timeout)
 	// shouldn't poison the cache for subsequent calls that would get real data.
+	// Stored against the generation captured before the state read so a
+	// concurrent scanner merge invalidates this entry.
 	if !Wrapped.is_empty() {
-		let _ = INSTALLED_CACHE[CacheSlot].set(Response.clone());
+		*INSTALLED_CACHE[CacheSlot].lock() = Some((GenerationAtRead, Response.clone()));
 	}
 
 	Ok(Response)

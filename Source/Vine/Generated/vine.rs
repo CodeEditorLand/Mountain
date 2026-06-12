@@ -346,6 +346,9 @@ pub struct ShowTextDocumentResponse {
 pub struct ShowMessageRequest {
     #[prost(string, tag = "1")]
     pub message: ::prost::alloc::string::String,
+    /// Optional action-button labels shown alongside the message.
+    #[prost(string, repeated, tag = "2")]
+    pub items: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Response for showing a message.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]

@@ -1,12 +1,17 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use CommonLibrary::Error::CommonError::CommonError;
-use serde_json::Value;
-use tauri::AppHandle;
+use serde_json::{Value, json};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::{
 	ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
 	ExtensionManagement,
+	IPC::WindServiceHandlers::{
+		Extension::NotifyCocoonDeltaExtensions::Fn as NotifyCocoonDeltaExtensions,
+		Extensions::ExtensionsGetInstalled::BumpScanGeneration,
+	},
+	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
 
@@ -43,6 +48,14 @@ pub async fn Fn(
 						PostWriteCount
 					);
 
+					// The pre-baked manifest covers every bundled extension
+					// root - enough for the workbench's first getInstalled
+					// burst and Cocoon's init payload. Unblock waiters now;
+					// the user-path supplement below merges in the background
+					// and bumps the getInstalled cache generation when it
+					// lands.
+					_State.ScanReady.notify_waiters();
+
 					// Supplementary live-scan of user-writable paths only.
 					// PreBake at build time walks the bundled extension trees
 					// (Mountain/Target/Resources/extensions,
@@ -68,17 +81,26 @@ pub async fn Fn(
 						.filter(|P| ExtensionManagement::Scanner::IsUserExtensionScanPath(P))
 						.collect();
 
-					if !UserScanPaths.is_empty() {
-						dev_log!(
-							"extensions",
-							"[ExtensionScanner] Cache hit supplement: live-scanning {} user-writable path(s)",
-							UserScanPaths.len()
-						);
+					if UserScanPaths.is_empty() {
+						return Ok(());
+					}
 
+					dev_log!(
+						"extensions",
+						"[ExtensionScanner] Cache hit supplement: live-scanning {} user-writable path(s) in the \
+						 background",
+						UserScanPaths.len()
+					);
+
+					let BackgroundHandle = ApplicationHandle.clone();
+
+					let ScannedExtensions = _State.ScannedExtensions.clone();
+
+					tauri::async_runtime::spawn(async move {
 						let UserFutures:Vec<_> = UserScanPaths
 							.into_iter()
 							.map(|Path| {
-								let Handle = ApplicationHandle.clone();
+								let Handle = BackgroundHandle.clone();
 
 								async move {
 									let Display = Path.display().to_string();
@@ -112,10 +134,10 @@ pub async fn Fn(
 
 						let UserResults = futures::future::join_all(UserFutures).await;
 
-						let mut UserMerged = 0usize;
+						let mut Merged:Vec<(String, ExtensionDescriptionStateDTO)> = Vec::new();
 
 						{
-							let mut Guard = _State.ScannedExtensions.ScannedExtensions.lock();
+							let mut Guard = ScannedExtensions.ScannedExtensions.lock();
 
 							for Found in UserResults {
 								for Extension in Found {
@@ -127,9 +149,9 @@ pub async fn Fn(
 										.to_string();
 
 									if !Identifier.is_empty() {
-										Guard.insert(Identifier, Extension);
+										Guard.insert(Identifier.clone(), Extension.clone());
 
-										UserMerged += 1;
+										Merged.push((Identifier, Extension));
 									}
 								}
 							}
@@ -138,12 +160,80 @@ pub async fn Fn(
 						dev_log!(
 							"extensions",
 							"[ExtensionScanner] Cache hit supplement: merged {} user extension(s) into state",
-							UserMerged
+							Merged.len()
 						);
-					}
 
-					// Unblock any callers waiting for the first scan result.
-					_State.ScanReady.notify_waiters();
+						// Invalidate the per-TypeFilter getInstalled caches:
+						// any builtins-only response cached between the early
+						// ScanReady notify and this merge is rebuilt from the
+						// merged map on the next call.
+						BumpScanGeneration();
+
+						if Merged.is_empty() {
+							return;
+						}
+
+						// Cocoon may already have fetched the builtins-only
+						// list for its extension registry; $deltaExtensions
+						// reconciles it (fire-and-forget, swallowed when
+						// Cocoon is not connected yet - the init payload /
+						// getAll it fetches later reads the merged map).
+						let ToAdd:Vec<Value> =
+							Merged.iter().filter_map(|(_, Description)| serde_json::to_value(Description).ok()).collect();
+
+						NotifyCocoonDeltaExtensions(ToAdd, Vec::new());
+
+						// Same event the VSIX installer emits - Sky's
+						// ExtensionChangeSubscriber refreshes the sidebar so
+						// the @installed view picks up the late merge.
+						for (Identifier, Description) in &Merged {
+							let Location = Description
+								.ExtensionLocation
+								.as_str()
+								.map(str::to_string)
+								.or_else(|| {
+									Description
+										.ExtensionLocation
+										.get("path")
+										.and_then(Value::as_str)
+										.map(str::to_string)
+								})
+								.unwrap_or_default();
+
+							if let Err(Error) = BackgroundHandle.emit(
+								"sky://extensions/installed",
+								json!({
+									"identifier": Identifier,
+									"version": Description.Version,
+									"location": Location,
+								}),
+							) {
+								dev_log!(
+									"extensions",
+									"warn: [ExtensionScanner] failed to emit sky://extensions/installed: {}",
+									Error
+								);
+							}
+						}
+
+						// The stage-2 configuration re-merge ran without
+						// these extensions' contributes.configuration
+						// defaults; merge once more now that they are in the
+						// map.
+						if let Some(RunTime) = BackgroundHandle.try_state::<Arc<ApplicationRunTime>>() {
+							let Environment = RunTime.inner().Environment.clone();
+
+							if let Err(Error) =
+								crate::Environment::ConfigurationProvider::Loading::Fn(&Environment).await
+							{
+								dev_log!(
+									"extensions",
+									"warn: [ExtensionScanner] post-merge configuration re-merge failed: {}",
+									Error
+								);
+							}
+						}
+					});
 
 					return Ok(());
 				},
@@ -259,6 +349,11 @@ pub async fn Fn(
 		FailedScans,
 		PostWriteCount
 	);
+
+	// Invalidate any getInstalled responses cached against the previous
+	// generation (recovery rescans, repeated calls) before waking waiters so
+	// they rebuild from the freshly swapped map.
+	BumpScanGeneration();
 
 	// Unblock any callers waiting for the first scan result.
 	_State.ScanReady.notify_waiters();
