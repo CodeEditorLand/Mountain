@@ -1,5 +1,7 @@
 //! Wire method: `nativeHost:pickFolderAndOpen`, `:pickFileAndOpen`,
 //! `:pickFileFolderAndOpen`, `:pickWorkspaceAndOpen`.
+//! Reads `canSelectFiles` / `canSelectFolders` from the options object
+//! and routes to the correct Tauri dialog picker type (file vs folder).
 //!
 //! Atom I1 (2026-04-21): before webview reload, mutate
 //! ApplicationState.Workspace and fire `$deltaWorkspaceFolders` to Cocoon so
@@ -21,19 +23,41 @@ use crate::{
 	dev_log,
 };
 
-pub async fn Fn(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn Fn(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	use std::path::PathBuf;
 
 	use tauri_plugin_dialog::DialogExt;
 
-	dev_log!("folder", "pickFolderAndOpen requested");
+	// Electron passes `(windowId, options)`; `options` is always the last
+	// element so we find the first object with known picker fields.
+	let Options = Arguments.iter().rev().find(|V| V.is_object()).cloned().unwrap_or(Value::Null);
+
+	// Honour `canSelectFiles` / `canSelectFolders` so VS Code extensions that
+	// declare e.g. only `canSelectFolders: true` get the correct picker type.
+	let CanSelectFiles = Options
+		.get("canSelectFiles")
+		.and_then(Value::as_bool)
+		.unwrap_or(true);
+	let CanSelectFolders = Options
+		.get("canSelectFolders")
+		.and_then(Value::as_bool)
+		.unwrap_or(true);
+
+	dev_log!("folder", "pickFolderAndOpen requested (files={}, folders={})", CanSelectFiles, CanSelectFolders);
 
 	let Handle = ApplicationHandle.clone();
 
 	tokio::task::spawn_blocking(move || {
-		let FolderPath = Handle.dialog().file().blocking_pick_folder();
+		let PickedPath = if CanSelectFolders {
+			Handle.dialog().file().blocking_pick_folder()
+		} else if CanSelectFiles {
+			Handle.dialog().file().blocking_pick_file()
+		} else {
+			// Neither file nor folder allowed — return cancelled.
+			return;
+		};
 
-		if let Some(Path) = FolderPath {
+		if let Some(Path) = PickedPath {
 			let PathStr = Path.to_string();
 
 			dev_log!("folder", "picked: {}", PathStr);
