@@ -17,11 +17,11 @@ use crate::{
 /// Routes label commands. Returns Some(result) for handled commands,
 /// None otherwise.
 pub(crate) async fn route(
-	RunTime: Arc<ApplicationRunTime>,
+	RunTime:Arc<ApplicationRunTime>,
 
-	command: &str,
+	command:&str,
 
-	Arguments: Vec<Value>,
+	Arguments:Vec<Value>,
 ) -> Option<Result<Value, String>> {
 	match command {
 		"label:getUri" => {

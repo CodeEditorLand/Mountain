@@ -44,5 +44,8 @@ pub mod HandleRevListCount;
 
 pub mod HandleRevParse;
 
+#[path = "Git/Router.rs"]
+pub mod Router;
+
 #[path = "Git/Shared/mod.rs"]
 pub(crate) mod Shared;

@@ -4,6 +4,8 @@ pub mod EnvironmentGet;
 
 pub mod Get;
 
+pub mod Router;
+
 pub mod Update;
 
 pub mod Workbench;

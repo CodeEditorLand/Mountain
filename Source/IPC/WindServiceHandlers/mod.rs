@@ -9,6 +9,8 @@ pub mod Commands;
 #[path = "Configuration/mod.rs"]
 pub mod Configuration;
 
+pub mod Debug;
+
 pub mod Encryption;
 
 pub mod Extension;
@@ -27,6 +29,8 @@ pub mod Keybinding;
 
 pub mod Label;
 
+pub mod Lifecycle;
+
 pub mod Model;
 
 pub mod NativeDialog;
@@ -34,6 +38,8 @@ pub mod NativeDialog;
 pub mod NativeHost;
 
 pub mod Navigation;
+
+pub mod Notification;
 
 pub mod Output;
 
