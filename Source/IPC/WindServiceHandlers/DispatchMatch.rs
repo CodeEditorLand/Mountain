@@ -131,13 +131,6 @@ use UI::{
 	KeybindingLookup::Fn as KeybindingLookup,
 	KeybindingRemove::Fn as KeybindingRemove,
 	KeybindingResolve::Fn as KeybindingResolve,
-	LifecycleGetPhase::Fn as LifecycleGetPhase,
-	LifecycleRequestShutdown::Fn as LifecycleRequestShutdown,
-	LifecycleWhenPhase::Fn as LifecycleWhenPhase,
-	NotificationEndProgress::Fn as NotificationEndProgress,
-	NotificationShow::Fn as NotificationShow,
-	NotificationShowProgress::Fn as NotificationShowProgress,
-	NotificationUpdateProgress::Fn as NotificationUpdateProgress,
 	ProgressBegin::Fn as ProgressBegin,
 	ProgressEnd::Fn as ProgressEnd,
 	ProgressReport::Fn as ProgressReport,
@@ -240,7 +233,7 @@ macro_rules! forward_to_cocoon {
 
 		let Payload = cocoon_payload($Arguments);
 
-		// Non-blocking check — `IsClientConnected` is a cheap read of the
+		// Non-blocking check - `IsClientConnected` is a cheap read of the
 		// shared connection-pool map (no RPC). When Cocoon is gone we
 		// return the fallback immediately instead of paying the old
 		// 3-second WaitForClientConnection that serialized boot-time RPC
@@ -253,7 +246,7 @@ macro_rules! forward_to_cocoon {
 					.unwrap_or(Value::Null),
 			)
 		} else {
-			dev_log!("ipc", "{}: Cocoon disconnected — returning Null fallback", $tag);
+			dev_log!("ipc", "{}: Cocoon disconnected - returning Null fallback", $tag);
 
 			Ok(Value::Null)
 		}
@@ -425,7 +418,7 @@ pub async fn mountain_ipc_invoke(
 			| "commands:unregisterCommand"
 			| "commands:onDidRegisterCommand"
 			| "commands:onDidExecuteCommand"
-			// Editor model + view events — per-keystroke/scroll frequency
+			// Editor model + view events - per-keystroke/scroll frequency
 			| "sky:model:contentChanged"
 			| "sky:editor:selectionChanged"
 			| "sky:editor:activeChanged"
@@ -465,7 +458,7 @@ pub async fn mountain_ipc_invoke(
 
 			match target {
 				crate::Shim::SwallowMap::RedirectTarget::Mountain => {
-					// Handle directly in Rust — bypass Cocoon gRPC
+					// Handle directly in Rust - bypass Cocoon gRPC
 					match crate::Shim::NativeBus::handle(&ApplicationHandle, &command, &Arguments).await {
 						Ok(result) => return Ok(result),
 
@@ -483,7 +476,7 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				_ => {
-					// Passthrough — fall through to original dispatch
+					// Passthrough - fall through to original dispatch
 				},
 			}
 		}
@@ -714,7 +707,7 @@ pub async fn mountain_ipc_invoke(
 				{
 					forward_to_cocoon!("tree", command, Arguments)
 				},
-				// `file:*` has its own gate (`TierFileSystem`) — routing raw file
+				// `file:*` has its own gate (`TierFileSystem`) - routing raw file
 				// I/O to Cocoon would break disk access since Cocoon has no
 				// disk provider. Keep `model:` / `textFile:` under `TierModel`.
 				_ if command.starts_with("file:") && tier_routes_to_node(TIER_FILE_SYSTEM, "TierFileSystem") => {
@@ -752,6 +745,12 @@ pub async fn mountain_ipc_invoke(
 				// for parity with the Wind-side table - default stays Mountain.
 				_ if command.starts_with("nativeHost:") && tier_routes_to_node(TIER_NATIVE_HOST, "TierNativeHost") => {
 					forward_to_cocoon!("nativeHost", command, Arguments)
+				},
+				_ if command.starts_with("storage:") && tier_routes_to_node(TIER_STORAGE, "TierStorage") => {
+					forward_to_cocoon!("storage", command, Arguments)
+				},
+				_ if command.starts_with("git:") && tier_routes_to_node(TIER_SCM, "TierSCM") => {
+					forward_to_cocoon!("scm", command, Arguments)
 				},
 
 				// Configuration commands. VS Code's stock
@@ -886,7 +885,7 @@ pub async fn mountain_ipc_invoke(
 				| "logger:deregisterLogger"
 				| "logger:setVisibility" => Ok(Value::Null),
 
-				// `logger:getLevel` — VS Code expects a numeric LogLevel enum.
+				// `logger:getLevel` - VS Code expects a numeric LogLevel enum.
 				// Mapping: Trace=0, Debug=1, Info=2, Warning=3, Error=4, Critical=5
 				"logger:getLevel" => Ok(json!(log::max_level() as u32)),
 
@@ -1101,7 +1100,7 @@ pub async fn mountain_ipc_invoke(
 					Ok(Value::Null)
 				},
 
-				// P1.15: diagnostic:getBootMarks — read performance.mark
+				// P1.15: diagnostic:getBootMarks - read performance.mark
 				// entries from the webview so the diagnostic dashboard can
 				// surface boot-phase timings (land:*, TTFB, DOMContentLoaded,
 				// etc.) alongside the Rust-side Mountain.dev.log stream.
@@ -1112,7 +1111,7 @@ pub async fn mountain_ipc_invoke(
 					// (emit → Sky listener → oneshot response) or a Tauri command
 					// with `tauri::Window::eval` paired with a `listen` event.
 					// Return the shape so callers don't crash iterating null.
-					dev_log!("diagnostic", "getBootMarks (stub — eval() is async, needs IPC round-trip)");
+					dev_log!("diagnostic", "getBootMarks (stub - eval() is async, needs IPC round-trip)");
 
 					Ok(Value::Array(vec![]))
 				},
@@ -1168,36 +1167,6 @@ pub async fn mountain_ipc_invoke(
 				// Storage commands (additional)
 				"storage:delete" => call!(rt, "storage", "storage:delete", StorageDelete, Arguments),
 				"storage:keys" => call!(rt, "storage", "storage:keys", StorageKeys),
-
-				// Notification commands (emit sky:// events for Sky to render)
-				"notification:show" => call!(app, "notification", "notification:show", NotificationShow, Arguments),
-				"notification:showProgress" => {
-					call!(
-						app,
-						"notification",
-						"notification:showProgress",
-						NotificationShowProgress,
-						Arguments
-					)
-				},
-				"notification:updateProgress" => {
-					call!(
-						app,
-						"notification",
-						"notification:updateProgress",
-						NotificationUpdateProgress,
-						Arguments
-					)
-				},
-				"notification:endProgress" => {
-					call!(
-						app,
-						"notification",
-						"notification:endProgress",
-						NotificationEndProgress,
-						Arguments
-					)
-				},
 
 				// Progress commands
 				"progress:begin" => call!(app, "progress", "progress:begin", ProgressBegin, Arguments),
@@ -1274,67 +1243,6 @@ pub async fn mountain_ipc_invoke(
 						.unwrap_or_else(|| Ok(Value::Null))
 				},
 
-				// Lifecycle commands
-				"lifecycle:getPhase" => call!(rt, "lifecycle", "lifecycle:getPhase", LifecycleGetPhase),
-				"lifecycle:whenPhase" => call!(rt, "lifecycle", "lifecycle:whenPhase", LifecycleWhenPhase, Arguments),
-				"lifecycle:requestShutdown" => {
-					call!(app, "lifecycle", "lifecycle:requestShutdown", LifecycleRequestShutdown)
-				},
-				"lifecycle:advancePhase" | "lifecycle:setPhase" => {
-					dev_log!("lifecycle", "{}", command);
-
-					// Wind calls this at the end of every workbench init pass so
-					// the phase advances Starting → Ready → Restored → Eventually.
-					// Mountain emits `sky://lifecycle/phaseChanged` so any extension
-					// host or service waiting on a later phase wakes up.
-					let NewPhase = arg_u64_or(&Arguments, 0, 1) as u8;
-
-					RunTime
-						.Environment
-						.ApplicationState
-						.Feature
-						.Lifecycle
-						.AdvanceAndBroadcast(NewPhase, &ApplicationHandle);
-
-					// Hidden-until-ready: the main window is built with
-					// `.visible(false)` to suppress the four-repaint flash
-					// (native chrome → inline bg → theme CSS → workbench
-					// DOM). Phase 3 = Restored means `.monaco-workbench`
-					// is attached and the first frame is painted; show
-					// the window now so the user's first glimpse is the
-					// finished editor rather than the paint cascade.
-					//
-					// `set_focus()` follows `show()` so keyboard input
-					// routes to the editor immediately on reveal.
-					// Failures are logged but swallowed - if the window
-					// is already visible (phase 3 re-fired from another
-					// consumer) Tauri returns a benign error.
-					if NewPhase >= 3 {
-						if let Some(MainWindow) = ApplicationHandle.get_webview_window("main") {
-							if let Ok(false) = MainWindow.is_visible() {
-								if let Err(Error) = MainWindow.show() {
-									dev_log!(
-										"lifecycle",
-										"warn: [Lifecycle] main window show() failed on phase {}: {}",
-										NewPhase,
-										Error
-									);
-								} else {
-									dev_log!(
-										"lifecycle",
-										"[Lifecycle] main window revealed on phase {} (hidden-until-ready)",
-										NewPhase
-									);
-
-									let _ = MainWindow.set_focus();
-								}
-							}
-						}
-					}
-
-					Ok(json!(RunTime.Environment.ApplicationState.Feature.Lifecycle.GetPhase()))
-				},
-
 				// Label commands - routed through LabelRouter
 				command if command.starts_with("label:") => {
 					Label::LabelRouter::route(RunTime.clone(), &command, Arguments)
@@ -1345,6 +1253,45 @@ pub async fn mountain_ipc_invoke(
 				// Navigation history commands - routed through HistoryRouter
 				command if command.starts_with("history:") => {
 					History::HistoryRouter::route(RunTime.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
+				},
+
+				// Notification commands - routed through NotificationRouter
+				command if command.starts_with("notification:") => {
+					Notification::Router::route(ApplicationHandle.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
+				},
+
+				// Lifecycle commands - routed through LifecycleRouter
+				command if command.starts_with("lifecycle:") => {
+					Lifecycle::Router::route(RunTime.clone(), ApplicationHandle.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
+				},
+
+				// Git commands - routed through GitRouter
+				command if command.starts_with("git:") => {
+					Git::Router::route(ApplicationHandle.clone(), RunTime.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
+				},
+
+				// NativeHost commands - routed through NativeHostRouter
+				command if command.starts_with("nativeHost:") => {
+					NativeHost::Router::route(ApplicationHandle.clone(), RunTime.clone(), &command, Arguments)
+						.await
+						.unwrap_or_else(|| Ok(Value::Null))
+				},
+
+				// Configuration commands - routed through ConfigurationRouter
+				// Also handles environment:get and workbench:getConfiguration
+				command if command.starts_with("configuration:")
+					|| command == "environment:get"
+					|| command == "workbench:getConfiguration" =>
+				{
+					Configuration::Router::route(RunTime.clone(), ApplicationHandle.clone(), &command, Arguments)
 						.await
 						.unwrap_or_else(|| Ok(Value::Null))
 				},
@@ -1424,9 +1371,9 @@ pub async fn mountain_ipc_invoke(
 				// lifecycle service from suppressing quit prompts.
 				"window:getActiveWindowCount" => Ok(json!(1)),
 
-				// `window:setTitle` / `nativeHost:setTitle` - explicit title
-				// override from extensions or the workbench title service.
-				"window:setTitle" | "nativeHost:setTitle" => {
+				// `window:setTitle` - explicit title override from extensions
+				// or the workbench title service.
+				"window:setTitle" => {
 					dev_log!("window", "{}", command);
 
 					let Title = arg_string(&Arguments, 0);
@@ -1612,69 +1559,6 @@ pub async fn mountain_ipc_invoke(
 						"speed": 0u32,
 						"times": { "user": 0u64, "nice": 0u64, "sys": 0u64, "idle": 0u64, "irq": 0u64 },
 					}]))
-				},
-
-				// Git (localGit channel) - implements stock VS Code's
-				// ILocalGitService surface plus `exec` / `isAvailable` for
-				// the built-in Git extension. Handlers spawn native `git`
-				// via tokio::process. See Batch 4 in HANDOFF §-10.
-				//
-				// TierSCM gate: with `TierSCM=Node` (set in `.env.Land`
-				// or via a flavor overlay) every git:* + scm:* command
-				// forwards to Cocoon's vscode.scm namespace instead so
-				// extensions like the upstream Git extension can run
-				// pure-JS against their own bundled `simple-git`. Default
-				// is Mountain - native subprocess with 30s timeout.
-				"git:exec" | "git:clone" | "git:pull" | "git:checkout" | "git:revParse" | "git:fetch"
-				| "git:revListCount" | "git:cancel" | "git:isAvailable"
-					if tier_routes_to_node(TIER_SCM, "TierSCM") =>
-				{
-					forward_to_cocoon!("scm", command, Arguments)
-				},
-				"git:exec" => {
-					dev_log!("git", "git:exec");
-
-					Git::HandleExec::Fn(Arguments).await
-				},
-				"git:clone" => {
-					dev_log!("git", "git:clone");
-
-					Git::HandleClone::Fn(Arguments).await
-				},
-				"git:pull" => {
-					dev_log!("git", "git:pull");
-
-					Git::HandlePull::Fn(Arguments).await
-				},
-				"git:checkout" => {
-					dev_log!("git", "git:checkout");
-
-					Git::HandleCheckout::Fn(Arguments).await
-				},
-				"git:revParse" => {
-					dev_log!("git", "git:revParse");
-
-					Git::HandleRevParse::Fn(Arguments).await
-				},
-				"git:fetch" => {
-					dev_log!("git", "git:fetch");
-
-					Git::HandleFetch::Fn(Arguments).await
-				},
-				"git:revListCount" => {
-					dev_log!("git", "git:revListCount");
-
-					Git::HandleRevListCount::Fn(Arguments).await
-				},
-				"git:cancel" => {
-					dev_log!("git", "git:cancel");
-
-					Git::HandleCancel::Fn(Arguments).await
-				},
-				"git:isAvailable" => {
-					dev_log!("git", "git:isAvailable");
-
-					Git::HandleIsAvailable::Fn(Arguments).await
 				},
 
 				// Tree-view child lookup from the renderer side. Mirrors the
@@ -2540,7 +2424,7 @@ pub async fn mountain_ipc_invoke(
 					// Check if command should defer to Cocoon's Node.js runtime.
 					// The env var is baked in at build time via rustc-env from
 					// build.rs; at runtime we also accept it via process env for
-					// debug overrides. Cache the result — this runs per unknown
+					// debug overrides. Cache the result - this runs per unknown
 					// command and env lookup is a syscall.
 					static TIER_IPC_CACHE:OnceLock<String> = OnceLock::new();
 

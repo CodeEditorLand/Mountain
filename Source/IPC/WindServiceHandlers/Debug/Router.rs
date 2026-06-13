@@ -1,8 +1,9 @@
-//! Debug command router — Mountain-native pre-processing + Cocoon forward.
+//! Debug command router - Mountain-native pre-processing + Cocoon forward.
 
 use std::sync::Arc;
 
 use serde_json::{Value, json};
+use tauri::Emitter;
 
 use crate::{
 	IPC::WindServiceHandlers::Utilities::JsonValueHelpers::{arg_string_or, arg_val},
@@ -35,7 +36,7 @@ async fn forward_to_cocoon(tag:&str, command:&str, arguments:Vec<Value>) -> Resu
 				.unwrap_or(Value::Null),
 		)
 	} else {
-		dev_log!("ipc", "{}: Cocoon disconnected — returning Null fallback", tag);
+		dev_log!("ipc", "{}: Cocoon disconnected - returning Null fallback", tag);
 
 		Ok(Value::Null)
 	}
