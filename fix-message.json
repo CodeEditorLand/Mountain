@@ -1,3 +1,0 @@
-{
-	"Message": "docs(Mountain): Revise Architecture and DeepDive opening sections for direct narrative style\n\nReplace the meta-textual framing \"This document describes\" in Architecture.md with a direct statement that positions Mountain as the primary Tauri application. Reword the DeepDive.md opening paragraph to move the document's purpose into a supporting clause rather than the lead, bringing Mountain's concrete role as the VSCode service implementation layer to the forefront.\n\nEliminates redundant document-self-reference prose across both documentation files."
-}
