@@ -169,8 +169,7 @@ graph LR
         end
         subgraph RUNTIME["RunTime/ - Effect Engine"]
             AppRunTime["ApplicationRunTime ⚙️"]:::mountain
-            EnvProviders["Environment/ Providers\n(FS · Terminal · SCM · UI · Storage…)"]
-:::mountain
+            EnvProviders["Environment/ Providers\n(FS · Terminal · SCM · UI · Storage…)"]:::mountain
         end
         subgraph IPC_LAYER["IPC/ - Tauri IPC Server"]
             WindHandlers["WindServiceHandlers mod.rs"]:::ipc
