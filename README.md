@@ -66,7 +66,7 @@ crate, providing native-speed implementations for filesystem I/O, process
 management, secure storage, and more. It manages the application lifecycle,
 orchestrates native OS operations, launches and communicates with the `Cocoon`
 🦋 (`Node.js`) extension host sidecar via `gRPC` 🌿, and serves as the backend
-for the `Wind` 🌬️ layer through `Tauri` commands and events.
+for the `Wind` 🍃 layer through `Tauri` commands and events.
 
 `Electron` ships an entire `Chromium` renderer per window, each carrying a full
 heap. Every OS interaction crosses a serialized JSON IPC pipe. **Mountain**
@@ -85,7 +85,7 @@ fraction of `Electron`'s.
 3. **Orchestrate Sidecars** - Reliably launch, manage, and communicate with the
    `Cocoon` 🦋 (`Node.js`) extension host sidecar via a robust `gRPC` 🌿
    interface.
-4. **Power the User Interface** - Serve as the backend for the `Wind` 🌬️ layer,
+4. **Power the User Interface** - Serve as the backend for the `Wind` 🍃 layer,
    responding to requests via `Tauri` commands and pushing state updates via
    `Tauri` events.
 
@@ -316,7 +316,7 @@ component in the `Land` 🏞️ monorepo. It depends on:
 
 | Component             | Protocol                           | Role                                                 |
 | --------------------- | ---------------------------------- | ---------------------------------------------------- |
-| **Wind** 🌬️ / **Sky** | `tauri::invoke` + `sky://` events  | UI WebView - command dispatch and state push         |
+| **Wind** 🍃 / **Sky** | `tauri::invoke` + `sky://` events  | UI WebView - command dispatch and state push         |
 | **Cocoon** 🦋         | `gRPC` via `Vine` 🌿 on port 50052 | Node.js extension host sidecar                       |
 | **Air** 🪁            | `AirClient` gRPC                   | Background daemon for file indexing, search, updates |
 | **Grove** 🌳          | `gRPC` via `Vine` 🌿               | Native Rust/WASM extension host (future)             |
@@ -406,7 +406,7 @@ Mountain is designed to be compatible with:
 
 | Target        | Integration                                                         |
 | ------------- | ------------------------------------------------------------------- |
-| **Wind** 🌬️   | Serves as the backend via `Tauri` commands and `sky://` events      |
+| **Wind** 🍃   | Serves as the backend via `Tauri` commands and `sky://` events      |
 | **Cocoon** 🦋 | Communicates via `gRPC` on port 50052 for extension host operations |
 | **Sky**       | Hosts the `Sky` WebView as the primary UI surface                   |
 | **Air** 🪁    | Connects via `AirClient` gRPC for OTA updates and file operations   |
