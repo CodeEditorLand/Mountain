@@ -9,17 +9,13 @@
 				</picture>
 			</h3>
 		</td>
-		<td colspan="3" valign="top">
-			<h3 align="center">
-				Mountain Binaries&#x2001;📦
-			</h3>
-		</td>
+		<td colspan="3" valign="top"><h3 align="center">Mountain Binaries&#x2001;📦</h3></td>
 	</tr>
 </table>
 
 ---
 
-# **Mountain Binaries** 📦 Staged Executables for Bundling
+# **Mountain Binaries**&#x2001;📦&#x2001;Staged Executables for Bundling
 
 This directory, `Binary/`, serves as a temporary staging area for executables
 that are dynamically selected and prepared by the `Build.rs` orchestrator. It is

@@ -1,4 +1,4 @@
-# Mountain: Native Backend Application 🏔️
+# Mountain: Native Backend Application&#x2001;🏔️
 
 `Mountain` is the primary `Tauri` application and native `Rust` backend for the
 `Land` code editor. `Mountain`:
@@ -58,7 +58,7 @@ sequenceDiagram
     Note over M,AIR: System ready for user interaction
 ```
 
-## Overview 📋
+## Overview&#x2001;📋
 
 `Mountain` is a `Rust` binary built with `Tauri` v2 and `tonic` `gRPC`:
 
@@ -76,9 +76,9 @@ sequenceDiagram
 
 ---
 
-## Application Lifecycle 🔄
+## Application Lifecycle&#x2001;🔄
 
-### Startup Sequence 🚀
+### Startup Sequence&#x2001;🚀
 
 ```
 fn main()
@@ -119,7 +119,7 @@ fn main()
 4. System ready for user interaction
 ```
 
-### Shutdown Sequence 🛑
+### Shutdown Sequence&#x2001;🛑
 
 ```
 1. Tauri window close requested
@@ -134,7 +134,7 @@ fn main()
 
 ---
 
-## Module Architecture 🗺️
+## Module Architecture&#x2001;🗺️
 
 ```
 Element/Mountain/Source/
@@ -196,7 +196,7 @@ Element/Mountain/Source/
 
 ---
 
-## ApplicationState 📦
+## ApplicationState&#x2001;📦
 
 The central state container managed by `Tauri`:
 
@@ -221,7 +221,7 @@ pub struct AppState {
 
 ---
 
-## Environment and Providers 🧩
+## Environment and Providers&#x2001;🧩
 
 `MountainEnvironment` implements every trait from `Common`. Each capability has
 a dedicated Provider:
@@ -241,7 +241,7 @@ a dedicated Provider:
 | `WorkspaceProvider`          | `Workspace`                  | Folder management               |
 | `IPCProvider`                | `IPC`                        | gRPC proxy to Cocoon            |
 
-### Provider Registration 📝
+### Provider Registration&#x2001;📝
 
 ```rust
 impl MountainEnvironment {
@@ -258,7 +258,7 @@ impl MountainEnvironment {
 
 ---
 
-## Tauri Command System ⌨️
+## Tauri Command System&#x2001;⌨️
 
 `Mountain` registers `Tauri` commands as typed `Rust` handlers:
 
@@ -291,11 +291,11 @@ async fn read_file(
 
 ---
 
-## gRPC Service (Vine) 🌐
+## gRPC Service (Vine)&#x2001;🌐
 
 `Mountain` hosts the `Vine` `gRPC` server for `Cocoon` and `Air` communication.
 
-### Server Configuration ⚙️
+### Server Configuration&#x2001;⚙️
 
 ```rust
 // Server listens on NetworkMountainPort (default: 50051)
@@ -310,7 +310,7 @@ Server::builder()
     .await?;
 ```
 
-### Service Handlers 📋
+### Service Handlers&#x2001;📋
 
 | Service       | RPC                | Handler Module                            |
 | ------------- | ------------------ | ----------------------------------------- |
@@ -322,9 +322,9 @@ Server::builder()
 
 ---
 
-## Process Management ⚙️
+## Process Management&#x2001;⚙️
 
-### Cocoon Management 🔄
+### Cocoon Management&#x2001;🔄
 
 The `CocoonManagement` module handles the `Cocoon` sidecar lifecycle:
 
@@ -334,7 +334,7 @@ The `CocoonManagement` module handles the `Cocoon` sidecar lifecycle:
 4. **Crash recovery**: Up to 3 automatic restarts with exponential backoff
 5. **Graceful shutdown**: `SIGTERM`, 5s timeout, `SIGKILL` on timeout
 
-### Air Management 🔄
+### Air Management&#x2001;🔄
 
 The `AirManagement` module handles `Air` sidecar lifecycle:
 
@@ -347,7 +347,7 @@ The `AirManagement` module handles `Air` sidecar lifecycle:
 
 ---
 
-## IPC and Event System 📡
+## IPC and Event System&#x2001;📡
 
 `Mountain` pushes events to `Wind`/`Sky` via `Tauri`'s event system:
 
@@ -371,7 +371,7 @@ app_handle.emit("configuration-changed", serde_json::json!({
 
 ---
 
-## Cache System 💾
+## Cache System&#x2001;💾
 
 `Mountain` implements two caching subsystems:
 
@@ -382,7 +382,7 @@ app_handle.emit("configuration-changed", serde_json::json!({
 
 ---
 
-## Extension Management 🧩
+## Extension Management&#x2001;🧩
 
 | Operation | Implementation                                             |
 | --------- | ---------------------------------------------------------- |
@@ -393,7 +393,7 @@ app_handle.emit("configuration-changed", serde_json::json!({
 
 ---
 
-## Related Documentation 📚
+## Related Documentation&#x2001;📚
 
 - [Common](https://github.com/CodeEditorLand/Common/tree/Current/Documentation/GitHub/Architecture.md) -
   Abstract trait definitions

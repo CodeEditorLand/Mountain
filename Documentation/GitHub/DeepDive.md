@@ -1,16 +1,8 @@
 <table>
 	<tr>
-		<td align="left" valign="middle">
-			<h3 align="left"> Mountain</h3>
-		</td>
-		<td align="left" valign="middle">
-			<h3 align="left">
-				⛰️
-			</h3>
-		</td>
-		<td align="left" valign="middle">
-			<h3 align="left"> + </h3>
-		</td>
+		<td align="left" valign="middle"><h3 align="left">Mountain</h3></td>
+		<td align="left" valign="middle"><h3 align="left">⛰️</h3></td>
+		<td align="left" valign="middle"><h3 align="left">+</h3></td>
 		<td align="left" valign="middle">
 			<h3 align="left">
 				<a href="https://Editor.Land" target="_blank">
@@ -22,24 +14,14 @@
 				</a>
 			</h3>
 		</td>
-		<td align="left" valign="middle">
-			<h3 align="left">
-				<a href="https://Editor.Land" target="_blank">
-					Land
-				</a>
-			</h3>
-		</td>
-		<td align="left" valign="middle">
-			<h3 align="left">
-				🏞️
-			</h3>
-		</td>
+		<td align="left" valign="middle"><h3 align="left"><a href="https://Editor.Land" target="_blank">Land</a></h3></td>
+		<td align="left" valign="middle"><h3 align="left">🏞️</h3></td>
 	</tr>
 </table>
 
 ---
 
-# **Mountain** ⛰️ Deep Dive & Architecture
+# **Mountain**&#x2001;⛰️&#x2001;Deep Dive & Architecture
 
 **Mountain** provides the technical foundation for implementing VSCode services
 as native Rust services within the Land project. **Mountain** serves as the

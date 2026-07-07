@@ -1,16 +1,8 @@
 <table>
 	<tr>
-		<td align="left" valign="middle">
-			<h3 align="left"> Mountain</h3>
-		</td>
-		<td align="left" valign="middle">
-			<h3 align="left">
-				⛰️
-			</h3>
-		</td>
-		<td align="left" valign="middle">
-			<h3 align="left"> + </h3>
-		</td>
+		<td align="left" valign="middle"><h3 align="left">Mountain</h3></td>
+		<td align="left" valign="middle"><h3 align="left">⛰️</h3></td>
+		<td align="left" valign="middle"><h3 align="left">+</h3></td>
 		<td align="left" valign="middle">
 			<h3 align="left">
 				<a href="https://Editor.Land" target="_blank">
@@ -22,24 +14,14 @@
 				</a>
 			</h3>
 		</td>
-		<td align="left" valign="middle">
-			<h3 align="left">
-				<a href="https://Editor.Land" target="_blank">
-					Land
-				</a>
-			</h3>
-		</td>
-		<td align="left" valign="middle">
-			<h3 align="left">
-				🏞️
-			</h3>
-		</td>
+		<td align="left" valign="middle"><h3 align="left"><a href="https://Editor.Land" target="_blank">Land</a></h3></td>
+		<td align="left" valign="middle"><h3 align="left">🏞️</h3></td>
 	</tr>
 </table>
 
 ---
 
-# **Naming Conventions** 📝
+# **Naming Conventions**&#x2001;📝
 
 This document defines the comprehensive naming conventions used throughout the
 **Mountain** codebase and the broader Land ecosystem. These conventions ensure
@@ -469,11 +451,11 @@ std::env::var("PATH")?;
 
 **Checklist** when creating new modules:
 
-1. ✅ Add `#![allow(non_snake_case, non_camel_case_types)]` at the top 2. ✅ Use
-PascalCase for struct/enum/trait names 3. ✅ Use PascalCase for all functions
-and methods 4. ✅ Use PascalCase for all fields and variables 5. ✅ Align DTO
-fields with Protocol Buffer message fields 6. ✅ Use PascalCase for generic type
-parameters with 'T' prefix 7. ✅ Use PascalCase for file names
+1.&#x2001;✅ Add `#![allow(non_snake_case, non_camel_case_types)]` at the top 2.&#x2001;✅ Use
+PascalCase for struct/enum/trait names 3.&#x2001;✅ Use PascalCase for all functions
+and methods 4.&#x2001;✅ Use PascalCase for all fields and variables 5.&#x2001;✅ Align DTO
+fields with Protocol Buffer message fields 6.&#x2001;✅ Use PascalCase for generic type
+parameters with 'T' prefix 7.&#x2001;✅ Use PascalCase for file names
 
 **Example**:
 
@@ -588,7 +570,7 @@ Before renaming, assess the impact:
 
 ## Implementation Status
 
-### Core Modules ✅
+### Core Modules&#x2001;✅
 
 | Module             | Status      | Notes                                                |
 | ------------------ | ----------- | ---------------------------------------------------- |
@@ -600,7 +582,7 @@ Before renaming, assess the impact:
 | `IPC`              | ✅ Complete | All IPC handlers and adapters follow PascalCase      |
 | `WorkSpace`        | ✅ Complete | WorkspaceProvider follows PascalCase                 |
 
-### DTOs ✅
+### DTOs&#x2001;✅
 
 All DTO files in `ApplicationState/DTO/` follow PascalCase conventions:
 
@@ -618,7 +600,7 @@ All DTO files in `ApplicationState/DTO/` follow PascalCase conventions:
 - `WindowStateDTO.rs`
 - `WorkSpaceFolderStateDTO.rs`
 
-### Environment Providers ✅
+### Environment Providers&#x2001;✅
 
 All provider implementations in `Environment/` follow PascalCase:
 
@@ -647,7 +629,7 @@ All provider implementations in `Environment/` follow PascalCase:
 - `WebViewProvider.rs`
 - `WorkSpaceProvider.rs`
 
-### Module Headers ✅
+### Module Headers&#x2001;✅
 
 All modules include the naming convention header:
 
