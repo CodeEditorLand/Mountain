@@ -49,9 +49,9 @@ The Native `Rust`/`Tauri` Desktop Shell for Land&#x2001;🏞️
 _"Where `Electron` takes 200 ms to open a dialog, `Mountain` takes 2."_
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](https://github.com/CodeEditorLand/Mountain/tree/Current/LICENSE)
-[<img src="https://editor.land/Image/Rust.svg" width="14" alt="Rust" />](https://www.rust-lang.org/)&#x2001;[![Crates.io](https://img.shields.io/crates/v/Mountain.svg)](https://crates.io/crates/Mountain)
-[<img src="https://editor.land/Image/Rust.svg" width="14" alt="Rust" />](https://www.rust-lang.org/)&#x2001;[![Rust Version](https://img.shields.io/badge/Rust-1.95+-orange.svg)](https://www.rust-lang.org/)
-[<img src="https://editor.land/Image/Tauri.svg" width="14" alt="Tauri" />](https://tauri.app/)&#x2001;[![Tauri Version](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://tauri.app/)
+[<img src="https://editor.land/Image/Rust.svg" width="14" alt="Rust" />](https://www.rust-lang.org/) [![Crates.io](https://img.shields.io/crates/v/Mountain.svg)](https://crates.io/crates/Mountain)
+[<img src="https://editor.land/Image/Rust.svg" width="14" alt="Rust" />](https://www.rust-lang.org/) [![Rust Version](https://img.shields.io/badge/Rust-1.95+-orange.svg)](https://www.rust-lang.org/)
+[<img src="https://editor.land/Image/Tauri.svg" width="14" alt="Tauri" />](https://tauri.app/) [![Tauri Version](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://tauri.app/)
 [![gRPC](https://img.shields.io/badge/gRPC-tonic-blueviolet.svg)](https://github.com/hyperium/tonic)
 
 **[Rust API Documentation](https://rust.documentation.mountain.editor.land/)**&#x2001;📖
@@ -61,13 +61,13 @@ _"Where `Electron` takes 200 ms to open a dialog, `Mountain` takes 2."_
 ## Overview
 
 **Mountain** is the foundational `Rust`/`Tauri` backend for the
-**Land**&#x2001;🏞️&#x2001;Code Editor. It implements the abstract service
-`trait`s defined in the `Common` &#x2001;🧑🏻‍🏭&#x2001;crate, providing native-speed
+**Land**&#x2001;🏞️ Code Editor. It implements the abstract service
+`trait`s defined in the `Common`&#x2001;🧑🏻‍🏭 crate, providing native-speed
 implementations for filesystem I/O, process management, secure storage, and
 more. It manages the application lifecycle, orchestrates native OS operations,
-launches and communicates with the `Cocoon` &#x2001;🦋&#x2001;(`Node.js`)
+launches and communicates with the `Cocoon`&#x2001;🦋 (`Node.js`)
 extension host sidecar via `gRPC`&#x2001;🌿, and serves as the backend for the
-`Wind`&#x2001;🍃&#x2001;layer through `Tauri` commands and events.
+`Wind`&#x2001;🍃 layer through `Tauri` commands and events.
 
 `Electron` ships an entire `Chromium` renderer per window, each carrying a full
 heap. Every OS interaction crosses a serialized JSON IPC pipe. **Mountain**
@@ -81,14 +81,14 @@ fraction of `Electron`'s.
 1. **Be the Native Core** - Act as the primary `Rust` application, leveraging
    `Tauri` to create a lightweight, cross-platform windowing and `WebView` host.
 2. **Provide High-Performance Services** - Implement the abstract service
-   `trait`s defined in the `Common`&#x2001;🧑🏻‍🏭&#x2001;crate, offering
+   `trait`s defined in the `Common`&#x2001;🧑🏻‍🏭 crate, offering
    native-speed implementations for filesystem I/O, process management, secure
    storage, and more.
 3. **Orchestrate Sidecars** - Reliably launch, manage, and communicate with the
-   `Cocoon`&#x2001;🦋&#x2001;(`Node.js`) extension host sidecar via a robust
+   `Cocoon`&#x2001;🦋 (`Node.js`) extension host sidecar via a robust
    `gRPC`&#x2001;🌿 interface.
 4. **Power the User Interface** - Serve as the backend for the
-   `Wind`&#x2001;🍃&#x2001;layer, responding to requests via `Tauri` commands
+   `Wind`&#x2001;🍃 layer, responding to requests via `Tauri` commands
    and pushing state updates via `Tauri` events.
 
 ---
@@ -96,7 +96,7 @@ fraction of `Electron`'s.
 ## Key Features&#x2001;⛰️
 
 **Declarative Effect System** - Built on a `Rust` `ActionEffect` system defined
-in the `Common`&#x2001;🧑🏻‍🏭&#x2001;crate. Business logic is described as
+in the `Common`&#x2001;🧑🏻‍🏭 crate. Business logic is described as
 declarative, composable effects, executed by a central `ApplicationRunTime`.
 Every incoming request (from `Wind`&#x2001;🍃, `Cocoon`&#x2001;🦋, or internal
 triggers) maps to an effect that the runtime executes with retry and timeout
@@ -104,7 +104,7 @@ semantics.
 
 **`gRPC`-Powered IPC** - Hosts a `tonic`-based `gRPC` server (`Vine`&#x2001;🌿)
 on port 50052 to provide a strongly-typed, high-performance communication
-channel for the `Cocoon`&#x2001;🦋&#x2001;extension host. All extension host ↔
+channel for the `Cocoon`&#x2001;🦋 extension host. All extension host ↔
 native communication flows through this channel.
 
 **Centralized State Management** - Utilizes a thread-safe, `Tauri`-managed
@@ -131,7 +131,7 @@ for VS Code-compatible extensions. Includes NLS (National Language Support)
 resolution and default configuration merging.
 
 **Over-the-Air Updates** - Integrated update system using the
-`Air`&#x2001;🪁&#x2001;daemon for checking, downloading, and applying
+`Air`&#x2001;🪁 daemon for checking, downloading, and applying
 application updates with progress reporting and automatic restart.
 
 ---
@@ -144,12 +144,12 @@ application updates with progress reporting and automatic restart.
 | **Separation of Concerns**      | Isolate service logic into distinct `Environment` provider modules, each responsible for a specific domain (e.g., `FileSystem`, `Documents`). | `Environment/*`, `Command/*`             |
 | **Declarative Logic**           | Express complex operations as `ActionEffect`s, executed by `ApplicationRunTime` - composable, testable, and robust.                           | `RunTime/*`, `Track/*`, `Common`         |
 | **Centralized State**           | Maintain a single, thread-safe `ApplicationState` struct managed by `Tauri` for data consistency across the entire application.               | `ApplicationState/*`                     |
-| **Secure & Performant IPC**     | Use `gRPC` for all communication with the `Cocoon`&#x2001;🦋&#x2001;sidecar, ensuring a well-defined and high-performance API boundary.       | `Vine/*`                                 |
-| **UI-Backend Decoupling**       | Interact with `Wind`&#x2001;🍃&#x2001;exclusively through asynchronous `Tauri` commands and events, keeping the backend UI-agnostic.          | `Binary/*` (invoke handler), `Command/*` |
+| **Secure & Performant IPC**     | Use `gRPC` for all communication with the `Cocoon`&#x2001;🦋 sidecar, ensuring a well-defined and high-performance API boundary.              | `Vine/*`                                 |
+| **UI-Backend Decoupling**       | Interact with `Wind`&#x2001;🍃 exclusively through asynchronous `Tauri` commands and events, keeping the backend UI-agnostic.                 | `Binary/*` (invoke handler), `Command/*` |
 
 ---
 
-## System Architecture&#x2001;
+## System Architecture
 
 ```mermaid
 graph LR
@@ -305,9 +305,9 @@ Element/Mountain/
 
 ## In the Land Project
 
-**Mountain**&#x2001;⛰️&#x2001;is the primary consumer of the
-`Common`&#x2001;🧑🏻‍🏭&#x2001;crate and a key component in the
-`Land`&#x2001;🏞️&#x2001;monorepo. It depends on:
+**Mountain**&#x2001;⛰️ is the primary consumer of the
+`Common`&#x2001;🧑🏻‍🏭 crate and a key component in the
+`Land`&#x2001;🏞️ monorepo. It depends on:
 
 | Dependency           | Role                                                 |
 | -------------------- | ---------------------------------------------------- |
@@ -318,12 +318,12 @@ Element/Mountain/
 | **Vine**&#x2001;🌿   | gRPC protocol definitions and multiplexer            |
 | **Cache**&#x2001;📦  | Memory-mapped asset and path caches                  |
 
-**Mountain**&#x2001;⛰️&#x2001;connects to:
+**Mountain**&#x2001;⛰️ connects to:
 
 | Component                              | Protocol                                         | Role                                                 |
 | -------------------------------------- | ------------------------------------------------ | ---------------------------------------------------- |
 | **Wind**&#x2001;🍃 / **Sky**&#x2001;🌌 | `tauri::invoke` + `sky://` events                | UI WebView - command dispatch and state push         |
-| **Cocoon**&#x2001;🦋                   | `gRPC` via `Vine`&#x2001;🌿&#x2001;on port 50052 | Node.js extension host sidecar                       |
+| **Cocoon**&#x2001;🦋                   | `gRPC` via `Vine`&#x2001;🌿 on port 50052         | Node.js extension host sidecar                       |
 | **Air**&#x2001;🪁                      | `AirClient` gRPC                                 | Background daemon for file indexing, search, updates |
 | **Grove**&#x2001;🌳                    | `gRPC` via `Vine`&#x2001;🌿                      | Native Rust/WASM extension host (future)             |
 
@@ -396,8 +396,8 @@ Mountain enforces security at multiple layers:
 
 | Layer                      | Mechanism                                                                                                         |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Process isolation**      | `Cocoon`&#x2001;🦋&#x2001;runs as a separate OS process - a crash in an extension does not take down the editor   |
-| **gRPC boundary**          | All extension host ↔ native communication crosses the `Vine`&#x2001;🌿&#x2001;`gRPC` protocol with typed messages |
+| **Process isolation**      | `Cocoon`&#x2001;🦋 runs as a separate OS process - a crash in an extension does not take down the editor          |
+| **gRPC boundary**          | All extension host ↔ native communication crosses the `Vine`&#x2001;🌿 `gRPC` protocol with typed messages        |
 | **Permission system**      | `IPC/Permission/` - role-based access control (Admin, Developer, User, Standard) with audit logging               |
 | **Message encryption**     | `IPC/Encryption/SecureChannel` - encrypted message channels with configurable security policies                   |
 | **Secure storage**         | Native OS keychain via `keyring` for secrets, tokens, and credentials                                             |
