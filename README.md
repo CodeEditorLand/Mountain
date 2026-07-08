@@ -72,7 +72,7 @@ extension host sidecar via `gRPC`&#x2001;🌿, and serves as the backend for the
 `Electron` ships an entire `Chromium` renderer per window, each carrying a full
 heap. Every OS interaction crosses a serialized JSON IPC pipe. **Mountain**
 replaces that with a single `Rust` binary backed by `Tauri` - OS-level native
-calls, a work-stealing scheduler (`Echo`&#x2001;⚡), and a `gRPC`-based sidecar
+calls, a work-stealing scheduler (`Echo`&#x2001;📣), and a `gRPC`-based sidecar
 protocol. The result: dialogs open in 2 ms instead of 200, and memory usage is a
 fraction of `Electron`'s.
 
@@ -312,7 +312,7 @@ Element/Mountain/
 | Dependency           | Role                                                 |
 | -------------------- | ---------------------------------------------------- |
 | **Common**&#x2001;🧑🏻‍🏭 | Abstract traits, DTOs, and the `ActionEffect` system |
-| **Echo**&#x2001;⚡   | Work-stealing scheduler for task execution           |
+| **Echo**&#x2001;📣   | Work-stealing scheduler for task execution           |
 | **Mist**&#x2001;🌫️   | Pub/sub message bus for event-driven workflows       |
 | **Air**&#x2001;🪁    | Background daemon for OTA updates                    |
 | **Vine**&#x2001;🌿   | gRPC protocol definitions and multiplexer            |
@@ -373,7 +373,7 @@ cargo run --release
 | Crate / Package        | Purpose                                           |
 | ---------------------- | ------------------------------------------------- |
 | `Common`&#x2001;🧑🏻‍🏭     | Local path dependency - abstract traits & DTOs    |
-| `Echo`&#x2001;⚡       | Local path dependency - work-stealing scheduler   |
+| `Echo`&#x2001;📣       | Local path dependency - work-stealing scheduler   |
 | `Air`&#x2001;🪁        | Local path dependency - OTA update daemon client  |
 | `Mist`&#x2001;🌫️       | Local path dependency - pub/sub message bus       |
 | `Vine`&#x2001;🌿       | Local path dependency - gRPC protocol definitions |
@@ -417,7 +417,7 @@ Mountain is designed to be compatible with:
 | **Sky**&#x2001;🌌    | Hosts the `Sky` WebView as the primary UI surface                   |
 | **Air**&#x2001;🪁    | Connects via `AirClient` gRPC for OTA updates and file operations   |
 | **Common**&#x2001;🧑🏻‍🏭 | Implements all abstract service `trait`s from the `Common` crate    |
-| **Echo**&#x2001;⚡   | Integrates with the work-stealing scheduler for task execution      |
+| **Echo**&#x2001;📣   | Integrates with the work-stealing scheduler for task execution      |
 | **Vine**&#x2001;🌿   | Uses the `Vine.proto` gRPC protocol for all IPC                     |
 | **Mist**&#x2001;🌫️   | Connects to the pub/sub message bus for event-driven workflows      |
 | **Grove**&#x2001;🌳  | Supports native Rust/WASM extension hosting via `gRPC`              |
