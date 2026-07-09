@@ -444,7 +444,7 @@ Mountain is designed to be compatible with:
 - [`Grove`](https://github.com/CodeEditorLand/Grove)&#x2001;🌳 - Native
   Rust/WASM extension host
 - [`Vine`](https://github.com/CodeEditorLand/Vine)&#x2001;🌿 - gRPC protocol
-- [`Echo`](https://github.com/CodeEditorLand/Echo)&#x2001;⚡ - Work-stealing
+- [`Echo`](https://github.com/CodeEditorLand/Echo)&#x2001;📣 - Work-stealing
   scheduler
 - [`Air`](https://github.com/CodeEditorLand/Air)&#x2001;🪁 - Background daemon
 - [`Mist`](https://github.com/CodeEditorLand/Mist)&#x2001;🌫️ - Pub/sub message
