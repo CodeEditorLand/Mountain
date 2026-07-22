@@ -72,9 +72,9 @@ pub(crate) fn Fn(
 						},
 					};
 
-					if OutTx.send(Response).await.is_err() {
-						// Receiver closed - peer disconnected.
-						break;
+					match OutTx.send(Response).await {
+						Ok(()) => {},
+						Err(_) => break, // Receiver closed - peer disconnected.
 					}
 				},
 				Payload::Response(_) => {

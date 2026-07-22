@@ -110,13 +110,17 @@ impl DiagnosticManager for MountainEnvironment {
 				},
 			};
 
-			if URIKey.is_empty() {
-				dev_log!(
-					"extensions",
-					"warn: [DiagnosticProvider] skipping diagnostic entry with empty URI string"
-				);
+			match URIKey.is_empty() {
+				true => {
+					dev_log!(
+						"extensions",
+						"warn: [DiagnosticProvider] skipping diagnostic entry with empty URI string"
+					);
 
-				continue;
+					continue;
+				},
+
+				false => {},
 			}
 
 			ChangedURIKeys.push(URIKey.clone());

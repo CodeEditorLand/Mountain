@@ -452,34 +452,42 @@ pub async fn mountain_ipc_invoke(
 	let RunTime:Arc<ApplicationRunTime> = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 	// Shim interception pre-check (gated behind TierShim)
-	if crate::Shim::Gate::is_enabled() {
-		if crate::Shim::SwallowMap::should_swallow(&command) {
-			let target = crate::Shim::SwallowMap::redirect_target(&command);
+	match crate::Shim::Gate::is_enabled() {
+		true => {
+			match crate::Shim::SwallowMap::should_swallow(&command) {
+				true => {
+					let target = crate::Shim::SwallowMap::redirect_target(&command);
 
-			match target {
-				crate::Shim::SwallowMap::RedirectTarget::Mountain => {
-					// Handle directly in Rust - bypass Cocoon gRPC
-					match crate::Shim::NativeBus::handle(&ApplicationHandle, &command, &Arguments).await {
-						Ok(result) => return Ok(result),
+					match target {
+						crate::Shim::SwallowMap::RedirectTarget::Mountain => {
+							// Handle directly in Rust - bypass Cocoon gRPC
+							match crate::Shim::NativeBus::handle(&ApplicationHandle, &command, &Arguments).await {
+								Ok(result) => return Ok(result),
 
-						Err(e) => {
-							dev_log!("shim", "NativeBus error for {}: {}", command, e);
+								Err(e) => {
+									dev_log!("shim", "NativeBus error for {}: {}", command, e);
 
+									return Ok(Value::Null);
+								},
+							}
+						},
+
+						crate::Shim::SwallowMap::RedirectTarget::None => {
+							// Discard silently
 							return Ok(Value::Null);
+						},
+
+						_ => {
+							// Passthrough - fall through to original dispatch
 						},
 					}
 				},
 
-				crate::Shim::SwallowMap::RedirectTarget::None => {
-					// Discard silently
-					return Ok(Value::Null);
-				},
-
-				_ => {
-					// Passthrough - fall through to original dispatch
-				},
+				false => {},
 			}
-		}
+		},
+
+		false => {},
 	}
 
 	// Short-circuit known no-op commands BEFORE Echo scheduler submission
@@ -500,23 +508,25 @@ pub async fn mountain_ipc_invoke(
 					Arguments.first().and_then(|V| V.as_str()).unwrap_or(""),
 				);
 
-				if !Msg.is_empty() {
+				match Msg.is_empty() {
+					false => dev_log!("vscode-log", "[ERROR] {}", Msg),
 
-					dev_log!("vscode-log", "[ERROR] {}", Msg);
+					true => {},
 				}
 
 				return Ok(Value::Null);
-			},
+				},
 
-			"logger:warn" => {
+				"logger:warn" => {
 
 				let Msg = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or(
 					Arguments.first().and_then(|V| V.as_str()).unwrap_or(""),
 				);
 
-				if !Msg.is_empty() {
+				match Msg.is_empty() {
+					false => dev_log!("vscode-log", "[WARN] {}", Msg),
 
-					dev_log!("vscode-log", "[WARN] {}", Msg);
+					true => {},
 				}
 
 				return Ok(Value::Null);
@@ -574,9 +584,10 @@ pub async fn mountain_ipc_invoke(
 
 				let N = MENUBAR_CALLS_FAST.fetch_add(1, AO::Relaxed) + 1;
 
-				if N == 1 || N % 100 == 0 {
+				match (N == 1) || (N % 100 == 0) {
+					true => dev_log!("menubar", "menubar:updateMenubar (fast-path call #{})", N),
 
-					dev_log!("menubar", "menubar:updateMenubar (fast-path call #{})", N);
+					false => {},
 				}
 
 				return Ok(Value::Null);
@@ -765,8 +776,11 @@ pub async fn mountain_ipc_invoke(
 					// On successful update, broadcast the change to Sky so
 					// the workbench theme/settings UI reflects the new value
 					// without a full reload.
-					if UpdateResult.is_ok() {
-						let _ = ApplicationHandle.emit("sky://configuration/changed", serde_json::json!({}));
+					match UpdateResult.is_ok() {
+						true => {
+							let _ = ApplicationHandle.emit("sky://configuration/changed", serde_json::json!({}));
+						},
+						false => {},
 					}
 
 					UpdateResult
@@ -853,27 +867,33 @@ pub async fn mountain_ipc_invoke(
 				"logger:log" | "logger:warn" | "logger:error" | "logger:info" | "logger:debug" | "logger:trace" => {
 					let Level = command.trim_start_matches("logger:");
 
-					let Msg = if Arguments.len() >= 2 {
-						let Tail:Vec<String> = Arguments
-							.iter()
-							.skip(1)
-							.filter_map(|V| V.as_str().map(str::to_owned).or_else(|| serde_json::to_string(V).ok()))
-							.collect();
+					let Msg = match Arguments.len() >= 2 {
+						true => {
+							let Tail:Vec<String> = Arguments
+								.iter()
+								.skip(1)
+								.filter_map(|V| V.as_str().map(str::to_owned).or_else(|| serde_json::to_string(V).ok()))
+								.collect();
 
-						Tail.join(" ")
-					} else {
-						Arguments
-							.first()
-							.and_then(|V| V.as_str().map(str::to_owned))
-							.unwrap_or_default()
+							Tail.join(" ")
+						},
+						false => {
+							Arguments
+								.first()
+								.and_then(|V| V.as_str().map(str::to_owned))
+								.unwrap_or_default()
+						},
 					};
 
-					if !Msg.is_empty() {
-						match Level {
-							"error" | "critical" => dev_log!("vscode-log", "[ERROR] {}", Msg),
-							"warn" => dev_log!("vscode-log", "[WARN] {}", Msg),
-							_ => dev_log!("vscode-log", "{}", Msg),
-						}
+					match Msg.is_empty() {
+						false => {
+							match Level {
+								"error" | "critical" => dev_log!("vscode-log", "[ERROR] {}", Msg),
+								"warn" => dev_log!("vscode-log", "[WARN] {}", Msg),
+								_ => dev_log!("vscode-log", "{}", Msg),
+							}
+						},
+						true => {},
 					}
 
 					Ok(Value::Null)
@@ -1063,36 +1083,38 @@ pub async fn mountain_ipc_invoke(
 
 					let Message = arg_string(&Arguments, 1);
 
-					let Extras = if Arguments.len() > 2 {
-						let Tail:Vec<String> = Arguments
-							.iter()
-							.skip(2)
-							.map(|V| {
-								let S = serde_json::to_string(V).unwrap_or_default();
+					let Extras = match Arguments.len() > 2 {
+						true => {
+							let Tail:Vec<String> = Arguments
+								.iter()
+								.skip(2)
+								.map(|V| {
+									let S = serde_json::to_string(V).unwrap_or_default();
 
-								// Char-aware truncation - JSON-encoded values may
-								// embed multi-byte UTF-8 (extension names, repo
-								// paths with non-ASCII, debug payloads). Slicing
-								// at a fixed byte offset can land mid-codepoint
-								// and panic the tokio worker.
-								if S.len() > 240 {
-									let CutAt = S
-										.char_indices()
-										.map(|(Index, _)| Index)
-										.take_while(|Index| *Index <= 240)
-										.last()
-										.unwrap_or(0);
+									// Char-aware truncation - JSON-encoded values may
+									// embed multi-byte UTF-8 (extension names, repo
+									// paths with non-ASCII, debug payloads). Slicing
+									// at a fixed byte offset can land mid-codepoint
+									// and panic the tokio worker.
+									match S.len() > 240 {
+										true => {
+											let CutAt = S
+												.char_indices()
+												.map(|(Index, _)| Index)
+												.take_while(|Index| *Index <= 240)
+												.last()
+												.unwrap_or(0);
 
-									format!("{}…", &S[..CutAt])
-								} else {
-									S
-								}
-							})
-							.collect();
+											format!("{}…", &S[..CutAt])
+										},
+										false => S,
+									}
+								})
+								.collect();
 
-						format!(" {}", Tail.join(" "))
-					} else {
-						String::new()
+							format!(" {}", Tail.join(" "))
+						},
+						false => String::new(),
 					};
 
 					dev_log!("diagnostic", "[{}] {}{}", Tag, Message, Extras);
@@ -1287,9 +1309,10 @@ pub async fn mountain_ipc_invoke(
 
 				// Configuration commands - routed through ConfigurationRouter
 				// Also handles environment:get and workbench:getConfiguration
-				command if command.starts_with("configuration:")
-					|| command == "environment:get"
-					|| command == "workbench:getConfiguration" =>
+				command
+					if command.starts_with("configuration:")
+						|| command == "environment:get"
+						|| command == "workbench:getConfiguration" =>
 				{
 					Configuration::Router::route(RunTime.clone(), ApplicationHandle.clone(), &command, Arguments)
 						.await
@@ -1378,10 +1401,16 @@ pub async fn mountain_ipc_invoke(
 
 					let Title = arg_string(&Arguments, 0);
 
-					if !Title.is_empty() {
-						if let Some(Win) = ApplicationHandle.get_webview_window("main") {
-							let _ = Win.set_title(&Title);
-						}
+					match Title.is_empty() {
+						false => {
+							match ApplicationHandle.get_webview_window("main") {
+								Some(Win) => {
+									let _ = Win.set_title(&Title);
+								},
+								None => {},
+							}
+						},
+						true => {},
 					}
 
 					Ok(Value::Null)
@@ -1610,29 +1639,36 @@ pub async fn mountain_ipc_invoke(
 					// Mirror visibility state into ApplicationState so native
 					// queries (sky:replay-events, treeView.visible getter) read
 					// the current value without a Cocoon round-trip.
-					if command == "tree:visibilityChanged" {
-						if let (Some(ViewId), Some(Visible)) = (
-							Payload.get("viewId").and_then(|v| v.as_str()),
-							Payload.get("visible").and_then(|v| v.as_bool()),
-						) {
-							RunTime
-								.Environment
-								.ApplicationState
-								.Feature
-								.TreeViews
-								.SetVisible(ViewId, Visible);
-						}
+					match command.as_str() {
+						"tree:visibilityChanged" => {
+							match (
+								Payload.get("viewId").and_then(|v| v.as_str()),
+								Payload.get("visible").and_then(|v| v.as_bool()),
+							) {
+								(Some(ViewId), Some(Visible)) => {
+									RunTime
+										.Environment
+										.ApplicationState
+										.Feature
+										.TreeViews
+										.SetVisible(ViewId, Visible);
+								},
+								_ => {},
+							}
+						},
+						_ => {},
 					}
 
 					tokio::spawn(async move {
-						if let Err(E) = crate::Vine::Client::SendNotification::Fn(
+						match crate::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
 							Method.to_string(),
 							Payload,
 						)
 						.await
 						{
-							dev_log!("ipc", "warn: [tree] Cocoon notify {} failed: {:?}", Method, E);
+							Ok(()) => {},
+							Err(E) => dev_log!("ipc", "warn: [tree] Cocoon notify {} failed: {:?}", Method, E),
 						}
 					});
 
@@ -1679,12 +1715,15 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("model", "[SelectionChanged] uri={}", Uri);
 
 					// Store on workspace state
-					if !Uri.is_empty() {
-						RunTime
-							.Environment
-							.ApplicationState
-							.Workspace
-							.SetActiveDocumentURI(Some(Uri.clone()));
+					match Uri.is_empty() {
+						false => {
+							RunTime
+								.Environment
+								.ApplicationState
+								.Workspace
+								.SetActiveDocumentURI(Some(Uri.clone()))
+						},
+						true => {},
 					}
 
 					let ViewColumn = Arguments
@@ -1722,42 +1761,48 @@ pub async fn mountain_ipc_invoke(
 
 					let Uri = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
 
-					if !Uri.is_empty() {
-						let Content = Payload.get("content").and_then(Value::as_str).unwrap_or("").to_string();
+					match Uri.is_empty() {
+						false => {
+							let Content = Payload.get("content").and_then(Value::as_str).unwrap_or("").to_string();
 
-						let Version = Payload.get("version").and_then(Value::as_i64).unwrap_or(1);
+							let Version = Payload.get("version").and_then(Value::as_i64).unwrap_or(1);
 
-						// Update in-memory document state.
-						if let Some(mut Doc) = RunTime.Environment.ApplicationState.Feature.Documents.Get(&Uri) {
-							Doc.Version = Version;
+							// Update in-memory document state.
+							match RunTime.Environment.ApplicationState.Feature.Documents.Get(&Uri) {
+								Some(mut Doc) => {
+									Doc.Version = Version;
 
-							Doc.Lines = Content.lines().map(|L| L.to_owned()).collect();
+									Doc.Lines = Content.lines().map(|L| L.to_owned()).collect();
 
-							Doc.IsDirty = true;
+									Doc.IsDirty = true;
 
-							RunTime
-								.Environment
-								.ApplicationState
-								.Feature
-								.Documents
-								.AddOrUpdate(Uri.clone(), Doc);
-						}
+									RunTime
+										.Environment
+										.ApplicationState
+										.Feature
+										.Documents
+										.AddOrUpdate(Uri.clone(), Doc);
+								},
+								None => {},
+							}
 
-						// Notify Cocoon so onDidChangeTextDocument fires in extensions.
-						let Payload2 = json!([
-							{ "external": Uri.clone(), "$mid": 1 },
+							// Notify Cocoon so onDidChangeTextDocument fires in extensions.
+							let Payload2 = json!([
+								{ "external": Uri.clone(), "$mid": 1 },
 
-							{ "content": Content, "versionId": Version, "isDirty": true, "changes": [] }
-						]);
+								{ "content": Content, "versionId": Version, "isDirty": true, "changes": [] }
+							]);
 
-						tokio::spawn(async move {
-							let _ = crate::Vine::Client::SendNotification::Fn(
-								"cocoon-main".to_string(),
-								"$acceptModelChanged".to_string(),
-								Payload2,
-							)
-							.await;
-						});
+							tokio::spawn(async move {
+								let _ = crate::Vine::Client::SendNotification::Fn(
+									"cocoon-main".to_string(),
+									"$acceptModelChanged".to_string(),
+									Payload2,
+								)
+								.await;
+							});
+						},
+						true => {},
 					}
 
 					Ok(Value::Null)
@@ -1772,12 +1817,15 @@ pub async fn mountain_ipc_invoke(
 
 					dev_log!("model", "[ActiveEditorChanged] uri={}", Uri);
 
-					if !Uri.is_empty() {
-						RunTime
-							.Environment
-							.ApplicationState
-							.Workspace
-							.SetActiveDocumentURI(Some(Uri.clone()));
+					match Uri.is_empty() {
+						false => {
+							RunTime
+								.Environment
+								.ApplicationState
+								.Workspace
+								.SetActiveDocumentURI(Some(Uri.clone()))
+						},
+						true => {},
 					}
 
 					// Canonical renderer event (SkyEvent.EditorActiveChanged) so
@@ -1801,27 +1849,40 @@ pub async fn mountain_ipc_invoke(
 					// without needing an explicit `$activateByEvent` call from
 					// the workbench. The languageId is looked up from the
 					// in-memory document registry; unknown URIs are skipped.
-					if !Uri.is_empty() {
-						let MaybeLanguageId = RunTime
-							.Environment
-							.ApplicationState
-							.Feature
-							.Documents
-							.Get(&Uri)
-							.map(|Doc| Doc.LanguageIdentifier.clone());
+					match Uri.is_empty() {
+						false => {
+							match RunTime
+								.Environment
+								.ApplicationState
+								.Feature
+								.Documents
+								.Get(&Uri)
+								.map(|Doc| Doc.LanguageIdentifier.clone())
+							{
+								Some(LanguageId) => {
+									match LanguageId.is_empty() || LanguageId == "plaintext" {
+										true => {},
+										false => {
+											dev_log!(
+												"extensions",
+												"onLanguage:{} activation for uri={}",
+												LanguageId,
+												Uri
+											);
 
-						if let Some(LanguageId) = MaybeLanguageId {
-							if !LanguageId.is_empty() && LanguageId != "plaintext" {
-								dev_log!("extensions", "onLanguage:{} activation for uri={}", LanguageId, Uri);
-
-								let _ = crate::Vine::Client::SendNotification::Fn(
-									"cocoon-main".to_string(),
-									"$activateByEvent".to_string(),
-									json!({ "activationEvent": format!("onLanguage:{}", LanguageId) }),
-								)
-								.await;
+											let _ = crate::Vine::Client::SendNotification::Fn(
+												"cocoon-main".to_string(),
+												"$activateByEvent".to_string(),
+												json!({ "activationEvent": format!("onLanguage:{}", LanguageId) }),
+											)
+											.await;
+										},
+									}
+								},
+								None => {},
 							}
-						}
+						},
+						true => {},
 					}
 
 					Ok(Value::Null)
@@ -1993,46 +2054,49 @@ pub async fn mountain_ipc_invoke(
 
 					let UriStr = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
 
-					if UriStr.is_empty() {
-						Ok(json!({ "items": [] }))
-					} else {
-						let Line = Payload
-							.get("position")
-							.and_then(|P| P.get("line"))
-							.and_then(Value::as_u64)
-							.unwrap_or(0) as i64 + 1;
+					match UriStr.is_empty() {
+						true => Ok(json!({ "items": [] })),
+						false => {
+							let Line = Payload
+								.get("position")
+								.and_then(|P| P.get("line"))
+								.and_then(Value::as_u64)
+								.unwrap_or(0) as i64 + 1;
 
-						let Character = Payload
-							.get("position")
-							.and_then(|P| P.get("character"))
-							.and_then(Value::as_u64)
-							.unwrap_or(0) as i64 + 1;
+							let Character = Payload
+								.get("position")
+								.and_then(|P| P.get("character"))
+								.and_then(Value::as_u64)
+								.unwrap_or(0) as i64 + 1;
 
-						let Context = Payload.get("context").cloned().unwrap_or_else(|| json!({ "triggerKind": 0 }));
+							let Context =
+								Payload.get("context").cloned().unwrap_or_else(|| json!({ "triggerKind": 0 }));
 
-						match url::Url::parse(&UriStr) {
-							Ok(Uri) => {
-								let Position = PositionDTO { LineNumber:Line as u32, Column:Character as u32 };
+							match url::Url::parse(&UriStr) {
+								Ok(Uri) => {
+									let Position = PositionDTO { LineNumber:Line as u32, Column:Character as u32 };
 
-								match RunTime.Environment.ProvideInlineCompletionItems(Uri, Position, Context).await {
-									Ok(Some(Result)) => {
-										let Items = Result
-											.get("items")
-											.cloned()
-											.unwrap_or_else(|| if Result.is_array() { Result } else { json!([]) });
+									match RunTime.Environment.ProvideInlineCompletionItems(Uri, Position, Context).await
+									{
+										Ok(Some(Result)) => {
+											let Items = Result
+												.get("items")
+												.cloned()
+												.unwrap_or_else(|| if Result.is_array() { Result } else { json!([]) });
 
-										Ok(json!({ "items": Items }))
-									},
-									Ok(None) => Ok(json!({ "items": [] })),
-									Err(Error) => {
-										dev_log!("ipc", "warn: language:provideInlineCompletions error: {}", Error);
+											Ok(json!({ "items": Items }))
+										},
+										Ok(None) => Ok(json!({ "items": [] })),
+										Err(Error) => {
+											dev_log!("ipc", "warn: language:provideInlineCompletions error: {}", Error);
 
-										Ok(json!({ "items": [] }))
-									},
-								}
-							},
-							Err(_) => Ok(json!({ "items": [] })),
-						}
+											Ok(json!({ "items": [] }))
+										},
+									}
+								},
+								Err(_) => Ok(json!({ "items": [] })),
+							}
+						},
 					}
 				},
 
@@ -2049,20 +2113,26 @@ pub async fn mountain_ipc_invoke(
 
 					dev_log!("language", "[cancelRequest] requestId={}", RequestId);
 
-					if !RequestId.is_empty() {
-						if let Some(Sender) = RunTime
-							.Environment
-							.ApplicationState
-							.Feature
-							.LanguageProviderCancellations
-							.remove(RequestId)
-						{
-							let _ = Sender.1.send(true);
+					match RequestId.is_empty() {
+						false => {
+							match RunTime
+								.Environment
+								.ApplicationState
+								.Feature
+								.LanguageProviderCancellations
+								.remove(RequestId)
+							{
+								Some(Sender) => {
+									let _ = Sender.1.send(true);
 
-							dev_log!("language", "[cancelRequest] cancelled requestId={}", RequestId);
-						} else {
-							dev_log!("language", "[cancelRequest] requestId={} not found", RequestId);
-						}
+									dev_log!("language", "[cancelRequest] cancelled requestId={}", RequestId);
+								},
+								None => {
+									dev_log!("language", "[cancelRequest] requestId={} not found", RequestId);
+								},
+							}
+						},
+						true => {},
 					}
 
 					Ok(Value::Null)
@@ -2249,18 +2319,24 @@ pub async fn mountain_ipc_invoke(
 						DebugStartParams,
 					);
 
-					if let Some(EffectResult) = StartEffect {
-						match EffectResult {
-							Ok(task) => {
-								if let Err(e) = task(RunTime.clone()).await {
-									dev_log!("exthost", "warn: debug:startDebugging effect failed: {}", e);
-								}
-							},
+					match StartEffect {
+						Some(EffectResult) => {
+							match EffectResult {
+								Ok(task) => {
+									match task(RunTime.clone()).await {
+										Ok(_) => {},
+										Err(e) => {
+											dev_log!("exthost", "warn: debug:startDebugging effect failed: {}", e)
+										},
+									}
+								},
 
-							Err(e) => {
-								dev_log!("exthost", "warn: debug:startDebugging effect build error: {}", e);
-							},
-						}
+								Err(e) => {
+									dev_log!("exthost", "warn: debug:startDebugging effect build error: {}", e);
+								},
+							}
+						},
+						None => {},
 					}
 
 					forward_to_cocoon!("debug", command, Arguments)
@@ -2272,68 +2348,75 @@ pub async fn mountain_ipc_invoke(
 				"debug:addBreakpoints" => {
 					let _ = TIER_DEBUG;
 
-					if let Some(serde_json::Value::Array(RawBreakpoints)) = Arguments.first() {
-						let Entries:Vec<
-							crate::ApplicationState::State::FeatureState::Debug::DebugState::BreakpointEntry,
-						> = RawBreakpoints
-							.iter()
-							.filter_map(|Raw| {
-								let Id = Raw
-									.get("id")
-									.or_else(|| Raw.get("Id"))
-									.and_then(serde_json::Value::as_str)
-									.map(str::to_string)?;
+					match Arguments.first() {
+						Some(serde_json::Value::Array(RawBreakpoints)) => {
+							let Entries:Vec<
+								crate::ApplicationState::State::FeatureState::Debug::DebugState::BreakpointEntry,
+							> = RawBreakpoints
+								.iter()
+								.filter_map(|Raw| {
+									let Id = Raw
+										.get("id")
+										.or_else(|| Raw.get("Id"))
+										.and_then(serde_json::Value::as_str)
+										.map(str::to_string)?;
 
-								let Kind = Raw
-									.get("type")
-									.or_else(|| Raw.get("kind"))
-									.and_then(serde_json::Value::as_str)
-									.unwrap_or("source")
-									.to_string();
+									let Kind = Raw
+										.get("type")
+										.or_else(|| Raw.get("kind"))
+										.and_then(serde_json::Value::as_str)
+										.unwrap_or("source")
+										.to_string();
 
-								let Uri = Raw
-									.get("uri")
-									.or_else(|| Raw.get("source").and_then(|S| S.get("uri")))
-									.and_then(serde_json::Value::as_str)
-									.unwrap_or("")
-									.to_string();
+									let Uri = Raw
+										.get("uri")
+										.or_else(|| Raw.get("source").and_then(|S| S.get("uri")))
+										.and_then(serde_json::Value::as_str)
+										.unwrap_or("")
+										.to_string();
 
-								let Line = Raw
-									.get("lineNumber")
-									.or_else(|| Raw.get("line"))
-									.and_then(serde_json::Value::as_u64)
-									.unwrap_or(0);
+									let Line = Raw
+										.get("lineNumber")
+										.or_else(|| Raw.get("line"))
+										.and_then(serde_json::Value::as_u64)
+										.unwrap_or(0);
 
-								let Column = Raw.get("column").and_then(serde_json::Value::as_u64);
+									let Column = Raw.get("column").and_then(serde_json::Value::as_u64);
 
-								let Enabled = Raw.get("enabled").and_then(serde_json::Value::as_bool).unwrap_or(true);
+									let Enabled =
+										Raw.get("enabled").and_then(serde_json::Value::as_bool).unwrap_or(true);
 
-								Some(
-									crate::ApplicationState::State::FeatureState::Debug::DebugState::BreakpointEntry {
-										id:Id,
-										kind:Kind,
-										uri:Uri,
-										line:Line,
-										column:Column,
-										enabled:Enabled,
-										raw:Raw.clone(),
-									},
-								)
-							})
-							.collect();
+									Some(
+											crate::ApplicationState::State::FeatureState::Debug::DebugState::BreakpointEntry {
+												id:Id,
+												kind:Kind,
+												uri:Uri,
+												line:Line,
+												column:Column,
+												enabled:Enabled,
+												raw:Raw.clone(),
+											},
+										)
+								})
+								.collect();
 
-						if !Entries.is_empty() {
-							RunTime.Environment.ApplicationState.Feature.Debug.AddBreakpoints(Entries);
+							match Entries.is_empty() {
+								false => {
+									RunTime.Environment.ApplicationState.Feature.Debug.AddBreakpoints(Entries);
 
-							let _ = ApplicationHandle.emit(
-								"sky://debug/breakpointsChanged",
-								json!({
-									"added": RawBreakpoints,
-									"removed": [],
-									"changed": [],
-								}),
-							);
-						}
+									let _ = ApplicationHandle.emit(
+										"sky://debug/breakpointsChanged",
+										json!({
+											"added": RawBreakpoints,
+											"removed": [],
+											"changed": [],
+										}),
+									);
+								},
+								true => {},
+							}
+						},
+						_ => {},
 					}
 
 					forward_to_cocoon!("debug", command, Arguments)
@@ -2354,21 +2437,28 @@ pub async fn mountain_ipc_invoke(
 				"debug:removeBreakpoints" => {
 					let _ = TIER_DEBUG;
 
-					if let Some(serde_json::Value::Array(RawIds)) = Arguments.first() {
-						let Ids:Vec<String> = RawIds.iter().filter_map(|V| V.as_str().map(str::to_string)).collect();
+					match Arguments.first() {
+						Some(serde_json::Value::Array(RawIds)) => {
+							let Ids:Vec<String> =
+								RawIds.iter().filter_map(|V| V.as_str().map(str::to_string)).collect();
 
-						if !Ids.is_empty() {
-							RunTime.Environment.ApplicationState.Feature.Debug.RemoveBreakpoints(&Ids);
+							match Ids.is_empty() {
+								false => {
+									RunTime.Environment.ApplicationState.Feature.Debug.RemoveBreakpoints(&Ids);
 
-							let _ = ApplicationHandle.emit(
-								"sky://debug/breakpointsChanged",
-								json!({
-									"added": [],
-									"removed": RawIds,
-									"changed": [],
-								}),
-							);
-						}
+									let _ = ApplicationHandle.emit(
+										"sky://debug/breakpointsChanged",
+										json!({
+											"added": [],
+											"removed": RawIds,
+											"changed": [],
+										}),
+									);
+								},
+								true => {},
+							}
+						},
+						_ => {},
 					}
 
 					forward_to_cocoon!("debug", command, Arguments)
@@ -2508,10 +2598,10 @@ pub async fn mountain_ipc_invoke(
 	if !IsHighFrequencyCommand {
 		let IsErr = Result.is_err();
 
-		let SpanName = if IsErr {
-			format!("land:mountain:ipc:{}:error", command)
-		} else {
-			format!("land:mountain:ipc:{}", command)
+		let SpanName = match IsErr {
+			true => format!("land:mountain:ipc:{}:error", command),
+
+			false => format!("land:mountain:ipc:{}", command),
 		};
 
 		crate::otel_span!(&SpanName, OTLPStart, &[("ipc.command", command.as_str())]);

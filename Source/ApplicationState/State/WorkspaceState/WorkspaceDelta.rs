@@ -45,8 +45,10 @@ fn FolderToWire(Folder:&WorkspaceFolderStateDTO) -> serde_json::Value {
 /// log tag `[LandFix:WsDelta]` keeps the event grep-able in dev logs and is
 /// deliberately consistent with `[LandFix:WsNs]` on the Cocoon side.
 pub async fn DispatchDeltaWorkspaceFolders(Added:Vec<WorkspaceFolderStateDTO>, Removed:Vec<WorkspaceFolderStateDTO>) {
-	if Added.is_empty() && Removed.is_empty() {
-		return;
+	match Added.is_empty() && Removed.is_empty() {
+		true => return,
+
+		false => {},
 	}
 
 	let AddedWire:Vec<serde_json::Value> = Added.iter().map(FolderToWire).collect();
@@ -66,14 +68,16 @@ pub async fn DispatchDeltaWorkspaceFolders(Added:Vec<WorkspaceFolderStateDTO>, R
 		"removed": RemovedWire,
 	});
 
-	if let Err(Error) =
-		Client::SendNotification::Fn("cocoon-main".to_string(), "$deltaWorkspaceFolders".to_string(), Payload).await
-	{
-		dev_log!(
-			"workspaces",
-			"warn: [LandFix:WsDelta] $deltaWorkspaceFolders notification failed: {}",
-			Error
-		);
+	match Client::SendNotification::Fn("cocoon-main".to_string(), "$deltaWorkspaceFolders".to_string(), Payload).await {
+		Ok(()) => {},
+
+		Err(Error) => {
+			dev_log!(
+				"workspaces",
+				"warn: [LandFix:WsDelta] $deltaWorkspaceFolders notification failed: {}",
+				Error
+			)
+		},
 	}
 }
 
@@ -89,21 +93,27 @@ pub fn UpdateWorkspaceFoldersAndNotify(
 ) {
 	let (Added, Removed) = State.SetWorkspaceFoldersReturnDelta(Folders);
 
-	if Added.is_empty() && Removed.is_empty() {
-		return;
+	match Added.is_empty() && Removed.is_empty() {
+		true => return,
+
+		false => {},
 	}
 
-	if let Ok(Handle) = tokio::runtime::Handle::try_current() {
-		Handle.spawn(async move {
-			DispatchDeltaWorkspaceFolders(Added, Removed).await;
-		});
-	} else {
-		dev_log!(
-			"workspaces",
-			"warn: [LandFix:WsDelta] No tokio runtime available - delta dropped ({} added, {} removed)",
-			Added.len(),
-			Removed.len()
-		);
+	match tokio::runtime::Handle::try_current() {
+		Ok(Handle) => {
+			Handle.spawn(async move {
+				DispatchDeltaWorkspaceFolders(Added, Removed).await;
+			});
+		},
+
+		Err(_) => {
+			dev_log!(
+				"workspaces",
+				"warn: [LandFix:WsDelta] No tokio runtime available - delta dropped ({} added, {} removed)",
+				Added.len(),
+				Removed.len()
+			)
+		},
 	}
 }
 
@@ -124,8 +134,10 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 	// dead code - removed to keep the file warning-clean.
 	let (Added, Removed) = State.SetWorkspaceFoldersReturnDelta(Folders);
 
-	if Added.is_empty() && Removed.is_empty() {
-		return;
+	match Added.is_empty() && Removed.is_empty() {
+		true => return,
+
+		false => {},
 	}
 
 	let AddedWire:Vec<serde_json::Value> = Added.iter().map(FolderToWire).collect();
@@ -142,12 +154,16 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 			.collect::<Vec<_>>(),
 	});
 
-	if let Err(Error) = LogSkyEmit(ApplicationHandle, SkyEvent::WorkspacesChanged.AsStr(), BroadcastPayload) {
-		dev_log!(
-			"workspaces",
-			"warn: [LandFix:WsDelta] sky://workspaces/changed emit failed: {}",
-			Error
-		);
+	match LogSkyEmit(ApplicationHandle, SkyEvent::WorkspacesChanged.AsStr(), BroadcastPayload) {
+		Ok(()) => {},
+
+		Err(Error) => {
+			dev_log!(
+				"workspaces",
+				"warn: [LandFix:WsDelta] sky://workspaces/changed emit failed: {}",
+				Error
+			)
+		},
 	}
 
 	// Persist the additions into the recently-opened list so the next boot's
@@ -155,10 +171,14 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 	// Mirrors VS Code's `ElectronMainWorkspacesMainService` behaviour.
 	PersistRecentlyOpened(&Added);
 
-	if let Ok(Handle) = tokio::runtime::Handle::try_current() {
-		Handle.spawn(async move {
-			DispatchDeltaWorkspaceFolders(Added, Removed).await;
-		});
+	match tokio::runtime::Handle::try_current() {
+		Ok(Handle) => {
+			Handle.spawn(async move {
+				DispatchDeltaWorkspaceFolders(Added, Removed).await;
+			});
+		},
+
+		Err(_) => {},
 	}
 }
 
@@ -168,8 +188,10 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 /// must not prevent the workspace change. The dotfile root is resolved
 /// through the `FiddeeRoot` atom so a future rename touches a single file.
 fn PersistRecentlyOpened(Added:&[WorkspaceFolderStateDTO]) {
-	if Added.is_empty() {
-		return;
+	match Added.is_empty() {
+		true => return,
+
+		false => {},
 	}
 
 	let Path = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::Fn()
@@ -206,15 +228,27 @@ fn PersistRecentlyOpened(Added:&[WorkspaceFolderStateDTO]) {
 
 	Current.insert("workspaces".into(), serde_json::Value::Array(Workspaces));
 
-	if !Current.contains_key("files") {
-		Current.insert("files".into(), serde_json::json!([]));
+	match Current.contains_key("files") {
+		true => {},
+
+		false => {
+			Current.insert("files".into(), serde_json::json!([]));
+		},
 	}
 
-	if let Some(Parent) = Path.parent() {
-		let _ = std::fs::create_dir_all(Parent);
+	match Path.parent() {
+		Some(Parent) => {
+			let _ = std::fs::create_dir_all(Parent);
+		},
+
+		None => {},
 	}
 
-	if let Ok(Serialised) = serde_json::to_vec_pretty(&serde_json::Value::Object(Current)) {
-		let _ = std::fs::write(&Path, Serialised);
+	match serde_json::to_vec_pretty(&serde_json::Value::Object(Current)) {
+		Ok(Serialised) => {
+			let _ = std::fs::write(&Path, Serialised);
+		},
+
+		Err(_) => {},
 	}
 }

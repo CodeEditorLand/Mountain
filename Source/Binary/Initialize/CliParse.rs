@@ -233,7 +233,11 @@ fn ResolveRecentlyOpenedTopFolder() -> Option<PathBuf> {
 
 	let Candidate = PathBuf::from(&Normalised);
 
-	if Candidate.is_dir() { Some(Candidate) } else { None }
+	match Candidate.is_dir() {
+		true => Some(Candidate),
+
+		false => None,
+	}
 }
 
 /// Walk up from `Start` looking for a project-root marker (`Cargo.toml`,

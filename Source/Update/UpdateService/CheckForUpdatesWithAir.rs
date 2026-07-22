@@ -70,15 +70,19 @@ pub async fn Fn(
 		UpdateMode::Enum::ForceTauri => CheckForUpdates::Fn(ApplicationHandle, RunTime, NotifyNoUpdate).await,
 
 		UpdateMode::Enum::AutoDetect => {
-			if let Some(AirRef) = &AirClient {
-				if IsAirAvailable::Fn(AirRef).await {
+			match &AirClient {
+				Some(AirRef) if IsAirAvailable::Fn(AirRef).await => {
 					return CheckForUpdatesViaAir::Fn(ApplicationHandle, RunTime, NotifyNoUpdate, AirRef).await;
-				}
+				},
 
-				dev_log!(
-					"update",
-					"warn: [UpdateService] Air client provided but unhealthy - falling back to Tauri"
-				);
+				Some(_) => {
+					dev_log!(
+						"update",
+						"warn: [UpdateService] Air client provided but unhealthy - falling back to Tauri"
+					);
+				},
+
+				None => {},
 			}
 
 			CheckForUpdates::Fn(ApplicationHandle, RunTime, NotifyNoUpdate).await

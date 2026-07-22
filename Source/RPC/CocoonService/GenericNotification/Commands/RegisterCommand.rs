@@ -9,12 +9,16 @@ pub async fn Fn(Params:Value, Env:&MountainEnvironment) {
 
 	let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 
-	if let Err(Error) = Env.RegisterCommand(ExtensionId, CommandId.clone()).await {
-		dev_log!(
-			"cocoon",
-			"warn: [CocoonService] notification: registerCommand '{}' failed: {:?}",
-			CommandId,
-			Error
-		);
+	match Env.RegisterCommand(ExtensionId, CommandId.clone()).await {
+		Ok(()) => {},
+
+		Err(Error) => {
+			dev_log!(
+				"cocoon",
+				"warn: [CocoonService] notification: registerCommand '{}' failed: {:?}",
+				CommandId,
+				Error
+			)
+		},
 	}
 }

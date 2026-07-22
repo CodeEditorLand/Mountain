@@ -64,10 +64,10 @@ impl ConfigurationError {
 	pub fn key_not_found(key:impl Into<String>, section:Option<String>) -> Self {
 		let key = key.into();
 
-		let message = if let Some(section) = &section {
-			format!("Configuration key '{}' not found in section '{}'", key, section)
-		} else {
-			format!("Configuration key '{}' not found", key)
+		let message = match &section {
+			Some(section) => format!("Configuration key '{}' not found in section '{}'", key, section),
+
+			None => format!("Configuration key '{}' not found", key),
 		};
 
 		Self::KeyNotFound {

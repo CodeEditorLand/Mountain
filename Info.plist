@@ -12,8 +12,6 @@
 	<dict>
 		<key>Disable</key>
 		<string>false</string>
-		<key>Inspect</key>
-		<string>1</string>
 		<key>NetworkCocoonPort</key>
 		<string>50052</string>
 		<key>NetworkMountainPort</key>
@@ -41,7 +39,7 @@
 		<key>ProductVersion</key>
 		<string>1.118.0</string>
 		<key>Record</key>
-		<string>1</string>
+		<string>0</string>
 		<key>TierAuth</key>
 		<string>Node</string>
 		<key>TierClipboard</key>
@@ -113,7 +111,7 @@
 		<key>TierWebSocket</key>
 		<string>Disabled</string>
 		<key>Trace</key>
-		<string>all</string>
+		<string></string>
 	</dict>
 </dict>
 </plist>

@@ -79,7 +79,7 @@ impl LifecyclePhaseState {
 			_ => "Unknown",
 		};
 
-		if let Err(Error) = LogSkyEmit(
+		match LogSkyEmit(
 			ApplicationHandle,
 			SkyEvent::LifecyclePhaseChanged.AsStr(),
 			serde_json::json!({
@@ -88,11 +88,15 @@ impl LifecyclePhaseState {
 				"label": Label,
 			}),
 		) {
-			dev_log!(
-				"lifecycle",
-				"warn: [LifecyclePhaseState] sky://lifecycle/phaseChanged emit failed: {}",
-				Error
-			);
+			Ok(()) => {},
+
+			Err(Error) => {
+				dev_log!(
+					"lifecycle",
+					"warn: [LifecyclePhaseState] sky://lifecycle/phaseChanged emit failed: {}",
+					Error
+				)
+			},
 		}
 	}
 }

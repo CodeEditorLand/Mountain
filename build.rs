@@ -189,11 +189,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		let _ = std::fs::write(ExtensionsManifest, r#"{"version":1,"count":0,"extensions":[]}"#);
 	}
 
-	// Skip resource-path validation when generating docs. tauri_build::build()
-	// checks that every [[bundle.resources]] path exists, but Sky assets
-	// (bootstrap-meta.js etc.) are only present after a full Astro build.
-	// Package.sh sets CARGO_BUILDING_DOCS=1 to signal this context.
-	if std::env::var("CARGO_BUILDING_DOCS").is_err() {
+	// Skip resource-path validation when generating docs or in dev mode.
+	// tauri_build::build() checks that every [[bundle.resources]] path exists,
+	// but Sky assets (vs/, bootstrap-meta.js etc.) are only present after a
+	// full Astro build (run by beforeDevCommand / beforeBuildCommand).
+	// Package.sh sets CARGO_BUILDING_DOCS=1 for doc builds; dev mode also
+	// skips because the Sky build hasn't executed yet.
+	if std::env::var("CARGO_BUILDING_DOCS").is_err() && !tauri_build::is_dev() {
 		tauri_build::build();
 	}
 

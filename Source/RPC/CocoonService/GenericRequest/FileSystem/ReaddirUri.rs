@@ -15,8 +15,10 @@ pub async fn Fn(RequestId:u64, Params:Value) -> Response<GenericResponse> {
 			let mut Names:Vec<String> = Vec::new();
 
 			while let Ok(Some(Entry)) = Entries.next_entry().await {
-				if let Some(Name) = Entry.file_name().to_str() {
-					Names.push(Name.to_string());
+				match Entry.file_name().to_str() {
+					Some(Name) => Names.push(Name.to_string()),
+
+					None => {},
 				}
 			}
 

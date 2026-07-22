@@ -120,15 +120,19 @@ impl State {
 		let mut dto = MergedConfigurationStateDTO { Data:current_config };
 
 		// Use the DTO's SetValue method which handles nested paths properly
-		if let Err(e) = dto.SetValue(path, value) {
-			dev_log!(
-				"config",
-				"warn: [ConfigurationState] Failed to set value at path '{}': {}",
-				path,
-				e
-			);
+		match dto.SetValue(path, value) {
+			Ok(()) => {},
 
-			return;
+			Err(e) => {
+				dev_log!(
+					"config",
+					"warn: [ConfigurationState] Failed to set value at path '{}': {}",
+					path,
+					e
+				);
+
+				return;
+			},
 		}
 
 		// Write the updated data back

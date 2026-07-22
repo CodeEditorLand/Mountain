@@ -75,12 +75,15 @@ pub async fn vine_subscribe_notifications(channel:Channel<NotificationFramePaylo
 						timestamp_nanos:Frame.TimestampNanos,
 					};
 
-					if let Err(Error) = channel.send(Payload) {
-						// Channel closed - the webview disposed its
-						// subscription. Exit the drain task.
-						dev_log!("grpc", "[VineSubscribe] channel closed ({}); ending drain task", Error);
+					match channel.send(Payload) {
+						Ok(()) => {},
+						Err(Error) => {
+							// Channel closed - the webview disposed its
+							// subscription. Exit the drain task.
+							dev_log!("grpc", "[VineSubscribe] channel closed ({}); ending drain task", Error);
 
-						break;
+							break;
+						},
 					}
 				},
 				Err(tokio::sync::broadcast::error::RecvError::Lagged(N)) => {

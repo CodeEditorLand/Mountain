@@ -24,8 +24,10 @@ pub(crate) async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) ->
 
 	let PropValue = Arguments.get(2).and_then(Value::as_str).unwrap_or("").to_string();
 
-	if TermId == 0 || PropValue.is_empty() {
-		return Ok(Value::Null);
+	match (TermId == 0) || PropValue.is_empty() {
+		true => return Ok(Value::Null),
+
+		false => {},
 	}
 
 	match PropId {

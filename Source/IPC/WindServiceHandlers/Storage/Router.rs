@@ -58,8 +58,7 @@ pub(crate) async fn route(
 
 			let WorkspacePath = (*RunTime.Environment.ApplicationState.WorkspaceMementoPath.lock()).clone();
 
-			let GlobalData =
-				(*RunTime.Environment.ApplicationState.Configuration.MementoGlobalStorage.lock()).clone();
+			let GlobalData = (*RunTime.Environment.ApplicationState.Configuration.MementoGlobalStorage.lock()).clone();
 
 			let WorkspaceData = (*RunTime
 				.Environment
@@ -69,13 +68,7 @@ pub(crate) async fn route(
 				.lock())
 			.clone();
 
-			FlushPendingWrites(
-				GlobalPath,
-				WorkspacePath,
-				GlobalData,
-				WorkspaceData,
-			)
-			.await;
+			FlushPendingWrites(GlobalPath, WorkspacePath, GlobalData, WorkspaceData).await;
 
 			Some(Ok(Value::Null))
 		},

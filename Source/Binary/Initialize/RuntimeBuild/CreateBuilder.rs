@@ -9,12 +9,16 @@ use crate::{Binary::Initialize::RuntimeBuild::SchedulerConfig, dev_log};
 pub fn Fn(Config:SchedulerConfig::Struct) -> SchedulerBuilder {
 	let mut Builder = SchedulerBuilder::Create();
 
-	if let Some(Count) = Config.WorkerCount {
-		let Count = Count.clamp(1, 256);
+	match Config.WorkerCount {
+		Some(Count) => {
+			let Count = Count.clamp(1, 256);
 
-		Builder = Builder.WithWorkerCount(Count);
+			Builder = Builder.WithWorkerCount(Count);
 
-		dev_log!("lifecycle", "[RuntimeBuild] Configuring {} worker threads", Count);
+			dev_log!("lifecycle", "[RuntimeBuild] Configuring {} worker threads", Count);
+		},
+
+		None => {},
 	}
 
 	Builder

@@ -8,10 +8,10 @@ pub async fn Fn(RequestId:u64, Params:Value) -> Response<GenericResponse> {
 		.or_else(|| Params.get("path").and_then(|V| V.as_str()))
 		.unwrap_or("");
 
-	let Result = if std::path::Path::new(Path).is_dir() {
-		tokio::fs::remove_dir_all(Path).await
-	} else {
-		tokio::fs::remove_file(Path).await
+	let Result = match std::path::Path::new(Path).is_dir() {
+		true => tokio::fs::remove_dir_all(Path).await,
+
+		false => tokio::fs::remove_file(Path).await,
 	};
 
 	match Result {

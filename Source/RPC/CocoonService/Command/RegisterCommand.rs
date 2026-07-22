@@ -14,24 +14,28 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterCommandRequest) -> R
 		Request.extension_id
 	);
 
-	if let Err(Error) = Service
+	match Service
 		.environment
 		.RegisterCommand(Request.extension_id.clone(), Request.command_id.clone())
 		.await
 	{
-		dev_log!(
-			"cocoon",
-			"warn: [CocoonService] Failed to register command '{}': {:?}",
-			Request.command_id,
-			Error
-		);
-	} else {
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Command registered: id={}, title={:?}",
-			Request.command_id,
-			Request.title
-		);
+		Ok(()) => {
+			dev_log!(
+				"cocoon",
+				"[CocoonService] Command registered: id={}, title={:?}",
+				Request.command_id,
+				Request.title
+			)
+		},
+
+		Err(Error) => {
+			dev_log!(
+				"cocoon",
+				"warn: [CocoonService] Failed to register command '{}': {:?}",
+				Request.command_id,
+				Error
+			)
+		},
 	}
 
 	Ok(Response::new(Empty {}))

@@ -39,10 +39,10 @@ pub async fn Fn(
 	let ContextDTO = CompletionContextDTO {
 		TriggerKind:CompletionTriggerKindDTO::Invoke,
 
-		TriggerCharacter:if Request.trigger_character.is_empty() {
-			None
-		} else {
-			Some(Request.trigger_character.clone())
+		TriggerCharacter:match Request.trigger_character.is_empty() {
+			true => None,
+
+			false => Some(Request.trigger_character.clone()),
 		},
 	};
 

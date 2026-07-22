@@ -23,7 +23,10 @@ pub async fn Fn(
 		.map(|Item| {
 			QuickPickItemDTO {
 				Label:Item.label.clone(),
-				Description:if Item.description.is_empty() { None } else { Some(Item.description.clone()) },
+				Description:match Item.description.is_empty() {
+					true => None,
+					false => Some(Item.description.clone()),
+				},
 				Detail:None,
 				Picked:Some(Item.picked),
 				AlwaysShow:None,
@@ -32,11 +35,13 @@ pub async fn Fn(
 		.collect();
 
 	let Options = Some(QuickPickOptionsDTO {
-		Title:if Request.title.is_empty() { None } else { Some(Request.title.clone()) },
-		PlaceHolder:if Request.placeholder.is_empty() {
-			None
-		} else {
-			Some(Request.placeholder.clone())
+		Title:match Request.title.is_empty() {
+			true => None,
+			false => Some(Request.title.clone()),
+		},
+		PlaceHolder:match Request.placeholder.is_empty() {
+			true => None,
+			false => Some(Request.placeholder.clone()),
 		},
 		CanPickMany:Some(Request.can_pick_many),
 		IgnoreFocusOut:None,

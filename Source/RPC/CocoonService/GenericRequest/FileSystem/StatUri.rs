@@ -24,7 +24,7 @@ pub async fn Fn(RequestId:u64, Params:Value) -> Response<GenericResponse> {
 			super::OkResponse(
 				RequestId,
 				&json!({
-					"type": if Meta.is_dir() { 2 } else { 1 },
+					"type": match Meta.is_dir() { true => 2, false => 1 },
 					"is_file": Meta.is_file(),
 					"is_directory": Meta.is_dir(),
 					"size": Meta.len(),

@@ -43,30 +43,38 @@ pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<Runtime>, NotifyNoUpdat
 				))
 				.await?;
 
-			if Response == Some("Install".to_string()) {
-				dev_log!("update", "[UpdateService] User chose to install. Downloading...");
+			match Response.as_deref() {
+				Some("Install") => {
+					dev_log!("update", "[UpdateService] User chose to install. Downloading...");
 
-				let OnChunk = |Bytes, Total| {
-					dev_log!("update", "[Update] progress {} / {:?}", Bytes, Total);
-				};
+					let OnChunk = |Bytes, Total| {
+						dev_log!("update", "[Update] progress {} / {:?}", Bytes, Total);
+					};
 
-				let OnFinish = || {
-					dev_log!("update", "[Update] download complete; installing");
-				};
+					let OnFinish = || {
+						dev_log!("update", "[Update] download complete; installing");
+					};
 
-				if let Err(Error) = Update.download_and_install(OnChunk, OnFinish).await {
-					dev_log!("update", "error: [UpdateService] install failed: {}", Error);
+					match Update.download_and_install(OnChunk, OnFinish).await {
+						Ok(()) => {},
 
-					RunTime
-						.Run(ShowMessage(
-							MessageSeverity::Error,
-							format!("Failed to install update: {}", Error),
-							json!(null),
-						))
-						.await?;
-				}
-			} else {
-				dev_log!("update", "[UpdateService] User declined install.");
+						Err(Error) => {
+							dev_log!("update", "error: [UpdateService] install failed: {}", Error);
+
+							RunTime
+								.Run(ShowMessage(
+									MessageSeverity::Error,
+									format!("Failed to install update: {}", Error),
+									json!(null),
+								))
+								.await?;
+						},
+					}
+				},
+
+				_ => {
+					dev_log!("update", "[UpdateService] User declined install.");
+				},
 			}
 		},
 

@@ -12,18 +12,17 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<R
 	dev_log!(
 		"git",
 		"[Git] exec-begin cwd={} args=[{}]",
-		if Request.repository_path.is_empty() {
-			"<cwd>".to_string()
-		} else {
-			Request.repository_path.clone()
+		match Request.repository_path.is_empty() {
+			true => "<cwd>".to_string(),
+			false => Request.repository_path.clone(),
 		},
 		Request.args.join(" ")
 	);
 
-	let WorkingDirectory = if Request.repository_path.is_empty() {
-		std::env::current_dir().unwrap_or_default()
-	} else {
-		std::path::PathBuf::from(&Request.repository_path)
+	let WorkingDirectory = match Request.repository_path.is_empty() {
+		true => std::env::current_dir().unwrap_or_default(),
+
+		false => std::path::PathBuf::from(&Request.repository_path),
 	};
 
 	let Output = tokio::process::Command::new("git")

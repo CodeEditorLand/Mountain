@@ -181,10 +181,10 @@ pub async fn Fn(
 	);
 
 	// Deserialise the generic parameter bytes as a JSON value
-	let Params:serde_json::Value = if Req.parameter.is_empty() {
-		serde_json::Value::Null
-	} else {
-		serde_json::from_slice(&Req.parameter).unwrap_or(serde_json::Value::Null)
+	let Params:serde_json::Value = match Req.parameter.is_empty() {
+		true => serde_json::Value::Null,
+
+		false => serde_json::from_slice(&Req.parameter).unwrap_or(serde_json::Value::Null),
 	};
 
 	let Route = match ROUTES.get(Req.method.as_str()) {
@@ -313,17 +313,19 @@ pub async fn Fn(
 			// VS Code's `workspace.findTextInFiles` takes a
 			// `TextSearchQuery` in field `pattern` (or passed flat
 			// at the top level). Accept both shapes.
-			let QueryValue = if Params.get("pattern").map(|V| V.is_object()).unwrap_or(false) {
-				Params.get("pattern").cloned().unwrap_or(serde_json::Value::Null)
-			} else if Params.get("pattern").map(|V| V.is_string()).unwrap_or(false) {
-				json!({
-					"pattern": Params.get("pattern").and_then(|V| V.as_str()).unwrap_or(""),
-					"isRegExp": Params.get("isRegExp").and_then(|V| V.as_bool()).unwrap_or(false),
-					"isCaseSensitive": Params.get("isCaseSensitive").and_then(|V| V.as_bool()).unwrap_or(false),
-					"isWordMatch": Params.get("isWordMatch").and_then(|V| V.as_bool()).unwrap_or(false),
-				})
-			} else {
-				Params.clone()
+			let QueryValue = match Params.get("pattern") {
+				Some(V) if V.is_object() => V.clone(),
+
+				Some(V) if V.is_string() => {
+					json!({
+						"pattern": V.as_str().unwrap_or(""),
+						"isRegExp": Params.get("isRegExp").and_then(|V| V.as_bool()).unwrap_or(false),
+						"isCaseSensitive": Params.get("isCaseSensitive").and_then(|V| V.as_bool()).unwrap_or(false),
+						"isWordMatch": Params.get("isWordMatch").and_then(|V| V.as_bool()).unwrap_or(false),
+					})
+				},
+
+				_ => Params.clone(),
 			};
 
 			let OptionsValue = Params.get("options").cloned().unwrap_or(serde_json::Value::Null);

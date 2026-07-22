@@ -29,15 +29,19 @@ pub async fn Fn(
 		.ProviderRegistration
 		.GetProvider(Handle);
 
-	if Provider.is_none() {
-		dev_log!(
-			"tree-view",
-			"[TreeView] get-children view={} parent_handle={} - no provider registered",
-			Request.view_id,
-			Request.tree_item_handle
-		);
+	match Provider.is_none() {
+		true => {
+			dev_log!(
+				"tree-view",
+				"[TreeView] get-children view={} parent_handle={} - no provider registered",
+				Request.view_id,
+				Request.tree_item_handle
+			);
 
-		return Ok(Response::new(GetTreeChildrenResponse { items:Vec::new() }));
+			return Ok(Response::new(GetTreeChildrenResponse { items:Vec::new() }));
+		},
+
+		false => {},
 	}
 
 	dev_log!(

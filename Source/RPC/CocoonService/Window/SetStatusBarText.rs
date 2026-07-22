@@ -45,13 +45,17 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:SetStatusBarTextRequest) -> 
 		AccessibilityInformation:None,
 	};
 
-	if let Err(Error) = Service.environment.SetStatusBarEntry(Entry).await {
-		dev_log!("cocoon", "warn: [CocoonService] set_status_bar_text trait failed: {}", Error);
+	match Service.environment.SetStatusBarEntry(Entry).await {
+		Ok(()) => {},
 
-		let _ = Service
-			.environment
-			.ApplicationHandle
-			.emit("sky://statusbar/update", json!({ "id": Request.item_id, "text": Request.text }));
+		Err(Error) => {
+			dev_log!("cocoon", "warn: [CocoonService] set_status_bar_text trait failed: {}", Error);
+
+			let _ = Service
+				.environment
+				.ApplicationHandle
+				.emit("sky://statusbar/update", json!({ "id": Request.item_id, "text": Request.text }));
+		},
 	}
 
 	Ok(Response::new(Empty {}))

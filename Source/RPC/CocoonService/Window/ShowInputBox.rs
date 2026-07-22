@@ -17,11 +17,26 @@ pub async fn Fn(
 	dev_log!("cocoon", "[CocoonService] show_input_box");
 
 	let Options = Some(InputBoxOptionsDTO {
-		Title:if Request.title.is_empty() { None } else { Some(Request.title) },
-		PlaceHolder:if Request.placeholder.is_empty() { None } else { Some(Request.placeholder) },
-		Value:if Request.value.is_empty() { None } else { Some(Request.value) },
-		Prompt:if Request.prompt.is_empty() { None } else { Some(Request.prompt) },
-		IsPassword:if Request.password { Some(true) } else { None },
+		Title:match Request.title.is_empty() {
+			true => None,
+			false => Some(Request.title),
+		},
+		PlaceHolder:match Request.placeholder.is_empty() {
+			true => None,
+			false => Some(Request.placeholder),
+		},
+		Value:match Request.value.is_empty() {
+			true => None,
+			false => Some(Request.value),
+		},
+		Prompt:match Request.prompt.is_empty() {
+			true => None,
+			false => Some(Request.prompt),
+		},
+		IsPassword:match Request.password {
+			true => Some(true),
+			false => None,
+		},
 		IgnoreFocusOut:None,
 	});
 

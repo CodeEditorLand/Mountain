@@ -142,8 +142,10 @@ impl fmt::Display for FileSystemError {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.context())?;
 
-		if let Some(path) = self.path() {
-			write!(f, " (path: {})", path.display())?;
+		match self.path() {
+			Some(path) => write!(f, " (path: {})", path.display())?,
+
+			None => {},
 		}
 
 		Ok(())

@@ -48,14 +48,16 @@ pub async fn LoadNLSBundle(
 		Ok(Bytes) => Bytes,
 
 		Err(Error) => {
-			if PlaceholdersNeeded {
-				dev_log!("nls", "[LandFix:NLS] no bundle for {} ({})", ExtensionPath.display(), Error);
-			} else {
-				dev_log!(
-					"nls",
-					"[LandFix:NLS] {} has no placeholders, no bundle needed",
-					ExtensionPath.display()
-				);
+			match PlaceholdersNeeded {
+				true => dev_log!("nls", "[LandFix:NLS] no bundle for {} ({})", ExtensionPath.display(), Error),
+
+				false => {
+					dev_log!(
+						"nls",
+						"[LandFix:NLS] {} has no placeholders, no bundle needed",
+						ExtensionPath.display()
+					)
+				},
 			}
 
 			return None;
@@ -77,16 +79,24 @@ pub async fn LoadNLSBundle(
 	let mut Resolved = Map::with_capacity(Object.len());
 
 	for (Key, RawValue) in Object {
-		let Text = if let Some(s) = RawValue.as_str() {
-			Some(s.to_string())
-		} else if let Some(obj) = RawValue.as_object() {
-			obj.get("message").and_then(|m| m.as_str()).map(|s| s.to_string())
-		} else {
-			None
+		let Text = match RawValue.as_str() {
+			Some(s) => Some(s.to_string()),
+
+			None => {
+				match RawValue.as_object() {
+					Some(obj) => obj.get("message").and_then(|m| m.as_str()).map(|s| s.to_string()),
+
+					None => None,
+				}
+			},
 		};
 
-		if let Some(t) = Text {
-			Resolved.insert(Key.clone(), Value::String(t));
+		match Text {
+			Some(t) => {
+				Resolved.insert(Key.clone(), Value::String(t));
+			},
+
+			None => {},
 		}
 	}
 

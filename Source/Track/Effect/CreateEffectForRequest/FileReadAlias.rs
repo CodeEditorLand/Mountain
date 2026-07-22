@@ -30,7 +30,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				let Path = {
 					let s = str_obj_or_pos(&Parameters, "uri", 0);
 
-					if s.is_empty() { str_obj_or_pos(&Parameters, "path", 0) } else { s }
+					match s.is_empty() {
+						false => s,
+						true => str_obj_or_pos(&Parameters, "path", 0),
+					}
 				}
 				.to_string();
 
@@ -38,8 +41,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				// the LooksLike404 classifier in MountainVinegRPCService
 				// downgrades the log level and uses error code -32004 rather
 				// than tripping the circuit breaker with a -32000.
-				if Path.is_empty() {
-					return Err(format!("{}: empty path (resource not found)", MethodNameOwned));
+				match Path.is_empty() {
+					true => return Err(format!("{}: empty path (resource not found)", MethodNameOwned)),
+					false => {},
 				}
 
 				let PathBuf_ = std::path::PathBuf::from(strip_file_uri(&Path));

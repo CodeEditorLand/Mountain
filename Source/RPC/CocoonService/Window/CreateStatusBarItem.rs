@@ -30,7 +30,11 @@ pub async fn Fn(
 
 		Text:Request.text.clone(),
 
-		Tooltip:if Request.tooltip.is_empty() { None } else { Some(json!(Request.tooltip)) },
+		Tooltip:match Request.tooltip.is_empty() {
+			true => None,
+
+			false => Some(json!(Request.tooltip)),
+		},
 
 		HasTooltipProvider:false,
 
@@ -47,13 +51,17 @@ pub async fn Fn(
 		AccessibilityInformation:None,
 	};
 
-	if let Err(Error) = Service.environment.SetStatusBarEntry(Entry).await {
-		dev_log!("cocoon", "warn: [CocoonService] create_status_bar_item trait failed: {}", Error);
+	match Service.environment.SetStatusBarEntry(Entry).await {
+		Ok(()) => {},
 
-		let _ = Service.environment.ApplicationHandle.emit(
-			"sky://statusbar/create",
-			json!({ "id": Request.id, "text": Request.text, "tooltip": Request.tooltip }),
-		);
+		Err(Error) => {
+			dev_log!("cocoon", "warn: [CocoonService] create_status_bar_item trait failed: {}", Error);
+
+			let _ = Service.environment.ApplicationHandle.emit(
+				"sky://statusbar/create",
+				json!({ "id": Request.id, "text": Request.text, "tooltip": Request.tooltip }),
+			);
+		},
 	}
 
 	Ok(Response::new(CreateStatusBarItemResponse { item_id:Request.id.clone() }))

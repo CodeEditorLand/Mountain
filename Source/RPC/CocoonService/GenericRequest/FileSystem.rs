@@ -101,7 +101,7 @@ pub async fn HandleStat(RequestId:u64, Params:Value) -> Response<GenericResponse
 			OkResponse(
 				RequestId,
 				&json!({
-					"type": if Meta.is_dir() { 2 } else { 1 },
+					"type": match Meta.is_dir() { true => 2, false => 1 },
 					"is_file": Meta.is_file(),
 					"is_directory": Meta.is_dir(),
 					"size": Meta.len(),
@@ -134,7 +134,7 @@ pub async fn HandleStatUri(RequestId:u64, Params:Value) -> Response<GenericRespo
 			OkResponse(
 				RequestId,
 				&json!({
-					"type": if Meta.is_dir() { 2 } else { 1 },
+					"type": match Meta.is_dir() { true => 2, false => 1 },
 					"is_file": Meta.is_file(),
 					"is_directory": Meta.is_dir(),
 					"size": Meta.len(),
@@ -216,10 +216,10 @@ pub async fn HandleDelete(RequestId:u64, Params:Value) -> Response<GenericRespon
 		.or_else(|| Params.get("path").and_then(|V| V.as_str()))
 		.unwrap_or("");
 
-	let Result = if std::path::Path::new(Path).is_dir() {
-		tokio::fs::remove_dir_all(Path).await
-	} else {
-		tokio::fs::remove_file(Path).await
+	let Result = match std::path::Path::new(Path).is_dir() {
+		true => tokio::fs::remove_dir_all(Path).await,
+
+		false => tokio::fs::remove_file(Path).await,
 	};
 
 	match Result {

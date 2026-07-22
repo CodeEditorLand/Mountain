@@ -48,14 +48,18 @@ pub async fn Fn(
 				.map_or(false, |id| id == Request.provider_id)
 		});
 
-	if !ProviderFound {
-		dev_log!(
-			"cocoon",
-			"[CocoonService] get_authentication_session: no provider registered for '{}'",
-			Request.provider_id
-		);
+	match ProviderFound {
+		true => {},
 
-		return Ok(Response::new(GetAuthenticationSessionResponse::default()));
+		false => {
+			dev_log!(
+				"cocoon",
+				"[CocoonService] get_authentication_session: no provider registered for '{}'",
+				Request.provider_id
+			);
+
+			return Ok(Response::new(GetAuthenticationSessionResponse::default()));
+		},
 	}
 
 	// Forward to Cocoon's ExtHostAuthentication$getSession. Payload mirrors the

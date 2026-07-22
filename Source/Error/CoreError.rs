@@ -214,8 +214,10 @@ impl fmt::Display for MountainError {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.context)?;
 
-		if let Some(source) = &self.source {
-			write!(f, " ({})", source)?;
+		match &self.source {
+			Some(source) => write!(f, " ({})", source)?,
+
+			None => {},
 		}
 
 		Ok(())

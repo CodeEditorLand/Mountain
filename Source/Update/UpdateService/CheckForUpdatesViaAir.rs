@@ -52,140 +52,166 @@ pub async fn Fn(
 		Ok(Response) => {
 			let Reply = Response.into_inner();
 
-			if Reply.update_available {
-				dev_log!("update", "[UpdateService] Air reports v{}", Reply.version);
+			match (Reply.update_available, NotifyNoUpdate) {
+				(true, _) => {
+					dev_log!("update", "[UpdateService] Air reports v{}", Reply.version);
 
-				let Message = format!(
-					"A new version of Mountain is available: v{}.\n\n{}",
-					Reply.version, Reply.release_notes
-				);
+					let Message = format!(
+						"A new version of Mountain is available: v{}.\\n\\n{}",
+						Reply.version, Reply.release_notes
+					);
 
-				let UserResponse = RunTime
-					.Run(ShowMessage(
-						MessageSeverity::Info,
-						Message,
-						json!({ "modal": true, "actions": ["Install", "Later"] }),
-					))
-					.await?;
+					let UserResponse = RunTime
+						.Run(ShowMessage(
+							MessageSeverity::Info,
+							Message,
+							json!({ "modal": true, "actions": ["Install", "Later"] }),
+						))
+						.await?;
 
-				if UserResponse == Some("Install".to_string()) {
-					let _ = ApplicationHandle.emit("sky://update/downloading", json!({ "version": Reply.version }));
+					match UserResponse.as_deref() {
+						Some("Install") => {
+							let _ =
+								ApplicationHandle.emit("sky://update/downloading", json!({ "version": Reply.version }));
 
-					let mut Client = (**AirClient).clone();
+							let mut Client = (**AirClient).clone();
 
-					let DownloadReq = tonic::Request::new(DownloadRequest {
-						request_id:uuid::Uuid::new_v4().to_string(),
-						url:Reply.download_url.clone(),
-						destination_path:String::new(),
-						checksum:String::new(),
-						headers:std::collections::HashMap::new(),
-					});
+							let DownloadReq = tonic::Request::new(DownloadRequest {
+								request_id:uuid::Uuid::new_v4().to_string(),
+								url:Reply.download_url.clone(),
+								destination_path:String::new(),
+								checksum:String::new(),
+								headers:std::collections::HashMap::new(),
+							});
 
-					match Client.download_update(DownloadReq).await {
-						Ok(DownloadResponse) => {
-							let Downloaded = DownloadResponse.into_inner();
+							match Client.download_update(DownloadReq).await {
+								Ok(DownloadResponse) => {
+									let Downloaded = DownloadResponse.into_inner();
 
-							if !Downloaded.error.is_empty() {
-								dev_log!("update", "error: [UpdateService] Air download failed: {}", Downloaded.error);
-
-								RunTime
-									.Run(ShowMessage(
-										MessageSeverity::Error,
-										format!("Update download failed: {}", Downloaded.error),
-										json!(null),
-									))
-									.await?;
-							} else {
-								let _ = ApplicationHandle.emit(
-									"sky://update/downloaded",
-									json!({ "version": Reply.version, "path": Downloaded.file_path }),
-								);
-
-								let ApplyReq = tonic::Request::new(ApplyUpdateRequest {
-									request_id:uuid::Uuid::new_v4().to_string(),
-									version:Reply.version.clone(),
-									update_path:Downloaded.file_path.clone(),
-								});
-
-								match Client.apply_update(ApplyReq).await {
-									Ok(ApplyResponse) => {
-										let Applied = ApplyResponse.into_inner();
-
-										if !Applied.error.is_empty() {
+									match Downloaded.error.is_empty() {
+										false => {
 											dev_log!(
 												"update",
-												"error: [UpdateService] Air apply failed: {}",
-												Applied.error
+												"error: [UpdateService] Air download failed: {}",
+												Downloaded.error
 											);
 
 											RunTime
 												.Run(ShowMessage(
 													MessageSeverity::Error,
-													format!("Update install failed: {}", Applied.error),
+													format!("Update download failed: {}", Downloaded.error),
 													json!(null),
 												))
 												.await?;
-										} else {
-											let _ = ApplicationHandle
-												.emit("sky://update/applied", json!({ "version": Reply.version }));
+										},
 
-											RunTime
-												.Run(ShowMessage(
-													MessageSeverity::Info,
-													format!(
-														"v{} is ready. Restart Mountain to finish the update.",
-														Reply.version
-													),
-													json!(null),
-												))
-												.await?;
-										}
-									},
+										true => {
+											let _ = ApplicationHandle.emit(
+												"sky://update/downloaded",
+												json!({ "version": Reply.version, "path": Downloaded.file_path }),
+											);
 
-									Err(ApplyStatus) => {
-										dev_log!(
-											"update",
-											"error: [UpdateService] Air apply_update RPC failed: {}",
-											ApplyStatus
-										);
+											let ApplyReq = tonic::Request::new(ApplyUpdateRequest {
+												request_id:uuid::Uuid::new_v4().to_string(),
+												version:Reply.version.clone(),
+												update_path:Downloaded.file_path.clone(),
+											});
 
-										RunTime
-											.Run(ShowMessage(
-												MessageSeverity::Error,
-												format!("Failed to apply update: {}", ApplyStatus),
-												json!(null),
-											))
-											.await?;
-									},
-								}
+											match Client.apply_update(ApplyReq).await {
+												Ok(ApplyResponse) => {
+													let Applied = ApplyResponse.into_inner();
+
+													match Applied.error.is_empty() {
+														false => {
+															dev_log!(
+																"update",
+																"error: [UpdateService] Air apply failed: {}",
+																Applied.error
+															);
+
+															RunTime
+																.Run(ShowMessage(
+																	MessageSeverity::Error,
+																	format!("Update install failed: {}", Applied.error),
+																	json!(null),
+																))
+																.await?;
+														},
+
+														true => {
+															let _ = ApplicationHandle.emit(
+																"sky://update/applied",
+																json!({ "version": Reply.version }),
+															);
+
+															RunTime
+																.Run(ShowMessage(
+																	MessageSeverity::Info,
+																	format!(
+																		"v{} is ready. Restart Mountain to finish the \
+																		 update.",
+																		Reply.version
+																	),
+																	json!(null),
+																))
+																.await?;
+														},
+													}
+												},
+
+												Err(ApplyStatus) => {
+													dev_log!(
+														"update",
+														"error: [UpdateService] Air apply_update RPC failed: {}",
+														ApplyStatus
+													);
+
+													RunTime
+														.Run(ShowMessage(
+															MessageSeverity::Error,
+															format!("Failed to apply update: {}", ApplyStatus),
+															json!(null),
+														))
+														.await?;
+												},
+											}
+										},
+									}
+								},
+
+								Err(DownloadStatus) => {
+									dev_log!(
+										"update",
+										"error: [UpdateService] Air download_update RPC failed: {}",
+										DownloadStatus
+									);
+
+									RunTime
+										.Run(ShowMessage(
+											MessageSeverity::Error,
+											format!("Failed to download update: {}", DownloadStatus),
+											json!(null),
+										))
+										.await?;
+								},
 							}
 						},
 
-						Err(DownloadStatus) => {
-							dev_log!(
-								"update",
-								"error: [UpdateService] Air download_update RPC failed: {}",
-								DownloadStatus
-							);
-
-							RunTime
-								.Run(ShowMessage(
-									MessageSeverity::Error,
-									format!("Failed to download update: {}", DownloadStatus),
-									json!(null),
-								))
-								.await?;
-						},
+						_ => {}, // User chose "Later" or dismissed
 					}
-				}
-			} else if NotifyNoUpdate {
-				RunTime
-					.Run(ShowMessage(
-						MessageSeverity::Info,
-						"You are running the latest version of Mountain.".to_string(),
-						json!(null),
-					))
-					.await?;
+				},
+
+				(false, true) => {
+					RunTime
+						.Run(ShowMessage(
+							MessageSeverity::Info,
+							"You are running the latest version of Mountain.".to_string(),
+							json!(null),
+						))
+						.await?;
+				},
+
+				(false, false) => {},
 			}
 
 			Ok(())
@@ -194,14 +220,18 @@ pub async fn Fn(
 		Err(Status) => {
 			dev_log!("update", "error: [UpdateService] Air update check failed: {}", Status);
 
-			if NotifyNoUpdate {
-				RunTime
-					.Run(ShowMessage(
-						MessageSeverity::Error,
-						format!("Failed to check for updates via Air: {}", Status),
-						json!(null),
-					))
-					.await?;
+			match NotifyNoUpdate {
+				true => {
+					RunTime
+						.Run(ShowMessage(
+							MessageSeverity::Error,
+							format!("Failed to check for updates via Air: {}", Status),
+							json!(null),
+						))
+						.await?;
+				},
+
+				false => {},
 			}
 
 			Err(CommonError::ExternalServiceError {

@@ -16,17 +16,21 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:SetWebviewHtmlRequest) -> Re
 		Request.html.len()
 	);
 
-	if let Err(Error) = Service
+	match Service
 		.environment
 		.SetWebviewHTML(Request.handle.to_string(), Request.html.clone())
 		.await
 	{
-		dev_log!("cocoon", "warn: [CocoonService] set_webview_html trait failed: {}", Error);
+		Ok(()) => {},
 
-		let _ = Service.environment.ApplicationHandle.emit(
-			"sky://webview/set-html",
-			json!({ "handle": Request.handle, "html": Request.html }),
-		);
+		Err(Error) => {
+			dev_log!("cocoon", "warn: [CocoonService] set_webview_html trait failed: {}", Error);
+
+			let _ = Service.environment.ApplicationHandle.emit(
+				"sky://webview/set-html",
+				json!({ "handle": Request.handle, "html": Request.html }),
+			);
+		},
 	}
 
 	Ok(Response::new(Empty {}))

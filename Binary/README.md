@@ -9,7 +9,11 @@
 				</picture>
 			</h3>
 		</td>
-		<td colspan="3" valign="top"><h3 align="center">Mountain Binaries&#x2001;📦</h3></td>
+		<td colspan="3" valign="top">
+			<h3 align="center">
+				Mountain Binaries&#x2001;📦
+			</h3>
+		</td>
 	</tr>
 </table>
 

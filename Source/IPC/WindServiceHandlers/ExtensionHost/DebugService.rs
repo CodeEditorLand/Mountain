@@ -10,8 +10,10 @@ use CommonLibrary::IPC::SkyEvent::SkyEvent;
 pub async fn ExtensionHostDebugReload(ApplicationHandle:AppHandle) -> Result<Value, String> {
 	crate::dev_log!("exthost", "extensionhostdebugservice:reload");
 
-	if let Err(Error) = ApplicationHandle.emit(SkyEvent::ExtHostDebugReload.AsStr(), json!({})) {
-		crate::dev_log!("exthost", "warn: extensionhostdebugservice:reload emit failed: {}", Error);
+	match ApplicationHandle.emit(SkyEvent::ExtHostDebugReload.AsStr(), json!({})) {
+		Err(Error) => crate::dev_log!("exthost", "warn: extensionhostdebugservice:reload emit failed: {}", Error),
+
+		Ok(()) => {},
 	}
 
 	let _ = crate::Vine::Client::SendNotification::Fn(
@@ -27,8 +29,10 @@ pub async fn ExtensionHostDebugReload(ApplicationHandle:AppHandle) -> Result<Val
 pub async fn ExtensionHostDebugClose(ApplicationHandle:AppHandle) -> Result<Value, String> {
 	crate::dev_log!("exthost", "extensionhostdebugservice:close");
 
-	if let Err(Error) = ApplicationHandle.emit("sky://exthost/debug-close", json!({})) {
-		crate::dev_log!("exthost", "warn: extensionhostdebugservice:close emit failed: {}", Error);
+	match ApplicationHandle.emit("sky://exthost/debug-close", json!({})) {
+		Err(Error) => crate::dev_log!("exthost", "warn: extensionhostdebugservice:close emit failed: {}", Error),
+
+		Ok(()) => {},
 	}
 
 	let _ = crate::Vine::Client::SendNotification::Fn(

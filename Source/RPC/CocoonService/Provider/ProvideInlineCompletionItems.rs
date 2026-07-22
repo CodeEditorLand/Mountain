@@ -83,8 +83,9 @@ pub async fn Fn(
 						.or_else(|| Item.get("text").and_then(|V| V.as_str()))
 						.unwrap_or("");
 
-					if InsertText.is_empty() {
-						return None;
+					match InsertText.is_empty() {
+						true => return None,
+						false => {},
 					}
 
 					let IsSnippet = Item.get("isSnippet").and_then(|V| V.as_bool()).unwrap_or(false);

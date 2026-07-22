@@ -74,19 +74,27 @@ pub fn SwitchTrayIcon(App:AppHandle, IsDarkMode:bool) {
 
 	const LIGHT_ICON_BYTES:&[u8] = include_bytes!("../../../icons/32x32.png");
 
-	let IconBytes = if IsDarkMode { DARK_ICON_BYTES } else { LIGHT_ICON_BYTES };
+	let IconBytes = match IsDarkMode {
+		true => DARK_ICON_BYTES,
 
-	if let Some(Tray) = App.tray_by_id("tray") {
-		match Image::from_bytes(IconBytes) {
-			Ok(IconImage) => {
-				if let Err(e) = Tray.set_icon(Some(IconImage)) {
-					dev_log!("window", "error: [UI] [Tray] Failed to set icon: {}", e);
-				}
-			},
+		false => LIGHT_ICON_BYTES,
+	};
 
-			Err(e) => dev_log!("window", "error: [UI] [Tray] Failed to load icon bytes: {}", e),
-		}
-	} else {
-		dev_log!("window", "warn: [UI] [Tray] Tray with ID 'tray' not found.");
+	match App.tray_by_id("tray") {
+		Some(Tray) => {
+			match Image::from_bytes(IconBytes) {
+				Ok(IconImage) => {
+					match Tray.set_icon(Some(IconImage)) {
+						Ok(()) => {},
+
+						Err(e) => dev_log!("window", "error: [UI] [Tray] Failed to set icon: {}", e),
+					}
+				},
+
+				Err(e) => dev_log!("window", "error: [UI] [Tray] Failed to load icon bytes: {}", e),
+			}
+		},
+
+		None => dev_log!("window", "warn: [UI] [Tray] Tray with ID 'tray' not found."),
 	}
 }

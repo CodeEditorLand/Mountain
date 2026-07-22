@@ -13,9 +13,9 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:OpenTerminalRequest) -> Resu
 
 	let Options = json!({
 		"name": Request.name,
-		"shellPath": if Request.shell_path.is_empty() { serde_json::Value::Null } else { json!(Request.shell_path) },
+		"shellPath": match Request.shell_path.is_empty() { true => serde_json::Value::Null, false => json!(Request.shell_path) },
 		"shellArgs": Request.shell_args,
-		"cwd": if Request.cwd.is_empty() { serde_json::Value::Null } else { json!(Request.cwd) },
+		"cwd": match Request.cwd.is_empty() { true => serde_json::Value::Null, false => json!(Request.cwd) },
 	});
 
 	match Service.environment.CreateTerminal(Options).await {

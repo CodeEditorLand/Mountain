@@ -28,13 +28,17 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:ResizeTerminalRequest) -> Re
 	// Resize the actual PTY (sends SIGWINCH so readline/zsh repaint).
 	let Provider:std::sync::Arc<dyn TerminalProvider> = Service.environment.Require();
 
-	if let Err(Error) = Provider.ResizeTerminal(TerminalId.into(), Cols, Rows).await {
-		dev_log!(
-			"cocoon",
-			"warn: [CocoonService] resize_terminal id={} failed: {}",
-			TerminalId,
-			Error
-		);
+	match Provider.ResizeTerminal(TerminalId.into(), Cols, Rows).await {
+		Ok(_) => {},
+
+		Err(Error) => {
+			dev_log!(
+				"cocoon",
+				"warn: [CocoonService] resize_terminal id={} failed: {}",
+				TerminalId,
+				Error
+			);
+		},
 	}
 
 	// Notify Sky so xterm.js reflows its viewport.

@@ -15,10 +15,10 @@ pub async fn Fn(
 ) -> Result<Response<ShowMessageResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] show_information_message: {}", Request.message);
 
-	let Items:Option<serde_json::Value> = if Request.items.is_empty() {
-		None
-	} else {
-		Some(serde_json::json!(Request.items))
+	let Items:Option<serde_json::Value> = match Request.items.is_empty() {
+		true => None,
+
+		false => Some(serde_json::json!(Request.items)),
 	};
 
 	let _ = Service

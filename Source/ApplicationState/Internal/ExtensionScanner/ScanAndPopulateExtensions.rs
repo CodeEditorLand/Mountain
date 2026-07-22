@@ -27,233 +27,261 @@ pub async fn Fn(
 	// `Maintain/Build/Manifest/PreBake.ts` writes a single JSON blob to
 	// `Target/debug/extensions.manifest.json` as part of the debug build.
 	// Loading it avoids the N×disk-read scan and cuts ~1200 ms from boot.
-	if let Ok(ExecutablePath) = std::env::current_exe() {
-		if let Some(BinaryDir) = ExecutablePath.parent() {
-			match super::LoadFromCache::Fn(&BinaryDir.to_path_buf()).await {
-				Ok(Some(CachedMap)) => {
-					let CachedLen = CachedMap.len();
+	match std::env::current_exe() {
+		Ok(ExecutablePath) => {
+			match ExecutablePath.parent() {
+				Some(BinaryDir) => {
+					match super::LoadFromCache::Fn(&BinaryDir.to_path_buf()).await {
+						Ok(Some(CachedMap)) => {
+							let CachedLen = CachedMap.len();
 
-					let PostWriteCount = {
-						let mut Guard = _State.ScannedExtensions.ScannedExtensions.lock();
+							let PostWriteCount = {
+								let mut Guard = _State.ScannedExtensions.ScannedExtensions.lock();
 
-						*Guard = CachedMap;
+								*Guard = CachedMap;
 
-						Guard.len()
-					};
+								Guard.len()
+							};
 
-					dev_log!(
-						"extensions",
-						"[ExtensionScanner] Cache hit: {} extensions loaded in <50ms (live scan skipped). State has \
-						 {} entries.",
-						CachedLen,
-						PostWriteCount
-					);
+							dev_log!(
+								"extensions",
+								"[ExtensionScanner] Cache hit: {} extensions loaded in <50ms (live scan skipped). \
+								 State has {} entries.",
+								CachedLen,
+								PostWriteCount
+							);
 
-					// The pre-baked manifest covers every bundled extension
-					// root - enough for the workbench's first getInstalled
-					// burst and Cocoon's init payload. Unblock waiters now;
-					// the user-path supplement below merges in the background
-					// and bumps the getInstalled cache generation when it
-					// lands.
-					_State.ScanReady.notify_waiters();
+							// The pre-baked manifest covers every bundled extension
+							// root - enough for the workbench's first getInstalled
+							// burst and Cocoon's init payload. Unblock waiters now;
+							// the user-path supplement below merges in the background
+							// and bumps the getInstalled cache generation when it
+							// lands.
+							_State.ScanReady.notify_waiters();
 
-					// Supplementary live-scan of user-writable paths only.
-					// PreBake at build time walks the bundled extension trees
-					// (Mountain/Target/Resources/extensions,
-					// Sky/Target/Static/Application/extensions, VS Code
-					// Dependency/.../extensions) - it does NOT walk
-					// `~/.fiddee/extensions` or `~/.land/extensions`.
-					// Without this supplementary scan, the cache hit hides
-					// every VSIX-installed extension from the workbench:
-					// `extensions:scanUserExtensions` returns 0 and the
-					// `@installed` view stays empty.
-					//
-					// We re-use `Registry.GetExtensionScanPaths()` and filter
-					// through `Scanner::IsUserExtensionScanPath` so the
-					// classifier and the scan set stay coherent (Lodge
-					// override, ~/.fiddee/extensions, ~/.land/extensions).
-					// Found entries overwrite cache entries with the same ID
-					// - matches stock VS Code semantics where an installed
-					// VSIX shadows a built-in of the same identifier.
-					let UserScanPaths:Vec<PathBuf> = _State
-						.Registry
-						.GetExtensionScanPaths()
-						.into_iter()
-						.filter(|P| ExtensionManagement::Scanner::IsUserExtensionScanPath(P))
-						.collect();
+							// Supplementary live-scan of user-writable paths only.
+							// PreBake at build time walks the bundled extension trees
+							// (Mountain/Target/Resources/extensions,
+							// Sky/Target/Static/Application/extensions, VS Code
+							// Dependency/.../extensions) - it does NOT walk
+							// `~/.fiddee/extensions` or `~/.land/extensions`.
+							// Without this supplementary scan, the cache hit hides
+							// every VSIX-installed extension from the workbench:
+							// `extensions:scanUserExtensions` returns 0 and the
+							// `@installed` view stays empty.
+							//
+							// We re-use `Registry.GetExtensionScanPaths()` and filter
+							// through `Scanner::IsUserExtensionScanPath` so the
+							// classifier and the scan set stay coherent (Lodge
+							// override, ~/.fiddee/extensions, ~/.land/extensions).
+							// Found entries overwrite cache entries with the same ID
+							// - matches stock VS Code semantics where an installed
+							// VSIX shadows a built-in of the same identifier.
+							let UserScanPaths:Vec<PathBuf> = _State
+								.Registry
+								.GetExtensionScanPaths()
+								.into_iter()
+								.filter(|P| ExtensionManagement::Scanner::IsUserExtensionScanPath(P))
+								.collect();
 
-					if UserScanPaths.is_empty() {
-						return Ok(());
-					}
+							match UserScanPaths.is_empty() {
+								true => return Ok(()),
 
-					dev_log!(
-						"extensions",
-						"[ExtensionScanner] Cache hit supplement: live-scanning {} user-writable path(s) in the \
-						 background",
-						UserScanPaths.len()
-					);
-
-					let BackgroundHandle = ApplicationHandle.clone();
-
-					let ScannedExtensions = _State.ScannedExtensions.clone();
-
-					tauri::async_runtime::spawn(async move {
-						let UserFutures:Vec<_> = UserScanPaths
-							.into_iter()
-							.map(|Path| {
-								let Handle = BackgroundHandle.clone();
-
-								async move {
-									let Display = Path.display().to_string();
-
-									match ExtensionManagement::Scanner::ScanDirectoryForExtensions(Handle, Path).await {
-										Ok(Found) => {
-											dev_log!(
-												"extensions",
-												"[ExtensionScanner] User path '{}' → {} extensions (supplement)",
-												Display,
-												Found.len()
-											);
-
-											Found
-										},
-
-										Err(E) => {
-											dev_log!(
-												"extensions",
-												"warn: [ExtensionScanner] User path '{}' failed (supplement): {}",
-												Display,
-												E
-											);
-
-											Vec::new()
-										},
-									}
-								}
-							})
-							.collect();
-
-						let UserResults = futures::future::join_all(UserFutures).await;
-
-						let mut Merged:Vec<(String, ExtensionDescriptionStateDTO)> = Vec::new();
-
-						{
-							let mut Guard = ScannedExtensions.ScannedExtensions.lock();
-
-							for Found in UserResults {
-								for Extension in Found {
-									let Identifier = Extension
-										.Identifier
-										.get("value")
-										.and_then(Value::as_str)
-										.unwrap_or_default()
-										.to_string();
-
-									if !Identifier.is_empty() {
-										Guard.insert(Identifier.clone(), Extension.clone());
-
-										Merged.push((Identifier, Extension));
-									}
-								}
+								false => {},
 							}
-						}
 
-						dev_log!(
-							"extensions",
-							"[ExtensionScanner] Cache hit supplement: merged {} user extension(s) into state",
-							Merged.len()
-						);
+							dev_log!(
+								"extensions",
+								"[ExtensionScanner] Cache hit supplement: live-scanning {} user-writable path(s) in \
+								 the background",
+								UserScanPaths.len()
+							);
 
-						// Invalidate the per-TypeFilter getInstalled caches:
-						// any builtins-only response cached between the early
-						// ScanReady notify and this merge is rebuilt from the
-						// merged map on the next call.
-						BumpScanGeneration();
+							let BackgroundHandle = ApplicationHandle.clone();
 
-						if Merged.is_empty() {
-							return;
-						}
+							let ScannedExtensions = _State.ScannedExtensions.clone();
 
-						// Cocoon may already have fetched the builtins-only
-						// list for its extension registry; $deltaExtensions
-						// reconciles it (fire-and-forget, swallowed when
-						// Cocoon is not connected yet - the init payload /
-						// getAll it fetches later reads the merged map).
-						let ToAdd:Vec<Value> = Merged
-							.iter()
-							.filter_map(|(_, Description)| serde_json::to_value(Description).ok())
-							.collect();
+							tauri::async_runtime::spawn(async move {
+								let UserFutures:Vec<_> = UserScanPaths
+									.into_iter()
+									.map(|Path| {
+										let Handle = BackgroundHandle.clone();
 
-						NotifyCocoonDeltaExtensions(ToAdd, Vec::new());
+										async move {
+											let Display = Path.display().to_string();
 
-						// Same event the VSIX installer emits - Sky's
-						// ExtensionChangeSubscriber refreshes the sidebar so
-						// the @installed view picks up the late merge.
-						for (Identifier, Description) in &Merged {
-							let Location = Description
-								.ExtensionLocation
-								.as_str()
-								.map(str::to_string)
-								.or_else(|| {
-									Description
+											match ExtensionManagement::Scanner::ScanDirectoryForExtensions(Handle, Path)
+												.await
+											{
+												Ok(Found) => {
+													dev_log!(
+														"extensions",
+														"[ExtensionScanner] User path '{}' → {} extensions \
+														 (supplement)",
+														Display,
+														Found.len()
+													);
+
+													Found
+												},
+
+												Err(E) => {
+													dev_log!(
+														"extensions",
+														"warn: [ExtensionScanner] User path '{}' failed (supplement): \
+														 {}",
+														Display,
+														E
+													);
+
+													Vec::new()
+												},
+											}
+										}
+									})
+									.collect();
+
+								let UserResults = futures::future::join_all(UserFutures).await;
+
+								let mut Merged:Vec<(String, ExtensionDescriptionStateDTO)> = Vec::new();
+
+								{
+									let mut Guard = ScannedExtensions.ScannedExtensions.lock();
+
+									for Found in UserResults {
+										for Extension in Found {
+											let Identifier = Extension
+												.Identifier
+												.get("value")
+												.and_then(Value::as_str)
+												.unwrap_or_default()
+												.to_string();
+
+											match Identifier.is_empty() {
+												true => {},
+												false => {
+													Guard.insert(Identifier.clone(), Extension.clone());
+
+													Merged.push((Identifier, Extension));
+												},
+											}
+										}
+									}
+								}
+
+								dev_log!(
+									"extensions",
+									"[ExtensionScanner] Cache hit supplement: merged {} user extension(s) into state",
+									Merged.len()
+								);
+
+								// Invalidate the per-TypeFilter getInstalled caches:
+								// any builtins-only response cached between the early
+								// ScanReady notify and this merge is rebuilt from the
+								// merged map on the next call.
+								BumpScanGeneration();
+
+								match Merged.is_empty() {
+									true => return,
+									false => {},
+								}
+
+								// Cocoon may already have fetched the builtins-only
+								// list for its extension registry; $deltaExtensions
+								// reconciles it (fire-and-forget, swallowed when
+								// Cocoon is not connected yet - the init payload /
+								// getAll it fetches later reads the merged map).
+								let ToAdd:Vec<Value> = Merged
+									.iter()
+									.filter_map(|(_, Description)| serde_json::to_value(Description).ok())
+									.collect();
+
+								NotifyCocoonDeltaExtensions(ToAdd, Vec::new());
+
+								// Same event the VSIX installer emits - Sky's
+								// ExtensionChangeSubscriber refreshes the sidebar so
+								// the @installed view picks up the late merge.
+								for (Identifier, Description) in &Merged {
+									let Location = Description
 										.ExtensionLocation
-										.get("path")
-										.and_then(Value::as_str)
+										.as_str()
 										.map(str::to_string)
-								})
-								.unwrap_or_default();
+										.or_else(|| {
+											Description
+												.ExtensionLocation
+												.get("path")
+												.and_then(Value::as_str)
+												.map(str::to_string)
+										})
+										.unwrap_or_default();
 
-							if let Err(Error) = BackgroundHandle.emit(
-								"sky://extensions/installed",
-								json!({
-									"identifier": Identifier,
-									"version": Description.Version,
-									"location": Location,
-								}),
-							) {
-								dev_log!(
-									"extensions",
-									"warn: [ExtensionScanner] failed to emit sky://extensions/installed: {}",
-									Error
-								);
-							}
-						}
+									match BackgroundHandle.emit(
+										"sky://extensions/installed",
+										json!({
+											"identifier": Identifier,
+											"version": Description.Version,
+											"location": Location,
+										}),
+									) {
+										Ok(()) => {},
+										Err(Error) => {
+											dev_log!(
+												"extensions",
+												"warn: [ExtensionScanner] failed to emit sky://extensions/installed: \
+												 {}",
+												Error
+											)
+										},
+									}
+								}
 
-						// The stage-2 configuration re-merge ran without
-						// these extensions' contributes.configuration
-						// defaults; merge once more now that they are in the
-						// map.
-						if let Some(RunTime) = BackgroundHandle.try_state::<Arc<ApplicationRunTime>>() {
-							let Environment = RunTime.inner().Environment.clone();
+								// The stage-2 configuration re-merge ran without
+								// these extensions' contributes.configuration
+								// defaults; merge once more now that they are in the
+								// map.
+								match BackgroundHandle.try_state::<Arc<ApplicationRunTime>>() {
+									Some(RunTime) => {
+										let Environment = RunTime.inner().Environment.clone();
 
-							if let Err(Error) =
-								crate::Environment::ConfigurationProvider::Loading::Fn(&Environment).await
-							{
-								dev_log!(
-									"extensions",
-									"warn: [ExtensionScanner] post-merge configuration re-merge failed: {}",
-									Error
-								);
-							}
-						}
-					});
+										match crate::Environment::ConfigurationProvider::Loading::Fn(&Environment).await
+										{
+											Ok(()) => {},
+											Err(Error) => {
+												dev_log!(
+													"extensions",
+													"warn: [ExtensionScanner] post-merge configuration re-merge \
+													 failed: {}",
+													Error
+												)
+											},
+										}
+									},
+									None => {},
+								}
+							});
 
-					return Ok(());
+							return Ok(());
+						},
+
+						Ok(None) => {
+							dev_log!("extensions", "[ExtensionScanner] Cache miss - falling back to live disk scan");
+						},
+
+						Err(E) => {
+							dev_log!(
+								"extensions",
+								"warn: [ExtensionScanner] Cache load error: {}; continuing with live scan",
+								E
+							);
+						},
+					}
 				},
 
-				Ok(None) => {
-					dev_log!("extensions", "[ExtensionScanner] Cache miss - falling back to live disk scan");
-				},
-
-				Err(E) => {
-					dev_log!(
-						"extensions",
-						"warn: [ExtensionScanner] Cache load error: {}; continuing with live scan",
-						E
-					);
-				},
+				None => {},
 			}
-		}
+		},
+
+		Err(_) => {},
 	}
 
 	let ScanPaths:Vec<PathBuf> = _State.Registry.GetExtensionScanPaths();
@@ -318,8 +346,12 @@ pub async fn Fn(
 						.unwrap_or_default()
 						.to_string();
 
-					if !Identifier.is_empty() {
-						All.insert(Identifier, Extension);
+					match Identifier.is_empty() {
+						true => {},
+
+						false => {
+							All.insert(Identifier, Extension);
+						},
 					}
 				}
 			},

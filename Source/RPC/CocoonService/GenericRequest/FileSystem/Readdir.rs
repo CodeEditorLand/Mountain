@@ -13,10 +13,14 @@ pub async fn Fn(RequestId:u64, Params:Value) -> Response<GenericResponse> {
 			let mut Items:Vec<Value> = Vec::new();
 
 			while let Ok(Some(Entry)) = Entries.next_entry().await {
-				if let Some(Name) = Entry.file_name().to_str() {
-					let IsDir = Entry.file_type().await.map(|T| T.is_dir()).unwrap_or(false);
+				match Entry.file_name().to_str() {
+					Some(Name) => {
+						let IsDir = Entry.file_type().await.map(|T| T.is_dir()).unwrap_or(false);
 
-					Items.push(json!({ "name": Name, "type": if IsDir { 2u32 } else { 1u32 } }));
+						Items.push(json!({ "name": Name, "type": match IsDir { true => 2u32, false => 1u32 } }));
+					},
+
+					None => {},
 				}
 			}
 

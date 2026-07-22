@@ -39,8 +39,9 @@ fn GetOrInitChannel(Handle:&AppHandle) -> &'static TreeViewChannel {
 
 				Rx.recv_many(&mut Buf, 4096).await;
 
-				if Buf.is_empty() {
-					continue;
+				match Buf.is_empty() {
+					true => continue,
+					false => {},
 				}
 
 				let Handle = Buf[0].0.clone();

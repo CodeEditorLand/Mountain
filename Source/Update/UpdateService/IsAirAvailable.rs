@@ -19,8 +19,10 @@ pub async fn Fn(AirClient:&AirServiceClient<tonic::transport::Channel>) -> bool 
 		Ok(Response) => {
 			let IsHealthy = Response.into_inner().healthy;
 
-			if !IsHealthy {
-				dev_log!("update", "warn: [UpdateService] Air health check returned unhealthy");
+			match IsHealthy {
+				true => {},
+
+				false => dev_log!("update", "warn: [UpdateService] Air health check returned unhealthy"),
 			}
 
 			IsHealthy
