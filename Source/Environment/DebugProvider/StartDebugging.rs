@@ -101,8 +101,8 @@ pub(crate) async fn Fn(
 
 	// Adapter-descriptor DTO shapes mirror VS Code's
 	// `vs/workbench/api/common/extHostDebugService.ts::convert*ToDto`:
-	//   executable  → { type: "executable", command, args, options: { env?, cwd? }
-	// }   server      → { type: "server", port, host? }
+	//   executable  → { type: "executable", command, args, options: { env?,
+	// cwd? } }   server      → { type: "server", port, host? }
 	//   pipeServer  → { type: "pipeServer", path }
 	//   implementation → { type: "implementation" }   (handled in-process by
 	// Cocoon)

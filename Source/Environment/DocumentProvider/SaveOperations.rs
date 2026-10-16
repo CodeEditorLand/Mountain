@@ -198,7 +198,8 @@ pub(super) async fn save_all_documents(
 					return false;
 				}
 
-				// Include only file-scheme documents unless IncludeUntitled is true
+				// Include only file-scheme documents unless IncludeUntitled is
+				// true
 				if !include_untitled && document.URI.scheme() != "file" {
 					return false;
 				}

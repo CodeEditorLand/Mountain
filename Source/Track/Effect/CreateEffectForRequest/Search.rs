@@ -32,7 +32,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				// Accept three call shapes:
 				//   - `{pattern, options}` named form
-				//   - `[pattern, options]` positional from `TryMountainThenNode` Cocoon path
+				//   - `[pattern, options]` positional from
+				//     `TryMountainThenNode` Cocoon path
 				//   - `pattern` bare (legacy single-arg)
 				let Args = if let Some(Object) = Parameters.as_object() {
 					(

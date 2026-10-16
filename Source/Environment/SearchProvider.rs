@@ -517,9 +517,12 @@ impl SearchProvider for MountainEnvironment {
 								if Entry.file_type().map_or(false, |ft| ft.is_file()) {
 									let EntryPath = Entry.path();
 
-									// Apply include/exclude glob patterns relative
-									// to the workspace folder so `**/*.ts` matches
-									// nested files without requiring absolute paths.
+									// Apply include/exclude glob patterns
+									// relative
+									// to the workspace folder so `**/*.ts`
+									// matches
+									// nested files without requiring absolute
+									// paths.
 									let RelPath =
 										EntryPath.strip_prefix(&FolderPath).unwrap_or(EntryPath).to_string_lossy();
 

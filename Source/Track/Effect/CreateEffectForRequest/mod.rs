@@ -143,8 +143,8 @@ pub fn Fn<R:Runtime>(
 
 	Try!(Documents);
 
-	// NOTE: FileReadAlias folded into FileSystem; keep this line only if the alias
-	// module is restored and updated to call into FileSystem for
+	// NOTE: FileReadAlias folded into FileSystem; keep this line only if the
+	// alias module is restored and updated to call into FileSystem for
 	// `openDocument`/`readFile`/`stat`.
 
 	Try!(FileWatcher);

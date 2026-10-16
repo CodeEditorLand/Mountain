@@ -19,13 +19,13 @@ pub(crate) async fn Fn(SideCarIdentifier:&str, ChildProcess:&mut Child) -> Resul
 	//
 	// New policy:
 	//   - Initial 50 ms sleep, doubled per attempt up to a 2 s ceiling.
-	//   - Hard 20 s total-budget (unchanged) so the overall failure ceiling doesn't
-	//     regress for pathological slow-boot hardware.
-	//   - Before each sleep, poll `ChildProcess.try_wait()`: if Node has exited,
-	//     abandon the loop immediately with the exit status embedded in the error -
-	//     no point retrying against a dead process, and the exit code usually
-	//     reveals the import failure (1 = unhandled exception, 13 = invalid
-	//     module).
+	//   - Hard 20 s total-budget (unchanged) so the overall failure ceiling
+	//     doesn't regress for pathological slow-boot hardware.
+	//   - Before each sleep, poll `ChildProcess.try_wait()`: if Node has
+	//     exited, abandon the loop immediately with the exit status embedded in
+	//     the error - no point retrying against a dead process, and the exit
+	//     code usually reveals the import failure (1 = unhandled exception, 13
+	//     = invalid module).
 	let GRPCAddress = format!("127.0.0.1:{}", super::COCOON_GRPC_PORT);
 
 	crate::dev_log!(

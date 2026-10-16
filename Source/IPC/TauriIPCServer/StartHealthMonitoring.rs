@@ -40,7 +40,8 @@ pub(crate) async fn Fn(Pool:&ConnectionPool, connection_id:&str) {
 					);
 				}
 			} else {
-				// The connection has been removed from the pool, stop monitoring
+				// The connection has been removed from the pool, stop
+				// monitoring
 				break;
 			}
 		}

@@ -525,9 +525,9 @@ impl WindAdvancedSync {
 impl WindAdvancedSync {
 	/// Start advanced synchronization
 	pub async fn start_synchronization(self: Arc<Self>) -> Result<(), String> {
-		// Polling loops are stub implementations with all actual logic commented
-		// out. Do not spawn them until real implementations land - they would
-		// only burn CPU and flood the dev log.
+		// Polling loops are stub implementations with all actual logic
+		// commented out. Do not spawn them until real implementations
+		// land - they would only burn CPU and flood the dev log.
 		Ok(())
 	}
 
@@ -591,8 +591,8 @@ impl WindAdvancedSync {
 
 		// Emit UI state update via Mountain IPC
 		// if let Err(e) = self.mountain_ipc.update_ui_state(&sync).await {
-		//     dev_log!("ipc", "error: [WindAdvancedSync] Failed to update UI state via
-		// Mountain IPC: {}", e); }
+		//     dev_log!("ipc", "error: [WindAdvancedSync] Failed to update UI
+		// state via Mountain IPC: {}", e); }
 
 		Ok(())
 	}

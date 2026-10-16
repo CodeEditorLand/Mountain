@@ -123,7 +123,8 @@ impl Compressor {
 			));
 		}
 
-		// Check if compression is beneficial (only compress if size exceeds threshold)
+		// Check if compression is beneficial (only compress if size exceeds
+		// threshold)
 		if SerializedMessages.len() < self.SingleMessageThreshold {
 			dev_log!(
 				"ipc",
@@ -228,8 +229,8 @@ impl Compressor {
 
 /// Validate decompression input size
 fn validate_decompression_input(CompressedSize:usize) -> Result<(), String> {
-	// Reject unreasonably large compressed inputs (even though decompression has
-	// limit)
+	// Reject unreasonably large compressed inputs (even though decompression
+	// has limit)
 	// Maximum compressed input size: 5MB to prevent decompression bomb attacks
 	const MAX_COMPRESSED_INPUT:usize = 5 * 1024 * 1024;
 

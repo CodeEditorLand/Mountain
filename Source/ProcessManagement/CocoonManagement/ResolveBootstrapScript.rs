@@ -60,13 +60,14 @@ pub(crate) fn Fn(ApplicationHandle:&AppHandle) -> Result<PathBuf, CommonError> {
 	//
 	// 1. Bundle (.app): tauri.conf.json maps
 	//    `Element/Cocoon/Target/Bootstrap/Implementation/Cocoon` →
-	//    `Contents/Resources/Cocoon/Target/Bootstrap/Implementation/Cocoon`. The
-	//    Tauri resource resolver finds it directly.
+	//    `Contents/Resources/Cocoon/Target/Bootstrap/Implementation/Cocoon`.
+	//    The Tauri resource resolver finds it directly.
 	//
 	// 2. Repo (dev binary): bootstrap is at
-	//    `Element/Mountain/scripts/cocoon/bootstrap-fork.js`, so walking `../../..`
-	//    from the bootstrap dir reaches `Element/` and `COCOON_BUNDLE_PROBE`
-	//    (`../Cocoon/Target/...`) descends into `Element/Cocoon/Target/...`.
+	//    `Element/Mountain/scripts/cocoon/bootstrap-fork.js`, so walking
+	//    `../../..` from the bootstrap dir reaches `Element/` and
+	//    `COCOON_BUNDLE_PROBE` (`../Cocoon/Target/...`) descends into
+	//    `Element/Cocoon/Target/...`.
 	let BundleProbe = path_resolver
 		.resolve("Cocoon/Target/Bootstrap/Implementation/Cocoon/Main.js", BaseDirectory::Resource)
 		.ok()

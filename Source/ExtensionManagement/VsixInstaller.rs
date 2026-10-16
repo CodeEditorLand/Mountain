@@ -319,14 +319,15 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 			// Promote executable bit whenever the payload is a native
 			// binary the extension will spawn. Heuristics, in order:
 			//   1. Zip already recorded any exec bit (user/group/other).
-			//   2. Path lives under a `bin/` segment (vscode convention for shipped CLI
-			//      tools: openai.chatgpt's `bin/<triple>/codex`, rust-analyzer's
-			//      `bin/ra_lsp`, Dart-Code's `bin/dart`, …).
-			//   3. First two bytes match a known executable magic number: Mach-O
-			//      (`\xCF\xFA\xED\xFE` / `\xCE\xFA\xED\xFE` / fat `\xCA\xFE\xBA\xBE`), ELF
-			//      (`\x7FELF`), or shebang (`#!`). Some zip creators drop all mode bits;
-			//      the magic-number probe is the only way to tell before the extension
-			//      tries to spawn the file.
+			//   2. Path lives under a `bin/` segment (vscode convention for
+			//      shipped CLI tools: openai.chatgpt's `bin/<triple>/codex`,
+			//      rust-analyzer's `bin/ra_lsp`, Dart-Code's `bin/dart`, …).
+			//   3. First two bytes match a known executable magic number:
+			//      Mach-O (`\xCF\xFA\xED\xFE` / `\xCE\xFA\xED\xFE` / fat
+			//      `\xCA\xFE\xBA\xBE`), ELF (`\x7FELF`), or shebang (`#!`).
+			//      Some zip creators drop all mode bits; the magic-number probe
+			//      is the only way to tell before the extension tries to spawn
+			//      the file.
 			// Directory segments that conventionally hold spawnable
 			// binaries: VS Code's `bin/`, language-server `server/`
 			// (rust-analyzer, ruby-lsp, jdt-ls, gopls), .NET's
@@ -359,8 +360,10 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 							&& matches!(
 								&Bytes[..4],
 								b"\xCF\xFA\xED\xFE"
-									| b"\xCE\xFA\xED\xFE" | b"\xFE\xED\xFA\xCF"
-									| b"\xFE\xED\xFA\xCE" | b"\xCA\xFE\xBA\xBE"
+									| b"\xCE\xFA\xED\xFE"
+									| b"\xFE\xED\xFA\xCF"
+									| b"\xFE\xED\xFA\xCE"
+									| b"\xCA\xFE\xBA\xBE"
 									| b"\xBE\xBA\xFE\xCA"
 							);
 

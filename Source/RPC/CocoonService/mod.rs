@@ -428,10 +428,12 @@ impl CocoonServiceImpl {
 	/// - `language_selector`: Language scope (e.g. `"typescript"`).
 	/// - `extension_id`: Extension that registered this provider.
 	fn RegisterProvider(&self, handle:u32, provider_type:ProviderType, language_selector:&str, extension_id:&str) {
-		// SideCarIdentifier = "cocoon-main" so FeatureMethods::invoke_provider can
-		// route back via Vine::Client::SendRequestToSideCar("cocoon-main", ...).
+		// SideCarIdentifier = "cocoon-main" so FeatureMethods::invoke_provider
+		// can route back via
+		// Vine::Client::SendRequestToSideCar("cocoon-main", ...).
 		// Selector stored as array so ProviderLookup::get_matching_provider's
-		// `.as_array()` call finds the language entry: [{ "language": "typescript" }].
+		// `.as_array()` call finds the language entry: [{ "language":
+		// "typescript" }].
 		let dto = ProviderRegistrationDTO {
 			Handle:handle,
 
@@ -533,9 +535,9 @@ impl CocoonService for CocoonServiceImpl {
 	// Bidirectional streaming channel. Cocoon opens this stream and sends
 	// Envelope frames; Mountain reads each frame and routes:
 	//   Notification  → GenericNotification::Dispatcher (same path as the unary
-	// endpoint)   Request       → GenericRequest::Dispatcher; response sent back
-	// via out_tx   Response      → log and ignore (not expected on this direction)
-	//   Cancel        → no-op
+	// endpoint)   Request       → GenericRequest::Dispatcher; response sent
+	// back via out_tx   Response      → log and ignore (not expected on
+	// this direction)   Cancel        → no-op
 	// Outbound frames are delivered via the mpsc channel whose sender is
 	// stored in CHANNEL_REGISTRY keyed by a per-call channel_id.
 	type OpenChannelFromMountainStream = std::pin::Pin<
@@ -1276,11 +1278,13 @@ impl CocoonService for CocoonServiceImpl {
 
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		// Registration: store handle + selector in the LanguageFeatureProviderRegistry.
-		// The generic NotificationDispatcher already handles
+		// Registration: store handle + selector in the
+		// LanguageFeatureProviderRegistry. The generic
+		// NotificationDispatcher already handles
 		// `register_inline_completion_item_provider` coming via
-		// SendCocoonNotification; this typed path is the proto-generated entry point.
-		// NOTE: prost generates snake_case fields from the proto definition.
+		// SendCocoonNotification; this typed path is the proto-generated entry
+		// point. NOTE: prost generates snake_case fields from the proto
+		// definition.
 		let Inner = request.into_inner();
 
 		let Handle = Inner.handle;

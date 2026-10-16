@@ -296,8 +296,10 @@ fn Tokenize(Source:&str) -> Result<Vec<Token>, String> {
 
 					while End < Bytes.len()
 						&& (Bytes[End].is_alphanumeric()
-							|| Bytes[End] == '_' || Bytes[End] == '.'
-							|| Bytes[End] == '-' || Bytes[End] == ':'
+							|| Bytes[End] == '_'
+							|| Bytes[End] == '.'
+							|| Bytes[End] == '-'
+							|| Bytes[End] == ':'
 							|| Bytes[End] == '/')
 					{
 						End += 1;

@@ -298,8 +298,9 @@ impl ExtensionManagementService for MountainEnvironment {
 		ScannedExtensionsGuard.clear();
 
 		for extension in extensions {
-			// The scanner returns camelCase JSON (serde rename_all = "camelCase").
-			// Deserialize directly into ExtensionDescriptionStateDTO.
+			// The scanner returns camelCase JSON (serde rename_all =
+			// "camelCase"). Deserialize directly into
+			// ExtensionDescriptionStateDTO.
 			match serde_json::from_value::<ExtensionDescriptionStateDTO>(extension.clone()) {
 				Ok(Dto) => {
 					// Use identifier.value or fall back to name

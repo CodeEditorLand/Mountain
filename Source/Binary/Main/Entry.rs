@@ -251,8 +251,9 @@ pub fn Fn() {
 						let CleanValue = Value.trim().trim_matches('"').trim_matches('\'');
 
 						if std::env::var_os(CleanKey).is_none() {
-							// SAFETY: set_var is called once per key during bootstrap
-							// before any threads read env (Tokio runtime starts later
+							// SAFETY: set_var is called once per key during
+							// bootstrap before any
+							// threads read env (Tokio runtime starts later
 							// in this function).
 							unsafe { std::env::set_var(CleanKey, CleanValue) };
 						}
@@ -411,7 +412,8 @@ pub fn Fn() {
 		// ---------------------------------------------------------------------
 		dev_log!("lifecycle", "[Boot] [State] Building ApplicationState...");
 
-		// Create application state directly (StateBuild::Build with default config)
+		// Create application state directly (StateBuild::Build with default
+		// config)
 		let AppState = ApplicationState::default();
 
 		// -------------------------------------------------------------------
@@ -470,7 +472,8 @@ pub fn Fn() {
 				if !Folders.is_empty() {
 					// Seed state directly; Cocoon is not yet spawned at this
 					// point, so there is no sidecar to notify. The initial
-					// workspace makes it to Cocoon via `InitializeExtensionHost`'s
+					// workspace makes it to Cocoon via
+					// `InitializeExtensionHost`'s
 					// `workspace` payload during its handshake instead.
 					AppState.Workspace.SetWorkspaceFolders(Folders);
 
@@ -533,7 +536,8 @@ pub fn Fn() {
 					dev_log!("lifecycle", "[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
 
 					// ---------------------------------------------------------
-					// [Service Registry] Initialize service registry for land:// routing
+					// [Service Registry] Initialize service registry for
+					// land:// routing
 					// ---------------------------------------------------------
 					dev_log!(
 						"lifecycle",
@@ -556,13 +560,16 @@ pub fn Fn() {
 
 					register_land_service("code.editor.land", ServerPortForClosure);
 
-					// Register API editor service (same port for now, can be separate later)
+					// Register API editor service (same port for now, can be
+					// separate later)
 					register_land_service("api.editor.land", ServerPortForClosure);
 
-					// Register assets editor service (same port for now, can be separate later)
+					// Register assets editor service (same port for now, can be
+					// separate later)
 					register_land_service("assets.editor.land", ServerPortForClosure);
 
-					// Make the registry available as managed state for Tauri commands
+					// Make the registry available as managed state for Tauri
+					// commands
 					app.manage(service_registry);
 
 					dev_log!(
@@ -760,7 +767,8 @@ pub fn Fn() {
 			})
 			.register_asynchronous_uri_scheme_protocol("vscode-webview", |ctx, request, responder| {
 				// VS Code's `WebviewElement` wraps every extension webview in
-				// an iframe whose `src` is `vscode-webview://<authority>/index.html?...`.
+				// an iframe whose `src` is
+				// `vscode-webview://<authority>/index.html?...`.
 				// Without this handler the iframe stays blank and every
 				// extension that uses `webviewView` / `WebviewPanel` /
 				// `CustomEditor` (Roo Code, Claude, GitLens, custom editors)

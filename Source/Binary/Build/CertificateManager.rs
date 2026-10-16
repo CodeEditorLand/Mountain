@@ -216,7 +216,8 @@ impl CertificateManager {
 	fn generate_ca_cert(&self) -> Result<(Vec<u8>, Vec<u8>)> {
 		dev_log!("security", "generating new CA certificate");
 
-		// NOTE: Using rcgen CertificateParams::default() which provides working API
+		// NOTE: Using rcgen CertificateParams::default() which provides working
+		// API
 
 		// Generate a basic key pair
 		let key_pair = rcgen::KeyPair::generate()?;
@@ -255,7 +256,8 @@ impl CertificateManager {
 			rcgen::KeyUsagePurpose::CrlSign,
 		];
 
-		// Using CertificateParams directly with KeyPair (correct API for rcgen 0.14.x)
+		// Using CertificateParams directly with KeyPair (correct API for rcgen
+		// 0.14.x)
 		let cert = params.self_signed(&key_pair)?;
 
 		// We want PEM format for the certificate manager

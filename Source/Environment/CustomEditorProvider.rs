@@ -235,8 +235,9 @@ impl CustomEditorProvider for MountainEnvironment {
 		//    "cocoon-main".
 		// 2. Make an RPC call to that sidecar's implementation of
 		//    `$resolveCustomEditor`.
-		// 3. The sidecar will then call back to the host with `setHtml`, `postMessage`,
-		//    etc. to populate the webview associated with the `WebviewPanelHandle`.
+		// 3. The sidecar will then call back to the host with `setHtml`,
+		//    `postMessage`, etc. to populate the webview associated with the
+		//    `WebviewPanelHandle`.
 
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 

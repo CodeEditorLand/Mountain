@@ -19,7 +19,8 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Moved = {
 		#[cfg(target_os = "macos")]
 		{
-			// Pass path via env var so it is never interpolated into AppleScript source.
+			// Pass path via env var so it is never interpolated into
+			// AppleScript source.
 			tokio::process::Command::new("osascript")
 				.env("MOVE_TARGET", &Path)
 				.args([
@@ -55,7 +56,8 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 
 		#[cfg(target_os = "windows")]
 		{
-			// Pass path via env var so it is never interpolated into PowerShell source.
+			// Pass path via env var so it is never interpolated into PowerShell
+			// source.
 			tokio::process::Command::new("powershell.exe")
 				.env("MOVE_TARGET", &Path)
 				.args([

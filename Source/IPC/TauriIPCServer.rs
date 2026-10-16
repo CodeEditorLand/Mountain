@@ -487,8 +487,9 @@ impl TauriIPCServer {
 
 	/// Send compressed Message batch
 	pub async fn send_compressed_batch(&self, channel:&str, messages:Vec<TauriIPCMessage>) -> Result<(), String> {
-		// Configure compressor with balanced settings: level 6 (good compression/speed
-		// tradeoff) and batch size 10 (aggregate small messages for efficiency)
+		// Configure compressor with balanced settings: level 6 (good
+		// compression/speed tradeoff) and batch size 10 (aggregate
+		// small messages for efficiency)
 		let compressor = MessageCompressor::new(6, 10);
 
 		let compressed_data = compressor

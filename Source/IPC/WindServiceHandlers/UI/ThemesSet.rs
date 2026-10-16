@@ -45,8 +45,9 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 	// Node-resident extensions (GitLens, Roo, rust-analyzer) that adapt
 	// their UI based on theme.kind never see the change. Cocoon's
 	// `Services/Handler/Notification/Handler.ts` maps
-	// `$acceptActiveColorTheme` → `Emitter.emit("window.didChangeActiveColorTheme",
-	// ...)` which `Window/Namespace.ts:1041` subscribers attach to via
+	// `$acceptActiveColorTheme` →
+	// `Emitter.emit("window.didChangeActiveColorTheme", ...)` which
+	// `Window/Namespace.ts:1041` subscribers attach to via
 	// `MakeEventSubscriber`. Payload includes the workbench's theme kind
 	// (1=Light, 2=Dark, 3=HighContrast, 4=HighContrastLight) when
 	// discoverable from the theme id, otherwise just the id.

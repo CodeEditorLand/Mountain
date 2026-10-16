@@ -305,8 +305,9 @@ impl TerminalProvider for MountainEnvironment {
 						let DataString = String::from_utf8_lossy(&Buffer[..count]).to_string();
 
 						// Auto-reply: scan the output chunk for any registered
-						// match strings and write the answer back synchronously.
-						// The check is intentionally cheap (snapshot + linear
+						// match strings and write the answer back
+						// synchronously. The check is
+						// intentionally cheap (snapshot + linear
 						// scan): auto-reply lists are tiny (<10 entries) and
 						// the hot path is the empty-list case (single  +
 						//  check = ~10 ns on an M-series core).
@@ -325,10 +326,12 @@ impl TerminalProvider for MountainEnvironment {
 						// Fan out in two directions so both consumers see
 						// the bytes:
 						//   1. Cocoon's extension host (via gRPC) - lets
-						//      `vscode.window.onDidWriteTerminalData` and the SCM
-						//      `$acceptTerminalProcessData` chain continue to function.
-						//   2. Sky's webview (via Tauri event) - the UI xterm renderer subscribes to
-						//      `sky://terminal/data` and draws the bytes into the user-visible terminal
+						//      `vscode.window.onDidWriteTerminalData` and the
+						//      SCM `$acceptTerminalProcessData` chain continue
+						//      to function.
+						//   2. Sky's webview (via Tauri event) - the UI xterm
+						//      renderer subscribes to `sky://terminal/data` and
+						//      draws the bytes into the user-visible terminal
 						//      panel.
 						// Without the Tauri emit the user sees a terminal
 						// panel open but no shell output because gRPC-only
@@ -506,10 +509,12 @@ impl TerminalProvider for MountainEnvironment {
 		let CreatePid = TerminalState.OSProcessIdentifier;
 
 		tokio::spawn(async move {
-			// 20 ms: enough for the Tauri invoke round-trip + `_ptys.set(id,pty)`
-			// to complete before `onProcessReady` fires. The original 120 ms was
-			// measured on a slow test machine; modern M-series hardware completes
-			// the full cycle in <5 ms. 20 ms gives 4× headroom.
+			// 20 ms: enough for the Tauri invoke round-trip +
+			// `_ptys.set(id,pty)` to complete before
+			// `onProcessReady` fires. The original 120 ms was
+			// measured on a slow test machine; modern M-series hardware
+			// completes the full cycle in <5 ms. 20 ms gives 4×
+			// headroom.
 			tokio::time::sleep(std::time::Duration::from_millis(20)).await;
 
 			let CreatePayload = json!({
@@ -601,8 +606,8 @@ impl TerminalProvider for MountainEnvironment {
 			.remove(&TerminalId);
 
 		if let Some(TerminalArc) = TerminalArc {
-			// Dropping the PTY master's writer and reader handles will signal the
-			// underlying process to terminate.
+			// Dropping the PTY master's writer and reader handles will signal
+			// the underlying process to terminate.
 			drop(TerminalArc);
 		}
 
@@ -653,8 +658,9 @@ impl TerminalProvider for MountainEnvironment {
 			});
 		}
 
-		// Pull the shared master-PTY handle out of the state lock before touching
-		// it so we never hold the outer terminals map while performing IO.
+		// Pull the shared master-PTY handle out of the state lock before
+		// touching it so we never hold the outer terminals map while
+		// performing IO.
 		let MasterOption = {
 			let TerminalsGuard = self.ApplicationState.Feature.Terminals.ActiveTerminals.lock();
 

@@ -55,9 +55,9 @@ pub(super) async fn get_matching_provider(
 			continue;
 		}
 
-		// Selector shapes (all stored as JSON from CocoonService.RegisterProvider):
-		//   Canonical: [{ "language": "typescript" }]
-		//   Wildcard:  [{ "language": "*" }]
+		// Selector shapes (all stored as JSON from
+		// CocoonService.RegisterProvider):   Canonical: [{ "language":
+		// "typescript" }]   Wildcard:  [{ "language": "*" }]
 		//   Legacy obj: { "language": ["typescript"] }
 		//   Plain str: "*"
 		let Matched = if let Some(SelectorArray) = Provider.Selector.as_array() {

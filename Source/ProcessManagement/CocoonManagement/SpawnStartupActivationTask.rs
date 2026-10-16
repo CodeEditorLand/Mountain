@@ -11,7 +11,8 @@ use crate::{Environment::MountainEnvironment::MountainEnvironment, dev_log};
 pub(crate) fn Fn(SideCarIdentifier:&str, Environment:&Arc<MountainEnvironment>) {
 	// Trigger startup extension activation. Cocoon is fully reactive -
 	// it won't activate any extensions until Mountain tells it to.
-	// Fire-and-forget: don't block on activation, and don't fail init if it errors.
+	// Fire-and-forget: don't block on activation, and don't fail init if it
+	// errors.
 	//
 	// Stock VS Code fires a cascade of activation events at boot:
 	//   1. `*` - unconditional "activate anything that contributes *"

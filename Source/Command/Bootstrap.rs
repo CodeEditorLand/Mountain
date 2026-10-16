@@ -665,11 +665,12 @@ pub fn RegisterNativeCommands(
 	dev_log!("commands", "[Bootstrap] Validating registered commands...");
 
 	// Validate all registered commands at startup to catch configuration errors
-	// early. Verification includes command signature correctness, parameter type
-	// matching, required permissions and capabilities, and extension metadata
-	// validity. This prevents runtime errors from malformed registrations and
-	// provides immediate feedback to extension developers during development.
-	// Current implementation logs without performing actual validation checks.
+	// early. Verification includes command signature correctness, parameter
+	// type matching, required permissions and capabilities, and extension
+	// metadata validity. This prevents runtime errors from malformed
+	// registrations and provides immediate feedback to extension developers
+	// during development. Current implementation logs without performing
+	// actual validation checks.
 
 	// --- Tree View Provider Registration ---
 	let mut TreeViewRegistry = ApplicationState.Feature.TreeViews.ActiveTreeViews.lock();

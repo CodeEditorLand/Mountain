@@ -244,10 +244,10 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 
 	let Response = json!(Wrapped);
 
-	// Only cache non-empty responses - an empty response on first call (timeout)
-	// shouldn't poison the cache for subsequent calls that would get real data.
-	// Stored against the generation captured before the state read so a
-	// concurrent scanner merge invalidates this entry.
+	// Only cache non-empty responses - an empty response on first call
+	// (timeout) shouldn't poison the cache for subsequent calls that would
+	// get real data. Stored against the generation captured before the
+	// state read so a concurrent scanner merge invalidates this entry.
 	if !Wrapped.is_empty() {
 		*INSTALLED_CACHE[CacheSlot].lock() = Some((GenerationAtRead, Response.clone()));
 	}

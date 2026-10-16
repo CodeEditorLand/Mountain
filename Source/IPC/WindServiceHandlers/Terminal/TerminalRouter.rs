@@ -580,7 +580,8 @@ pub(crate) async fn route(
 			let Cwd = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
 
 			if !Cwd.is_empty() {
-				// Persist CWD in ApplicationState. Lock, update, drop immediately.
+				// Persist CWD in ApplicationState. Lock, update, drop
+				// immediately.
 				let _CwdPersisted = RunTime
 					.Environment
 					.ApplicationState

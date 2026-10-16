@@ -35,8 +35,9 @@ pub async fn Fn(_Arguments:Vec<Value>) -> Result<Value, String> {
 			// Retry with osascript-elevated write on macOS.
 			#[cfg(target_os = "macos")]
 			{
-				// Pass paths via env vars; use AppleScript's `quoted form of` for
-				// safe shell quoting - no interpolation into script source.
+				// Pass paths via env vars; use AppleScript's `quoted form of`
+				// for safe shell quoting - no interpolation
+				// into script source.
 				let Status = tokio::process::Command::new("osascript")
 					.env("SH_SRC", ExePath.as_os_str())
 					.env("SH_DST", Target.as_os_str())

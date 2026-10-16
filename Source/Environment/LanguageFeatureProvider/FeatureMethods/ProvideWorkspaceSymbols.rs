@@ -10,9 +10,9 @@ pub(crate) async fn Fn(
 
 	query:String,
 ) -> Result<Option<Value>, CommonError> {
-	// Workspace symbols don't have a specific document URI - use a dummy lookup.
-	// The provider is registered globally, so we pick the first WorkspaceSymbol
-	// provider.
+	// Workspace symbols don't have a specific document URI - use a dummy
+	// lookup. The provider is registered globally, so we pick the first
+	// WorkspaceSymbol provider.
 	let MatchingRegistration = {
 		let providers = environment
 			.ApplicationState

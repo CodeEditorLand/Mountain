@@ -171,7 +171,8 @@ pub async fn Fn(BinaryDir:&PathBuf) -> Result<Option<HashMap<String, ExtensionDe
 
 		let Path = &Entry.path;
 
-		// Helpers scoped to each manifest to eliminate repeated extraction chains.
+		// Helpers scoped to each manifest to eliminate repeated extraction
+		// chains.
 		let str = |k:&str| Manifest.get(k).and_then(Value::as_str).map(str::to_string);
 
 		let str_or = |k:&str, d:&str| Manifest.get(k).and_then(Value::as_str).unwrap_or(d).to_string();

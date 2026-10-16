@@ -131,8 +131,8 @@ pub(crate) fn Fn(
 
 				buffer.extend_from_slice(&temp_buf[..n]);
 
-				// Check if we've read the full response (simple check for content-length or end
-				// of headers)
+				// Check if we've read the full response (simple check for
+				// content-length or end of headers)
 				if buffer.len() > 1024 * 1024 {
 					// Limit to 1MB
 					dev_log!("lifecycle", "warn: [Scheme] Response too large, truncating");
@@ -140,8 +140,9 @@ pub(crate) fn Fn(
 					break;
 				}
 
-				// Simple heuristic: if we have a full HTTP response with Content-Length, check
-				// if we've read everything
+				// Simple heuristic: if we have a full HTTP response with
+				// Content-Length, check if we've read
+				// everything
 				if let Some(headers_end) = buffer.windows(4).position(|w| w == b"\r\n\r\n") {
 					let headers = String::from_utf8_lossy(&buffer[..headers_end]);
 
@@ -154,7 +155,8 @@ pub(crate) fn Fn(
 							}
 						}
 					} else if !headers.contains("Transfer-Encoding: chunked") {
-						// No Content-Length and not chunked, assume complete if connection closes
+						// No Content-Length and not chunked, assume complete if
+						// connection closes
 						continue;
 					}
 				}

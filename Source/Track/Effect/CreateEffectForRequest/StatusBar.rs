@@ -26,8 +26,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			crate::effect!(run_time, {
 				let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
 
-				// The extension host serialises this as an object with named fields,
-				// matching the shape used by the RPC layer (EntryIdentifier = id).
+				// The extension host serialises this as an object with named
+				// fields, matching the shape used by the RPC
+				// layer (EntryIdentifier = id).
 				let Parameters = Parameters.clone();
 
 				let entry_id = Parameters
@@ -83,8 +84,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			crate::effect!(run_time, {
 				let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
 
-				// Require a non-empty id - a missing id would silently target the
-				// wrong entry (previously fell back to the literal string "id").
+				// Require a non-empty id - a missing id would silently target
+				// the wrong entry (previously fell back to the
+				// literal string "id").
 				let id = Parameters
 					.get(0)
 					.and_then(Value::as_str)

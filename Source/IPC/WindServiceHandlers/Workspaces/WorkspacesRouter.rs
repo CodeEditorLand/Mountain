@@ -85,7 +85,8 @@ pub(crate) async fn route(
 		"workspaces:addRecentlyOpened" => {
 			dev_log!("workspaces", "workspaces:addRecentlyOpened");
 
-			// VS Code passes `[{ workspace?, folderUri?, fileUri?, label? }, …]`.
+			// VS Code passes `[{ workspace?, folderUri?, fileUri?, label? },
+			// …]`.
 			let Entries:Vec<Value> = Arguments.first().and_then(|V| V.as_array()).cloned().unwrap_or_default();
 
 			if !Entries.is_empty() {

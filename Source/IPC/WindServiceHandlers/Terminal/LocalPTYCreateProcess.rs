@@ -23,10 +23,12 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 				Some(TerminalId) if TerminalId > 0 => Ok(serde_json::json!(TerminalId)),
 
 				Some(_) | None => {
-					// Defensive: if `CreateTerminal` returned without a usable id
-					// (shape drift or `GetNextTerminalIdentifier` regression),
+					// Defensive: if `CreateTerminal` returned without a usable
+					// id (shape drift or
+					// `GetNextTerminalIdentifier` regression),
 					// surface an error so the workbench binds `LocalPty(0, …)`
-					// and every subsequent `_proxy.input(0, data)` fails loudly.
+					// and every subsequent `_proxy.input(0, data)` fails
+					// loudly.
 					crate::dev_log!(
 						"terminal",
 						"error: [localPty:createProcess] CreateTerminal returned no usable id; response={:?}",

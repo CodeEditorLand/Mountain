@@ -57,7 +57,8 @@ pub async fn Fn(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result
 			// Resize on a disposed terminal is a common race during shutdown -
 			// the workbench layout pass fires after `exit`, the PTY closes, and
 			// the resize call lands on a dropped master. Log at warn, return
-			// Null so the workbench's resize loop continues instead of stalling.
+			// Null so the workbench's resize loop continues instead of
+			// stalling.
 			crate::dev_log!(
 				"terminal",
 				"warn: localPty:resize id={} cols={} rows={} failed: {}",

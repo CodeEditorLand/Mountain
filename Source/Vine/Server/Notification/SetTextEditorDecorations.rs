@@ -7,10 +7,11 @@ pub async fn SetTextEditorDecorations(Service:&MountainVinegRPCService, Paramete
 	::Vine::Server::Notification::SetTextEditorDecorations::SetTextEditorDecorations(Service, Parameter).await;
 
 	// P4.6: Lazy-register unknown decoration type keys. Extensions may call
-	// `editor.setDecorations(type, ranges)` before `createTextEditorDecorationType`
-	// resolves, or the registration notification may arrive out-of-order relative
-	// to the decoration batch. When a `decorationTypeKey` in the payload isn't
-	// yet known, auto-forward it as a create so Monaco has styling registered by
+	// `editor.setDecorations(type, ranges)` before
+	// `createTextEditorDecorationType` resolves, or the registration
+	// notification may arrive out-of-order relative to the decoration
+	// batch. When a `decorationTypeKey` in the payload isn't yet known,
+	// auto-forward it as a create so Monaco has styling registered by
 	// the time `setDecorationsByType` executes.
 	if let Some(Key) = Parameter.get("key").and_then(|K| K.as_str()) {
 		let Decorations = &Service.RunTime().Environment.ApplicationState.Feature.Decorations;

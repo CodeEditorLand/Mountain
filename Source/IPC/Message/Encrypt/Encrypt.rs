@@ -337,12 +337,13 @@ mod tests {
 
 		channel.rotate_keys().expect("Rotation failed");
 
-		// Old encrypted message should still decrypt (GCM with correct nonce works)
+		// Old encrypted message should still decrypt (GCM with correct nonce
+		// works)
 		let decrypted_after_rotation = channel.decrypt_message(&encrypted_before);
 
-		// This will fail because we generated a new key - new key cannot decrypt old
-		// messages That's expected behavior - key rotation means old messages become
-		// undecryptable by design
+		// This will fail because we generated a new key - new key cannot
+		// decrypt old messages That's expected behavior - key rotation
+		// means old messages become undecryptable by design
 		assert!(decrypted_after_rotation.is_err());
 
 		// New messages work with new key

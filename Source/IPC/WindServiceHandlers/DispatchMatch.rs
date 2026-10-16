@@ -831,8 +831,9 @@ pub async fn mountain_ipc_invoke(
 						},
 
 						Ok(None) => {
-							// Key not found in any scope - fall back to merged value
-							// so the Settings UI gets `undefined` rather than crashing.
+							// Key not found in any scope - fall back to merged
+							// value so the Settings
+							// UI gets `undefined` rather than crashing.
 							let Fallback = ConfigurationGet(RunTime.clone(), Arguments).await.unwrap_or(Value::Null);
 
 							Ok(json!({
@@ -988,12 +989,15 @@ pub async fn mountain_ipc_invoke(
 					call!(rt, "storage-verbose", "storage:updateItems", StorageUpdateItems, Arguments)
 				},
 				"storage:optimize" => {
-					// Flush pending debounced writes for both scopes immediately.
-					// VS Code calls this before workspace close and hot-reload to
-					// ensure state is fully persisted without waiting for the 100 ms
-					// debounce window. The call carries no scope argument, so global
-					// and workspace stores flush together - a partial flush could
-					// persist one scope while losing in-flight writes to the other.
+					// Flush pending debounced writes for both scopes
+					// immediately. VS Code calls this
+					// before workspace close and hot-reload to
+					// ensure state is fully persisted without waiting for the
+					// 100 ms debounce window. The call
+					// carries no scope argument, so global
+					// and workspace stores flush together - a partial flush
+					// could persist one scope while losing
+					// in-flight writes to the other.
 					dev_log!("storage", "storage:optimize → flush");
 
 					let GlobalPath = Some((*RunTime.Environment.ApplicationState.GlobalMementoPath.lock()).clone());
@@ -1050,8 +1054,9 @@ pub async fn mountain_ipc_invoke(
 				"env:asExternalUri" | "env:resolveExternalUri" => {
 					let UriStr = arg_string(&Arguments, 0);
 
-					// Parse the URI into its components so VS Code can reconstruct
-					// the Uri object without undefined fields.
+					// Parse the URI into its components so VS Code can
+					// reconstruct the Uri object without
+					// undefined fields.
 					let Parsed = UriStr
 						.parse::<url::Url>()
 						.unwrap_or_else(|_| url::Url::parse("file:///").unwrap());
@@ -1091,10 +1096,14 @@ pub async fn mountain_ipc_invoke(
 								.map(|V| {
 									let S = serde_json::to_string(V).unwrap_or_default();
 
-									// Char-aware truncation - JSON-encoded values may
-									// embed multi-byte UTF-8 (extension names, repo
-									// paths with non-ASCII, debug payloads). Slicing
-									// at a fixed byte offset can land mid-codepoint
+									// Char-aware truncation - JSON-encoded
+									// values may
+									// embed multi-byte UTF-8 (extension names,
+									// repo
+									// paths with non-ASCII, debug payloads).
+									// Slicing
+									// at a fixed byte offset can land
+									// mid-codepoint
 									// and panic the tokio worker.
 									match S.len() > 240 {
 										true => {
@@ -1127,11 +1136,13 @@ pub async fn mountain_ipc_invoke(
 				// surface boot-phase timings (land:*, TTFB, DOMContentLoaded,
 				// etc.) alongside the Rust-side Mountain.dev.log stream.
 				"diagnostic:getBootMarks" => {
-					// TODO: Tauri's `Window.eval()` is fire-and-forget (returns `()`),
-					// not a sync read of the JS runtime. To collect the actual
+					// TODO: Tauri's `Window.eval()` is fire-and-forget (returns
+					// `()`), not a sync read of the JS
+					// runtime. To collect the actual
 					// performance marks, this needs a webview IPC round-trip
-					// (emit → Sky listener → oneshot response) or a Tauri command
-					// with `tauri::Window::eval` paired with a `listen` event.
+					// (emit → Sky listener → oneshot response) or a Tauri
+					// command with `tauri::Window::eval`
+					// paired with a `listen` event.
 					// Return the shape so callers don't crash iterating null.
 					dev_log!("diagnostic", "getBootMarks (stub - eval() is async, needs IPC round-trip)");
 
@@ -1582,7 +1593,8 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				"process:getCpuInfo" => {
-					// Return a single-entry array matching Node.js `os.cpus()` shape.
+					// Return a single-entry array matching Node.js `os.cpus()`
+					// shape.
 					Ok(json!([{
 						"model": format!("{} ({})", std::env::consts::ARCH, std::env::consts::OS),
 						"speed": 0u32,
@@ -1786,7 +1798,8 @@ pub async fn mountain_ipc_invoke(
 								None => {},
 							}
 
-							// Notify Cocoon so onDidChangeTextDocument fires in extensions.
+							// Notify Cocoon so onDidChangeTextDocument fires in
+							// extensions.
 							let Payload2 = json!([
 								{ "external": Uri.clone(), "$mid": 1 },
 
@@ -1828,8 +1841,9 @@ pub async fn mountain_ipc_invoke(
 						true => {},
 					}
 
-					// Canonical renderer event (SkyEvent.EditorActiveChanged) so
-					// Wind's Editor layer tracks the active editor.
+					// Canonical renderer event (SkyEvent.EditorActiveChanged)
+					// so Wind's Editor layer tracks the
+					// active editor.
 					let _ = ApplicationHandle.emit("sky://editor/active-changed", Payload.clone());
 
 					tokio::spawn(async move {
@@ -2061,13 +2075,15 @@ pub async fn mountain_ipc_invoke(
 								.get("position")
 								.and_then(|P| P.get("line"))
 								.and_then(Value::as_u64)
-								.unwrap_or(0) as i64 + 1;
+								.unwrap_or(0) as i64
+								+ 1;
 
 							let Character = Payload
 								.get("position")
 								.and_then(|P| P.get("character"))
 								.and_then(Value::as_u64)
-								.unwrap_or(0) as i64 + 1;
+								.unwrap_or(0) as i64
+								+ 1;
 
 							let Context =
 								Payload.get("context").cloned().unwrap_or_else(|| json!({ "triggerKind": 0 }));
@@ -2139,10 +2155,12 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				"language:getLanguages" | "languages:getLanguages" => {
-					// Builtin baseline merged with every `contributes.languages`
-					// id from the scanned extensions, so the language picker /
-					// `vscode.languages.getLanguages()` reflects what's actually
-					// installed instead of a frozen 14-entry list.
+					// Builtin baseline merged with every
+					// `contributes.languages` id from the
+					// scanned extensions, so the language picker /
+					// `vscode.languages.getLanguages()` reflects what's
+					// actually installed instead of a
+					// frozen 14-entry list.
 					let mut Languages:Vec<String> = [
 						"plaintext",
 						"typescript",
@@ -2200,13 +2218,16 @@ pub async fn mountain_ipc_invoke(
 					let Payload = Arguments.into_iter().next().unwrap_or(Value::Null);
 
 					// Skip the 3-second blocking wait at boot. If Cocoon isn't
-					// connected yet, return an empty fallback immediately so the
-					// tokenizer doesn't stall the worker for up to 3 s on first
+					// connected yet, return an empty fallback immediately so
+					// the tokenizer doesn't stall the
+					// worker for up to 3 s on first
 					// editor open. The workbench retries on the next keystroke.
-					// NOTE: must be an if/else expression, not `return Ok(...)`.
-					// A bare `return` inside this match arm exits the enclosing
-					// async block (not just the arm), changing the block's inferred
-					// return type from `()` to `Result<Value, _>` and breaking
+					// NOTE: must be an if/else expression, not `return
+					// Ok(...)`. A bare `return` inside this
+					// match arm exits the enclosing
+					// async block (not just the arm), changing the block's
+					// inferred return type from `()` to
+					// `Result<Value, _>` and breaking
 					// Scheduler::Submit's Output = () bound.
 					if !crate::Vine::Client::IsClientConnected::Fn("cocoon-main") {
 						Ok(Value::Array(Vec::new()))
@@ -2511,11 +2532,13 @@ pub async fn mountain_ipc_invoke(
 				_ => {
 					use std::{str::FromStr, sync::OnceLock};
 
-					// Check if command should defer to Cocoon's Node.js runtime.
-					// The env var is baked in at build time via rustc-env from
-					// build.rs; at runtime we also accept it via process env for
-					// debug overrides. Cache the result - this runs per unknown
-					// command and env lookup is a syscall.
+					// Check if command should defer to Cocoon's Node.js
+					// runtime. The env var is baked in at
+					// build time via rustc-env from
+					// build.rs; at runtime we also accept it via process env
+					// for debug overrides. Cache the result
+					// - this runs per unknown command and
+					// env lookup is a syscall.
 					static TIER_IPC_CACHE:OnceLock<String> = OnceLock::new();
 
 					let TierIPC:&str =
@@ -2526,7 +2549,8 @@ pub async fn mountain_ipc_invoke(
 					if ShouldDefer {
 						// Forward to Cocoon via cocoon:request bridge.
 						// Cocoon's RequestRoutingHandler + extension namespaces
-						// cover language:*, scm:*, debug:*, tasks:*, auth:*, etc.
+						// cover language:*, scm:*, debug:*, tasks:*, auth:*,
+						// etc.
 						let Payload = cocoon_payload(Arguments);
 
 						dev_log!("ipc", "deferred → Cocoon: {}", command);
@@ -2606,9 +2630,10 @@ pub async fn mountain_ipc_invoke(
 
 		crate::otel_span!(&SpanName, OTLPStart, &[("ipc.command", command.as_str())]);
 
-		// Emit `land:mountain:handler:complete` to PostHog for every dispatched IPC.
-		// Pairs with `land:cocoon:handler:complete` to populate the Feature
-		// Parity dashboard's Node-vs-Rust handler-latency comparison.
+		// Emit `land:mountain:handler:complete` to PostHog for every dispatched
+		// IPC. Pairs with `land:cocoon:handler:complete` to populate
+		// the Feature Parity dashboard's Node-vs-Rust handler-latency
+		// comparison.
 		let HandlerElapsedNanos = crate::IPC::DevLog::NowNano::Fn().saturating_sub(OTLPStart);
 
 		let HandlerDurationMs = HandlerElapsedNanos / 1_000_000;

@@ -145,10 +145,11 @@ pub(super) async fn update_configuration_value(
 
 	if let Value::Object(ref mut RootMap) = current_config {
 		if let Some(LangId) = overrides.OverrideIdentifier.as_deref().filter(|S| !S.is_empty()) {
-			// Language-scoped override: write into `"[<langId>]": { key: value }`.
-			// This is how VS Code stores per-language defaults:
-			//   `prettier-vscode` sets `"[typescript]": { "editor.defaultFormatter": "..."
-			// }`   `vscode-eslint` sets `"[javascript]": { "editor.codeActionsOnSave":
+			// Language-scoped override: write into `"[<langId>]": { key: value
+			// }`. This is how VS Code stores per-language defaults:
+			//   `prettier-vscode` sets `"[typescript]": {
+			// "editor.defaultFormatter": "..." }`   `vscode-eslint`
+			// sets `"[javascript]": { "editor.codeActionsOnSave":
 			// {...} }`
 			let ScopeKey = format!("[{}]", LangId);
 

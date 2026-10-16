@@ -248,9 +248,10 @@ pub fn AppLifecycleSetup(
 		let enable_debug_server = std::env::var("DebugServer").map(|v| v != "0" && !v.is_empty()).unwrap_or(false);
 
 		if enable_debug_server {
-			// DebugServer values: mountain | cocoon | both | 1 (= mountain, legacy).
-			// Mountain port: DebugServerPort or DebugServerPortMountain (default 9933).
-			// Cocoon port: DebugServerPortCocoon (default 9934) - started inside the
+			// DebugServer values: mountain | cocoon | both | 1 (= mountain,
+			// legacy). Mountain port: DebugServerPort or
+			// DebugServerPortMountain (default 9933). Cocoon port:
+			// DebugServerPortCocoon (default 9934) - started inside the
 			// Cocoon extension-host process from its own bootstrap path.
 			dev_log!(
 				"lifecycle",
@@ -279,10 +280,10 @@ pub fn AppLifecycleSetup(
 	// The fix is the standard Electron-style handshake:
 	//   1. Mountain prevents the close.
 	//   2. Mountain emits `sky://window/close-requested` to the webview.
-	//   3. Sky listens, asks the workbench to close the active editor; if there is
-	//      no active editor (or the workbench refuses), Sky calls
-	//      `nativeHost:closeWindow`, which uses `WebviewWindow::destroy()` to tear
-	//      the window down without re-firing CloseRequested.
+	//   3. Sky listens, asks the workbench to close the active editor; if there
+	//      is no active editor (or the workbench refuses), Sky calls
+	//      `nativeHost:closeWindow`, which uses `WebviewWindow::destroy()` to
+	//      tear the window down without re-firing CloseRequested.
 	if IsLandDisabled() {
 		dev_log!(
 			"window",
@@ -324,7 +325,8 @@ pub fn AppLifecycleSetup(
 		let HomeDir = PathResolver.home_dir().unwrap_or_default();
 
 		// Set the canonical userdata base so WindServiceHandlers resolves
-		// /User/... paths to the real Tauri app_data_dir (not hardcoded "FIDDEE").
+		// /User/... paths to the real Tauri app_data_dir (not hardcoded
+		// "FIDDEE").
 		crate::IPC::WindServiceHandlers::Utilities::UserdataDir::Set::Fn(AppDataDir.to_string_lossy().to_string());
 
 		// Set the real filesystem root for /Static/Application/ path mapping.
@@ -634,16 +636,19 @@ pub fn AppLifecycleSetup(
 		// binds its listeners and needs neither configuration nor scan.
 		tokio::join!(
 			async {
-				// [Config] [Re-merge] - now that ScannedExtensions is populated,
-				// run the merge a second time so `collect_default_configurations`
+				// [Config] [Re-merge] - now that ScannedExtensions is
+				// populated, run the merge a second time so
+				// `collect_default_configurations`
 				// can walk extension manifests and seed `git.enabled = true`,
 				// `git.path = null`, `git.autoRepositoryDetection = true`, plus
 				// every other `contributes.configuration.properties[*].default`
-				// the 113 scanned extensions declare. The first-pass merge logged
-				// "0 top-level keys"; this pass should log a much larger count.
-				// User / workspace overrides applied during the first pass are
-				// preserved because the merge order is Default → User → Workspace
-				// and the cached User/Workspace JSON files are re-read each call.
+				// the 113 scanned extensions declare. The first-pass merge
+				// logged "0 top-level keys"; this pass should
+				// log a much larger count. User / workspace
+				// overrides applied during the first pass are
+				// preserved because the merge order is Default → User →
+				// Workspace and the cached User/Workspace JSON
+				// files are re-read each call.
 				let ConfigRemergeStart = crate::IPC::DevLog::NowNano::Fn();
 
 				let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;

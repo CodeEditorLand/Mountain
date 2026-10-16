@@ -184,10 +184,12 @@ pub fn Initialize(
 
 	dev_log!("grpc", "[VineServer] ApplicationRunTime retrieved successfully");
 
-	// Create MountainService implementation (handles calls from Cocoon to Mountain)
+	// Create MountainService implementation (handles calls from Cocoon to
+	// Mountain)
 	let MountainService = MountainVinegRPCService::Create(ApplicationHandle.clone(), RunTime.clone());
 
-	// Create CocoonService implementation (handles calls from Mountain to Cocoon)
+	// Create CocoonService implementation (handles calls from Mountain to
+	// Cocoon)
 	let cocoon_service_impl = CocoonServiceImpl::new(RunTime.Environment.clone());
 
 	dev_log!("grpc", "[VineServer] Service implementations created");

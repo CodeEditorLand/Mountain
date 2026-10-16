@@ -30,8 +30,9 @@ pub async fn Fn(Arguments:Vec<Value>) -> Result<Value, String> {
 			if let Some(Arr) = Buf.as_array() {
 				Arr.iter().filter_map(|V| V.as_u64().map(|N| N as u8)).collect()
 			} else if let Some(S) = Buf.as_str() {
-				// base64-encoded buffer (sent by some VS Code serialisation paths).
-				// Decode it; fall back to raw UTF-8 bytes if not valid base64.
+				// base64-encoded buffer (sent by some VS Code serialisation
+				// paths). Decode it; fall back to raw UTF-8
+				// bytes if not valid base64.
 				use base64::Engine as _;
 
 				base64::engine::general_purpose::STANDARD

@@ -351,7 +351,8 @@ pub async fn ScanDirectoryForExtensions(
 
 					// BATCH-18: only report "no bundle" when the manifest
 					// actually contains `%placeholder%` strings that need
-					// substitution. Many shipped extensions (js-debug-companion,
+					// substitution. Many shipped extensions
+					// (js-debug-companion,
 					// js-profile-table) publish English-only manifests with no
 					// placeholders - surfacing a warning there is misleading
 					// because the UI renders correctly with the raw fields.
@@ -377,12 +378,14 @@ pub async fn ScanDirectoryForExtensions(
 
 					match serde_json::from_value::<ExtensionDescriptionStateDTO>(ManifestValue) {
 						Ok(mut Description) => {
-							// Augment the description with its location on disk.
+							// Augment the description with its location on
+							// disk.
 							Description.ExtensionLocation =
 								serde_json::to_value(url::Url::from_directory_path(&PotentialExtensionPath).unwrap())
 									.unwrap_or(Value::Null);
 
-							// Construct identifier from publisher.name if not set
+							// Construct identifier from publisher.name if not
+							// set
 							if Description.Identifier == Value::Null
 								|| Description.Identifier == Value::Object(Default::default())
 							{
@@ -395,9 +398,11 @@ pub async fn ScanDirectoryForExtensions(
 								Description.Identifier = serde_json::json!({ "value": Id });
 							}
 
-							// Classify the extension by the scan path it came from.
-							// Built-in extensions ship in the Mountain/Sky/VS Code
-							// bundle; user extensions live under
+							// Classify the extension by the scan path it came
+							// from.
+							// Built-in extensions ship in the Mountain/Sky/VS
+							// Code bundle; user
+							// extensions live under
 							// `~/.fiddee/extensions` (written by
 							// `VsixInstaller::InstallVsix`). Hardcoding `true`
 							// here (the previous behaviour) made every VSIX
@@ -407,14 +412,20 @@ pub async fn ScanDirectoryForExtensions(
 							// extensions only.
 							Description.IsBuiltin = !IsUserPath;
 
-							// Boot-time exec-bit heal for user-scope extensions.
-							// Runs only against `~/.fiddee/extensions/<id>/` (built-in
-							// trees ship with correct modes from the bundle). Walks
-							// `bin/`, `server/`, `tools/`, etc., promotes 0o644 →
-							// 0o755 on files matching ELF / Mach-O / shebang magic.
-							// One-shot per boot - cheap (a couple stat + read(4) calls
-							// per file in those directories), and recovers extensions
-							// installed before the in-extractor exec-bit fix landed
+							// Boot-time exec-bit heal for user-scope
+							// extensions. Runs only
+							// against `~/.fiddee/extensions/<id>/` (built-in
+							// trees ship with correct modes from the bundle).
+							// Walks
+							// `bin/`, `server/`, `tools/`, etc., promotes 0o644
+							// → 0o755 on files
+							// matching ELF / Mach-O / shebang magic.
+							// One-shot per boot - cheap (a couple stat +
+							// read(4) calls
+							// per file in those directories), and recovers
+							// extensions
+							// installed before the in-extractor exec-bit fix
+							// landed
 							// without forcing the user to reinstall.
 							#[cfg(unix)]
 							if IsUserPath {
@@ -631,7 +642,8 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 		if let Some(contributes) = Extension.Contributes.as_ref().and_then(|v| v.as_object()) {
 			if let Some(configuration) = contributes.get("configuration").and_then(|v| v.as_object()) {
 				if let Some(properties) = configuration.get("properties").and_then(|v| v.as_object()) {
-					// NESTED OBJECT HANDLING: Recursively process configuration properties
+					// NESTED OBJECT HANDLING: Recursively process configuration
+					// properties
 					self::process_configuration_properties(&mut MergedDefaults, "", properties, &mut Vec::new())?;
 				}
 			}

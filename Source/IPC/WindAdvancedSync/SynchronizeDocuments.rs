@@ -40,14 +40,17 @@ pub(crate) async fn Fn(Sync:&WindAdvancedSync) {
 
 					dev_log!("ipc", "error: [WindAdvancedSync] Failed to apply document change: {}", e);
 
-					// ERROR HANDLING: Exponential backoff on consecutive failures
+					// ERROR HANDLING: Exponential backoff on consecutive
+					// failures
 					consecutive_failures += 1;
 
 					if consecutive_failures >= max_consecutive_failures {
 						dev_log!("lifecycle", "Too many consecutive failures, slowing sync interval");
 
-						// Reduce sync frequency to 30-second interval to prevent system overload
-						// during persistent error conditions (circuit breaker pattern).
+						// Reduce sync frequency to 30-second interval to
+						// prevent system overload
+						// during persistent error conditions (circuit breaker
+						// pattern).
 						interval = tokio::time::interval(Duration::from_secs(30));
 					}
 				},
@@ -58,7 +61,8 @@ pub(crate) async fn Fn(Sync:&WindAdvancedSync) {
 		if success_count > 0 {
 			consecutive_failures = 0;
 
-			// Restore normal sync frequency to 5-second interval after successful recovery.
+			// Restore normal sync frequency to 5-second interval after
+			// successful recovery.
 			interval = tokio::time::interval(Duration::from_secs(5));
 		}
 

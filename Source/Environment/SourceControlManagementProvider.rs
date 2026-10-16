@@ -81,9 +81,10 @@ impl SourceControlManagementProvider for MountainEnvironment {
 		let ProviderData:SourceControlCreateDTO = serde_json::from_value(ProviderDataValue)?;
 
 		// Honor caller-supplied handle when present so the marker maps
-		// (`SourceControlManagementProviders` / `SourceControlManagementGroups`)
-		// key under the SAME identifier Cocoon's `ScmNamespace.ts` uses
-		// for subsequent `register_scm_resource_group` and `update_scm_group`
+		// (`SourceControlManagementProviders` /
+		// `SourceControlManagementGroups`) key under the SAME
+		// identifier Cocoon's `ScmNamespace.ts` uses for subsequent
+		// `register_scm_resource_group` and `update_scm_group`
 		// notifications. Without this, `UpdateSourceControlGroup` looks up
 		// Cocoon's handle in a map keyed by a Mountain-allocated handle,
 		// the entry isn't there, and every group update warns

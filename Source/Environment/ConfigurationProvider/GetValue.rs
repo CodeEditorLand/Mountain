@@ -78,7 +78,8 @@ pub(super) async fn get_configuration_value(
 		if let Some(lang_block) = configuration_guard.get(&lang_block_key).and_then(|v| v.as_object()) {
 			match section.as_deref() {
 				None => {
-					// Return the whole merged config with language block applied.
+					// Return the whole merged config with language block
+					// applied.
 					let mut merged = if let Some(obj) = base_value.as_object() {
 						obj.clone()
 					} else {
@@ -93,7 +94,8 @@ pub(super) async fn get_configuration_value(
 				},
 
 				Some(section_path) => {
-					// Check if the language block overrides this specific section key.
+					// Check if the language block overrides this specific
+					// section key.
 					let top_key = section_path.split('.').next().unwrap_or(section_path);
 
 					if let Some(lang_value) = lang_block.get(top_key) {

@@ -68,8 +68,8 @@ pub async fn Fn(
 
 	let Method = notification.method.as_str();
 
-	// ---- Language Providers (APIFactoryService.ts register_*_provider strings)
-	// ----
+	// ---- Language Providers (APIFactoryService.ts register_*_provider
+	// strings) ----
 	if Method.starts_with("register_") {
 		if !LanguageProviders::Dispatch::Fn(Method, Params, Service) {
 			dev_log!(

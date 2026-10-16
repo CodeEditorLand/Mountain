@@ -113,8 +113,9 @@ impl HealthChecker {
 	pub async fn check_connection_health(&self, handle:&mut ConnectionHandle) -> bool {
 		let start_time = std::time::Instant::now();
 
-		// Simulate network latency (in production, this would be an actual ping)
-		// Using a small delay to simulate realistic network conditions
+		// Simulate network latency (in production, this would be an actual
+		// ping) Using a small delay to simulate realistic network
+		// conditions
 		tokio::time::sleep(std::time::Duration::from_millis(10)).await;
 
 		let response_time = start_time.elapsed();

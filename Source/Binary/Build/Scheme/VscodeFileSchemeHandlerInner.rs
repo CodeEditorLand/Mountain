@@ -33,11 +33,12 @@ pub(crate) fn Fn<R:tauri::Runtime>(
 	// `vscode-file://vscode.git/Volumes/.../extensions/git/media/icon.svg`.
 	// The strip-prefix chain below covers both:
 	//   1. Exact `vscode-app` authority (with or without trailing `/`)
-	//   2. ANY other authority - we treat the post-authority path as the resource
-	//      path and let the OS-absolute-root detection below serve it straight from
-	//      disk. Without this fallback every extension-supplied webview asset
-	//      (icons, scripts, stylesheets, fonts) returned 404 because the strip
-	//      yielded `""` and the asset_resolver lookup ran with an empty key.
+	//   2. ANY other authority - we treat the post-authority path as the
+	//      resource path and let the OS-absolute-root detection below serve it
+	//      straight from disk. Without this fallback every extension-supplied
+	//      webview asset (icons, scripts, stylesheets, fonts) returned 404
+	//      because the strip yielded `""` and the asset_resolver lookup ran
+	//      with an empty key.
 	let FilePath = Uri
 		.strip_prefix("vscode-file://vscode-app/")
 		.or_else(|| Uri.strip_prefix("vscode-file://vscode-app"))
@@ -124,9 +125,10 @@ pub(crate) fn Fn<R:tauri::Runtime>(
 	// URIs like `vscode-file://vscode-app/Volumes/<vol>/.../seti.woff` after
 	// `FileAccess.uriToBrowserUri` rewrites a plain `file:///Volumes/...`
 	// extension path. The authority `vscode-app` is followed directly by the
-	// absolute filesystem path (sans leading `/`). Detect the well-known macOS /
-	// Linux absolute-path roots and serve straight from disk instead of trying
-	// to resolve them against `Sky/Target/` (where they do not exist).
+	// absolute filesystem path (sans leading `/`). Detect the well-known macOS
+	// / Linux absolute-path roots and serve straight from disk instead of
+	// trying to resolve them against `Sky/Target/` (where they do not
+	// exist).
 	let IsAbsoluteOSPath = [
 		"Volumes/",
 		"Users/",

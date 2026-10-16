@@ -54,10 +54,12 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 				require_non_empty_path("FileSystem.ReadFile", path_str)?;
 
-				// vscode://schemas-associations/ is a synthetic URI emitted by VS Code's
-				// JSON language server to request schema associations from the host.
-				// Mountain has no disk-backed file for this; return an empty schema list
-				// so the language server does not spin retrying.
+				// vscode://schemas-associations/ is a synthetic URI emitted by
+				// VS Code's JSON language server to request
+				// schema associations from the host.
+				// Mountain has no disk-backed file for this; return an empty
+				// schema list so the language server does not
+				// spin retrying.
 				if path_str.starts_with("vscode://schemas-associations/") {
 					let payload =
 						serde_json::to_vec(&json!({ "schemas": [] })).unwrap_or_else(|_| b"{\"schemas\":[]}".to_vec());
@@ -90,8 +92,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				// Only base64-encoded strings are accepted.
 				// The Value::Array path (per-byte u64 iteration) was removed:
 				//   - O(N) enum-match per byte (200k matches for a 200 KB file)
-				//   - filter_map silently drops bytes >127 from signed Int8Array serializers,
-				//     causing silent data corruption
+				//   - filter_map silently drops bytes >127 from signed
+				//     Int8Array serializers, causing silent data corruption
 				let content_bytes = match content {
 					Some(Value::String(s)) => {
 						STANDARD

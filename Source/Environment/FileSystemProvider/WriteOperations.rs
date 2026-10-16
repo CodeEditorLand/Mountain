@@ -78,13 +78,14 @@ pub(super) async fn write_file_impl(
 		.await
 		.map_err(|error| CommonError::FromStandardIOError(error, path.clone(), "WriteFile"))?;
 
-	// Implement atomic write pattern to prevent partial writes and data corruption
-	// on crashes or interrupts. The current implementation writes directly to the
-	// target file, which can leave corrupted files if the operation is interrupted.
-	// A robust implementation: 1) writes content to a temporary file in the same
-	// directory (ensuring same filesystem for atomic rename), 2) flushes and syncs
-	// the temporary file to disk (fsync), 3) atomically renames the temporary file
-	// to the target path using fs::rename (POSIX rename is atomic within a
+	// Implement atomic write pattern to prevent partial writes and data
+	// corruption on crashes or interrupts. The current implementation
+	// writes directly to the target file, which can leave corrupted files
+	// if the operation is interrupted. A robust implementation: 1) writes
+	// content to a temporary file in the same directory (ensuring same
+	// filesystem for atomic rename), 2) flushes and syncs the temporary
+	// file to disk (fsync), 3) atomically renames the temporary file to the
+	// target path using fs::rename (POSIX rename is atomic within a
 	// filesystem), 4) deletes old file if replacing, or handles temp cleanup on
 	// failure. This pattern ensures the target file is either fully written or
 	// unchanged.

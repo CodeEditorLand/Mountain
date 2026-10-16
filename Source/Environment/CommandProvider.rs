@@ -191,14 +191,16 @@ impl CommandExecutor for MountainEnvironment {
 				// but that Land doesn't carry because the backing service
 				// doesn't exist:
 				//
-				// - `getTelemetrySenderObject` - `vs/platform/telemetry/**` registers this so
-				//   extensions can fetch a `TelemetrySender` via `commands.executeCommand`.
-				//   Land has no telemetry backend, so returning null (no sender) matches the
-				//   "telemetry disabled" code path every extension already defensively handles.
+				// - `getTelemetrySenderObject` - `vs/platform/telemetry/**`
+				//   registers this so extensions can fetch a `TelemetrySender`
+				//   via `commands.executeCommand`. Land has no telemetry
+				//   backend, so returning null (no sender) matches the
+				//   "telemetry disabled" code path every extension already
+				//   defensively handles.
 				// - `testing.clearTestResults` - registered by
-				//   `vs/workbench/contrib/testing/browser/testExplorerActions.ts`. No
-				//   test-explorer UI in Land today; null is the correct "nothing to clear"
-				//   shape.
+				//   `vs/workbench/contrib/testing/browser/testExplorerActions.
+				//   ts`. No test-explorer UI in Land today; null is the correct
+				//   "nothing to clear" shape.
 				//
 				// Extensions that look these up defensively try/catch. The
 				// only observable effect of the prior error return was the
@@ -230,9 +232,10 @@ impl CommandExecutor for MountainEnvironment {
 				// Workbench renderer-side commands that VS Code's browser-side
 				// `CommandsRegistry` handles. Forward via Tauri event to Sky so
 				// the workbench's own command service can execute them.
-				// `workbench.action.*`, `editor.action.*`, and friends fall here
-				// when they're not already in Mountain's native registry. Return
-				// null (void) immediately - callers never await a meaningful
+				// `workbench.action.*`, `editor.action.*`, and friends fall
+				// here when they're not already in Mountain's
+				// native registry. Return null (void)
+				// immediately - callers never await a meaningful
 				// result from renderer commands. The event is caught by Sky's
 				// `InstallCommands.ts` bridge.
 				let IsRendererCommand = CommandIdentifier.starts_with("workbench.action.")

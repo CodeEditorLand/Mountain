@@ -422,7 +422,8 @@ mod tests {
 
 		let encrypted2 = channel.encrypt_message(&message).unwrap();
 
-		// Each encryption should produce different output (due to unique nonces)
+		// Each encryption should produce different output (due to unique
+		// nonces)
 		assert_ne!(encrypted1.nonce, encrypted2.nonce);
 
 		assert_ne!(encrypted1.ciphertext, encrypted2.ciphertext);

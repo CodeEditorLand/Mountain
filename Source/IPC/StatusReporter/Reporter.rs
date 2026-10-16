@@ -154,7 +154,8 @@ impl Struct {
 				last_message_time:SystemTime::now()
 					.duration_since(SystemTime::UNIX_EPOCH)
 					.unwrap_or_default()
-					.as_secs() - 10,
+					.as_secs()
+					- 10,
 
 				average_processing_time_ms:15.0,
 			},

@@ -489,8 +489,9 @@ mod tests {
 		// Release and try to clean up
 		pool.ReleaseConnection(Handle).await;
 
-		// Clean up (will have to adjust logic for testing or add a method to force
-		// cleanup) For now, we'll just verify the method exists and runs
+		// Clean up (will have to adjust logic for testing or add a method to
+		// force cleanup) For now, we'll just verify the method exists
+		// and runs
 		let cleaned = pool.CleanUpStaleConnections().await;
 
 		assert!(cleaned >= 0);

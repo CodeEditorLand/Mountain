@@ -216,7 +216,8 @@ fn CompileGlobToRegex(Pattern:&str) -> Option<regex::Regex> {
 
 	// Case-insensitive on macOS + Windows where the OS is typically
 	// case-insensitive; on case-sensitive Linux filesystems extensions commonly
-	// still use lowercase patterns, so the flag is safe across all three targets.
+	// still use lowercase patterns, so the flag is safe across all three
+	// targets.
 	if cfg!(any(target_os = "macos", target_os = "windows")) {
 		Regex.push_str("(?i)");
 	}

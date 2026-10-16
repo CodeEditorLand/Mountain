@@ -68,8 +68,8 @@ pub fn Fn(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), C
 	let FoldersGuard = ApplicationState.Workspace.WorkspaceFolders.lock();
 
 	if FoldersGuard.is_empty() {
-		// Allow access if no folder is open, as operations are likely on user-chosen
-		// files. A stricter model could deny this.
+		// Allow access if no folder is open, as operations are likely on
+		// user-chosen files. A stricter model could deny this.
 		return Ok(());
 	}
 

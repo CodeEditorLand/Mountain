@@ -838,7 +838,8 @@ impl MountainService for MountainVinegRPCService {
 				// Mark webview as ready in WebviewProvider state.
 				// TODO: WebviewStateDTO doesn't have a `ready` field yet;
 				// ready state tracking is deferred to future DTO work.
-				// self.RunTime.Environment.ApplicationState.Feature.Webviews.MarkReady(Handle);
+				// self.RunTime.Environment.ApplicationState.Feature.Webviews.
+				// MarkReady(Handle);
 
 				// Emit sky://webview/ready so the workbench can react.
 				let Payload = serde_json::json!({ "handle": Handle, "viewType": ViewType });
@@ -1190,7 +1191,8 @@ impl MountainService for MountainVinegRPCService {
 
 			"output.coalesce" => {
 				// Coalescence replaces the channel buffer with new content
-				// (similar to replace but may batch multiple replace operations)
+				// (similar to replace but may batch multiple replace
+				// operations)
 				::Vine::Server::Notification::OutputChannelReplace::OutputChannelReplace(self, &Parameter).await;
 			},
 
@@ -1276,9 +1278,10 @@ impl MountainService for MountainVinegRPCService {
 			"register_file_system_provider" => {
 				// When an extension registers a file-system provider for a
 				// virtual scheme, fire `onFileSystem:{scheme}` activation so
-				// extensions that declare `"activationEvents": ["onFileSystem:xyz"]`
-				// in their manifest are activated. The provider itself is
-				// registered through the same RegisterLanguageProvider path
+				// extensions that declare `"activationEvents":
+				// ["onFileSystem:xyz"]` in their manifest are
+				// activated. The provider itself is registered
+				// through the same RegisterLanguageProvider path
 				// as all other providers, so handle/registry state is kept.
 				let Scheme = Parameter.get("scheme").and_then(serde_json::Value::as_str).unwrap_or("");
 

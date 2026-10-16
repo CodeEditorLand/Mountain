@@ -15,7 +15,8 @@ pub(crate) async fn Fn(SideCarIdentifier:&str, Environment:&Arc<MountainEnvironm
 	);
 
 	// Brief delay to ensure Cocoon's gRPC service handlers are fully registered
-	// after bindAsync resolves (race condition on fast connections like attempt 1)
+	// after bindAsync resolves (race condition on fast connections like attempt
+	// 1)
 	sleep(Duration::from_millis(200)).await;
 
 	// Construct initialization payload

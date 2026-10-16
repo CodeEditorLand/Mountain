@@ -119,8 +119,9 @@ impl TauriIPCMessage {
 			.unwrap_or_default()
 			.as_millis() as u64;
 
-		// Maximum allowed clock skew: messages may be at most 5 seconds in the future
-		// to account for minor clock desynchronization between Wind and Mountain.
+		// Maximum allowed clock skew: messages may be at most 5 seconds in the
+		// future to account for minor clock desynchronization between
+		// Wind and Mountain.
 		const MAX_FUTURE_MS:u64 = 5_000;
 
 		// Maximum message age: reject messages older than 1 hour to prevent

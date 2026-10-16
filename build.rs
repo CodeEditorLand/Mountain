@@ -90,7 +90,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		// Patch bundle.resources
 		if let Some(Bundle) = Tauri.get_mut("bundle") {
 			let Resources = if TierSchemeAssets == "FileSystem" {
-				// Full disk layout - every file served from Contents/Resources/.
+				// Full disk layout - every file served from
+				// Contents/Resources/.
 				serde_json::json!({
 					"../Sky/Target/Browser": "Browser",
 					"../Sky/Target/BrowserProxy": "BrowserProxy",
@@ -174,9 +175,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// Ensure extensions.manifest.json exists before tauri_build::build()
 	// validates resource paths. Sky's BakeExtensionManifest integration writes
 	// the real file during astro:build:done (part of beforeBuildCommand), so it
-	// will be present for normal tauri builds. This stub covers the edge case of
-	// a direct `cargo build -p Mountain` run without a prior Sky build. At
-	// runtime LoadFromCache.rs falls back to a live scan when the array is empty.
+	// will be present for normal tauri builds. This stub covers the edge case
+	// of a direct `cargo build -p Mountain` run without a prior Sky build.
+	// At runtime LoadFromCache.rs falls back to a live scan when the array
+	// is empty.
 	let ExtensionsManifest = std::path::Path::new("../Sky/Target/extensions.manifest.json");
 
 	if !ExtensionsManifest.exists() {

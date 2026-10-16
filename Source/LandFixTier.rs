@@ -40,7 +40,8 @@ use crate::dev_log;
 /// `Binary::Main::Entry::Fn`, after the logging infrastructure is ready
 /// and before the Tokio runtime spawns any tasks.
 pub fn LogResolvedTiers() {
-	// Build-baked tiers use env!() - values are baked from .env.Land at build time.
+	// Build-baked tiers use env!() - values are baked from .env.Land at build
+	// time.
 	dev_log!(
 		"lifecycle",
 		"[LandFix:Tier] Mountain tiers: RemoteProcedureCall={} HTTPProxy={} Logger={} FileSystem={} FindFiles={} \

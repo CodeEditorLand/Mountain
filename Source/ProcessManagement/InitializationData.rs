@@ -254,9 +254,10 @@ pub async fn ConstructSandboxConfiguration(
 	let BackupPath = AppDataDir.join("Backups").join(ApplicationState.GetWorkspaceIdentifier()?);
 
 	// `logsPath` is a required field of `ISandboxConfiguration`. VS Code reads
-	// it via `NativeWorkbenchEnvironmentService.logsHome` → `URI.file(logsPath)`.
-	// Missing it leaves logsPath=undefined → URI.file(undefined).fsPath=undefined
-	// → path.join(undefined,"…") → "The path argument must be of type string".
+	// it via `NativeWorkbenchEnvironmentService.logsHome` →
+	// `URI.file(logsPath)`. Missing it leaves logsPath=undefined →
+	// URI.file(undefined).fsPath=undefined → path.join(undefined,"…") →
+	// "The path argument must be of type string".
 	let LogsPath = AppDataDir.join("logs").join(crate::IPC::DevLog::SessionTimestamp::Fn());
 
 	let _ = std::fs::create_dir_all(&LogsPath);
@@ -302,7 +303,8 @@ pub async fn ConstructSandboxConfiguration(
 	// call here is shallow enough to compile without issue.
 	let UserProfile = AppDataDir.join("User");
 
-	// Helper closure: build a `UriComponents` JSON object for a filesystem path.
+	// Helper closure: build a `UriComponents` JSON object for a filesystem
+	// path.
 	let FileUri = |P:std::path::PathBuf| -> serde_json::Value {
 		json!({
 			"scheme": "file",
@@ -548,10 +550,10 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 			// path) for raw-binary launches outside the bundle. Probe two
 			// fallback layouts so both `.app` and dev launches resolve:
 			//
-			//   1. `.app/Contents/MacOS/<bin>` → `Contents/Resources/` (shipped bundle,
-			//      raw-binary launch from inside the bundle tree).
-			//   2. `Element/Mountain/Target/<profile>/<bin>` → `Element/Sky/Target/`
-			//      (monorepo dev / raw release).
+			//   1. `.app/Contents/MacOS/<bin>` → `Contents/Resources/` (shipped
+			//      bundle, raw-binary launch from inside the bundle tree).
+			//   2. `Element/Mountain/Target/<profile>/<bin>` →
+			//      `Element/Sky/Target/` (monorepo dev / raw release).
 			let ExeDir = std::env::current_exe()
 				.ok()
 				.and_then(|P| P.parent().map(|D| D.to_path_buf()))

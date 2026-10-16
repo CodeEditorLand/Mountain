@@ -97,9 +97,11 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 					Out.iter().collect()
 				};
 
-				// New canonical path: ../Resources/Static/Application/extensions.
-				// Extensions land here when tauri.conf.json bundle.resources maps
-				// them to "Static/Application/extensions" (single source layout).
+				// New canonical path:
+				// ../Resources/Static/Application/extensions.
+				// Extensions land here when tauri.conf.json bundle.resources
+				// maps them to "Static/Application/extensions"
+				// (single source layout).
 				let StaticAppExtPath = Parent.join("../Resources/Static/Application/extensions");
 
 				if StaticAppExtPath.exists() {
@@ -115,14 +117,16 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 				}
 
 				// Legacy flat path: ../Resources/extensions (kept for backward
-				// compat while the tauri.conf.json resources remap takes effect).
+				// compat while the tauri.conf.json resources remap takes
+				// effect).
 				let ResourcesPath = Normalize(Parent.join("../Resources/extensions"));
 
 				dev_log!("extensions", "[Extensions] [ScanPaths] + {}", ResourcesPath.display());
 
 				ScanPathsGuard.push(ResourcesPath);
 
-				// VS Code-style bundle layout: `.app/Contents/Resources/app/extensions`.
+				// VS Code-style bundle layout:
+				// `.app/Contents/Resources/app/extensions`.
 				let ResourcesAppPath = Normalize(Parent.join("../Resources/app/extensions"));
 
 				dev_log!("extensions", "[Extensions] [ScanPaths] + {}", ResourcesAppPath.display());

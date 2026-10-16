@@ -20,8 +20,9 @@ pub(crate) async fn Fn(ApplicationHandle:&tauri::AppHandle, Environment:&Arc<Mou
 	// `LaunchAndManageCocoonSideCar` is `!Send` (parking_lot guards held
 	// across .await). We give it a dedicated current-thread runtime
 	// wrapped in a `LocalSet` so `spawn_local` works and no cross-thread
-	// move is required. `RestartRx`, `AppHandle`, and `Arc<MountainEnvironment>`
-	// are all `Send`, so they cross the thread boundary without issue.
+	// move is required. `RestartRx`, `AppHandle`, and
+	// `Arc<MountainEnvironment>` are all `Send`, so they cross the thread
+	// boundary without issue.
 	let _ = std::thread::Builder::new()
 		.name("cocoon-restart".into())
 		.spawn(move || {

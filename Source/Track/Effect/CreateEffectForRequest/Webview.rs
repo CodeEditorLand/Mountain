@@ -116,8 +116,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				// or malformed URI. A silent swap to
 				// `file:///tmp/test.txt` would:
 				//   - create that file on disk on every bad call,
-				//   - return success to Cocoon so the extension never receives an error,
-				//   - make the log undiagnosable (every failure shows the same sentinel path).
+				//   - return success to Cocoon so the extension never receives
+				//     an error,
+				//   - make the log undiagnosable (every failure shows the same
+				//     sentinel path).
 				// Return Err instead so the grpc layer logs the
 				// real caller input.
 				if resource_uri_str.is_empty() {

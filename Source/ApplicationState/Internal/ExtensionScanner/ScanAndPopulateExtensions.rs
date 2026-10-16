@@ -51,31 +51,41 @@ pub async fn Fn(
 								PostWriteCount
 							);
 
-							// The pre-baked manifest covers every bundled extension
-							// root - enough for the workbench's first getInstalled
-							// burst and Cocoon's init payload. Unblock waiters now;
-							// the user-path supplement below merges in the background
-							// and bumps the getInstalled cache generation when it
-							// lands.
+							// The pre-baked manifest covers every bundled
+							// extension
+							// root - enough for the workbench's first
+							// getInstalled
+							// burst and Cocoon's init payload. Unblock waiters
+							// now; the user-path
+							// supplement below merges in the background
+							// and bumps the getInstalled cache generation when
+							// it lands.
 							_State.ScanReady.notify_waiters();
 
-							// Supplementary live-scan of user-writable paths only.
-							// PreBake at build time walks the bundled extension trees
+							// Supplementary live-scan of user-writable paths
+							// only. PreBake at
+							// build time walks the bundled extension trees
 							// (Mountain/Target/Resources/extensions,
 							// Sky/Target/Static/Application/extensions, VS Code
 							// Dependency/.../extensions) - it does NOT walk
 							// `~/.fiddee/extensions` or `~/.land/extensions`.
-							// Without this supplementary scan, the cache hit hides
-							// every VSIX-installed extension from the workbench:
+							// Without this supplementary scan, the cache hit
+							// hides
+							// every VSIX-installed extension from the
+							// workbench:
 							// `extensions:scanUserExtensions` returns 0 and the
 							// `@installed` view stays empty.
 							//
-							// We re-use `Registry.GetExtensionScanPaths()` and filter
+							// We re-use `Registry.GetExtensionScanPaths()` and
+							// filter
 							// through `Scanner::IsUserExtensionScanPath` so the
 							// classifier and the scan set stay coherent (Lodge
-							// override, ~/.fiddee/extensions, ~/.land/extensions).
-							// Found entries overwrite cache entries with the same ID
-							// - matches stock VS Code semantics where an installed
+							// override, ~/.fiddee/extensions,
+							// ~/.land/extensions).
+							// Found entries overwrite cache entries with the
+							// same ID
+							// - matches stock VS Code semantics where an
+							//   installed
 							// VSIX shadows a built-in of the same identifier.
 							let UserScanPaths:Vec<PathBuf> = _State
 								.Registry
@@ -175,9 +185,12 @@ pub async fn Fn(
 									Merged.len()
 								);
 
-								// Invalidate the per-TypeFilter getInstalled caches:
-								// any builtins-only response cached between the early
-								// ScanReady notify and this merge is rebuilt from the
+								// Invalidate the per-TypeFilter getInstalled
+								// caches:
+								// any builtins-only response cached between the
+								// early
+								// ScanReady notify and this merge is rebuilt
+								// from the
 								// merged map on the next call.
 								BumpScanGeneration();
 
@@ -186,11 +199,16 @@ pub async fn Fn(
 									false => {},
 								}
 
-								// Cocoon may already have fetched the builtins-only
-								// list for its extension registry; $deltaExtensions
-								// reconciles it (fire-and-forget, swallowed when
-								// Cocoon is not connected yet - the init payload /
-								// getAll it fetches later reads the merged map).
+								// Cocoon may already have fetched the
+								// builtins-only
+								// list for its extension registry;
+								// $deltaExtensions
+								// reconciles it (fire-and-forget, swallowed
+								// when
+								// Cocoon is not connected yet - the init
+								// payload /
+								// getAll it fetches later reads the merged
+								// map).
 								let ToAdd:Vec<Value> = Merged
 									.iter()
 									.filter_map(|(_, Description)| serde_json::to_value(Description).ok())
@@ -199,7 +217,8 @@ pub async fn Fn(
 								NotifyCocoonDeltaExtensions(ToAdd, Vec::new());
 
 								// Same event the VSIX installer emits - Sky's
-								// ExtensionChangeSubscriber refreshes the sidebar so
+								// ExtensionChangeSubscriber refreshes the
+								// sidebar so
 								// the @installed view picks up the late merge.
 								for (Identifier, Description) in &Merged {
 									let Location = Description
@@ -235,10 +254,11 @@ pub async fn Fn(
 									}
 								}
 
-								// The stage-2 configuration re-merge ran without
-								// these extensions' contributes.configuration
-								// defaults; merge once more now that they are in the
-								// map.
+								// The stage-2 configuration re-merge ran
+								// without these
+								// extensions' contributes.configuration
+								// defaults; merge once more now that they are
+								// in the map.
 								match BackgroundHandle.try_state::<Arc<ApplicationRunTime>>() {
 									Some(RunTime) => {
 										let Environment = RunTime.inner().Environment.clone();

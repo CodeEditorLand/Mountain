@@ -70,10 +70,11 @@ pub(crate) async fn route(
 		// manifests. Do NOT alias - payload shapes differ.
 		"extensions:getInstalled" | "extensions:scanSystemExtensions" => {
 			// Atom H1a: Arguments[0]=type, Arguments[1]=profileLocation URI,
-			// Arguments[2]=productVersion, Arguments[3]=??? (VS Code canonical is
-			// 3; shim appears to add a 4th). Dump to find out what it
-			// contains on post-nav page reloads where the sidebar
-			// renders 0 entries despite Mountain returning 94.
+			// Arguments[2]=productVersion, Arguments[3]=??? (VS Code canonical
+			// is 3; shim appears to add a 4th). Dump to find out
+			// what it contains on post-nav page reloads where the
+			// sidebar renders 0 entries despite Mountain returning
+			// 94.
 			let ArgsSummary = Arguments
 				.iter()
 				.enumerate()
@@ -100,7 +101,8 @@ pub(crate) async fn route(
 
 			dev_log!("extensions", "{} Arguments={}", command, ArgsSummary);
 
-			// `scanSystemExtensions` → `getInstalled(type=ExtensionType.System)`.
+			// `scanSystemExtensions` →
+			// `getInstalled(type=ExtensionType.System)`.
 			let EffectiveArgs = if *command == *"extensions:scanSystemExtensions" {
 				let mut Overridden = Arguments.clone();
 

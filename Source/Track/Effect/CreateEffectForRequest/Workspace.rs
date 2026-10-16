@@ -34,10 +34,12 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 	match MethodName {
 		"applyEdit" => {
 			crate::effect!(run_time, {
-				// Atom T1: round-trip via Mountain's request/reply plumbing so the
-				// extension's `await workspace.applyEdit(…)` resolves when Sky has
-				// actually applied the edit (or refused). Previously a synthetic
-				// `true` returned before the edit ran, racing listeners that
+				// Atom T1: round-trip via Mountain's request/reply plumbing so
+				// the extension's `await
+				// workspace.applyEdit(…)` resolves when Sky has
+				// actually applied the edit (or refused). Previously a
+				// synthetic `true` returned before the edit
+				// ran, racing listeners that
 				// expected post-apply state.
 				let Payload = if Parameters.is_array() {
 					Parameters.get(0).cloned().unwrap_or_default()
@@ -249,7 +251,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					},
 				};
 
-				// Notify Cocoon that the file was saved so `onDidSaveTextDocument`
+				// Notify Cocoon that the file was saved so
+				// `onDidSaveTextDocument`
 				// fires for extension-triggered saves (format-on-save, etc.).
 				let _ = crate::Vine::Client::SendNotification::Fn(
 					"cocoon-main".to_string(),

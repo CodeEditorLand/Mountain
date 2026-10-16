@@ -22,7 +22,8 @@ mod tests {
 
 	// --- Mocking the Trait ---
 	// We create a dummy struct and impl the trait we want to mock.
-	// The `#[automock]` attribute will generate `MockTestFileSystemReader` for us.
+	// The `#[automock]` attribute will generate `MockTestFileSystemReader` for
+	// us.
 	#[automock]
 	#[async_trait]
 	pub trait TestFileSystemReader {

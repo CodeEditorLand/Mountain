@@ -114,8 +114,8 @@ impl WorkspaceFolderStateDTO {
 	pub fn FromPath(FolderPath:&str, Index:usize) -> Result<Self, String> {
 		let URI = Url::parse(FolderPath).map_err(|Error| format!("Invalid folder path: {}", Error))?;
 
-		// Check if the URI represents a directory by checking if it ends with a slash
-		// or if the file path exists and is a directory
+		// Check if the URI represents a directory by checking if it ends with a
+		// slash or if the file path exists and is a directory
 		let IsDirectory =
 			URI.path().ends_with('/') || (URI.scheme() == "file" && URI.to_file_path().map_or(false, |p| p.is_dir()));
 

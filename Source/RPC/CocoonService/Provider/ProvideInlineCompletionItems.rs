@@ -98,7 +98,8 @@ pub async fn Fn(
 						.unwrap_or("")
 						.to_string();
 
-					// prost generates snake_case field names from proto PascalCase.
+					// prost generates snake_case field names from proto
+					// PascalCase.
 					Some(InlineCompletionItem {
 						insert_text:InsertText.to_string(),
 						range:None, // Range hydration deferred to Mountain's provider impl
