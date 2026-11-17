@@ -80,7 +80,7 @@ sequenceDiagram
 
 ### Startup Sequence 🚀
 
-```
+```text
 fn main()
     |
     v
@@ -121,7 +121,7 @@ fn main()
 
 ### Shutdown Sequence 🛑
 
-```
+```text
 1. Tauri window close requested
 2. SIGTERM sent to Cocoon sidecar (graceful, 5s timeout)
 3. SIGTERM sent to Air sidecar (if running)
@@ -136,7 +136,7 @@ fn main()
 
 ## Module Architecture 🗺️
 
-```
+```text
 Element/Mountain/Source/
 +-- Binary/
 |   +-- Main/

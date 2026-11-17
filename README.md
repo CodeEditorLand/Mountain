@@ -250,7 +250,7 @@ graph LR
 
 ## Project Structure 🗺️
 
-```
+```text
 Element/Mountain/
 ├── Source/
 │   ├── Library.rs                 # Library root (lib + staticlib crate types)
