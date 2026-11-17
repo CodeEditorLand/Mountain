@@ -28,7 +28,8 @@
 //! does, but Mountain holds an Air client), so `GetSecret`, `StoreSecret` and
 //! `DeleteSecret` always use the local OS keyring. The availability probe logs
 //! a warning and reports unavailable rather than routing to the three
-//! `NotImplemented` Air helpers, which remain for a future Vine-backed client.
+//! Air helpers, each of which warns that the remote secret-fetch capability
+//! is missing and returns a typed `FeatureNotAvailable` error.
 //!
 //! ## VS Code reference
 //!
@@ -55,7 +56,7 @@ fn GetKeyringServiceName(Environment:&MountainEnvironment, ExtensionIdentifier:&
 /// The Air service definition does not expose `GetSecret`, `StoreSecret` or
 /// `DeleteSecret` RPCs (only the Vine protocol defines them, and Mountain
 /// holds an Air client). Reporting availability unconditionally made every
-/// secret operation fail with `NotImplemented` whenever an Air client was
+/// secret operation fail with an unavailable error whenever an Air client was
 /// attached. Report unavailability with a clear warning instead so the
 /// callers fall back to the local OS keyring.
 #[cfg(feature = "AirIntegration")]
@@ -274,11 +275,12 @@ impl SecretProvider for MountainEnvironment {
 
 /// Air stub: retrieves a secret from the remote Air service.
 ///
-/// Currently not implemented. Logs the request and returns
-/// [`CommonError::NotImplemented`]. When implemented, it will construct a
-/// `GetSecretRequest` with the extension identifier and key, call
-/// `AirClient.get_secret` with a timeout, map errors to `CommonError`,
-/// and return `Ok(Some(secret))` if found or `Ok(None)` if not found.
+/// The `AirService` contract exposes no secret-fetch RPC, so this helper
+/// cannot reach a remote store. It logs a warning naming the missing
+/// capability and returns a typed [`CommonError::FeatureNotAvailable`], which
+/// callers can distinguish from `Ok(None)` ("no secret"). A follow-up card
+/// should add `GetSecret` to `Element/Air/Proto/Air.proto` and wire this helper
+/// to it through a bounded, timeout-guarded client call.
 #[cfg(feature = "AirIntegration")]
 async fn GetSecretFromAir(
 	_AirClient:&AirServiceClient<tonic::transport::Channel>,
@@ -293,16 +295,22 @@ async fn GetSecretFromAir(
 		ExtensionIdentifier,
 		Key
 	);
+	dev_log!(
+		"storage",
+		"warn: [SecretProvider] GetSecretFromAir unavailable: AirService has no GetSecret RPC; using the local keyring"
+	);
 
-	Err(CommonError::NotImplemented { FeatureName:"GetSecretFromAir".to_string() })
+	Err(CommonError::FeatureNotAvailable { FeatureName:"AirService.GetSecret".to_string() })
 }
 
 /// Air stub: stores a secret in the remote Air service.
 ///
-/// Currently not implemented. Logs the request and returns
-/// [`CommonError::NotImplemented`]. When implemented, it will construct a
-/// `StoreSecretRequest` with extension identifier, key, and value; handle
-/// encryption and secure transmission; and map errors to `CommonError`.
+/// The `AirService` contract exposes no secret-store RPC, so this helper
+/// cannot reach a remote store. It logs a warning naming the missing
+/// capability and returns a typed [`CommonError::FeatureNotAvailable`], which
+/// callers can distinguish from a successful local write. A follow-up card
+/// should add `StoreSecret` to `Element/Air/Proto/Air.proto` and wire this
+/// helper to it through a bounded, timeout-guarded client call.
 #[cfg(feature = "AirIntegration")]
 async fn StoreSecretToAir(
 	_AirClient:&AirServiceClient<tonic::transport::Channel>,
@@ -319,16 +327,22 @@ async fn StoreSecretToAir(
 		ExtensionIdentifier,
 		Key
 	);
+	dev_log!(
+		"storage",
+		"warn: [SecretProvider] StoreSecretToAir unavailable: AirService has no StoreSecret RPC; using the local keyring"
+	);
 
-	Err(CommonError::NotImplemented { FeatureName:"StoreSecretToAir".to_string() })
+	Err(CommonError::FeatureNotAvailable { FeatureName:"AirService.StoreSecret".to_string() })
 }
 
 /// Air stub: deletes a secret from the remote Air service.
 ///
-/// Currently not implemented. Logs the request and returns
-/// [`CommonError::NotImplemented`]. When implemented, it will construct a
-/// `DeleteSecretRequest`, handle idempotency (deleting a non-existent
-/// secret is treated as success), and map errors to `CommonError`.
+/// The `AirService` contract exposes no secret-delete RPC, so this helper
+/// cannot reach a remote store. It logs a warning naming the missing
+/// capability and returns a typed [`CommonError::FeatureNotAvailable`], which
+/// callers can distinguish from a successful idempotent local delete. A
+/// follow-up card should add `DeleteSecret` to `Element/Air/Proto/Air.proto`
+/// and wire this helper to it through a bounded, timeout-guarded client call.
 #[cfg(feature = "AirIntegration")]
 async fn DeleteSecretFromAir(
 	_AirClient:&AirServiceClient<tonic::transport::Channel>,
@@ -343,6 +357,10 @@ async fn DeleteSecretFromAir(
 		ExtensionIdentifier,
 		Key
 	);
+	dev_log!(
+		"storage",
+		"warn: [SecretProvider] DeleteSecretFromAir unavailable: AirService has no DeleteSecret RPC; using the local keyring"
+	);
 
-	Err(CommonError::NotImplemented { FeatureName:"DeleteSecretFromAir".to_string() })
+	Err(CommonError::FeatureNotAvailable { FeatureName:"AirService.DeleteSecret".to_string() })
 }
