@@ -202,7 +202,7 @@ fn ValidateCapabilities(environment:&MountainEnvironment) -> Result<(), String> 
 
 /// Create minimal state for testing (reduced requirements)
 #[cfg(any(test, feature = "Test"))]
-pub fn BuildMinimal(_app_handle:tauri::AppHandle) -> Result<ApplicationState, String> {
+pub fn BuildMinimal<Handle>(_app_handle:Handle) -> Result<ApplicationState, String> {
 	dev_log!("lifecycle", "[StateBuild] Creating minimal test state");
 
 	// Create minimal ApplicationState for tests (no environment needed)
@@ -217,22 +217,30 @@ mod tests {
 
 	use super::*;
 
-	// Note: These tests are disabled because MountainEnvironment::Create()
-	// requires a tauri::AppHandle which cannot be easily created in unit tests.
-	// Integration tests should be used instead.
+	// `BuildMinimal` deliberately ignores its handle: the minimal state is
+	// the default state and needs no Tauri runtime. Passing a unit value here
+	// exercises that contract without an integration-test AppHandle.
 	#[test]
-	#[ignore = "Requires tauri::AppHandle - use integration tests instead"]
 	fn test_state_build() {
-		// Cannot create AppHandle in unit test context
-		// Integration tests should be used for this
-		unimplemented!("This test requires integration test setup with AppHandle");
+		let state = BuildMinimal(()).expect("minimal state should build");
+
+		assert_eq!(
+			state.GetWorkspaceIdentifier().expect("workspace identifier resolves"),
+			"NO_WORKSPACE"
+		);
+
+		assert!(state.WorkspaceMementoPath.lock().is_none());
 	}
 
 	#[test]
-	#[ignore = "Requires tauri::AppHandle - use integration tests instead"]
 	fn test_state_build_minimal() {
-		// Cannot create AppHandle in unit test context
-		// Integration tests should be used for this
-		unimplemented!("This test requires integration test setup with AppHandle");
+		let state = BuildMinimal(0_u8).expect("minimal state should build");
+
+		assert!(state.GlobalMementoPath.lock().as_os_str().is_empty());
+
+		assert_eq!(
+			state.GetWorkspaceIdentifier().expect("workspace identifier resolves"),
+			"NO_WORKSPACE"
+		);
 	}
 }

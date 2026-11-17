@@ -24,12 +24,11 @@
 //!
 //! ## Air integration
 //!
-//! When the `AirIntegration` feature is enabled, `GetSecret`, `StoreSecret`,
-//! and `DeleteSecret` delegate to Air service RPCs when the client is healthy,
-//! falling back to the local keyring otherwise. The three Air stub functions
-//! (`GetSecretFromAir`, `StoreSecretToAir`, `DeleteSecretFromAir`) are gated
-//! behind `#[cfg(feature = "AirIntegration")]` and currently return
-//! `NotImplemented`.
+//! The Air service definition does not expose secret RPCs (the Vine protocol
+//! does, but Mountain holds an Air client), so `GetSecret`, `StoreSecret` and
+//! `DeleteSecret` always use the local OS keyring. The availability probe logs
+//! a warning and reports unavailable rather than routing to the three
+//! `NotImplemented` Air helpers, which remain for a future Vine-backed client.
 //!
 //! ## VS Code reference
 //!
@@ -51,16 +50,23 @@ fn GetKeyringServiceName(Environment:&MountainEnvironment, ExtensionIdentifier:&
 	format!("{}.{}", Environment.ApplicationHandle.package_info().name, ExtensionIdentifier)
 }
 
-/// Checks whether the Air gRPC client is available for use.
+/// Checks whether the Air service can actually serve secret operations.
 ///
-/// Currently returns `true` unconditionally whenever a client is attached.
-/// A proper health check (`health_check` RPC) is not yet implemented because
-/// the raw `AirServiceClient` requires `&mut self` for the health check
-/// while `MountainEnvironment` holds an immutable reference to the client.
-/// This function exists as a placeholder for when a wrapper with
-/// interior mutability is introduced.
+/// The Air service definition does not expose `GetSecret`, `StoreSecret` or
+/// `DeleteSecret` RPCs (only the Vine protocol defines them, and Mountain
+/// holds an Air client). Reporting availability unconditionally made every
+/// secret operation fail with `NotImplemented` whenever an Air client was
+/// attached. Report unavailability with a clear warning instead so the
+/// callers fall back to the local OS keyring.
 #[cfg(feature = "AirIntegration")]
-async fn IsAirAvailable(_AirClient:&AirServiceClient<tonic::transport::Channel>) -> bool { true }
+async fn IsAirAvailable(_AirClient:&AirServiceClient<tonic::transport::Channel>) -> bool {
+	dev_log!(
+		"storage",
+		"warn: [SecretProvider] Air service has no secret RPCs; using the local keyring"
+	);
+
+	false
+}
 
 #[async_trait]
 impl SecretProvider for MountainEnvironment {
