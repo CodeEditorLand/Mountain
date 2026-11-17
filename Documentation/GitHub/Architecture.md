@@ -1,4 +1,4 @@
-# Mountain: Native Backend Application 🏔️
+# Mountain: Native Backend Application
 
 `Mountain` is the primary `Tauri` application and native `Rust` backend for the
 `Land` code editor. `Mountain`:
@@ -11,7 +11,7 @@
 
 ---
 
-## Table of Contents
+## Table of Contents 📖
 
 1. [Overview](#overview)
 2. [Application Lifecycle](#application-lifecycle)
@@ -233,7 +233,7 @@ a dedicated Provider:
 | `TerminalProvider`           | `Terminal`                   | portable-pty PTY management     |
 | `UserInterfaceProvider`      | `UserInterface`              | tauri-plugin-dialog             |
 | `CommandProvider`            | `CommandExecutor`            | Command registry + dispatch     |
-| `DocumentProvider`           | `Document`                   | Text model management           |
+| `DocumentProvider`           | `Document`                   | Text document management           |
 | `ExtensionManagementService` | `ExtensionManagementService` | VSIX install + manifest scan    |
 | `SearchProvider`             | `Search`                     | ripgrep-based search            |
 | `SecretProvider`             | `Secret`                     | OS keyring (keyring crate)      |
@@ -275,7 +275,7 @@ async fn read_file(
 }
 ```
 
-### Registered Command Categories
+### Registered Command Categories 🌅
 
 | Category      | Example Commands                                 | Handler                    |
 | ------------- | ------------------------------------------------ | -------------------------- |
@@ -292,6 +292,16 @@ async fn read_file(
 ---
 
 ## gRPC Service (Vine) 🌐
+
+```mermaid
+graph LR
+    CLIENT["Cocoon, Wind or Air client"] --> VINE["Vine gRPC server<br/>Spine.proto and Air.proto"]
+    VINE --> HANDLERS["Service handlers<br/>WindServiceAdapters and RPC/"]
+    HANDLERS --> STATE["ApplicationState"]
+    HANDLERS --> ENV["Environment providers"]
+    HANDLERS --> PROC["ProcessManagement<br/>Cocoon and Air"]
+```
+
 
 `Mountain` hosts the `Vine` `gRPC` server for `Cocoon` and `Air` communication.
 
@@ -358,7 +368,7 @@ app_handle.emit("configuration-changed", serde_json::json!({
 })).ok();
 ```
 
-### Event Catalog
+### Event Catalog 📜
 
 | Event                   | Payload                          | Trigger              |
 | ----------------------- | -------------------------------- | -------------------- |
@@ -412,7 +422,7 @@ app_handle.emit("configuration-changed", serde_json::json!({
 
 ---
 
-## Shim Compatibility
+## Shim Compatibility 🛡️
 
 | 🟠 Low-Level Shim                              | 🔵 Coverage Shim                   |
 | ---------------------------------------------- | ---------------------------------- |

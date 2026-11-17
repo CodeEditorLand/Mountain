@@ -1,4 +1,4 @@
-# **Mountain** ⛰️
+# **Mountain**
 
 <table>
 	<tr>
@@ -58,7 +58,7 @@ _"Where `Electron` takes 200 ms to open a dialog, `Mountain` takes 2."_
 
 ---
 
-## Overview
+## Overview 📋
 
 **Mountain** is the foundational `Rust`/`Tauri` backend for the
 **Land** 🏞️ Code Editor. It implements the abstract service
@@ -149,7 +149,7 @@ application updates with progress reporting and automatic restart.
 
 ---
 
-## System Architecture
+## System Architecture 🏗️
 
 ```mermaid
 graph LR
@@ -220,7 +220,7 @@ graph LR
 
 ---
 
-## Key Components
+## Key Components 🧩
 
 | Component           | Path                          | Description                                                                                                                    |
 | ------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -275,7 +275,7 @@ Element/Mountain/
 │   ├── ExtensionManagement/       # Extension scanner, default configs, NLS, VSIX installer
 │   ├── FileSystem/                # File explorer tree-view provider
 │   ├── IPC/                       # IPC core: Tauri server, Wind handlers, encryption, permissions
-│   │   ├── WindServiceHandlers/   # 300+ handler implementations (FS, terminal, UI, Git, model...)
+│   │   ├── WindServiceHandlers/   # 300+ handler implementations (FS, terminal, UI, Git, text documents...)
 │   │   ├── Enhanced/              # Connection pooling, message compression, secure channels
 │   │   ├── Common/                # Connection status, health, message types, performance metrics
 │   │   └── Security/              # Permission management, roles, security events
@@ -286,7 +286,7 @@ Element/Mountain/
 │   ├── Telemetry/                 # Feature flags, runtime gates, metrics, OpenTelemetry tracing
 │   ├── Track/                     # Central dispatcher: frontend commands, sidecar requests, webview
 │   ├── Update/                    # OTA update service via Air daemon
-│   ├── Vine/                      # gRPC layer: server, client, multiplexer, proto-generated code
+│   ├── Vine/                      # gRPC layer: server, client, multiplexer, protobuf-derived code
 │   └── Workspace/                 # Workspace file parsing and multi-root resolution
 ├── Proto/
 │   └── Vine.proto                 # gRPC protocol definition
@@ -303,7 +303,7 @@ Element/Mountain/
 
 ---
 
-## In the Land Project
+## In the Land Project 🔌
 
 **Mountain** ⛰️ is the primary consumer of the
 `Common` 🧑🏻‍🏭 crate and a key component in the
@@ -335,21 +335,21 @@ Element/Mountain/
 is built as part of the monorepo. For detailed build instructions, see
 [`Documentation/GitHub/Building.md`](https://github.com/CodeEditorLand/Land/tree/Current/Documentation/GitHub/Building.md).
 
-### Prerequisites
+### Prerequisites 📦
 
 - **Rust** 1.95 or later (edition 2024)
 - **Tauri** v2 CLI (`cargo install tauri-cli`)
 - Protocol Buffer compiler (`protoc`) - required for `Vine.proto` codegen
 - macOS, Linux, or Windows build toolchain
 
-### Build
+### Build 📦
 
 ```bash
 cd Element/Mountain
 cargo build --release
 ```
 
-### Build with Features
+### Build with Features 📦
 
 ```bash
 # Default features (all subsystems enabled)
@@ -362,7 +362,7 @@ cargo build --release --no-default-features --features "MistNative"
 cargo build --features "Development"
 ```
 
-### Run
+### Run 🚀
 
 ```bash
 cargo run --release
@@ -406,7 +406,7 @@ Mountain enforces security at multiple layers:
 
 ---
 
-## Compatibility
+## Compatibility 🔌
 
 Mountain is designed to be compatible with:
 
@@ -424,18 +424,20 @@ Mountain is designed to be compatible with:
 
 ---
 
-## API Reference
+## API Reference 📖
+
+- [Architecture](https://github.com/CodeEditorLand/Mountain/tree/Current/Documentation/GitHub/Architecture.md) - application lifecycle, provider registration and gRPC services
 
 - **[Rust API Documentation](https://rust.documentation.mountain.editor.land/)** 📖
 
 ---
 
-## Related Documentation
+## Related Documentation 📖
 
 - [Architecture Overview](https://Editor.Land/Doc/architecture) - Internal
   module structure
 - [Deep Dive](Documentation/GitHub/DeepDive.md) - In-depth technical details
-- [Land Documentation](../../Documentation/GitHub/README.md) - Complete
+- [Land Documentation](https://github.com/CodeEditorLand/Land/tree/Current/Documentation/GitHub/README.md) - Complete
   documentation index
 - [Why `Rust`](https://Editor.Land/Doc/why-rust)
 - [Why `Tauri`](https://Editor.Land/Doc/why-tauri)
