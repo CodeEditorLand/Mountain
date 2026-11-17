@@ -147,7 +147,7 @@
 //! - Protocol versioning for compatibility
 
 use std::{
-	collections::HashMap,
+	collections::{HashMap, HashSet},
 	io::{Read, Write},
 	sync::{Arc, Mutex},
 	time::Duration,
@@ -224,6 +224,14 @@ pub struct TauriIPCServer {
 	is_connected:Arc<Mutex<bool>>,
 
 	message_queue:Arc<Mutex<Vec<TauriIPCMessage>>>,
+
+	// D27: per-server cancel/settle registry, keyed by (channel, correlation
+	// id). Replaces the process-global statics formerly in ReceiveMessage.rs so
+	// a caller-supplied id collision in one channel cannot suppress a completion
+	// in another. Arc-backed so clones of the managed server share one registry.
+	pub(crate) cancel_registry:Arc<Mutex<HashSet<(String, String)>>>,
+
+	pub(crate) settled_registry:Arc<Mutex<HashSet<(String, String)>>>,
 }
 
 /// Message compression utility for optimizing IPC Message transfer
@@ -281,6 +289,10 @@ impl TauriIPCServer {
 			is_connected:Arc::new(Mutex::new(false)),
 
 			message_queue:Arc::new(Mutex::new(Vec::new())),
+
+			cancel_registry:Arc::new(Mutex::new(HashSet::new())),
+
+			settled_registry:Arc::new(Mutex::new(HashSet::new())),
 		}
 	}
 
